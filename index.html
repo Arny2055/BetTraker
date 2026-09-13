@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetTracker Pro - Sports Analytics Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfeff',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen antialiased flex flex-col selection:bg-cyan-500 selection:text-white">
+
+    <!-- Top Navigation -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">BetTracker Pro</h1>
+                    <p class="text-xs text-slate-400 font-medium">Quantitative Match Engine</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button id="toggle-view-btn" onclick="toggleView()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700/60 flex items-center space-x-2 shadow-sm">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span id="toggle-view-text">Importar Datos</span>
+                </button>
+                <button onclick="exportToCSV()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700/60 flex items-center space-x-1.5" title="Exportar CSV">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">CSV</span>
+                </button>
+                <button onclick="clearAllData()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 transition-all border border-rose-900/40 flex items-center space-x-1.5" title="Borrar Todo">
+                    <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+        <!-- KPI Cards SECTION -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-cyan-500/10 rounded-full blur-xl group-hover:bg-cyan-500/20 transition-all"></div>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Apuestas</p>
+                <h3 id="kpi-total" class="text-2xl sm:text-3xl font-bold text-white mt-1">0</h3>
+                <p id="kpi-closed-sub" class="text-[11px] text-slate-500 mt-1">0 cerradas</p>
+            </div>
+            
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-emerald-500/10 rounded-full blur-xl group-hover:bg-emerald-500/20 transition-all"></div>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Win Rate</p>
+                <h3 id="kpi-winrate" class="text-2xl sm:text-3xl font-bold text-emerald-400 mt-1">0.0%</h3>
+                <p id="kpi-win-sub" class="text-[11px] text-slate-500 mt-1">0G / 0P</p>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cuota Promedio</p>
+                <h3 id="kpi-avg-odds" class="text-2xl sm:text-3xl font-bold text-cyan-300 mt-1">1.00</h3>
+                <p class="text-[11px] text-slate-500 mt-1">Bookie Average</p>
+            </div>
+
+            <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
+                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Beneficio / Yield</p>
+                <h3 id="kpi-profit" class="text-2xl sm:text-3xl font-bold text-white mt-1">0.00 u</h3>
+                <p id="kpi-yield-sub" class="text-[11px] text-slate-500 mt-1">Yield: 0.0%</p>
+            </div>
+        </section>
+
+        <!-- VIEW 1: DATA PASTE INPUT FORM -->
+        <section id="paste-section" class="glass-panel p-6 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Importar Datos del Modelo</h2>
+                    <p class="text-xs text-slate-400">Pega el bloque de texto crudo directamente de tu hoja de cálculo o exportación.</p>
+                </div>
+                <span class="text-xs font-mono bg-cyan-950 text-cyan-400 border border-cyan-800/60 px-2.5 py-1 rounded-md">Smart Tokenizer Active</span>
+            </div>
+
+            <textarea id="raw-data-input" rows="8" placeholder="Pega los datos aquí... Ejemplo:
+KlaksvikStreymurOver/Under 2.5Over 2.563.44%1.58-100.00%1.601.670.00Ganada0.00Cerrada..." class="w-full bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all custom-scrollbar"></textarea>
+
+            <div class="flex items-center justify-end space-x-3">
+                <button onclick="document.getElementById('raw-data-input').value=''" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors">Limpiar Texto</button>
+                <button onclick="processRawData()" class="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Procesar y Guardar</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW 2: DASHBOARD TABLE & FILTERS -->
+        <section id="dashboard-section" class="glass-panel rounded-2xl overflow-hidden space-y-4 p-5">
+            <!-- Filter Controls -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="relative">
+                    <input type="text" id="filter-search" oninput="renderTable()" placeholder="Buscar equipo (Local / Visitante)..." class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-all">
+                    <svg class="w-4 h-4 text-slate-500 absolute right-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+
+                <div>
+                    <select id="filter-market" onchange="renderTable()" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition-all">
+                        <option value="ALL">Todos los Mercados</option>
+                        <option value="Over/Under 2.5">Over/Under 2.5</option>
+                        <option value="BTTS">BTTS</option>
+                    </select>
+                </div>
+
+                <div>
+                    <select id="filter-result" onchange="renderTable()" class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition-all">
+                        <option value="ALL">Todos los Resultados</option>
+                        <option value="Ganada">Ganada</option>
+                        <option value="Perdida">Perdida</option>
+                        <option value="Pendiente">Pendiente</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto custom-scrollbar rounded-xl border border-slate-800/80">
+                <table class="w-full text-left text-xs whitespace-nowrap">
+                    <thead class="bg-slate-900/90 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
+                        <tr>
+                            <th class="px-3.5 py-3">Local</th>
+                            <th class="px-3.5 py-3">Visitante</th>
+                            <th class="px-3.5 py-3">Mercado</th>
+                            <th class="px-3.5 py-3">Pick</th>
+                            <th class="px-3.5 py-3 text-right">Prob (%)</th>
+                            <th class="px-3.5 py-3 text-right">Cuota Fair</th>
+                            <th class="px-3.5 py-3 text-right">EV %</th>
+                            <th class="px-3.5 py-3 text-right">Cuota Bookie</th>
+                            <th class="px-3.5 py-3 text-right">EV Alt</th>
+                            <th class="px-3.5 py-3 text-right">Stake</th>
+                            <th class="px-3.5 py-3 text-center">Resultado</th>
+                            <th class="px-3.5 py-3 text-right">Beneficio</th>
+                            <th class="px-3.5 py-3 text-center">Estado</th>
+                            <th class="px-3 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bets-table-body" class="divide-y divide-slate-800/60 text-slate-300">
+                        <!-- Dynamic Rows Here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination / Counter Footer -->
+            <div class="flex items-center justify-between text-xs text-slate-500 px-1 pt-1">
+                <span id="showing-count">Mostrando 0 registros</span>
+                <span>BetTracker Engine v2.5</span>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // Global State
+        let betsData = [];
+        let isPasteModeView = false;
+
+        // On Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            renderDashboard();
+        });
+
+        // Local Storage Handlers
+        function saveToLocalStorage() {
+            localStorage.setItem('bettracker_data_v2', JSON.stringify(betsData));
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('bettracker_data_v2');
+            if (stored) {
+                try {
+                    betsData = JSON.parse(stored);
+                } catch(e) {
+                    betsData = [];
+                }
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('¿Estás seguro de que deseas eliminar TODOS los registros guardados?')) {
+                betsData = [];
+                saveToLocalStorage();
+                renderDashboard();
+            }
+        }
+
+        function deleteSingleRow(id) {
+            betsData = betsData.filter(item => item.id !== id);
+            saveToLocalStorage();
+            renderDashboard();
+        }
+
+        // View Toggler
+        function toggleView() {
+            isPasteModeView = !isPasteModeView;
+            const pasteSection = document.getElementById('paste-section');
+            const toggleText = document.getElementById('toggle-view-text');
+
+            if (isPasteModeView) {
+                pasteSection.classList.remove('hidden');
+                toggleText.textContent = 'Ver Dashboard';
+            } else {
+                pasteSection.classList.add('hidden');
+                toggleText.textContent = 'Importar Datos';
+            }
+        }
+
+        // Tokenizer / Parser Logic
+        function processRawData() {
+            const rawText = document.getElementById('raw-data-input').value.trim();
+            if (!rawText) {
+                alert('Por favor pega una cadena de texto válida.');
+                return;
+            }
+
+            const parsedRows = parseRawBetString(rawText);
+            
+            if (parsedRows.length === 0) {
+                alert('No se pudieron extraer registros. Revisa la estructura del texto.');
+                return;
+            }
+
+            // Append new items
+            betsData = [...parsedRows, ...betsData];
+            saveToLocalStorage();
+            document.getElementById('raw-data-input').value = '';
+            
+            // Switch view back to table
+            isPasteModeView = false;
+            document.getElementById('paste-section').classList.add('hidden');
+            document.getElementById('toggle-view-text').textContent = 'Importar Datos';
+            
+            renderDashboard();
+        }
+
+        function parseRawBetString(inputStr) {
+            // Regex match for known status marker at row end: "Cerrada" or "Abierta"
+            const rowSplitRegex = /(.*?)(Cerrada|Abierta)/g;
+            let match;
+            const extractedRows = [];
+
+            while ((match = rowSplitRegex.exec(inputStr)) !== null) {
+                const rawRow = match[0].trim();
+                const parsedObj = parseSingleRow(rawRow);
+                if (parsedObj) {
+                    extractedRows.push(parsedObj);
+                }
+            }
+
+            return extractedRows;
+        }
+
+        function parseSingleRow(rowText) {
+            try {
+                // Determine Status at end
+                let estado = "Cerrada";
+                if (rowText.endsWith("Abierta")) estado = "Abierta";
+                
+                // Identify Market & Pick patterns
+                let mercado = "";
+                let pick = "";
+
+                if (rowText.includes("Over/Under 2.5")) {
+                    mercado = "Over/Under 2.5";
+                    if (rowText.includes("Over 2.5")) pick = "Over 2.5";
+                    else if (rowText.includes("Under 2.5")) pick = "Under 2.5";
+                } else if (rowText.includes("BTTS")) {
+                    mercado = "BTTS";
+                    if (rowText.includes("BTTS Yes")) pick = "BTTS Yes";
+                    else if (rowText.includes("BTTS No")) pick = "BTTS No";
+                }
+
+                if (!mercado || !pick) return null;
+
+                // Split string using Market anchor
+                const marketIndex = rowText.indexOf(mercado);
+                const teamsPart = rowText.substring(0, marketIndex).trim();
+                const tailPart = rowText.substring(marketIndex + mercado.length + pick.length).trim();
+
+                // Split teamsPart into Local & Visitante
+                // Attempt heuristics based on capital letters or camel casing
+                let local = teamsPart;
+                let visitante = "";
+
+                // Look for capital letters inside teamsPart to split
+                const capMatches = [...teamsPart.matchAll(/[A-Z0-9]/g)];
+                if (capMatches.length > 1) {
+                    // Find a suitable mid boundary
+                    let midIdx = Math.floor(teamsPart.length / 2);
+                    let bestSplit = -1;
+                    let minDiff = 999;
+
+                    for (let i = 1; i < capMatches.length; i++) {
+                        let idx = capMatches[i].index;
+                        let diff = Math.abs(idx - midIdx);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            bestSplit = idx;
+                        }
+                    }
+
+                    if (bestSplit > 0) {
+                        local = teamsPart.substring(0, bestSplit).trim();
+                        visitante = teamsPart.substring(bestSplit).trim();
+                    }
+                }
+
+                // Process Numeric / Boolean Tokens in Tail
+                // Tail contains: Probability%, CuotaJusta, EV1%, CuotaBookie, EV2, Stake, Resultado, Beneficio, Estado
+                const probMatch = tailPart.match(/(\d+\.?\d*)%/);
+                const prob = probMatch ? parseFloat(probMatch[1]) : 0.0;
+
+                // Extract all floating point numbers (including negative numbers)
+                const numbersMatch = tailPart.match(/(-?\d+\.\d+|-?\d+)/g) || [];
+                
+                // Extract Result (Ganada / Perdida / Pendiente)
+                let resultado = "Pendiente";
+                if (tailPart.includes("Ganada")) resultado = "Ganada";
+                else if (tailPart.includes("Perdida")) resultado = "Perdida";
+
+                // Mapping numbers sequence after Prob%
+                // Typical sequence of numbers: [CuotaJusta, EV1, CuotaBookie, EV2/Stake, Beneficio]
+                let cuotaJusta = numbersMatch[1] ? parseFloat(numbersMatch[1]) : 1.0;
+                let ev1 = numbersMatch[2] ? parseFloat(numbersMatch[2]) : 0.0;
+                let cuotaBookie = numbersMatch[3] ? parseFloat(numbersMatch[3]) : 1.0;
+                let ev2 = numbersMatch[4] ? parseFloat(numbersMatch[4]) : 0.0;
+                let stake = numbersMatch[5] ? parseFloat(numbersMatch[5]) : 0.0;
+                let beneficio = numbersMatch[numbersMatch.length - 1] ? parseFloat(numbersMatch[numbersMatch.length - 1]) : 0.0;
+
+                // Auto-calculate benefit if 0.0 and closed
+                if (beneficio === 0 && estado === "Cerrada") {
+                    if (resultado === "Ganada") {
+                        beneficio = parseFloat(((cuotaBookie - 1) * (stake || 1)).toFixed(2));
+                    } else if (resultado === "Perdida") {
+                        beneficio = parseFloat((-1 * (stake || 1)).toFixed(2));
+                    }
+                }
+
+                return {
+                    id: 'bet_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                    local: local || "Local",
+                    visitante: visitante || "Visitante",
+                    mercado: mercado,
+                    pick: pick,
+                    probabilidad: prob,
+                    cuotaJusta: cuotaJusta,
+                    ev1: ev1,
+                    cuotaBookie: cuotaBookie,
+                    ev2: ev2,
+                    stake: stake || 1.0,
+                    resultado: resultado,
+                    beneficio: beneficio,
+                    estado: estado
+                };
+
+            } catch (e) {
+                console.error("Error parsing row: ", rowText, e);
+                return null;
+            }
+        }
+
+        // Render Dashboard & Calculation Logic
+        function renderDashboard() {
+            calculateMetrics();
+            renderTable();
+        }
+
+        function calculateMetrics() {
+            const total = betsData.length;
+            const closedBets = betsData.filter(b => b.estado === 'Cerrada');
+            const wins = closedBets.filter(b => b.resultado === 'Ganada').length;
+            const losses = closedBets.filter(b => b.resultado === 'Perdida').length;
+            
+            const winRate = closedBets.length > 0 ? ((wins / closedBets.length) * 100).toFixed(1) : "0.0";
+            
+            const avgOdds = total > 0 
+                ? (betsData.reduce((acc, b) => acc + (b.cuotaBookie || 1.0), 0) / total).toFixed(2) 
+                : "1.00";
+
+            const totalProfit = closedBets.reduce((acc, b) => acc + (b.beneficio || 0), 0);
+            const totalStaked = closedBets.reduce((acc, b) => acc + (b.stake || 1), 0);
+            const yieldRate = totalStaked > 0 ? ((totalProfit / totalStaked) * 100).toFixed(1) : "0.0";
+
+            // Update UI
+            document.getElementById('kpi-total').textContent = total;
+            document.getElementById('kpi-closed-sub').textContent = `${closedBets.length} cerradas`;
+            
+            document.getElementById('kpi-winrate').textContent = `${winRate}%`;
+            document.getElementById('kpi-win-sub').textContent = `${wins}G / ${losses}P`;
+
+            document.getElementById('kpi-avg-odds').textContent = avgOdds;
+
+            const profitEl = document.getElementById('kpi-profit');
+            profitEl.textContent = `${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)} u`;
+            profitEl.className = `text-2xl sm:text-3xl font-bold mt-1 ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            
+            document.getElementById('kpi-yield-sub').textContent = `Yield: ${yieldRate}%`;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('bets-table-body');
+            tbody.innerHTML = '';
+
+            const searchVal = document.getElementById('filter-search').value.toLowerCase();
+            const marketVal = document.getElementById('filter-market').value;
+            const resultVal = document.getElementById('filter-result').value;
+
+            const filtered = betsData.filter(item => {
+                const matchesTeam = item.local.toLowerCase().includes(searchVal) || item.visitante.toLowerCase().includes(searchVal);
+                const matchesMarket = marketVal === 'ALL' || item.mercado === marketVal;
+                const matchesResult = resultVal === 'ALL' || item.resultado === resultVal;
+                return matchesTeam && matchesMarket && matchesResult;
+            });
+
+            document.getElementById('showing-count').textContent = `Mostrando ${filtered.length} de ${betsData.length} registros`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="14" class="text-center py-8 text-slate-500 italic">
+                            No hay registros para mostrar.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-900/50 transition-colors border-b border-slate-800/40";
+
+                // Probability styling gradient
+                let probColor = "text-cyan-400";
+                if (item.probabilidad >= 75) probColor = "text-emerald-400 font-bold";
+                else if (item.probabilidad < 55) probColor = "text-amber-400";
+
+                // Result Badge styling
+                let resultBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">Pendiente</span>`;
+                if (item.resultado === 'Ganada') {
+                    resultBadge = `<span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 shadow-sm shadow-emerald-900/20">Ganada</span>`;
+                } else if (item.resultado === 'Perdida') {
+                    resultBadge = `<span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-rose-950/80 text-rose-400 border border-rose-800/60 shadow-sm shadow-rose-900/20">Perdida</span>`;
+                }
+
+                // Profit styling
+                let profitColor = "text-slate-300";
+                if (item.beneficio > 0) profitColor = "text-emerald-400 font-semibold";
+                else if (item.beneficio < 0) profitColor = "text-rose-400 font-semibold";
+
+                tr.innerHTML = `
+                    <td class="px-3.5 py-3 font-medium text-white">${escapeHtml(item.local)}</td>
+                    <td class="px-3.5 py-3 font-medium text-slate-300">${escapeHtml(item.visitante)}</td>
+                    <td class="px-3.5 py-3 text-slate-400">${escapeHtml(item.mercado)}</td>
+                    <td class="px-3.5 py-3 font-medium text-cyan-300">${escapeHtml(item.pick)}</td>
+                    <td class="px-3.5 py-3 text-right font-mono ${probColor}">${item.probabilidad.toFixed(2)}%</td>
+                    <td class="px-3.5 py-3 text-right font-mono text-slate-400">${item.cuotaJusta.toFixed(2)}</td>
+                    <td class="px-3.5 py-3 text-right font-mono text-slate-400">${item.ev1.toFixed(1)}%</td>
+                    <td class="px-3.5 py-3 text-right font-mono text-white font-semibold">${item.cuotaBookie.toFixed(2)}</td>
+                    <td class="px-3.5 py-3 text-right font-mono text-slate-400">${item.ev2.toFixed(2)}</td>
+                    <td class="px-3.5 py-3 text-right font-mono text-slate-300">${item.stake.toFixed(2)}</td>
+                    <td class="px-3.5 py-3 text-center">${resultBadge}</td>
+                    <td class="px-3.5 py-3 text-right font-mono ${profitColor}">${item.beneficio >= 0 ? '+' : ''}${item.beneficio.toFixed(2)}</td>
+                    <td class="px-3.5 py-3 text-center text-[11px] text-slate-400">${escapeHtml(item.estado)}</td>
+                    <td class="px-3 py-3 text-center">
+                        <button onclick="deleteSingleRow('${item.id}')" class="text-slate-500 hover:text-rose-400 transition-colors p-1" title="Eliminar registro">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // CSV Export Utility
+        function exportToCSV() {
+            if (betsData.length === 0) {
+                alert('No hay datos disponibles para exportar.');
+                return;
+            }
+
+            const headers = ["Local", "Visitante", "Mercado", "Pick", "Probabilidad", "Cuota Justa", "EV1", "Cuota Bookie", "EV2", "Stake", "Resultado", "Beneficio", "Estado"];
+            const rows = betsData.map(b => [
+                `"${b.local}"`,
+                `"${b.visitante}"`,
+                `"${b.mercado}"`,
+                `"${b.pick}"`,
+                b.probabilidad,
+                b.cuotaJusta,
+                b.ev1,
+                b.cuotaBookie,
+                b.ev2,
+                b.stake,
+                `"${b.resultado}"`,
+                b.beneficio,
+                `"${b.estado}"`
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `bettracker_export_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Helper XSS prevention
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
