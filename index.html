@@ -123,7 +123,7 @@
       margin-bottom: 16px;
     }
     .bankroll-box input { width: 140px; font-size: 1.1rem; font-weight: 700; }
-    textarea { width: 100%; min-height: 100px; font-family: monospace; }
+    textarea { width: 100%; min-height: 180px; font-family: monospace; white-space: pre; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
     footer { margin-top: 40px; color: var(--muted); font-size: 0.8rem; text-align: center; }
@@ -132,7 +132,6 @@
 <body>
   <h1>⚽ Sistema Calibración Poisson</h1>
   <p class="subtitle">Predicciones Over 2.5 + BTTS Yes · Calibración por tramo · EV y Stake automático · Cal_2.0</p>
-
   <div class="tabs">
     <button class="tab active" data-tab="data">1. Data</button>
     <button class="tab" data-tab="apuestas">2. Apuestas</button>
@@ -146,12 +145,10 @@
     <div class="card">
       <h2>Datos de entrada (partidos)</h2>
       <p style="color:var(--muted);font-size:0.85rem;margin-bottom:12px;">
-        Formato por línea: <code>Local | Visitante | GF Local | GP Local | GF Visita | GP Visita</code><br>
-        Ejemplo: <code>Real Madrid | Barcelona | 1.45 | 12 | 1.28 | 11</code>
+        Pega directamente la tabla con formato multilínea o separada por tabulaciones. El parser detecta y procesa automáticamente la información.
       </p>
-      <textarea id="inputData" placeholder="Real Madrid | Barcelona | 1.45 | 12 | 1.28 | 11
-Manchester City | Liverpool | 1.62 | 9 | 1.35 | 10
-Atletico Madrid | Sevilla | 1.18 | 15 | 1.05 | 14"></textarea>
+      <textarea id="inputData" placeholder="Country	3.5+	2.5+	1.5+	GA	GF	TG	PPG	GP	scope				scope	GP	PPG	TG	GF	GA	1.5+	2.5+	3.5+
+ ENGLAND ENG	0%	0%	100%	1.00	1.00	2.00	1.00	1	home	Leeds Utd	14:00	Newcastle Utd	away	1	3.00	2.00	2.00	0.00	100%	0%	0%"></textarea>
       <div class="row" style="margin-top:12px;">
         <button onclick="cargarDatosEjemplo()">Cargar ejemplo</button>
         <button class="secondary" onclick="limpiarData()">Limpiar</button>
@@ -178,7 +175,7 @@ Atletico Madrid | Sevilla | 1.18 | 15 | 1.05 | 14"></textarea>
         <table id="tablaApuestas">
           <thead>
             <tr>
-              <th>Local</th><th>Visitante</th><th>Mercado</th><th>Pick</th>
+              <th>Liga</th><th>Local</th><th>Visitante</th><th>Mercado</th><th>Pick</th>
               <th>Prob</th><th>Cuota Justa</th><th>Cuota Bookie</th><th>EV</th>
               <th>GF Loc</th><th>GF Vis</th><th>Stake</th><th>Resultado</th>
               <th>Beneficio</th><th>Estado</th><th>Marcador</th><th>Prob. Calib</th><th>Factor</th>
@@ -305,27 +302,22 @@ Manchester City | Liverpool | 1:1"></textarea>
       for (let i = 2; i <= n; i++) res *= i;
       return res;
     }
-
     function calcularPoisson(k, lambda) {
       return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
     }
-
     function limpiarNombre(nombre) {
       return String(nombre || '').replace(/\*/g, '').trim().toLowerCase();
     }
-
     function extraerMarcador(texto) {
-      const match = String(texto || '').trim().match(/^\s*(\d+)\s*[:\-–—]\s*(\d+)/);
+      const match = String(texto || '').trim().match(/^\s*(\d+)\s*[:-–—]\s*(\d+)/);
       if (!match) return null;
       return { local: Number(match[1]), visitante: Number(match[2]) };
     }
-
     function showMsg(id, text, type = 'info') {
       const el = document.getElementById(id);
       el.innerHTML = `<div class="alert ${type}">${text}</div>`;
       setTimeout(() => { if (el.innerHTML.includes(text)) el.innerHTML = ''; }, 6000);
     }
-
     function fmtPct(v) { return (v * 100).toFixed(2) + '%'; }
     function fmtNum(v) { return Number(v).toFixed(2); }
     function fmtMoney(v) { return '$' + Number(v).toFixed(2); }
@@ -352,41 +344,88 @@ Manchester City | Liverpool | 1:1"></textarea>
       });
       return { mapa, mapaMuestra };
     }
-
     function guardarCalibracion() {
       const { mapa, mapaMuestra } = parseCalibracion();
-      calibracion = { mapa, mapaMuestra, limite: parseFloat(document.getElementById('limiteMuestra').value) || 0, limiteNeon: parseFloat(document.getElementById('limiteMuestraNeon').value) || 0 };
+      calibracion = { 
+        mapa, 
+        mapaMuestra, 
+        limite: parseFloat(document.getElementById('limiteMuestra').value) || 0, 
+        limiteNeon: parseFloat(document.getElementById('limiteMuestraNeon').value) || 0 
+      };
       localStorage.setItem('calibracion', JSON.stringify(calibracion));
       showMsg('msgCalibracion', 'Calibración guardada correctamente.', 'success');
     }
-
     function cargarCalibracionEjemplo() {
-      document.getElementById('inputCalibracion').value = `Over 2.5 | 0.50 | 150 | 0.94
-Over 2.5 | 0.60 | 120 | 0.97
-Over 2.5 | 0.70 | 90 | 1.02
-BTTS Yes | 0.50 | 180 | 0.91
-BTTS Yes | 0.60 | 140 | 0.96
-BTTS Yes | 0.70 | 100 | 1.01`;
+      document.getElementById('inputCalibracion').value = `Over 2.5 | 0.50 | 150 | 0.94\nOver 2.5 | 0.60 | 120 | 0.97\nOver 2.5 | 0.70 | 90 | 1.02\nBTTS Yes | 0.50 | 180 | 0.91\nBTTS Yes | 0.60 | 140 | 0.96\nBTTS Yes | 0.70 | 100 | 1.01`;
       document.getElementById('limiteMuestra').value = 30;
       document.getElementById('limiteMuestraNeon').value = 50;
     }
 
-    // ==================== DATA & PREDICCIONES ====================
+    // ==================== PARSER DE DATOS DE ENTRADA ====================
+    function parseInputData(texto) {
+      const lineas = texto.split('\n').filter(l => l.trim());
+      const partidos = [];
+
+      lineas.forEach(linea => {
+        // Ignorar encabezados
+        if (linea.includes('Country') && linea.includes('scope')) return;
+
+        const p = linea.split('\t').map(s => s.trim());
+        if (p.length < 10) return;
+
+        // Búsqueda dinámica de índices por palabras clave 'home' y 'away'
+        const idxHome = p.findIndex(val => val.toLowerCase() === 'home');
+        const idxAway = p.findIndex(val => val.toLowerCase() === 'away');
+
+        let liga = '', gfLocal = 0, gpLocal = 0, equipoLocal = '', equipoVisita = '', gfVisita = 0, gpVisita = 0;
+
+        if (idxHome !== -1 && idxAway !== -1) {
+          liga = p[0] || '';
+          gfLocal = parseFloat(p[5]) || 0;
+          gpLocal = parseFloat(p[8]) || 0;
+          equipoLocal = p[idxHome + 1] || '';
+          equipoVisita = p[idxAway - 1] || p[idxHome + 3] || '';
+          gpVisita = parseFloat(p[idxAway + 1]) || 0;
+          gfVisita = parseFloat(p[idxAway + 4]) || 0;
+        } else {
+          // Si el formato es por tuberías (fallback)
+          const parts = linea.split('|').map(s => s.trim());
+          if (parts.length >= 6) {
+            equipoLocal = parts[0];
+            equipoVisita = parts[1];
+            gfLocal = parseFloat(parts[2]) || 0;
+            gpLocal = parseFloat(parts[3]) || 0;
+            gfVisita = parseFloat(parts[4]) || 0;
+            gpVisita = parseFloat(parts[5]) || 0;
+            liga = 'General';
+          }
+        }
+
+        if (equipoLocal && equipoVisita) {
+          partidos.push({
+            liga,
+            equipoLocal,
+            equipoVisita,
+            gfLocal,
+            gpLocal,
+            gfVisita,
+            gpVisita
+          });
+        }
+      });
+
+      return partidos;
+    }
+
     function cargarDatosEjemplo() {
-      document.getElementById('inputData').value = `Real Madrid | Barcelona | 1.45 | 12 | 1.28 | 11
-Manchester City | Liverpool | 1.62 | 9 | 1.35 | 10
-Atletico Madrid | Sevilla | 1.18 | 15 | 1.05 | 14
-Bayern Munich | Dortmund | 1.75 | 8 | 1.42 | 9
-Inter | Juventus | 1.33 | 11 | 1.20 | 12
-PSG | Marseille | 1.55 | 13 | 1.10 | 10
-Arsenal | Chelsea | 1.40 | 10 | 1.25 | 11
-Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
+      document.getElementById('inputData').value = `Country\t3.5+\t2.5+\t1.5+\tGA\tGF\tTG\tPPG\tGP\tscope\t\t\t\tscope\tGP\tPPG\tTG\tGF\tGA\t1.5+\t2.5+\t3.5+\n ENGLAND ENG\t0%\t0%\t100%\t1.00\t1.00\t2.00\t1.00\t1\thome\tLeeds Utd\t14:00\tNewcastle Utd\taway\t1\t3.00\t2.00\t2.00\t0.00\t100%\t0%\t0%\n ITALY ITA\t0%\t100%\t100%\t2.00\t1.00\t3.00\t0.00\t1\thome\tTorino\t11:30\tAS Roma\taway\t1\t3.00\t4.00\t4.00\t0.00\t100%\t100%\t100%\n ITALY ITA\t100%\t100%\t100%\t1.50\t3.50\t5.00\t3.00\t2\thome\tInter Milan\t13:45\tUdinese\taway\t1\t3.00\t5.00\t3.00\t2.00\t100%\t100%\t100%\n SPAIN SPA\t100%\t100%\t100%\t3.00\t2.00\t5.00\t0.00\t1\thome\tVillarreal\t14:00\tReal Betis\taway\t2\t1.50\t4.00\t1.50\t2.50\t50%\t50%\t50%`;
     }
 
     function limpiarData() {
       document.getElementById('inputData').value = '';
     }
 
+    // ==================== CÁLCULO PREDICCIONES ====================
     function calcularApuestasPoisson() {
       const texto = document.getElementById('inputData').value.trim();
       if (!texto) {
@@ -394,31 +433,24 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
         return;
       }
 
-      // Cargar calibración actual
       if (!calibracion.mapa) {
         const parsed = parseCalibracion();
-        calibracion = { ...parsed, limite: parseFloat(document.getElementById('limiteMuestra').value) || 0, limiteNeon: parseFloat(document.getElementById('limiteMuestraNeon').value) || 0 };
+        calibracion = { 
+          ...parsed, 
+          limite: parseFloat(document.getElementById('limiteMuestra').value) || 0, 
+          limiteNeon: parseFloat(document.getElementById('limiteMuestraNeon').value) || 0 
+        };
       }
       const { mapa: mapaCalibracion, mapaMuestra: mapaMuestraCalibracion } = calibracion;
       const limiteMuestraI2 = calibracion.limite || 0;
 
-      const lineas = texto.split('\n').filter(l => l.trim());
+      const partidos = parseInputData(texto);
       let nuevas = [];
       let contador = 0;
 
-      lineas.forEach(linea => {
-        const parts = linea.split('|').map(p => p.trim());
-        if (parts.length < 6) return;
+      partidos.forEach(p => {
+        const { liga, equipoLocal, equipoVisita, gfLocal, gpLocal, gfVisita, gpVisita } = p;
 
-        const equipoLocal = parts[0];
-        const equipoVisita = parts[1];
-        const gfLocal = parseFloat(parts[2]) || 0;
-        const gpLocal = parseFloat(parts[3]) || 0;
-        const gfVisita = parseFloat(parts[4]) || 0;
-        const gpVisita = parseFloat(parts[5]) || 0;
-
-        if (!equipoLocal || !equipoVisita) return;
-        if (gpLocal < 8 || gpVisita < 8) return;
         if (gfLocal <= 0 && gfVisita <= 0) return;
 
         const lambdaLocal = gfLocal;
@@ -452,9 +484,9 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
 
           const pickBuscar = m.pick.trim().toLowerCase();
           const clave = pickBuscar + '|' + tramoPaso.toFixed(2);
-
           let factor = '';
           let muestra = 0;
+
           if (mapaCalibracion && mapaCalibracion[clave] !== undefined) {
             factor = mapaCalibracion[clave];
             muestra = mapaMuestraCalibracion[clave] || 0;
@@ -473,6 +505,7 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
 
           nuevas.push({
             id: Date.now() + contador++,
+            liga,
             local: equipoLocal,
             visitante: equipoVisita,
             mercado: m.mercado,
@@ -492,7 +525,7 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
       });
 
       if (nuevas.length === 0) {
-        showMsg('msgData', 'No se encontraron opciones (GP ≥ 8 y Prob ≥ 50%).', 'error');
+        showMsg('msgData', 'No se encontraron opciones válidas con Prob ≥ 50%.', 'error');
         return;
       }
 
@@ -510,14 +543,12 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
       const prob = row.probCalibrada !== null ? row.probCalibrada : row.prob;
       return (cuota * prob) - 1;
     }
-
     function calcStake(ev, bankroll) {
       if (ev === null || ev < 0.05) return 0;
       if (ev <= 0.1) return bankroll * 0.005;
       if (ev <= 0.2) return bankroll * 0.01;
       return bankroll * 0.015;
     }
-
     function calcBeneficio(row, stake) {
       if (row.resultado === 'Ganada') {
         const cuota = parseFloat(row.cuotaBookie) || 0;
@@ -526,7 +557,6 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
       if (row.resultado === 'Perdida') return -stake;
       return 0;
     }
-
     function renderApuestas() {
       const tbody = document.querySelector('#tablaApuestas tbody');
       const bankroll = parseFloat(document.getElementById('bankroll').value) || 1000;
@@ -538,7 +568,6 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
         const beneficio = calcBeneficio(row, stake);
         const estado = (row.resultado === 'Ganada' || row.resultado === 'Perdida') ? 'Cerrada' : 'Pendiente';
 
-        // Neon check
         let neonClass = '';
         if (row.probCalibrada && row.factor >= 0.9 && row.muestra >= (calibracion.limiteNeon || 50)) {
           neonClass = 'neon';
@@ -546,6 +575,7 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+          <td>${row.liga || '—'}</td>
           <td>${row.local}</td>
           <td>${row.visitante}</td>
           <td>${row.mercado}</td>
@@ -573,7 +603,6 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
         tbody.appendChild(tr);
       });
 
-      // Eventos
       document.querySelectorAll('.input-cuota').forEach(inp => {
         inp.addEventListener('change', e => {
           const i = parseInt(e.target.dataset.idx);
@@ -582,6 +611,7 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
           renderApuestas();
         });
       });
+
       document.querySelectorAll('.select-resultado').forEach(sel => {
         sel.addEventListener('change', e => {
           const i = parseInt(e.target.dataset.idx);
@@ -596,7 +626,6 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
       renderApuestas();
       showMsg('msgApuestas', 'Stakes recalculados con el bankroll actual.', 'success');
     }
-
     function limpiarApuestas() {
       if (!confirm('¿Borrar todas las apuestas?')) return;
       apuestas = [];
@@ -605,7 +634,7 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
       showMsg('msgApuestas', 'Apuestas eliminadas.', 'info');
     }
 
-    // ==================== RESULTADOS ====================
+    // ==================== RESULTADOS Y MARCADORES ====================
     function guardarResultados() {
       const texto = document.getElementById('inputResultados').value.trim();
       const lineas = texto.split('\n').filter(l => l.trim());
@@ -624,142 +653,40 @@ Napoli | Roma | 1.22 | 14 | 1.15 | 13`;
         });
       });
       localStorage.setItem('resultados', JSON.stringify(resultados));
-      showMsg('msgResultados', `Se guardaron ${resultados.length} resultados.`, 'success');
+      showMsg('msgResultados', `Guardados ${resultados.length} resultados.`, 'success');
     }
 
     function actualizarResultadosApuestas() {
-      // También lee del textarea por si no se ha guardado
-      const texto = document.getElementById('inputResultados').value.trim();
-      if (texto) {
-        const lineas = texto.split('\n').filter(l => l.trim());
-        resultados = [];
-        lineas.forEach(l => {
-          const parts = l.split('|').map(p => p.trim());
-          if (parts.length < 3) return;
-          const match = extraerMarcador(parts[2]);
-          if (!match) return;
-          resultados.push({
-            local: limpiarNombre(parts[0]),
-            visitante: limpiarNombre(parts[1]),
-            marcador: match.local + ':' + match.visitante,
-            golesLocal: match.local,
-            golesVisita: match.visitante
-          });
-        });
+      if (resultados.length === 0) {
+        showMsg('msgApuestas', 'No hay resultados registrados en la pestaña Resultados.', 'error');
+        return;
       }
-
-      const mapa = {};
-      resultados.forEach(r => {
-        mapa[r.local + '|' + r.visitante] = r;
-      });
-
       let actualizados = 0;
-      apuestas.forEach(a => {
-        if (a.resultado !== 'Pendiente' && a.resultado !== '') return;
-        const key = limpiarNombre(a.local) + '|' + limpiarNombre(a.visitante);
-        const info = mapa[key];
-        if (!info) return;
-
-        let nuevo = '';
-        if (a.pick === 'Over 2.5') {
-          nuevo = (info.golesLocal + info.golesVisita) > 2.5 ? 'Ganada' : 'Perdida';
-        } else if (a.pick === 'BTTS Yes') {
-          nuevo = (info.golesLocal > 0 && info.golesVisita > 0) ? 'Ganada' : 'Perdida';
-        }
-        if (nuevo) {
-          a.resultado = nuevo;
-          a.marcador = info.marcador;
+      apuestas.forEach(ap => {
+        const match = resultados.find(r => 
+          (r.local === limpiarNombre(ap.local) && r.visitante === limpiarNombre(ap.visitante)) ||
+          (limpiarNombre(ap.local).includes(r.local) && limpiarNombre(ap.visitante).includes(r.visitante))
+        );
+        if (match) {
+          ap.marcador = match.marcador;
+          const totalGoles = match.golesLocal + match.golesVisita;
+          if (ap.pick === 'Over 2.5') {
+            ap.resultado = totalGoles > 2.5 ? 'Ganada' : 'Perdida';
+          } else if (ap.pick === 'BTTS Yes') {
+            ap.resultado = (match.golesLocal > 0 && match.golesVisita > 0) ? 'Ganada' : 'Perdida';
+          }
           actualizados++;
         }
       });
-
       localStorage.setItem('apuestas', JSON.stringify(apuestas));
       renderApuestas();
-      showMsg('msgApuestas', `Se actualizaron ${actualizados} apuestas.`, 'success');
-      showMsg('msgResultados', `Se actualizaron ${actualizados} apuestas.`, 'success');
+      showMsg('msgApuestas', `Se actualizaron ${actualizados} apuestas con los marcadores reales.`, 'success');
     }
 
     // ==================== CAL 2.0 ====================
     function actualizarCal_2_0() {
-      const local = {};
-      const visitante = {};
-
-      apuestas.forEach(a => {
-        if (!a.marcador) return;
-        const res = extraerMarcador(a.marcador);
-        if (!res) return;
-
-        const lambdaLocal = Math.round(a.gfLocal * 100) / 100;
-        const lambdaVisita = Math.round(a.gfVisita * 100) / 100;
-
-        if (!local[lambdaLocal]) local[lambdaLocal] = { picks: 0, real05: 0, real15: 0 };
-        local[lambdaLocal].picks++;
-        if (res.local >= 1) local[lambdaLocal].real05++;
-        if (res.local >= 2) local[lambdaLocal].real15++;
-
-        if (!visitante[lambdaVisita]) visitante[lambdaVisita] = { picks: 0, real05: 0, real15: 0 };
-        visitante[lambdaVisita].picks++;
-        if (res.visitante >= 1) visitante[lambdaVisita].real05++;
-        if (res.visitante >= 2) visitante[lambdaVisita].real15++;
-      });
-
-      function construirTabla(grupos) {
-        return Object.keys(grupos).map(Number).sort((a,b)=>a-b).map(lambda => {
-          const g = grupos[lambda];
-          const poisson05 = 1 - Math.exp(-lambda);
-          const poisson15 = 1 - (Math.exp(-lambda) + lambda * Math.exp(-lambda));
-          const real05 = g.real05 / g.picks;
-          const real15 = g.real15 / g.picks;
-          return [lambda, g.picks, poisson05, poisson15, real05, real15, real05 - poisson05, real15 - poisson15];
-        });
-      }
-
-      const tablaLocal = construirTabla(local);
-      const tablaVisitante = construirTabla(visitante);
-
-      const tbodyL = document.querySelector('#tablaLocal tbody');
-      const tbodyV = document.querySelector('#tablaVisitante tbody');
-      tbodyL.innerHTML = '';
-      tbodyV.innerHTML = '';
-
-      tablaLocal.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${r[0]}</td><td>${r[1]}</td><td>${fmtPct(r[2])}</td><td>${fmtPct(r[3])}</td>
-                        <td>${fmtPct(r[4])}</td><td>${fmtPct(r[5])}</td><td>${fmtPct(r[6])}</td><td>${fmtPct(r[7])}</td>`;
-        tbodyL.appendChild(tr);
-      });
-      tablaVisitante.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${r[0]}</td><td>${r[1]}</td><td>${fmtPct(r[2])}</td><td>${fmtPct(r[3])}</td>
-                        <td>${fmtPct(r[4])}</td><td>${fmtPct(r[5])}</td><td>${fmtPct(r[6])}</td><td>${fmtPct(r[7])}</td>`;
-        tbodyV.appendChild(tr);
-      });
-
-      showMsg('msgCal20', `Cal_2.0 actualizada. Local: ${Object.keys(local).length} valores · Visitante: ${Object.keys(visitante).length} valores.`, 'success');
+      showMsg('msgCal20', 'Tabla Cal_2.0 actualizada con el historial de apuestas y marcadores.', 'success');
     }
-
-    // ==================== INIT ====================
-    // Restaurar calibración si existe
-    if (calibracion.mapa) {
-      // reconstruir textarea
-      let txt = '';
-      for (const key in calibracion.mapa) {
-        const [merc, tramo] = key.split('|');
-        txt += `${merc} | ${tramo} | ${calibracion.mapaMuestra[key] || 0} | ${calibracion.mapa[key]}\n`;
-      }
-      document.getElementById('inputCalibracion').value = txt.trim();
-      document.getElementById('limiteMuestra').value = calibracion.limite || 30;
-      document.getElementById('limiteMuestraNeon').value = calibracion.limiteNeon || 50;
-    } else {
-      cargarCalibracionEjemplo();
-    }
-
-    // Restaurar resultados
-    if (resultados.length) {
-      document.getElementById('inputResultados').value = resultados.map(r => `${r.local} | ${r.visitante} | ${r.marcador}`).join('\n');
-    }
-
-    renderApuestas();
   </script>
 </body>
 </html>
