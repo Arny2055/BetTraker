@@ -2,8 +2,9 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BetAnalytix - Sports Betting Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>EV Strategy Hub - Quantitative Dashboard</title>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,971 +13,662 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            bg: '#090d16',
-                            card: '#1e293b',
-                            accent: '#06b6d4',
-                            win: '#10b981',
-                            loss: '#ef4444',
-                            pending: '#f59e0b',
-                            void: '#64748b'
-                        }
+                        darkBg: '#080C14',
+                        cardBg: 'rgba(15, 23, 42, 0.65)',
+                        cardBorder: 'rgba(255, 255, 255, 0.08)',
+                        neonGreen: '#00FF87',
+                        neonRed: '#FF2E63',
+                        neonBlue: '#00F0FF',
+                        neonPurple: '#7000FF',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
                     }
                 }
             }
         }
     </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
+        :root {
+            --sat: env(safe-area-inset-top);
+            --sab: env(safe-area-inset-bottom);
+        }
+
         body {
-            background-color: #090d16;
-            color: #f8fafc;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #080C14;
+            color: #F3F4F6;
+            font-family: 'Inter', sans-serif;
+            padding-top: var(--sat);
+            padding-bottom: calc(var(--sab) + 75px);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
+
+        /* Glassmorphism Styling */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-modal {
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(15, 23, 42, 0.70);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
+
+        .glass-input {
+            background: rgba(2, 6, 23, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+            transition: all 0.2s ease;
+        }
+
+        .glass-input:focus {
+            border-color: #00F0FF;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+            outline: none;
+        }
+
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 4px;
+            height: 4px;
         }
         ::-webkit-scrollbar-track {
-            background: #0f172a;
+            background: rgba(8, 12, 20, 0.5);
         }
         ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+
+        /* Neon Glows */
+        .glow-green {
+            box-shadow: 0 0 15px rgba(0, 255, 135, 0.2);
+        }
+        .glow-blue {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+        .glow-red {
+            box-shadow: 0 0 15px rgba(255, 46, 99, 0.2);
+        }
+
+        /* Touch Optimization for iPhone 14 */
+        .touch-target {
+            min-height: 44px;
+            min-width: 44px;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-white">
+<body class="min-h-screen antialiased selection:bg-neonBlue selection:text-black">
 
-    <!-- TOP HEADER -->
-    <header class="sticky top-0 z-30 glass-panel border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-            <!-- Logo & Title -->
-            <div class="flex items-center gap-3">
-                <div class="p-2 bg-gradient-to-tr from-cyan-500 to-emerald-500 rounded-xl text-slate-950 font-bold shadow-lg shadow-cyan-500/20">
-                    <i data-lucide="trending-up" class="w-6 h-6"></i>
+    <!-- TOP HEADER / METRICS BANNER -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 py-3 bg-darkBg/80 backdrop-blur-md">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-neonBlue to-neonPurple flex items-center justify-center text-black font-extrabold text-sm shadow-lg shadow-neonBlue/20">
+                    EV
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">BET-ANALYTIX</h1>
-                    <p class="text-xs text-slate-400 hidden sm:block">Track & Analytics Dashboard</p>
+                    <h1 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Strategy Hub</h1>
+                    <div class="text-sm font-extrabold text-white flex items-center gap-1.5">
+                        <span id="headerBankroll" class="tabular-nums text-neonBlue">$1,000.00</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-neonGreen font-semibold border border-neonGreen/20">LIVE</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Controls & Actions -->
-            <div class="flex items-center gap-3">
-                <!-- Config Capital / Bankroll Initial -->
-                <button onclick="openBankModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                    <i data-lucide="wallet" class="w-4 h-4 text-cyan-400"></i>
-                    <span class="hidden md:inline">Banca Inicial:</span>
-                    <span id="headerBankInit" class="text-white font-bold">$0</span>
-                </button>
-
-                <!-- Period Selector -->
-                <select id="filterPeriod" onchange="applyFilters()" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 font-medium rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                    <option value="all">Global (Todo)</option>
-                    <option value="month">Este Mes</option>
-                    <option value="30days">Últimos 30 días</option>
-                </select>
-
-                <!-- Export/Import JSON -->
-                <button onclick="exportData()" title="Exportar Datos" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                </button>
-                <button onclick="document.getElementById('importFile').click()" title="Importar Datos" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-                    <i data-lucide="upload" class="w-4 h-4"></i>
-                </button>
-                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
-
-                <!-- Add Bet Button -->
-                <button onclick="openBetModal()" class="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-500/20 text-xs sm:text-sm transition">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Nueva Apuesta</span>
-                </button>
+            <!-- Global KPI Summary -->
+            <div class="flex items-center gap-3 text-right">
+                <div>
+                    <p class="text-[10px] text-gray-400 font-medium">Bets Saved</p>
+                    <p id="headerBetCount" class="text-xs font-bold tabular-nums text-white">0</p>
+                </div>
+                <div class="h-6 w-[1px] bg-white/10"></div>
+                <div>
+                    <p class="text-[10px] text-gray-400 font-medium">Avg EV%</p>
+                    <p id="headerAvgEV" class="text-xs font-bold tabular-nums text-neonGreen">+0.0%</p>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- MAIN CONTAINER -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- MAIN CONTAINER (iPhone 14 Width Constrained) -->
+    <main class="max-w-md mx-auto px-4 py-4 space-y-5">
 
-        <!-- KPI METRICS GRID -->
-        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-            <!-- Banca Actual -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden">
-                <div class="flex justify-between items-start text-slate-400">
-                    <span class="text-xs font-semibold">Banca Actual</span>
-                    <i data-lucide="coins" class="w-4 h-4 text-cyan-400"></i>
-                </div>
-                <div class="mt-2">
-                    <div id="kpiCurrentBank" class="text-xl sm:text-2xl font-black text-white">$0.00</div>
-                    <div id="kpiBankGrowth" class="text-xs font-medium text-emerald-400 mt-0.5">+0.00%</div>
-                </div>
-            </div>
+        <!-- TAB NAVIGATION -->
+        <div class="glass-panel p-1 rounded-xl flex items-center justify-between text-xs font-semibold gap-1">
+            <button onclick="switchTab('calculator')" id="tab-calculator" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all bg-neonBlue/20 text-neonBlue border border-neonBlue/40">
+                <i class="fa-solid font-black fa-calculator"></i>
+                <span>Calc</span>
+            </button>
+            <button onclick="switchTab('simulation')" id="tab-simulation" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Monte Carlo</span>
+            </button>
+            <button onclick="switchTab('opportunities')" id="tab-opportunities" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white">
+                <i class="fa-solid fa-bolt text-amber-400"></i>
+                <span>Feed</span>
+            </button>
+            <button onclick="switchTab('tracker')" id="tab-tracker" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white">
+                <i class="fa-solid fa-list-check"></i>
+                <span>Log</span>
+            </button>
+        </div>
 
-            <!-- Profit Total -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
-                <div class="flex justify-between items-start text-slate-400">
-                    <span class="text-xs font-semibold">Profit Total</span>
-                    <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+        <!-- SECTION 1: CALCULATOR MODULE -->
+        <section id="sec-calculator" class="space-y-4">
+            <div class="glass-panel rounded-2xl p-4 space-y-4 relative overflow-hidden">
+                <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-microchip text-neonBlue"></i> Quantitative EV Calculator
+                    </h2>
+                    <span id="valueBadge" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/10 text-neonGreen border border-neonGreen/30 uppercase tracking-wider glow-green">
+                        +EV Detected
+                    </span>
                 </div>
-                <div class="mt-2">
-                    <div id="kpiProfit" class="text-xl sm:text-2xl font-black text-white">$0.00</div>
-                    <div id="kpiProfitUnits" class="text-xs font-medium text-slate-400 mt-0.5">0.00 U</div>
-                </div>
-            </div>
 
-            <!-- Yield -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
-                <div class="flex justify-between items-start text-slate-400">
-                    <span class="text-xs font-semibold">Yield</span>
-                    <i data-lucide="percent" class="w-4 h-4 text-indigo-400"></i>
-                </div>
-                <div class="mt-2">
-                    <div id="kpiYield" class="text-xl sm:text-2xl font-black text-white">0.00%</div>
-                    <div id="kpiTotalStaked" class="text-xs font-medium text-slate-400 mt-0.5">Staked: $0</div>
-                </div>
-            </div>
+                <!-- Input Controls Grid -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-medium text-gray-400 flex items-center gap-1">
+                            <span>Bookmaker Odds</span>
+                            <i class="fa-solid fa-circle-info text-[9px] text-gray-500" title="Decimal odds offered by bookmaker"></i>
+                        </label>
+                        <input type="number" id="inputOdds" step="0.01" value="2.10" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" oninput="calculateEV()">
+                    </div>
 
-            <!-- Win Rate -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
-                <div class="flex justify-between items-start text-slate-400">
-                    <span class="text-xs font-semibold">Win Rate</span>
-                    <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
-                </div>
-                <div class="mt-2">
-                    <div id="kpiWinRate" class="text-xl sm:text-2xl font-black text-white">0.0%</div>
-                    <div id="kpiWinLossRatio" class="text-xs font-medium text-slate-400 mt-0.5">0G - 0P - 0A</div>
-                </div>
-            </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-medium text-gray-400 flex items-center gap-1">
+                            <span>Model Win Prob (%)</span>
+                            <i class="fa-solid fa-circle-info text-[9px] text-gray-500" title="Your estimated win probability"></i>
+                        </label>
+                        <input type="number" id="inputProb" step="0.1" value="52.0" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" oninput="calculateEV()">
+                    </div>
 
-            <!-- ROI -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
-                <div class="flex justify-between items-start text-slate-400">
-                    <span class="text-xs font-semibold">ROI Total</span>
-                    <i data-lucide="line-chart" class="w-4 h-4 text-cyan-400"></i>
-                </div>
-                <div class="mt-2">
-                    <div id="kpiROI" class="text-xl sm:text-2xl font-black text-white">0.00%</div>
-                    <div class="text-xs font-medium text-slate-500 mt-0.5">Retorno Inv.</div>
-                </div>
-            </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-medium text-gray-400">Kelly Fraction</label>
+                        <select id="inputKellyFraction" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" onchange="calculateEV()">
+                            <option value="1.0">Full Kelly (1.0)</option>
+                            <option value="0.5">Half Kelly (0.50)</option>
+                            <option value="0.25" selected>Quarter Kelly (0.25)</option>
+                            <option value="0.10">Eighth Kelly (0.10)</option>
+                        </select>
+                    </div>
 
-            <!-- Promedios -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
-                <div class="flex justify-between items-start text-slate-400">
-                    <span class="text-xs font-semibold">Cuotas / Stake</span>
-                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-amber-400"></i>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-medium text-gray-400">Bankroll ($)</label>
+                        <input type="number" id="inputBankroll" step="10" value="1000" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" oninput="calculateEV()">
+                    </div>
                 </div>
-                <div class="mt-2">
-                    <div id="kpiAvgOdds" class="text-lg font-bold text-white">@1.00</div>
-                    <div id="kpiAvgStake" class="text-xs font-medium text-slate-400 mt-0.5">Stake Prom: 0.0U</div>
-                </div>
-            </div>
 
-            <!-- Racha Actual -->
-            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
-                <div class="flex justify-between items-start text-slate-400">
-                    <span class="text-xs font-semibold">Racha Actual</span>
-                    <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                <!-- Primary Metrics Display -->
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <div class="glass-panel p-3 rounded-xl border border-white/5 bg-slate-900/40">
+                        <p class="text-[10px] text-gray-400 font-medium">Expected Value (EV)</p>
+                        <p id="resEV" class="text-xl font-extrabold tabular-nums text-neonGreen mt-0.5">+9.20%</p>
+                    </div>
+                    <div class="glass-panel p-3 rounded-xl border border-white/5 bg-slate-900/40">
+                        <p class="text-[10px] text-gray-400 font-medium">Fair Odds (No Vig)</p>
+                        <p id="resFairOdds" class="text-xl font-extrabold tabular-nums text-neonBlue mt-0.5">1.92</p>
+                    </div>
                 </div>
-                <div class="mt-2">
-                    <div id="kpiStreak" class="text-xl sm:text-2xl font-black text-white">-</div>
-                    <div id="kpiTotalBets" class="text-xs font-medium text-slate-400 mt-0.5">0 Apuestas</div>
+
+                <!-- Stake & Profit Grid -->
+                <div class="grid grid-cols-3 gap-2 pt-1">
+                    <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
+                        <p class="text-[9px] text-gray-400 uppercase font-semibold">Implied Prob</p>
+                        <p id="resImplied" class="text-xs font-bold tabular-nums text-white mt-1">47.62%</p>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-neonBlue/10 border border-neonBlue/30 text-center">
+                        <p class="text-[9px] text-neonBlue uppercase font-bold">Rec. Stake</p>
+                        <p id="resStake" class="text-xs font-extrabold tabular-nums text-neonBlue mt-1">$20.83</p>
+                        <p id="resStakePct" class="text-[9px] text-neonBlue/80 font-medium">(2.08%)</p>
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center">
+                        <p class="text-[9px] text-neonGreen uppercase font-bold">Exp. Profit</p>
+                        <p id="resExpProfit" class="text-xs font-extrabold tabular-nums text-neonGreen mt-1">+$1.92</p>
+                    </div>
                 </div>
+
+                <!-- Bet Saver Action Button -->
+                <button onclick="saveCurrentBet()" class="touch-target w-full py-3 rounded-xl bg-gradient-to-r from-neonBlue to-neonPurple text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-neonBlue/20 active:scale-[0.98] transition-transform">
+                    <i class="fa-solid fa-bookmark"></i>
+                    Log Bet to Active Strategy
+                </button>
             </div>
         </section>
 
-        <!-- CHARTS SECTION -->
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Bankroll Evolution Chart -->
-            <div class="lg:col-span-2 glass-panel p-5 rounded-2xl flex flex-col">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="activity" class="w-5 h-5 text-cyan-400"></i>
-                        <h2 class="text-sm font-bold text-slate-200">Evolución del Capital (Bankroll)</h2>
-                    </div>
+        <!-- SECTION 2: MONTE CARLO SIMULATION MODULE -->
+        <section id="sec-simulation" class="space-y-4 hidden">
+            <div class="glass-panel rounded-2xl p-4 space-y-4">
+                <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-neonPurple"></i> Monte Carlo Bankroll Projection
+                    </h2>
+                    <span class="text-[10px] text-gray-400">100 Bet Trajectory</span>
                 </div>
-                <div class="relative flex-1 min-h-[280px]">
-                    <canvas id="bankrollChart"></canvas>
-                </div>
-            </div>
 
-            <!-- Distribution Chart -->
-            <div class="glass-panel p-5 rounded-2xl flex flex-col">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-400"></i>
-                        <h2 class="text-sm font-bold text-slate-200">Rendimiento por Deporte</h2>
+                <div class="p-3 bg-black/40 rounded-xl border border-white/5 space-y-2">
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-gray-400">Simulated Win Rate:</span>
+                        <span id="simWinRate" class="tabular-nums text-white">52.0%</span>
+                    </div>
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-gray-400">Kelly Fractional Stake:</span>
+                        <span id="simKellyFrac" class="tabular-nums text-neonBlue">2.08% / bet</span>
+                    </div>
+                    <div class="flex justify-between text-xs font-medium">
+                        <span class="text-gray-400">Expected Growth:</span>
+                        <span id="simExpGrowth" class="tabular-nums text-neonGreen font-bold">+19.2%</span>
                     </div>
                 </div>
-                <div class="relative flex-1 min-h-[280px] flex items-center justify-center">
-                    <canvas id="distributionChart"></canvas>
+
+                <!-- Chart Canvas Container -->
+                <div class="relative w-full h-64 bg-slate-950/60 rounded-xl p-2 border border-white/5">
+                    <canvas id="monteCarloChart"></canvas>
                 </div>
+
+                <button onclick="runMonteCarlo()" class="touch-target w-full py-2.5 rounded-xl glass-panel border border-neonPurple/40 text-neonPurple hover:bg-neonPurple/10 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    Re-Run Simulation (100 Iterations)
+                </button>
             </div>
         </section>
 
-        <!-- BETS HISTORY TABLE SECTION -->
-        <section class="glass-panel rounded-2xl overflow-hidden">
-            <!-- Table Header Filters -->
-            <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div class="flex items-center gap-2 w-full md:w-auto">
-                    <i data-lucide="list" class="w-5 h-5 text-slate-400"></i>
-                    <h2 class="text-base font-bold text-slate-200">Historial de Apuestas</h2>
-                </div>
-
-                <!-- Search and Quick Status Filters -->
-                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    <!-- Search Input -->
-                    <div class="relative flex-1 md:w-64">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
-                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Buscar evento, pick, liga..." class="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                    </div>
-
-                    <!-- Status Filter Buttons -->
-                    <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
-                        <button onclick="setStatusFilter('ALL')" id="filterBtnALL" class="px-3 py-1 rounded-md font-semibold text-cyan-400 bg-slate-800">Todas</button>
-                        <button onclick="setStatusFilter('WON')" id="filterBtnWON" class="px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white">Ganadas</button>
-                        <button onclick="setStatusFilter('LOST')" id="filterBtnLOST" class="px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white">Perdidas</button>
-                        <button onclick="setStatusFilter('PENDING')" id="filterBtnPENDING" class="px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white">Pendientes</button>
-                    </div>
-                </div>
+        <!-- SECTION 3: OPPORTUNITIES FEED MODULE -->
+        <section id="sec-opportunities" class="space-y-3 hidden">
+            <div class="flex items-center justify-between px-1">
+                <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> High Value +EV Opportunities
+                </h2>
+                <span class="text-[10px] text-gray-400">Live Scraped Feed</span>
             </div>
 
-            <!-- Table Container -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-                        <tr>
-                            <th class="px-4 py-3">Fecha</th>
-                            <th class="px-4 py-3">Evento / Partido</th>
-                            <th class="px-4 py-3">Pick / Selección</th>
-                            <th class="px-4 py-3">Deporte / Liga</th>
-                            <th class="px-4 py-3 text-center">Cuota</th>
-                            <th class="px-4 py-3 text-center">Stake</th>
-                            <th class="px-4 py-3 text-center">Bookmaker</th>
-                            <th class="px-4 py-3 text-center">Estado</th>
-                            <th class="px-4 py-3 text-right">Profit</th>
-                            <th class="px-4 py-3 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="betsTableBody" class="divide-y divide-slate-800/60 font-medium">
-                        <!-- Rows rendered dynamically -->
-                    </tbody>
-                </table>
+            <!-- Opportunities List Container -->
+            <div id="opportunitiesContainer" class="space-y-2.5">
+                <!-- Dynamic Content Populated via JS -->
             </div>
+        </section>
 
-            <!-- Empty State -->
-            <div id="emptyState" class="hidden p-12 text-center text-slate-500">
-                <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-slate-600"></i>
-                <p class="text-sm">No se encontraron apuestas registradas con los filtros aplicados.</p>
+        <!-- SECTION 4: STRATEGY & BET LOG MODULE -->
+        <section id="sec-tracker" class="space-y-4 hidden">
+            <div class="glass-panel rounded-2xl p-4 space-y-4">
+                <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-folder-open text-neonBlue"></i> Active Strategy Log
+                    </h2>
+                    <button onclick="clearLog()" class="text-[10px] text-neonRed font-semibold hover:underline">
+                        Clear History
+                    </button>
+                </div>
+
+                <div id="betLogContainer" class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                    <!-- Dynamic Log Items -->
+                </div>
             </div>
         </section>
 
     </main>
 
-    <!-- MODAL: ADD / EDIT BET -->
-    <div id="betModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-        <div class="glass-modal w-full max-w-xl rounded-2xl p-6 shadow-2xl relative border border-slate-700/60">
-            <button onclick="closeBetModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <i data-lucide="x" class="w-5 h-5"></i>
+    <!-- FIXED BOTTOM NAVIGATION BAR (iPhone Optimized) -->
+    <nav class="fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 bg-darkBg/90 backdrop-blur-xl px-4 py-2">
+        <div class="max-w-md mx-auto flex items-center justify-around">
+            <button onclick="switchTab('calculator')" id="nav-calculator" class="flex flex-col items-center gap-1 text-neonBlue touch-target justify-center w-16">
+                <i class="fa-solid fa-calculator text-base"></i>
+                <span class="text-[10px] font-medium">Calc</span>
             </button>
-
-            <h3 id="modalTitle" class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-400"></i> Registrar Apuesta
-            </h3>
-
-            <form id="betForm" onsubmit="saveBet(event)" class="space-y-4">
-                <input type="hidden" id="betId">
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Fecha -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Fecha</label>
-                        <input type="date" id="formDate" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                    </div>
-
-                    <!-- Deporte / Liga -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Deporte / Liga</label>
-                        <input type="text" id="formSport" placeholder="Ej. Fútbol / Premier League" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- Evento -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Evento / Partido</label>
-                    <input type="text" id="formEvent" placeholder="Ej. Arsenal vs Chelsea" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Selección / Pick -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Selección / Pick</label>
-                        <input type="text" id="formPick" placeholder="Ej. Arsenal Gana o Over 2.5" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                    </div>
-
-                    <!-- Tipo de Mercado -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Mercado</label>
-                        <input type="text" id="formMarket" placeholder="Ej. 1X2, Over/Under, BTTS" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <!-- Cuota -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Cuota Decimal</label>
-                        <input type="number" step="0.001" min="1.01" id="formOdds" placeholder="2.10" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                    </div>
-
-                    <!-- Stake (Monto) -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Stake / Arriesgado ($)</label>
-                        <input type="number" step="0.01" min="0.1" id="formStake" placeholder="100" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                    </div>
-
-                    <!-- Bookmaker -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Casa de Apuestas</label>
-                        <input type="text" id="formBookmaker" placeholder="Bet365, Pinnacle..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- Resultado -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Resultado / Estado</label>
-                    <select id="formStatus" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                        <option value="PENDING">Pendiente</option>
-                        <option value="WON">Ganada (Win)</option>
-                        <option value="LOST">Perdida (Loss)</option>
-                        <option value="VOID">Anulada (Void / Push)</option>
-                        <option value="HALF_WIN">Medio Ganada (Half Win)</option>
-                        <option value="HALF_LOSS">Medio Perdida (Half Loss)</option>
-                    </select>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="pt-2 flex justify-end gap-3">
-                    <button type="button" onclick="closeBetModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 hover:from-emerald-400 hover:to-teal-500 transition shadow-lg shadow-emerald-500/20">Guardar Apuesta</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL: INITIAL BANKROLL CONFIG -->
-    <div id="bankModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-        <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl relative border border-slate-700/60">
-            <button onclick="closeBankModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-                <i data-lucide="x" class="w-5 h-5"></i>
+            <button onclick="switchTab('simulation')" id="nav-simulation" class="flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16">
+                <i class="fa-solid fa-chart-line text-base"></i>
+                <span class="text-[10px] font-medium">Sim</span>
             </button>
-
-            <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
-                <i data-lucide="wallet" class="w-5 h-5 text-cyan-400"></i> Ajustar Banca Inicial
-            </h3>
-
-            <p class="text-xs text-slate-400 mb-4">Ingresa tu capital inicial para calcular el rendimiento del bankroll.</p>
-
-            <form onsubmit="saveInitialBankroll(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto de Banca Inicial ($)</label>
-                    <input type="number" id="formInitialBank" step="1" min="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
-                </div>
-
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeBankModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Cancelar</button>
-                    <button type="submit" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition">Actualizar</button>
-                </div>
-            </form>
+            <button onclick="switchTab('opportunities')" id="nav-opportunities" class="flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16">
+                <i class="fa-solid fa-bolt text-base"></i>
+                <span class="text-[10px] font-medium">Feed</span>
+            </button>
+            <button onclick="switchTab('tracker')" id="nav-tracker" class="flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16">
+                <i class="fa-solid fa-list-check text-base"></i>
+                <span class="text-[10px] font-medium">Log</span>
+            </button>
         </div>
-    </div>
+    </nav>
 
-    <!-- APPLICATION LOGIC JS -->
+    <!-- JAVASCRIPT ARCHITECTURE -->
     <script>
-        // MOCK INITIAL DATA IF LOCAL STORAGE IS EMPTY
-        const INITIAL_MOCK_DATA = [
-            { id: "1", date: "2026-09-01", sport: "Fútbol / La Liga", event: "Real Madrid vs Real Betis", pick: "Real Madrid -1 Asian Handicap", market: "Handicap", odds: 1.85, stake: 100, bookmaker: "Bet365", status: "WON" },
-            { id: "2", date: "2026-09-03", sport: "Fútbol / Premier League", event: "Arsenal vs Brighton", pick: "Over 2.5 Goles", market: "Over/Under", odds: 1.72, stake: 100, bookmaker: "Pinnacle", status: "WON" },
-            { id: "3", date: "2026-09-05", sport: "Tenis / US Open", event: "Alcaraz vs Sinner", pick: "Sinner Gana", market: "1X2", odds: 2.10, stake: 80, bookmaker: "Betway", status: "LOST" },
-            { id: "4", date: "2026-09-07", sport: "Fútbol / Serie A", event: "Inter vs Milan", pick: "Ambos Anotan (BTTS)", market: "BTTS", odds: 1.90, stake: 120, bookmaker: "1xBet", status: "WON" },
-            { id: "5", date: "2026-09-08", sport: "Baloncesto / NBA", event: "Lakers vs Celtics", pick: "Lakers +4.5", market: "Handicap", odds: 1.95, stake: 100, bookmaker: "Bet365", status: "HALF_WIN" },
-            { id: "6", date: "2026-09-10", sport: "Fútbol / Champions League", event: "Bayern vs PSG", pick: "Bayern Gana", market: "1X2", odds: 2.05, stake: 100, bookmaker: "Pinnacle", status: "WON" },
-            { id: "7", date: "2026-09-12", sport: "Fútbol / Liga MX", event: "Club América vs Chivas", pick: "Under 2.5 Goles", market: "Over/Under", odds: 1.80, stake: 90, bookmaker: "Caliente", status: "VOID" },
-            { id: "8", date: "2026-09-13", sport: "Béisbol / MLB", event: "Yankees vs Red Sox", pick: "Yankees Gana", market: "Moneyline", odds: 1.75, stake: 110, bookmaker: "Bet365", status: "PENDING" }
+        // GLOBAL STATE MANAGEMENT
+        let currentCalculatedBet = {};
+        let betHistory = JSON.parse(localStorage.getItem('ev_hub_history') || '[]');
+        let monteCarloChartInstance = null;
+
+        // MOCK OPPORTUNITIES DATA
+        const opportunitiesFeed = [
+            { id: 1, match: "Real Madrid vs Barcelona", market: "Over 2.5 Goals", odds: 1.95, prob: 56.5, league: "La Liga" },
+            { id: 2, match: "Arsenal vs Chelsea", market: "BTTS Yes", odds: 1.85, prob: 59.0, league: "Premier League" },
+            { id: 3, match: "Lakers vs Celtics", market: "Lakers +4.5 AH", odds: 2.05, prob: 53.0, league: "NBA" },
+            { id: 4, match: "Bayern Munich vs Dortmund", market: "Bayern Win & Over 1.5", odds: 1.75, prob: 62.0, league: "Bundesliga" },
+            { id: 5, match: "Man City vs Liverpool", market: "First Half Over 0.5", odds: 1.50, prob: 72.0, league: "Premier League" }
         ];
-
-        // GLOBAL APP STATE
-        let bets = [];
-        let initialBankroll = 1000;
-        let activeStatusFilter = 'ALL';
-        let bankrollChartInstance = null;
-        let distributionChartInstance = null;
-
-        // LOCAL STORAGE KEYS
-        const STORAGE_KEY_BETS = 'betanalytix_bets_v1';
-        const STORAGE_KEY_BANK = 'betanalytix_bank_v1';
 
         // INITIALIZATION
         document.addEventListener('DOMContentLoaded', () => {
-            loadStorageData();
-            initCharts();
-            renderApp();
-            lucide.createIcons();
+            calculateEV();
+            renderOpportunitiesFeed();
+            renderBetLog();
+            initMonteCarloChart();
+            updateGlobalHeaderMetrics();
         });
 
-        function loadStorageData() {
-            const storedBets = localStorage.getItem(STORAGE_KEY_BETS);
-            const storedBank = localStorage.getItem(STORAGE_KEY_BANK);
+        // TAB SWITCHER LOGIC
+        function switchTab(tabId) {
+            const tabs = ['calculator', 'simulation', 'opportunities', 'tracker'];
+            tabs.forEach(t => {
+                const sec = document.getElementById(`sec-${t}`);
+                const btnTab = document.getElementById(`tab-${t}`);
+                const btnNav = document.getElementById(`nav-${t}`);
 
-            if (storedBets) {
-                bets = JSON.parse(storedBets);
-            } else {
-                bets = [...INITIAL_MOCK_DATA];
-                localStorage.setItem(STORAGE_KEY_BETS, JSON.stringify(bets));
-            }
-
-            if (storedBank) {
-                initialBankroll = parseFloat(storedBank);
-            } else {
-                initialBankroll = 1000;
-                localStorage.setItem(STORAGE_KEY_BANK, initialBankroll.toString());
-            }
-        }
-
-        function saveStorageData() {
-            localStorage.setItem(STORAGE_KEY_BETS, JSON.stringify(bets));
-            localStorage.setItem(STORAGE_KEY_BANK, initialBankroll.toString());
-        }
-
-        // CALCULATE PROFIT FOR A SINGLE BET
-        function calculateBetProfit(bet) {
-            const stake = parseFloat(bet.stake) || 0;
-            const odds = parseFloat(bet.odds) || 0;
-
-            switch (bet.status) {
-                case 'WON':
-                    return stake * (odds - 1);
-                case 'LOST':
-                    return -stake;
-                case 'HALF_WIN':
-                    return (stake * (odds - 1)) / 2;
-                case 'HALF_LOSS':
-                    return -stake / 2;
-                case 'VOID':
-                case 'PENDING':
-                default:
-                    return 0;
-            }
-        }
-
-        // GET FILTERED BETS BASED ON TIME PERIOD AND QUICK STATUS FILTER
-        function getFilteredBets() {
-            const period = document.getElementById('filterPeriod').value;
-            const search = document.getElementById('searchInput').value.toLowerCase().trim();
-            const now = new Date();
-
-            return bets.filter(bet => {
-                const betDate = new Date(bet.date + 'T00:00:00');
-
-                // Filter Period
-                if (period === 'month') {
-                    if (betDate.getMonth() !== now.getMonth() || betDate.getFullYear() !== now.getFullYear()) {
-                        return false;
-                    }
-                } else if (period === '30days') {
-                    const diffTime = Math.abs(now - betDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays > 30) return false;
+                if (t === tabId) {
+                    sec.classList.remove('hidden');
+                    
+                    // Tab Styles
+                    btnTab.className = 'touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all bg-neonBlue/20 text-neonBlue border border-neonBlue/40';
+                    btnNav.className = 'flex flex-col items-center gap-1 text-neonBlue touch-target justify-center w-16';
+                } else {
+                    sec.classList.add('hidden');
+                    
+                    // Tab Styles
+                    btnTab.className = 'touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white';
+                    btnNav.className = 'flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16';
                 }
-
-                // Filter Status
-                if (activeStatusFilter !== 'ALL' && bet.status !== activeStatusFilter) {
-                    return false;
-                }
-
-                // Search Query
-                if (search) {
-                    const matchText = `${bet.event} ${bet.pick} ${bet.sport} ${bet.market} ${bet.bookmaker}`.toLowerCase();
-                    if (!matchText.includes(search)) return false;
-                }
-
-                return true;
-            });
-        }
-
-        // MAIN RENDER METHOD
-        function renderApp() {
-            const filteredBets = getFilteredBets();
-
-            renderHeaderAndKPIs(filteredBets);
-            renderTable(filteredBets);
-            updateCharts(filteredBets);
-        }
-
-        // KPI CALCULATIONS & RENDERING
-        function renderHeaderAndKPIs(currentBets) {
-            document.getElementById('headerBankInit').textContent = `$${initialBankroll.toLocaleString()}`;
-
-            const settledBets = currentBets.filter(b => b.status !== 'PENDING');
-            let totalProfit = 0;
-            let totalStakedSettled = 0;
-            let wins = 0, losses = 0, voids = 0;
-            let sumOdds = 0;
-            let sumStake = 0;
-
-            currentBets.forEach(bet => {
-                sumOdds += parseFloat(bet.odds);
-                sumStake += parseFloat(bet.stake);
             });
 
-            settledBets.forEach(bet => {
-                const profit = calculateBetProfit(bet);
-                totalProfit += profit;
-                totalStakedSettled += parseFloat(bet.stake);
-
-                if (bet.status === 'WON' || bet.status === 'HALF_WIN') wins++;
-                else if (bet.status === 'LOST' || bet.status === 'HALF_LOSS') losses++;
-                else if (bet.status === 'VOID') voids++;
-            });
-
-            const currentBankroll = initialBankroll + totalProfit;
-            const bankGrowth = ((currentBankroll - initialBankroll) / initialBankroll) * 100;
-            const yieldPercentage = totalStakedSettled > 0 ? (totalProfit / totalStakedSettled) * 100 : 0;
-            const totalDecided = wins + losses;
-            const winRate = totalDecided > 0 ? (wins / totalDecided) * 100 : 0;
-            const roi = initialBankroll > 0 ? (totalProfit / initialBankroll) * 100 : 0;
-            const avgOdds = currentBets.length > 0 ? sumOdds / currentBets.length : 0;
-            const avgStake = currentBets.length > 0 ? sumStake / currentBets.length : 0;
-
-            // Racha / Streak Calculation
-            let streakText = "-";
-            const sortedSettled = [...settledBets].sort((a, b) => new Date(b.date) - new Date(a.date));
-            if (sortedSettled.length > 0) {
-                const lastStatus = sortedSettled[0].status;
-                let count = 0;
-                for (let b of sortedSettled) {
-                    if (b.status === lastStatus) count++;
-                    else break;
-                }
-                if (lastStatus === 'WON') streakText = `🔥 ${count}W`;
-                else if (lastStatus === 'LOST') streakText = `❄️ ${count}L`;
-                else streakText = `${count} ${lastStatus}`;
+            if (tabId === 'simulation') {
+                runMonteCarlo();
             }
+        }
 
-            // Render KPI Values
-            document.getElementById('kpiCurrentBank').textContent = `$${currentBankroll.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        // CORE QUANTITATIVE MATHEMATICAL CALCULATIONS
+        function calculateEV() {
+            const odds = parseFloat(document.getElementById('inputOdds').value) || 0;
+            const probPct = parseFloat(document.getElementById('inputProb').value) || 0;
+            const kellyFraction = parseFloat(document.getElementById('inputKellyFraction').value) || 0.25;
+            const bankroll = parseFloat(document.getElementById('inputBankroll').value) || 0;
+
+            const prob = probPct / 100;
+            const impliedProb = odds > 0 ? (1 / odds) : 0;
             
-            const growthEl = document.getElementById('kpiBankGrowth');
-            growthEl.textContent = `${bankGrowth >= 0 ? '+' : ''}${bankGrowth.toFixed(2)}%`;
-            growthEl.className = `text-xs font-medium mt-0.5 ${bankGrowth >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
+            // Expected Value (EV%) = (Prob * (Odds - 1)) - (1 - Prob)
+            const evFraction = (prob * (odds - 1)) - (1 - prob);
+            const evPercentage = evFraction * 100;
 
-            const profitEl = document.getElementById('kpiProfit');
-            profitEl.textContent = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-            profitEl.className = `text-xl sm:text-2xl font-black ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
+            // Fair Odds = 1 / Probability
+            const fairOdds = prob > 0 ? (1 / prob) : 0;
 
-            const avgUnitSize = avgStake || 1;
-            document.getElementById('kpiProfitUnits').textContent = `${(totalProfit / (avgUnitSize || 1)).toFixed(2)} U`;
+            // Kelly Criterion Formula: f* = (p(b+1) - 1) / b   where b = odds - 1
+            const b = odds - 1;
+            let fullKellyStakePct = b > 0 ? ((prob * (b + 1) - 1) / b) : 0;
+            if (fullKellyStakePct < 0) fullKellyStakePct = 0; // No bet if negative EV
 
-            const yieldEl = document.getElementById('kpiYield');
-            yieldEl.textContent = `${yieldPercentage >= 0 ? '+' : ''}${yieldPercentage.toFixed(2)}%`;
-            yieldEl.className = `text-xl sm:text-2xl font-black ${yieldPercentage >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
-            document.getElementById('kpiTotalStaked').textContent = `Staked: $${totalStakedSettled.toLocaleString()}`;
+            const adjustedStakePct = fullKellyStakePct * kellyFraction;
+            const stakeAmount = bankroll * adjustedStakePct;
+            const expectedProfit = stakeAmount * evFraction;
 
-            document.getElementById('kpiWinRate').textContent = `${winRate.toFixed(1)}%`;
-            document.getElementById('kpiWinLossRatio').textContent = `${wins}G - ${losses}P - ${voids}A`;
+            // DOM UPDATES
+            document.getElementById('resEV').innerText = (evPercentage >= 0 ? '+' : '') + evPercentage.toFixed(2) + '%';
+            document.getElementById('resEV').className = `text-xl font-extrabold tabular-nums mt-0.5 ${evPercentage >= 0 ? 'text-neonGreen' : 'text-neonRed'}`;
 
-            const roiEl = document.getElementById('kpiROI');
-            roiEl.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`;
-            roiEl.className = `text-xl sm:text-2xl font-black ${roi >= 0 ? 'text-cyan-400' : 'text-rose-500'}`;
+            document.getElementById('resFairOdds').innerText = fairOdds > 0 ? fairOdds.toFixed(2) : '0.00';
+            document.getElementById('resImplied').innerText = (impliedProb * 100).toFixed(2) + '%';
+            document.getElementById('resStake').innerText = '$' + stakeAmount.toFixed(2);
+            document.getElementById('resStakePct').innerText = '(' + (adjustedStakePct * 100).toFixed(2) + '%)';
+            document.getElementById('resExpProfit').innerText = (expectedProfit >= 0 ? '+$' : '-$') + Math.abs(expectedProfit).toFixed(2);
 
-            document.getElementById('kpiAvgOdds').textContent = `@${avgOdds.toFixed(2)}`;
-            document.getElementById('kpiAvgStake').textContent = `Stake Prom: $${avgStake.toFixed(1)}`;
-
-            document.getElementById('kpiStreak').textContent = streakText;
-            document.getElementById('kpiTotalBets').textContent = `${currentBets.length} Apuestas`;
-        }
-
-        // RENDER TABLE
-        function renderTable(filteredBets) {
-            const tbody = document.getElementById('betsTableBody');
-            const emptyState = document.getElementById('emptyState');
-            tbody.innerHTML = '';
-
-            if (filteredBets.length === 0) {
-                emptyState.classList.remove('hidden');
-                return;
+            // Badge Update
+            const valueBadge = document.getElementById('valueBadge');
+            if (evPercentage > 0) {
+                valueBadge.innerText = '+EV VALUE DETECTED';
+                valueBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/10 text-neonGreen border border-neonGreen/30 uppercase tracking-wider glow-green';
             } else {
-                emptyState.classList.add('hidden');
+                valueBadge.innerText = '-EV NO VALUE';
+                valueBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-500/10 text-neonRed border border-neonRed/30 uppercase tracking-wider glow-red';
             }
 
-            // Sort chronology descending
-            const sortedBets = [...filteredBets].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            sortedBets.forEach(bet => {
-                const profit = calculateBetProfit(bet);
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-800/40 transition border-b border-slate-800/40';
-
-                // Status Badge Styling
-                let statusBadge = '';
-                switch (bet.status) {
-                    case 'WON':
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GANADA</span>`;
-                        break;
-                    case 'LOST':
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">PERDIDA</span>`;
-                        break;
-                    case 'VOID':
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">ANULADA</span>`;
-                        break;
-                    case 'HALF_WIN':
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">1/2 GANADA</span>`;
-                        break;
-                    case 'HALF_LOSS':
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/20">1/2 PERDIDA</span>`;
-                        break;
-                    case 'PENDING':
-                    default:
-                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">PENDIENTE</span>`;
-                        break;
-                }
-
-                // Profit Formatting
-                let profitDisplay = '-';
-                let profitClass = 'text-slate-400';
-                if (bet.status !== 'PENDING') {
-                    profitDisplay = `${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}`;
-                    profitClass = profit > 0 ? 'text-emerald-400 font-bold' : (profit < 0 ? 'text-rose-400 font-bold' : 'text-slate-400');
-                }
-
-                tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap text-slate-400">${bet.date}</td>
-                    <td class="px-4 py-3 font-semibold text-white">${escapeHtml(bet.event)}</td>
-                    <td class="px-4 py-3 text-cyan-300">${escapeHtml(bet.pick)}</td>
-                    <td class="px-4 py-3 text-slate-400">${escapeHtml(bet.sport)}</td>
-                    <td class="px-4 py-3 text-center font-bold text-amber-400">@${parseFloat(bet.odds).toFixed(2)}</td>
-                    <td class="px-4 py-3 text-center text-slate-300">$${parseFloat(bet.stake).toFixed(2)}</td>
-                    <td class="px-4 py-3 text-center text-slate-400">${escapeHtml(bet.bookmaker || '-')}</td>
-                    <td class="px-4 py-3 text-center">${statusBadge}</td>
-                    <td class="px-4 py-3 text-right whitespace-nowrap ${profitClass}">${profitDisplay}</td>
-                    <td class="px-4 py-3 text-center whitespace-nowrap">
-                        <div class="flex items-center justify-center gap-1">
-                            <button onclick="quickToggleStatus('${bet.id}')" title="Cambiar Estado Rápido" class="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-cyan-400 transition">
-                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick="editBet('${bet.id}')" title="Editar" class="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick="deleteBet('${bet.id}')" title="Eliminar" class="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-rose-400 transition">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            lucide.createIcons();
+            // Save state for Logging
+            currentCalculatedBet = {
+                odds: odds,
+                probPct: probPct,
+                evPct: evPercentage,
+                stake: stakeAmount,
+                stakePct: adjustedStakePct * 100,
+                expProfit: expectedProfit,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
         }
 
-        // INITIALIZE CHART.JS INSTANCES
-        function initCharts() {
-            // Bankroll Line Chart
-            const ctxBank = document.getElementById('bankrollChart').getContext('2d');
-            bankrollChartInstance = new Chart(ctxBank, {
+        // OPPORTUNITIES FEED RENDERER
+        function renderOpportunitiesFeed() {
+            const container = document.getElementById('opportunitiesContainer');
+            container.innerHTML = '';
+
+            opportunitiesFeed.forEach(item => {
+                const implied = (1 / item.odds) * 100;
+                const ev = ((item.prob / 100 * (item.odds - 1)) - (1 - item.prob / 100)) * 100;
+
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-3.5 rounded-xl flex items-center justify-between border border-white/5 hover:border-neonBlue/30 transition-all';
+                card.innerHTML = `
+                    <div class="space-y-1 pr-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-gray-300 uppercase">${item.league}</span>
+                            <span class="text-[10px] font-extrabold text-neonGreen">+${ev.toFixed(1)}% EV</span>
+                        </div>
+                        <p class="text-xs font-bold text-white leading-tight">${item.match}</p>
+                        <p class="text-[11px] text-neonBlue font-semibold">${item.market}</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-1.5 min-w-[85px]">
+                        <div class="text-right">
+                            <span class="text-[10px] text-gray-400 block">Book Odds</span>
+                            <span class="text-sm font-extrabold text-white tabular-nums">${item.odds.toFixed(2)}</span>
+                        </div>
+                        <button onclick="loadOpportunityIntoCalc(${item.odds}, ${item.prob})" class="touch-target px-3 py-1.5 rounded-lg bg-neonBlue/20 hover:bg-neonBlue/30 text-neonBlue text-[11px] font-bold border border-neonBlue/40 flex items-center gap-1 active:scale-95 transition-transform">
+                            <i class="fa-solid fa-bolt"></i> Load
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function loadOpportunityIntoCalc(odds, prob) {
+            document.getElementById('inputOdds').value = odds;
+            document.getElementById('inputProb').value = prob;
+            switchTab('calculator');
+            calculateEV();
+        }
+
+        // MONTE CARLO SIMULATION LOGIC
+        function initMonteCarloChart() {
+            const ctx = document.getElementById('monteCarloChart').getContext('2d');
+            monteCarloChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Bankroll ($)',
-                        data: [],
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 4,
-                        pointHoverRadius: 6,
-                        borderWidth: 2
-                    }]
+                    labels: Array.from({length: 101}, (_, i) => i),
+                    datasets: []
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) { return `Bank: $${context.parsed.y.toFixed(2)}`; }
-                            }
-                        }
+                        tooltip: { mode: 'index', intersect: false }
                     },
                     scales: {
                         x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#64748b', font: { size: 10 } }
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#6B7280', font: { size: 9 } }
                         },
                         y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#64748b', font: { size: 10 } }
-                        }
-                    }
-                }
-            });
-
-            // Sport Distribution Chart
-            const ctxDist = document.getElementById('distributionChart').getContext('2d');
-            distributionChartInstance = new Chart(ctxDist, {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [
-                            '#06b6d4', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'
-                        ],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { color: '#94a3b8', font: { size: 11 }, padding: 12 }
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#6B7280', font: { size: 9 } }
                         }
                     },
-                    cutout: '70%'
-                }
-            });
-        }
-
-        // UPDATE CHARTS DATA
-        function updateCharts(filteredBets) {
-            // 1. Bankroll Progression
-            const sortedBets = [...filteredBets]
-                .filter(b => b.status !== 'PENDING')
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            let currentVal = initialBankroll;
-            const labels = ['Inicio'];
-            const bankData = [initialBankroll];
-
-            sortedBets.forEach(bet => {
-                currentVal += calculateBetProfit(bet);
-                labels.push(bet.date);
-                bankData.push(currentVal);
-            });
-
-            bankrollChartInstance.data.labels = labels;
-            bankrollChartInstance.data.datasets[0].data = bankData;
-            
-            // Adjust line color depending on overall performance
-            const isProfit = currentVal >= initialBankroll;
-            bankrollChartInstance.data.datasets[0].borderColor = isProfit ? '#10b981' : '#ef4444';
-            bankrollChartInstance.data.datasets[0].backgroundColor = isProfit ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)';
-            
-            bankrollChartInstance.update();
-
-            // 2. Sport Breakdown
-            const sportMap = {};
-            filteredBets.forEach(bet => {
-                const sportName = bet.sport ? bet.sport.split('/')[0].trim() : 'Otros';
-                sportMap[sportName] = (sportMap[sportName] || 0) + 1;
-            });
-
-            distributionChartInstance.data.labels = Object.keys(sportMap);
-            distributionChartInstance.data.datasets[0].data = Object.values(sportMap);
-            distributionChartInstance.update();
-        }
-
-        // ACTIONS & FILTERS
-        function setStatusFilter(status) {
-            activeStatusFilter = status;
-            ['ALL', 'WON', 'LOST', 'PENDING'].forEach(s => {
-                const btn = document.getElementById(`filterBtn${s}`);
-                if (s === status) {
-                    btn.className = 'px-3 py-1 rounded-md font-semibold text-cyan-400 bg-slate-800';
-                } else {
-                    btn.className = 'px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white';
-                }
-            });
-            renderApp();
-        }
-
-        function applyFilters() {
-            renderApp();
-        }
-
-        // QUICK TOGGLE STATUS
-        function quickToggleStatus(id) {
-            const index = bets.findIndex(b => b.id === id);
-            if (index !== -1) {
-                const statusOrder = ['PENDING', 'WON', 'LOST', 'VOID', 'HALF_WIN', 'HALF_LOSS'];
-                const currentIdx = statusOrder.indexOf(bets[index].status);
-                const nextIdx = (currentIdx + 1) % statusOrder.length;
-                bets[index].status = statusOrder[nextIdx];
-                saveStorageData();
-                renderApp();
-            }
-        }
-
-        // MODAL MANAGEMENT
-        function openBetModal(editId = null) {
-            const modal = document.getElementById('betModal');
-            const form = document.getElementById('betForm');
-            form.reset();
-
-            if (editId) {
-                const bet = bets.find(b => b.id === editId);
-                if (bet) {
-                    document.getElementById('modalTitle').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-cyan-400"></i> Editar Apuesta`;
-                    document.getElementById('betId').value = bet.id;
-                    document.getElementById('formDate').value = bet.date;
-                    document.getElementById('formSport').value = bet.sport;
-                    document.getElementById('formEvent').value = bet.event;
-                    document.getElementById('formPick').value = bet.pick;
-                    document.getElementById('formMarket').value = bet.market || '';
-                    document.getElementById('formOdds').value = bet.odds;
-                    document.getElementById('formStake').value = bet.stake;
-                    document.getElementById('formBookmaker').value = bet.bookmaker || '';
-                    document.getElementById('formStatus').value = bet.status;
-                }
-            } else {
-                document.getElementById('modalTitle').innerHTML = `<i data-lucide="plus-circle" class="w-5 h-5 text-emerald-400"></i> Registrar Apuesta`;
-                document.getElementById('betId').value = '';
-                document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
-            }
-
-            modal.classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function closeBetModal() {
-            document.getElementById('betModal').classList.add('hidden');
-        }
-
-        function saveBet(e) {
-            e.preventDefault();
-            const id = document.getElementById('betId').value;
-
-            const betData = {
-                id: id || Date.now().toString(),
-                date: document.getElementById('formDate').value,
-                sport: document.getElementById('formSport').value,
-                event: document.getElementById('formEvent').value,
-                pick: document.getElementById('formPick').value,
-                market: document.getElementById('formMarket').value,
-                odds: parseFloat(document.getElementById('formOdds').value),
-                stake: parseFloat(document.getElementById('formStake').value),
-                bookmaker: document.getElementById('formBookmaker').value,
-                status: document.getElementById('formStatus').value
-            };
-
-            if (id) {
-                const index = bets.findIndex(b => b.id === id);
-                if (index !== -1) bets[index] = betData;
-            } else {
-                bets.push(betData);
-            }
-
-            saveStorageData();
-            closeBetModal();
-            renderApp();
-        }
-
-        function editBet(id) {
-            openBetModal(id);
-        }
-
-        function deleteBet(id) {
-            if (confirm('¿Estás seguro de que deseas eliminar esta apuesta?')) {
-                bets = bets.filter(b => b.id !== id);
-                saveStorageData();
-                renderApp();
-            }
-        }
-
-        // BANKROLL CONFIG MODAL
-        function openBankModal() {
-            document.getElementById('formInitialBank').value = initialBankroll;
-            document.getElementById('bankModal').classList.remove('hidden');
-        }
-
-        function closeBankModal() {
-            document.getElementById('bankModal').classList.add('hidden');
-        }
-
-        function saveInitialBankroll(e) {
-            e.preventDefault();
-            const val = parseFloat(document.getElementById('formInitialBank').value);
-            if (!isNaN(val) && val > 0) {
-                initialBankroll = val;
-                saveStorageData();
-                closeBankModal();
-                renderApp();
-            }
-        }
-
-        // EXPORT / IMPORT DATA JSON
-        function exportData() {
-            const dataToExport = {
-                initialBankroll: initialBankroll,
-                bets: bets
-            };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `betanalytix_backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        function importData(event) {
-            const fileReader = new FileReader();
-            fileReader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (imported.bets && Array.isArray(imported.bets)) {
-                        bets = imported.bets;
-                        if (imported.initialBankroll) initialBankroll = parseFloat(imported.initialBankroll);
-                        saveStorageData();
-                        renderApp();
-                        alert('¡Datos importados exitosamente!');
-                    } else {
-                        alert('Formato JSON de archivo no válido.');
+                    elements: {
+                        line: { borderWidth: 1.5, tension: 0.2 },
+                        point: { radius: 0 }
                     }
-                } catch (err) {
-                    alert('Error al procesar el archivo JSON.');
                 }
-            };
-            fileReader.readAsText(event.target.files[0]);
+            });
         }
 
-        // UTILS
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        function runMonteCarlo() {
+            if (!monteCarloChartInstance) return;
+
+            const startingBankroll = parseFloat(document.getElementById('inputBankroll').value) || 1000;
+            const odds = parseFloat(document.getElementById('inputOdds').value) || 2.0;
+            const winProb = (parseFloat(document.getElementById('inputProb').value) || 50) / 100;
+            const kellyFrac = parseFloat(document.getElementById('inputKellyFraction').value) || 0.25;
+
+            // Kelly Stake Fraction
+            const b = odds - 1;
+            let fullKelly = b > 0 ? ((winProb * (b + 1) - 1) / b) : 0;
+            if (fullKelly < 0) fullKelly = 0;
+            const stakeFraction = fullKelly * kellyFrac;
+
+            document.getElementById('simWinRate').innerText = (winProb * 100).toFixed(1) + '%';
+            document.getElementById('simKellyFrac').innerText = (stakeFraction * 100).toFixed(2) + '% / bet';
+
+            const numSimulations = 5;
+            const numBets = 100;
+            const datasets = [];
+
+            let totalFinalBankroll = 0;
+
+            for (let sim = 0; sim < numSimulations; sim++) {
+                let currentBank = startingBankroll;
+                const path = [currentBank];
+
+                for (let bet = 1; bet <= numBets; bet++) {
+                    const stake = currentBank * stakeFraction;
+                    const won = Math.random() < winProb;
+                    
+                    if (won) {
+                        currentBank += stake * (odds - 1);
+                    } else {
+                        currentBank -= stake;
+                    }
+                    path.push(currentBank);
+                }
+
+                totalFinalBankroll += currentBank;
+
+                const isMain = sim === 0;
+                datasets.push({
+                    data: path,
+                    borderColor: isMain ? '#00FF87' : 'rgba(0, 240, 255, 0.3)',
+                    borderWidth: isMain ? 2 : 1
+                });
+            }
+
+            const avgFinal = totalFinalBankroll / numSimulations;
+            const growthPct = ((avgFinal - startingBankroll) / startingBankroll) * 100;
+            document.getElementById('simExpGrowth').innerText = (growthPct >= 0 ? '+' : '') + growthPct.toFixed(1) + '%';
+
+            monteCarloChartInstance.data.datasets = datasets;
+            monteCarloChartInstance.update();
+        }
+
+        // BET LOGGING & LOCALSTORAGE MANAGEMENT
+        function saveCurrentBet() {
+            if (!currentCalculatedBet.odds) return;
+
+            betHistory.unshift({...currentCalculatedBet, id: Date.now()});
+            localStorage.setItem('ev_hub_history', JSON.stringify(betHistory));
+            
+            renderBetLog();
+            updateGlobalHeaderMetrics();
+
+            // Provide visual feedback
+            switchTab('tracker');
+        }
+
+        function renderBetLog() {
+            const container = document.getElementById('betLogContainer');
+            container.innerHTML = '';
+
+            if (betHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500 text-xs">
+                        <i class="fa-solid fa-box-open text-2xl mb-2 block"></i>
+                        No bets logged yet in this session.
+                    </div>
+                `;
+                return;
+            }
+
+            betHistory.forEach(bet => {
+                const item = document.createElement('div');
+                item.className = 'glass-panel p-3 rounded-xl flex items-center justify-between border border-white/5 text-xs';
+                item.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold ${bet.evPct >= 0 ? 'text-neonGreen' : 'text-neonRed'} tabular-nums">
+                                ${bet.evPct >= 0 ? '+' : ''}${bet.evPct.toFixed(2)}% EV
+                            </span>
+                            <span class="text-[10px] text-gray-500">${bet.timestamp}</span>
+                        </div>
+                        <p class="text-[11px] text-gray-300 mt-0.5">
+                            Odds: <span class="text-white font-bold tabular-nums">${bet.odds.toFixed(2)}</span> | 
+                            Win Prob: <span class="text-white font-bold tabular-nums">${bet.probPct.toFixed(1)}%</span>
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] text-gray-400 block">Stake</span>
+                        <span class="font-bold text-neonBlue tabular-nums">$${bet.stake.toFixed(2)}</span>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function clearLog() {
+            if (confirm("Are you sure you want to clear your logged bet history?")) {
+                betHistory = [];
+                localStorage.removeItem('ev_hub_history');
+                renderBetLog();
+                updateGlobalHeaderMetrics();
+            }
+        }
+
+        function updateGlobalHeaderMetrics() {
+            const betCount = betHistory.length;
+            document.getElementById('headerBetCount').innerText = betCount;
+
+            if (betCount > 0) {
+                const sumEV = betHistory.reduce((acc, curr) => acc + curr.evPct, 0);
+                const avgEV = sumEV / betCount;
+                document.getElementById('headerAvgEV').innerText = (avgEV >= 0 ? '+' : '') + avgEV.toFixed(1) + '%';
+                document.getElementById('headerAvgEV').className = `text-xs font-bold tabular-nums ${avgEV >= 0 ? 'text-neonGreen' : 'text-neonRed'}`;
+            } else {
+                document.getElementById('headerAvgEV').innerText = '+0.0%';
+                document.getElementById('headerAvgEV').className = 'text-xs font-bold tabular-nums text-neonGreen';
+            }
+
+            const bankroll = parseFloat(document.getElementById('inputBankroll').value) || 1000;
+            document.getElementById('headerBankroll').innerText = '$' + bankroll.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         }
     </script>
 </body>
