@@ -1,260 +1,983 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bet Tracker Pro - Analytics Engine</title>
-  <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: rgba(30, 41, 59, 0.7);
-      --border-color: rgba(255, 255, 255, 0.1);
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-green: #10b981;
-      --accent-red: #ef4444;
-      --accent-blue: #3b82f6;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 15px;
-    }
-
-    .kpi-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .kpi-title {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .kpi-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-    }
-
-    .positive { color: var(--accent-green); }
-    .negative { color: var(--accent-red); }
-    .neutral { color: var(--accent-blue); }
-
-    .table-container {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.9rem;
-    }
-
-    th, td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    th {
-      background-color: rgba(15, 23, 42, 0.5);
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    tr:hover {
-      background-color: rgba(255, 255, 255, 0.02);
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-
-    .badge-win { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); }
-    .badge-loss { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
-    .badge-pending { background: rgba(59, 130, 246, 0.2); color: var(--accent-blue); }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetAnalytix - Sports Betting Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#090d16',
+                            card: '#1e293b',
+                            accent: '#06b6d4',
+                            win: '#10b981',
+                            loss: '#ef4444',
+                            pending: '#f59e0b',
+                            void: '#64748b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-white">
 
-  <h1>Bet Tracker Pro Dashboard</h1>
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-30 glass-panel border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Logo & Title -->
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-gradient-to-tr from-cyan-500 to-emerald-500 rounded-xl text-slate-950 font-bold shadow-lg shadow-cyan-500/20">
+                    <i data-lucide="trending-up" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">BET-ANALYTIX</h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Track & Analytics Dashboard</p>
+                </div>
+            </div>
 
-  <section class="kpi-grid">
-    <div class="kpi-card">
-      <span class="kpi-title">Banca Actual</span>
-      <span class="kpi-value neutral" id="kpi-bankroll">$0.00</span>
+            <!-- Controls & Actions -->
+            <div class="flex items-center gap-3">
+                <!-- Config Capital / Bankroll Initial -->
+                <button onclick="openBankModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    <i data-lucide="wallet" class="w-4 h-4 text-cyan-400"></i>
+                    <span class="hidden md:inline">Banca Inicial:</span>
+                    <span id="headerBankInit" class="text-white font-bold">$0</span>
+                </button>
+
+                <!-- Period Selector -->
+                <select id="filterPeriod" onchange="applyFilters()" class="bg-slate-800 border border-slate-700 text-xs text-slate-200 font-medium rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    <option value="all">Global (Todo)</option>
+                    <option value="month">Este Mes</option>
+                    <option value="30days">Últimos 30 días</option>
+                </select>
+
+                <!-- Export/Import JSON -->
+                <button onclick="exportData()" title="Exportar Datos" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                </button>
+                <button onclick="document.getElementById('importFile').click()" title="Importar Datos" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                </button>
+                <input type="file" id="importFile" accept=".json" class="hidden" onchange="importData(event)">
+
+                <!-- Add Bet Button -->
+                <button onclick="openBetModal()" class="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold px-4 py-1.5 rounded-lg shadow-lg shadow-emerald-500/20 text-xs sm:text-sm transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Nueva Apuesta</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- KPI METRICS GRID -->
+        <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
+            <!-- Banca Actual -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between relative overflow-hidden">
+                <div class="flex justify-between items-start text-slate-400">
+                    <span class="text-xs font-semibold">Banca Actual</span>
+                    <i data-lucide="coins" class="w-4 h-4 text-cyan-400"></i>
+                </div>
+                <div class="mt-2">
+                    <div id="kpiCurrentBank" class="text-xl sm:text-2xl font-black text-white">$0.00</div>
+                    <div id="kpiBankGrowth" class="text-xs font-medium text-emerald-400 mt-0.5">+0.00%</div>
+                </div>
+            </div>
+
+            <!-- Profit Total -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-start text-slate-400">
+                    <span class="text-xs font-semibold">Profit Total</span>
+                    <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+                <div class="mt-2">
+                    <div id="kpiProfit" class="text-xl sm:text-2xl font-black text-white">$0.00</div>
+                    <div id="kpiProfitUnits" class="text-xs font-medium text-slate-400 mt-0.5">0.00 U</div>
+                </div>
+            </div>
+
+            <!-- Yield -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-start text-slate-400">
+                    <span class="text-xs font-semibold">Yield</span>
+                    <i data-lucide="percent" class="w-4 h-4 text-indigo-400"></i>
+                </div>
+                <div class="mt-2">
+                    <div id="kpiYield" class="text-xl sm:text-2xl font-black text-white">0.00%</div>
+                    <div id="kpiTotalStaked" class="text-xs font-medium text-slate-400 mt-0.5">Staked: $0</div>
+                </div>
+            </div>
+
+            <!-- Win Rate -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-start text-slate-400">
+                    <span class="text-xs font-semibold">Win Rate</span>
+                    <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+                <div class="mt-2">
+                    <div id="kpiWinRate" class="text-xl sm:text-2xl font-black text-white">0.0%</div>
+                    <div id="kpiWinLossRatio" class="text-xs font-medium text-slate-400 mt-0.5">0G - 0P - 0A</div>
+                </div>
+            </div>
+
+            <!-- ROI -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-start text-slate-400">
+                    <span class="text-xs font-semibold">ROI Total</span>
+                    <i data-lucide="line-chart" class="w-4 h-4 text-cyan-400"></i>
+                </div>
+                <div class="mt-2">
+                    <div id="kpiROI" class="text-xl sm:text-2xl font-black text-white">0.00%</div>
+                    <div class="text-xs font-medium text-slate-500 mt-0.5">Retorno Inv.</div>
+                </div>
+            </div>
+
+            <!-- Promedios -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-start text-slate-400">
+                    <span class="text-xs font-semibold">Cuotas / Stake</span>
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-amber-400"></i>
+                </div>
+                <div class="mt-2">
+                    <div id="kpiAvgOdds" class="text-lg font-bold text-white">@1.00</div>
+                    <div id="kpiAvgStake" class="text-xs font-medium text-slate-400 mt-0.5">Stake Prom: 0.0U</div>
+                </div>
+            </div>
+
+            <!-- Racha Actual -->
+            <div class="glass-panel p-4 rounded-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-start text-slate-400">
+                    <span class="text-xs font-semibold">Racha Actual</span>
+                    <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                </div>
+                <div class="mt-2">
+                    <div id="kpiStreak" class="text-xl sm:text-2xl font-black text-white">-</div>
+                    <div id="kpiTotalBets" class="text-xs font-medium text-slate-400 mt-0.5">0 Apuestas</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHARTS SECTION -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Bankroll Evolution Chart -->
+            <div class="lg:col-span-2 glass-panel p-5 rounded-2xl flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="activity" class="w-5 h-5 text-cyan-400"></i>
+                        <h2 class="text-sm font-bold text-slate-200">Evolución del Capital (Bankroll)</h2>
+                    </div>
+                </div>
+                <div class="relative flex-1 min-h-[280px]">
+                    <canvas id="bankrollChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Distribution Chart -->
+            <div class="glass-panel p-5 rounded-2xl flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-400"></i>
+                        <h2 class="text-sm font-bold text-slate-200">Rendimiento por Deporte</h2>
+                    </div>
+                </div>
+                <div class="relative flex-1 min-h-[280px] flex items-center justify-center">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- BETS HISTORY TABLE SECTION -->
+        <section class="glass-panel rounded-2xl overflow-hidden">
+            <!-- Table Header Filters -->
+            <div class="p-4 border-b border-slate-800 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <i data-lucide="list" class="w-5 h-5 text-slate-400"></i>
+                    <h2 class="text-base font-bold text-slate-200">Historial de Apuestas</h2>
+                </div>
+
+                <!-- Search and Quick Status Filters -->
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <!-- Search Input -->
+                    <div class="relative flex-1 md:w-64">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+                        <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Buscar evento, pick, liga..." class="w-full bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg pl-9 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                    </div>
+
+                    <!-- Status Filter Buttons -->
+                    <div class="flex bg-slate-900 p-1 rounded-lg border border-slate-800 text-xs">
+                        <button onclick="setStatusFilter('ALL')" id="filterBtnALL" class="px-3 py-1 rounded-md font-semibold text-cyan-400 bg-slate-800">Todas</button>
+                        <button onclick="setStatusFilter('WON')" id="filterBtnWON" class="px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white">Ganadas</button>
+                        <button onclick="setStatusFilter('LOST')" id="filterBtnLOST" class="px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white">Perdidas</button>
+                        <button onclick="setStatusFilter('PENDING')" id="filterBtnPENDING" class="px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white">Pendientes</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="px-4 py-3">Fecha</th>
+                            <th class="px-4 py-3">Evento / Partido</th>
+                            <th class="px-4 py-3">Pick / Selección</th>
+                            <th class="px-4 py-3">Deporte / Liga</th>
+                            <th class="px-4 py-3 text-center">Cuota</th>
+                            <th class="px-4 py-3 text-center">Stake</th>
+                            <th class="px-4 py-3 text-center">Bookmaker</th>
+                            <th class="px-4 py-3 text-center">Estado</th>
+                            <th class="px-4 py-3 text-right">Profit</th>
+                            <th class="px-4 py-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="betsTableBody" class="divide-y divide-slate-800/60 font-medium">
+                        <!-- Rows rendered dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden p-12 text-center text-slate-500">
+                <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-slate-600"></i>
+                <p class="text-sm">No se encontraron apuestas registradas con los filtros aplicados.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: ADD / EDIT BET -->
+    <div id="betModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-xl rounded-2xl p-6 shadow-2xl relative border border-slate-700/60">
+            <button onclick="closeBetModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 id="modalTitle" class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-400"></i> Registrar Apuesta
+            </h3>
+
+            <form id="betForm" onsubmit="saveBet(event)" class="space-y-4">
+                <input type="hidden" id="betId">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Fecha -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Fecha</label>
+                        <input type="date" id="formDate" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+
+                    <!-- Deporte / Liga -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Deporte / Liga</label>
+                        <input type="text" id="formSport" placeholder="Ej. Fútbol / Premier League" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Evento -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Evento / Partido</label>
+                    <input type="text" id="formEvent" placeholder="Ej. Arsenal vs Chelsea" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Selección / Pick -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Selección / Pick</label>
+                        <input type="text" id="formPick" placeholder="Ej. Arsenal Gana o Over 2.5" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+
+                    <!-- Tipo de Mercado -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Mercado</label>
+                        <input type="text" id="formMarket" placeholder="Ej. 1X2, Over/Under, BTTS" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <!-- Cuota -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Cuota Decimal</label>
+                        <input type="number" step="0.001" min="1.01" id="formOdds" placeholder="2.10" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+
+                    <!-- Stake (Monto) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Stake / Arriesgado ($)</label>
+                        <input type="number" step="0.01" min="0.1" id="formStake" placeholder="100" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+
+                    <!-- Bookmaker -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">Casa de Apuestas</label>
+                        <input type="text" id="formBookmaker" placeholder="Bet365, Pinnacle..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Resultado -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Resultado / Estado</label>
+                    <select id="formStatus" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                        <option value="PENDING">Pendiente</option>
+                        <option value="WON">Ganada (Win)</option>
+                        <option value="LOST">Perdida (Loss)</option>
+                        <option value="VOID">Anulada (Void / Push)</option>
+                        <option value="HALF_WIN">Medio Ganada (Half Win)</option>
+                        <option value="HALF_LOSS">Medio Perdida (Half Loss)</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-2 flex justify-end gap-3">
+                    <button type="button" onclick="closeBetModal()" class="px-4 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 hover:from-emerald-400 hover:to-teal-500 transition shadow-lg shadow-emerald-500/20">Guardar Apuesta</button>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="kpi-card">
-      <span class="kpi-title">Beneficio Neto</span>
-      <span class="kpi-value" id="kpi-profit">$0.00</span>
+
+    <!-- MODAL: INITIAL BANKROLL CONFIG -->
+    <div id="bankModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl relative border border-slate-700/60">
+            <button onclick="closeBankModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                <i data-lucide="wallet" class="w-5 h-5 text-cyan-400"></i> Ajustar Banca Inicial
+            </h3>
+
+            <p class="text-xs text-slate-400 mb-4">Ingresa tu capital inicial para calcular el rendimiento del bankroll.</p>
+
+            <form onsubmit="saveInitialBankroll(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Monto de Banca Inicial ($)</label>
+                    <input type="number" id="formInitialBank" step="1" min="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeBankModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white">Cancelar</button>
+                    <button type="submit" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition">Actualizar</button>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="kpi-card">
-      <span class="kpi-title">Yield</span>
-      <span class="kpi-value" id="kpi-yield">0.00%</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-title">Profit Factor</span>
-      <span class="kpi-value neutral" id="kpi-pf">0.00</span>
-    </div>
-    <div class="kpi-card">
-      <span class="kpi-title">Win Rate</span>
-      <span class="kpi-value neutral" id="kpi-winrate">0.00%</span>
-    </div>
-  </section>
 
-  <section class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Evento / Selección</th>
-          <th>Mercado</th>
-          <th>Cuota</th>
-          <th>Stake</th>
-          <th>Estado</th>
-          <th>P&L</th>
-        </tr>
-      </thead>
-      <tbody id="bets-body">
-      </tbody>
-    </table>
-  </section>
+    <!-- APPLICATION LOGIC JS -->
+    <script>
+        // MOCK INITIAL DATA IF LOCAL STORAGE IS EMPTY
+        const INITIAL_MOCK_DATA = [
+            { id: "1", date: "2026-09-01", sport: "Fútbol / La Liga", event: "Real Madrid vs Real Betis", pick: "Real Madrid -1 Asian Handicap", market: "Handicap", odds: 1.85, stake: 100, bookmaker: "Bet365", status: "WON" },
+            { id: "2", date: "2026-09-03", sport: "Fútbol / Premier League", event: "Arsenal vs Brighton", pick: "Over 2.5 Goles", market: "Over/Under", odds: 1.72, stake: 100, bookmaker: "Pinnacle", status: "WON" },
+            { id: "3", date: "2026-09-05", sport: "Tenis / US Open", event: "Alcaraz vs Sinner", pick: "Sinner Gana", market: "1X2", odds: 2.10, stake: 80, bookmaker: "Betway", status: "LOST" },
+            { id: "4", date: "2026-09-07", sport: "Fútbol / Serie A", event: "Inter vs Milan", pick: "Ambos Anotan (BTTS)", market: "BTTS", odds: 1.90, stake: 120, bookmaker: "1xBet", status: "WON" },
+            { id: "5", date: "2026-09-08", sport: "Baloncesto / NBA", event: "Lakers vs Celtics", pick: "Lakers +4.5", market: "Handicap", odds: 1.95, stake: 100, bookmaker: "Bet365", status: "HALF_WIN" },
+            { id: "6", date: "2026-09-10", sport: "Fútbol / Champions League", event: "Bayern vs PSG", pick: "Bayern Gana", market: "1X2", odds: 2.05, stake: 100, bookmaker: "Pinnacle", status: "WON" },
+            { id: "7", date: "2026-09-12", sport: "Fútbol / Liga MX", event: "Club América vs Chivas", pick: "Under 2.5 Goles", market: "Over/Under", odds: 1.80, stake: 90, bookmaker: "Caliente", status: "VOID" },
+            { id: "8", date: "2026-09-13", sport: "Béisbol / MLB", event: "Yankees vs Red Sox", pick: "Yankees Gana", market: "Moneyline", odds: 1.75, stake: 110, bookmaker: "Bet365", status: "PENDING" }
+        ];
 
-  <script>
-    const INITIAL_BANKROLL = 1000.00;
+        // GLOBAL APP STATE
+        let bets = [];
+        let initialBankroll = 1000;
+        let activeStatusFilter = 'ALL';
+        let bankrollChartInstance = null;
+        let distributionChartInstance = null;
 
-    // Estructura de datos normalizada
-    const betsData = [
-      { id: 1, date: '2026-09-10', event: 'Real Madrid vs Barcelona', market: 'Over 2.5', odds: 1.85, stake: 50.00, status: 'WIN' },
-      { id: 2, date: '2026-09-11', event: 'Arsenal vs Chelsea', market: '1X2 - Local', odds: 2.10, stake: 40.00, status: 'LOSS' },
-      { id: 3, date: '2026-09-12', event: 'Bayern vs Dortmund', market: 'BTTS - Sí', odds: 1.65, stake: 60.00, status: 'WIN' },
-      { id: 4, date: '2026-09-13', event: 'PSG vs Marseille', market: 'Hándicap -1', odds: 1.95, stake: 30.00, status: 'PENDING' }
-    ];
+        // LOCAL STORAGE KEYS
+        const STORAGE_KEY_BETS = 'betanalytix_bets_v1';
+        const STORAGE_KEY_BANK = 'betanalytix_bank_v1';
 
-    function calculateAnalytics(bets, initialBankroll) {
-      let totalStaked = 0;
-      let totalReturn = 0;
-      let grossProfit = 0;
-      let grossLoss = 0;
-      let wins = 0;
-      let losses = 0;
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStorageData();
+            initCharts();
+            renderApp();
+            lucide.createIcons();
+        });
 
-      bets.forEach(bet => {
-        if (bet.status === 'WIN') {
-          const profit = (bet.stake * bet.odds) - bet.stake;
-          totalStaked += bet.stake;
-          totalReturn += (bet.stake * bet.odds);
-          grossProfit += profit;
-          wins++;
-        } else if (bet.status === 'LOSS') {
-          totalStaked += bet.stake;
-          grossLoss += bet.stake;
-          losses++;
+        function loadStorageData() {
+            const storedBets = localStorage.getItem(STORAGE_KEY_BETS);
+            const storedBank = localStorage.getItem(STORAGE_KEY_BANK);
+
+            if (storedBets) {
+                bets = JSON.parse(storedBets);
+            } else {
+                bets = [...INITIAL_MOCK_DATA];
+                localStorage.setItem(STORAGE_KEY_BETS, JSON.stringify(bets));
+            }
+
+            if (storedBank) {
+                initialBankroll = parseFloat(storedBank);
+            } else {
+                initialBankroll = 1000;
+                localStorage.setItem(STORAGE_KEY_BANK, initialBankroll.toString());
+            }
         }
-      });
 
-      const netProfit = grossProfit - grossLoss;
-      const yieldPct = totalStaked > 0 ? (netProfit / totalStaked) * 100 : 0;
-      const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : (grossProfit > 0 ? grossProfit : 0);
-      const totalResolved = wins + losses;
-      const winRate = totalResolved > 0 ? (wins / totalResolved) * 100 : 0;
-      const currentBankroll = initialBankroll + netProfit;
-
-      return {
-        currentBankroll,
-        netProfit,
-        yieldPct,
-        profitFactor,
-        winRate
-      };
-    }
-
-    function renderDashboard() {
-      const stats = calculateAnalytics(betsData, INITIAL_BANKROLL);
-
-      document.getElementById('kpi-bankroll').textContent = `$${stats.currentBankroll.toFixed(2)}`;
-      
-      const profitElem = document.getElementById('kpi-profit');
-      profitElem.textContent = `${stats.netProfit >= 0 ? '+' : ''}$${stats.netProfit.toFixed(2)}`;
-      profitElem.className = `kpi-value ${stats.netProfit >= 0 ? 'positive' : 'negative'}`;
-
-      const yieldElem = document.getElementById('kpi-yield');
-      yieldElem.textContent = `${stats.yieldPct >= 0 ? '+' : ''}${stats.yieldPct.toFixed(2)}%`;
-      yieldElem.className = `kpi-value ${stats.yieldPct >= 0 ? 'positive' : 'negative'}`;
-
-      document.getElementById('kpi-pf').textContent = stats.profitFactor.toFixed(2);
-      document.getElementById('kpi-winrate').textContent = `${stats.winRate.toFixed(1)}%`;
-
-      const tbody = document.getElementById('bets-body');
-      tbody.innerHTML = betsData.map(bet => {
-        let pnlText = '-';
-        let pnlClass = '';
-        let badgeClass = 'badge-pending';
-
-        if (bet.status === 'WIN') {
-          const pnl = (bet.stake * bet.odds) - bet.stake;
-          pnlText = `+$${pnl.toFixed(2)}`;
-          pnlClass = 'positive';
-          badgeClass = 'badge-win';
-        } else if (bet.status === 'LOSS') {
-          pnlText = `-$${bet.stake.toFixed(2)}`;
-          pnlClass = 'negative';
-          badgeClass = 'badge-loss';
+        function saveStorageData() {
+            localStorage.setItem(STORAGE_KEY_BETS, JSON.stringify(bets));
+            localStorage.setItem(STORAGE_KEY_BANK, initialBankroll.toString());
         }
 
-        return `
-          <tr>
-            <td>${bet.date}</td>
-            <td><strong>${bet.event}</strong></td>
-            <td>${bet.market}</td>
-            <td>${bet.odds.toFixed(2)}</td>
-            <td>$${bet.stake.toFixed(2)}</td>
-            <td><span class="badge ${badgeClass}">${bet.status}</span></td>
-            <td class="${pnlClass}">${pnlText}</td>
-          </tr>
-        `;
-      }).join('');
-    }
+        // CALCULATE PROFIT FOR A SINGLE BET
+        function calculateBetProfit(bet) {
+            const stake = parseFloat(bet.stake) || 0;
+            const odds = parseFloat(bet.odds) || 0;
 
-    document.addEventListener('DOMContentLoaded', renderDashboard);
-  </script>
+            switch (bet.status) {
+                case 'WON':
+                    return stake * (odds - 1);
+                case 'LOST':
+                    return -stake;
+                case 'HALF_WIN':
+                    return (stake * (odds - 1)) / 2;
+                case 'HALF_LOSS':
+                    return -stake / 2;
+                case 'VOID':
+                case 'PENDING':
+                default:
+                    return 0;
+            }
+        }
+
+        // GET FILTERED BETS BASED ON TIME PERIOD AND QUICK STATUS FILTER
+        function getFilteredBets() {
+            const period = document.getElementById('filterPeriod').value;
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const now = new Date();
+
+            return bets.filter(bet => {
+                const betDate = new Date(bet.date + 'T00:00:00');
+
+                // Filter Period
+                if (period === 'month') {
+                    if (betDate.getMonth() !== now.getMonth() || betDate.getFullYear() !== now.getFullYear()) {
+                        return false;
+                    }
+                } else if (period === '30days') {
+                    const diffTime = Math.abs(now - betDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays > 30) return false;
+                }
+
+                // Filter Status
+                if (activeStatusFilter !== 'ALL' && bet.status !== activeStatusFilter) {
+                    return false;
+                }
+
+                // Search Query
+                if (search) {
+                    const matchText = `${bet.event} ${bet.pick} ${bet.sport} ${bet.market} ${bet.bookmaker}`.toLowerCase();
+                    if (!matchText.includes(search)) return false;
+                }
+
+                return true;
+            });
+        }
+
+        // MAIN RENDER METHOD
+        function renderApp() {
+            const filteredBets = getFilteredBets();
+
+            renderHeaderAndKPIs(filteredBets);
+            renderTable(filteredBets);
+            updateCharts(filteredBets);
+        }
+
+        // KPI CALCULATIONS & RENDERING
+        function renderHeaderAndKPIs(currentBets) {
+            document.getElementById('headerBankInit').textContent = `$${initialBankroll.toLocaleString()}`;
+
+            const settledBets = currentBets.filter(b => b.status !== 'PENDING');
+            let totalProfit = 0;
+            let totalStakedSettled = 0;
+            let wins = 0, losses = 0, voids = 0;
+            let sumOdds = 0;
+            let sumStake = 0;
+
+            currentBets.forEach(bet => {
+                sumOdds += parseFloat(bet.odds);
+                sumStake += parseFloat(bet.stake);
+            });
+
+            settledBets.forEach(bet => {
+                const profit = calculateBetProfit(bet);
+                totalProfit += profit;
+                totalStakedSettled += parseFloat(bet.stake);
+
+                if (bet.status === 'WON' || bet.status === 'HALF_WIN') wins++;
+                else if (bet.status === 'LOST' || bet.status === 'HALF_LOSS') losses++;
+                else if (bet.status === 'VOID') voids++;
+            });
+
+            const currentBankroll = initialBankroll + totalProfit;
+            const bankGrowth = ((currentBankroll - initialBankroll) / initialBankroll) * 100;
+            const yieldPercentage = totalStakedSettled > 0 ? (totalProfit / totalStakedSettled) * 100 : 0;
+            const totalDecided = wins + losses;
+            const winRate = totalDecided > 0 ? (wins / totalDecided) * 100 : 0;
+            const roi = initialBankroll > 0 ? (totalProfit / initialBankroll) * 100 : 0;
+            const avgOdds = currentBets.length > 0 ? sumOdds / currentBets.length : 0;
+            const avgStake = currentBets.length > 0 ? sumStake / currentBets.length : 0;
+
+            // Racha / Streak Calculation
+            let streakText = "-";
+            const sortedSettled = [...settledBets].sort((a, b) => new Date(b.date) - new Date(a.date));
+            if (sortedSettled.length > 0) {
+                const lastStatus = sortedSettled[0].status;
+                let count = 0;
+                for (let b of sortedSettled) {
+                    if (b.status === lastStatus) count++;
+                    else break;
+                }
+                if (lastStatus === 'WON') streakText = `🔥 ${count}W`;
+                else if (lastStatus === 'LOST') streakText = `❄️ ${count}L`;
+                else streakText = `${count} ${lastStatus}`;
+            }
+
+            // Render KPI Values
+            document.getElementById('kpiCurrentBank').textContent = `$${currentBankroll.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            
+            const growthEl = document.getElementById('kpiBankGrowth');
+            growthEl.textContent = `${bankGrowth >= 0 ? '+' : ''}${bankGrowth.toFixed(2)}%`;
+            growthEl.className = `text-xs font-medium mt-0.5 ${bankGrowth >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
+
+            const profitEl = document.getElementById('kpiProfit');
+            profitEl.textContent = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            profitEl.className = `text-xl sm:text-2xl font-black ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
+
+            const avgUnitSize = avgStake || 1;
+            document.getElementById('kpiProfitUnits').textContent = `${(totalProfit / (avgUnitSize || 1)).toFixed(2)} U`;
+
+            const yieldEl = document.getElementById('kpiYield');
+            yieldEl.textContent = `${yieldPercentage >= 0 ? '+' : ''}${yieldPercentage.toFixed(2)}%`;
+            yieldEl.className = `text-xl sm:text-2xl font-black ${yieldPercentage >= 0 ? 'text-emerald-400' : 'text-rose-500'}`;
+            document.getElementById('kpiTotalStaked').textContent = `Staked: $${totalStakedSettled.toLocaleString()}`;
+
+            document.getElementById('kpiWinRate').textContent = `${winRate.toFixed(1)}%`;
+            document.getElementById('kpiWinLossRatio').textContent = `${wins}G - ${losses}P - ${voids}A`;
+
+            const roiEl = document.getElementById('kpiROI');
+            roiEl.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`;
+            roiEl.className = `text-xl sm:text-2xl font-black ${roi >= 0 ? 'text-cyan-400' : 'text-rose-500'}`;
+
+            document.getElementById('kpiAvgOdds').textContent = `@${avgOdds.toFixed(2)}`;
+            document.getElementById('kpiAvgStake').textContent = `Stake Prom: $${avgStake.toFixed(1)}`;
+
+            document.getElementById('kpiStreak').textContent = streakText;
+            document.getElementById('kpiTotalBets').textContent = `${currentBets.length} Apuestas`;
+        }
+
+        // RENDER TABLE
+        function renderTable(filteredBets) {
+            const tbody = document.getElementById('betsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            if (filteredBets.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Sort chronology descending
+            const sortedBets = [...filteredBets].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sortedBets.forEach(bet => {
+                const profit = calculateBetProfit(bet);
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-800/40 transition border-b border-slate-800/40';
+
+                // Status Badge Styling
+                let statusBadge = '';
+                switch (bet.status) {
+                    case 'WON':
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">GANADA</span>`;
+                        break;
+                    case 'LOST':
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">PERDIDA</span>`;
+                        break;
+                    case 'VOID':
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/20">ANULADA</span>`;
+                        break;
+                    case 'HALF_WIN':
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">1/2 GANADA</span>`;
+                        break;
+                    case 'HALF_LOSS':
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/20">1/2 PERDIDA</span>`;
+                        break;
+                    case 'PENDING':
+                    default:
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">PENDIENTE</span>`;
+                        break;
+                }
+
+                // Profit Formatting
+                let profitDisplay = '-';
+                let profitClass = 'text-slate-400';
+                if (bet.status !== 'PENDING') {
+                    profitDisplay = `${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}`;
+                    profitClass = profit > 0 ? 'text-emerald-400 font-bold' : (profit < 0 ? 'text-rose-400 font-bold' : 'text-slate-400');
+                }
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap text-slate-400">${bet.date}</td>
+                    <td class="px-4 py-3 font-semibold text-white">${escapeHtml(bet.event)}</td>
+                    <td class="px-4 py-3 text-cyan-300">${escapeHtml(bet.pick)}</td>
+                    <td class="px-4 py-3 text-slate-400">${escapeHtml(bet.sport)}</td>
+                    <td class="px-4 py-3 text-center font-bold text-amber-400">@${parseFloat(bet.odds).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-center text-slate-300">$${parseFloat(bet.stake).toFixed(2)}</td>
+                    <td class="px-4 py-3 text-center text-slate-400">${escapeHtml(bet.bookmaker || '-')}</td>
+                    <td class="px-4 py-3 text-center">${statusBadge}</td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap ${profitClass}">${profitDisplay}</td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-1">
+                            <button onclick="quickToggleStatus('${bet.id}')" title="Cambiar Estado Rápido" class="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-cyan-400 transition">
+                                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="editBet('${bet.id}')" title="Editar" class="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-white transition">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteBet('${bet.id}')" title="Eliminar" class="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-rose-400 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        // INITIALIZE CHART.JS INSTANCES
+        function initCharts() {
+            // Bankroll Line Chart
+            const ctxBank = document.getElementById('bankrollChart').getContext('2d');
+            bankrollChartInstance = new Chart(ctxBank, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Bankroll ($)',
+                        data: [],
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return `Bank: $${context.parsed.y.toFixed(2)}`; }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // Sport Distribution Chart
+            const ctxDist = document.getElementById('distributionChart').getContext('2d');
+            distributionChartInstance = new Chart(ctxDist, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#06b6d4', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#94a3b8', font: { size: 11 }, padding: 12 }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // UPDATE CHARTS DATA
+        function updateCharts(filteredBets) {
+            // 1. Bankroll Progression
+            const sortedBets = [...filteredBets]
+                .filter(b => b.status !== 'PENDING')
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            let currentVal = initialBankroll;
+            const labels = ['Inicio'];
+            const bankData = [initialBankroll];
+
+            sortedBets.forEach(bet => {
+                currentVal += calculateBetProfit(bet);
+                labels.push(bet.date);
+                bankData.push(currentVal);
+            });
+
+            bankrollChartInstance.data.labels = labels;
+            bankrollChartInstance.data.datasets[0].data = bankData;
+            
+            // Adjust line color depending on overall performance
+            const isProfit = currentVal >= initialBankroll;
+            bankrollChartInstance.data.datasets[0].borderColor = isProfit ? '#10b981' : '#ef4444';
+            bankrollChartInstance.data.datasets[0].backgroundColor = isProfit ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)';
+            
+            bankrollChartInstance.update();
+
+            // 2. Sport Breakdown
+            const sportMap = {};
+            filteredBets.forEach(bet => {
+                const sportName = bet.sport ? bet.sport.split('/')[0].trim() : 'Otros';
+                sportMap[sportName] = (sportMap[sportName] || 0) + 1;
+            });
+
+            distributionChartInstance.data.labels = Object.keys(sportMap);
+            distributionChartInstance.data.datasets[0].data = Object.values(sportMap);
+            distributionChartInstance.update();
+        }
+
+        // ACTIONS & FILTERS
+        function setStatusFilter(status) {
+            activeStatusFilter = status;
+            ['ALL', 'WON', 'LOST', 'PENDING'].forEach(s => {
+                const btn = document.getElementById(`filterBtn${s}`);
+                if (s === status) {
+                    btn.className = 'px-3 py-1 rounded-md font-semibold text-cyan-400 bg-slate-800';
+                } else {
+                    btn.className = 'px-3 py-1 rounded-md font-semibold text-slate-400 hover:text-white';
+                }
+            });
+            renderApp();
+        }
+
+        function applyFilters() {
+            renderApp();
+        }
+
+        // QUICK TOGGLE STATUS
+        function quickToggleStatus(id) {
+            const index = bets.findIndex(b => b.id === id);
+            if (index !== -1) {
+                const statusOrder = ['PENDING', 'WON', 'LOST', 'VOID', 'HALF_WIN', 'HALF_LOSS'];
+                const currentIdx = statusOrder.indexOf(bets[index].status);
+                const nextIdx = (currentIdx + 1) % statusOrder.length;
+                bets[index].status = statusOrder[nextIdx];
+                saveStorageData();
+                renderApp();
+            }
+        }
+
+        // MODAL MANAGEMENT
+        function openBetModal(editId = null) {
+            const modal = document.getElementById('betModal');
+            const form = document.getElementById('betForm');
+            form.reset();
+
+            if (editId) {
+                const bet = bets.find(b => b.id === editId);
+                if (bet) {
+                    document.getElementById('modalTitle').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-cyan-400"></i> Editar Apuesta`;
+                    document.getElementById('betId').value = bet.id;
+                    document.getElementById('formDate').value = bet.date;
+                    document.getElementById('formSport').value = bet.sport;
+                    document.getElementById('formEvent').value = bet.event;
+                    document.getElementById('formPick').value = bet.pick;
+                    document.getElementById('formMarket').value = bet.market || '';
+                    document.getElementById('formOdds').value = bet.odds;
+                    document.getElementById('formStake').value = bet.stake;
+                    document.getElementById('formBookmaker').value = bet.bookmaker || '';
+                    document.getElementById('formStatus').value = bet.status;
+                }
+            } else {
+                document.getElementById('modalTitle').innerHTML = `<i data-lucide="plus-circle" class="w-5 h-5 text-emerald-400"></i> Registrar Apuesta`;
+                document.getElementById('betId').value = '';
+                document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeBetModal() {
+            document.getElementById('betModal').classList.add('hidden');
+        }
+
+        function saveBet(e) {
+            e.preventDefault();
+            const id = document.getElementById('betId').value;
+
+            const betData = {
+                id: id || Date.now().toString(),
+                date: document.getElementById('formDate').value,
+                sport: document.getElementById('formSport').value,
+                event: document.getElementById('formEvent').value,
+                pick: document.getElementById('formPick').value,
+                market: document.getElementById('formMarket').value,
+                odds: parseFloat(document.getElementById('formOdds').value),
+                stake: parseFloat(document.getElementById('formStake').value),
+                bookmaker: document.getElementById('formBookmaker').value,
+                status: document.getElementById('formStatus').value
+            };
+
+            if (id) {
+                const index = bets.findIndex(b => b.id === id);
+                if (index !== -1) bets[index] = betData;
+            } else {
+                bets.push(betData);
+            }
+
+            saveStorageData();
+            closeBetModal();
+            renderApp();
+        }
+
+        function editBet(id) {
+            openBetModal(id);
+        }
+
+        function deleteBet(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta apuesta?')) {
+                bets = bets.filter(b => b.id !== id);
+                saveStorageData();
+                renderApp();
+            }
+        }
+
+        // BANKROLL CONFIG MODAL
+        function openBankModal() {
+            document.getElementById('formInitialBank').value = initialBankroll;
+            document.getElementById('bankModal').classList.remove('hidden');
+        }
+
+        function closeBankModal() {
+            document.getElementById('bankModal').classList.add('hidden');
+        }
+
+        function saveInitialBankroll(e) {
+            e.preventDefault();
+            const val = parseFloat(document.getElementById('formInitialBank').value);
+            if (!isNaN(val) && val > 0) {
+                initialBankroll = val;
+                saveStorageData();
+                closeBankModal();
+                renderApp();
+            }
+        }
+
+        // EXPORT / IMPORT DATA JSON
+        function exportData() {
+            const dataToExport = {
+                initialBankroll: initialBankroll,
+                bets: bets
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `betanalytix_backup_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importData(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.bets && Array.isArray(imported.bets)) {
+                        bets = imported.bets;
+                        if (imported.initialBankroll) initialBankroll = parseFloat(imported.initialBankroll);
+                        saveStorageData();
+                        renderApp();
+                        alert('¡Datos importados exitosamente!');
+                    } else {
+                        alert('Formato JSON de archivo no válido.');
+                    }
+                } catch (err) {
+                    alert('Error al procesar el archivo JSON.');
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+        }
+
+        // UTILS
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
 </body>
 </html>
