@@ -140,7 +140,7 @@
 <body>
 <div class="container">
   <h1>Poisson Betting Analyzer</h1>
-  <p class="subtitle">Solo usa GF (Goles a Favor) · Over/Under 1.5 / 2.5 / 3.5 + BTTS · Prob ≥ 50%</p>
+  <p class="subtitle">Solo usa GF (Goles a Favor) · Over/Under 1.5 / 2.5 / 3.5 + BTTS · Prob ≥ 50% · GP ≥ 8 ambos equipos</p>
 
   <div class="card">
     <label for="inputData">Pega aquí la tabla (separada por tabulaciones):</label>
@@ -155,7 +155,8 @@ ENGLAND ENG	0%	0%	100%	1.00	1.00	2.00	1.00	1	home	Leeds Utd	14:00	Newcastle Utd	
     <p class="info">
       • Solo se usan los valores de <strong>GF Local</strong> y <strong>GF Visitante</strong>.<br>
       • Se generan Over/Under 1.5, 2.5, 3.5 y BTTS.<br>
-      • Solo se muestran picks con probabilidad ≥ 50%.
+      • Solo se muestran picks con probabilidad ≥ 50%.<br>
+      • <strong>Solo se procesan partidos donde ambos equipos tienen GP ≥ 8</strong>.
     </p>
   </div>
 
@@ -175,6 +176,8 @@ ENGLAND ENG	0%	0%	100%	1.00	1.00	2.00	1.00	1	home	Leeds Utd	14:00	Newcastle Utd	
             <th>EV</th>
             <th>GF Local</th>
             <th>GF Visita</th>
+            <th>GP Local</th>
+            <th>GP Visita</th>
             <th>Stake</th>
             <th>Resultado</th>
             <th>Beneficio</th>
@@ -247,9 +250,6 @@ function parseTable(raw) {
 
   const matches = [];
 
-  // Intentamos detectar columnas por posición relativa
-  // Formato esperado aproximado:
-  // ... GF (col ~5) ... homeTeam  time  awayTeam ... GF (col ~17)
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split('\t').map(c => c.trim());
 
@@ -264,44 +264,60 @@ function parseTable(raw) {
 
     // Equipos
     const homeTeam = cols[homeIdx + 1] || 'Local';
-    const awayTeam = cols[awayIdx - 1] || 'Visitante'; // normalmente el equipo está justo antes de "away"
+    const awayTeam = cols[awayIdx - 1] || 'Visitante';
 
-    // GF Local: suele estar unas columnas antes de "home"
-    // En el ejemplo: GF está en la columna 5 (0-based index 5)
-    // GF Visitante: después de "away"
-    let gfHome = 0, gfAway = 0;
+    // Extracción de GF y GP según la estructura de la tabla
+    // Estructura típica (0-based):
+    // ... GF(home)=5, PPG=7, GP(home)=8 ... home ... away ... GP(away)=15, PPG=16, TG=17, GF(away)=18 ...
+    let gfHome = 0, gfAway = 0, gpHome = 0, gpAway = 0;
 
-    // Método robusto: buscar el número más cercano a la izquierda de "home" que parezca GF
-    // y a la derecha de "away"
-    // En la mayoría de filas del ejemplo:
-    // home GF está en index ~5
-    // away GF está en index ~17
-
-    // Intentamos posiciones fijas primero (basado en tu ejemplo)
-    if (cols.length > 17) {
+    if (cols.length > 18) {
+      // Posiciones más comunes en tu formato
       gfHome = parseFloat(cols[5]) || 0;
-      gfAway = parseFloat(cols[17]) || 0;
+      gpHome = parseFloat(cols[8]) || 0;
+      gpAway = parseFloat(cols[15]) || 0;
+      gfAway = parseFloat(cols[18]) || 0;
     } else {
-      // Fallback: buscar números después de "home" y "away"
+      // Fallback por si el número de columnas varía
+      // GF Home: buscar hacia la izquierda de "home"
       for (let j = homeIdx - 1; j >= 0; j--) {
         const v = parseFloat(cols[j]);
-        if (!isNaN(v) && v >= 0 && v < 10) { gfHome = v; break; }
+        if (!isNaN(v) && v >= 0 && v < 15) {
+          // Intentamos distinguir GF de GP (GP suele ser entero más grande o estar en posición distinta)
+          if (j === homeIdx - 1 || j === homeIdx - 2) {
+            // Posición cercana suele ser GP o scope
+            continue;
+          }
+          gfHome = v;
+          break;
+        }
       }
+      // GP Home
+      for (let j = homeIdx - 1; j >= 0; j--) {
+        const v = parseFloat(cols[j]);
+        if (!isNaN(v) && Number.isInteger(v) && v >= 0 && v <= 50) {
+          gpHome = v;
+          break;
+        }
+      }
+      // GP Away y GF Away
       for (let j = awayIdx + 1; j < cols.length; j++) {
         const v = parseFloat(cols[j]);
-        if (!isNaN(v) && v >= 0 && v < 10) { gfAway = v; break; }
+        if (!isNaN(v) && Number.isInteger(v) && v >= 0 && v <= 50 && gpAway === 0) {
+          gpAway = v;
+        } else if (!isNaN(v) && v >= 0 && v < 10 && gfAway === 0) {
+          gfAway = v;
+        }
       }
     }
-
-    // Si no encontramos GF, intentamos otra posición común
-    if (gfHome === 0 && cols.length > 5) gfHome = parseFloat(cols[5]) || 0;
-    if (gfAway === 0 && cols.length > 17) gfAway = parseFloat(cols[17]) || 0;
 
     matches.push({
       home: homeTeam,
       away: awayTeam,
       gfHome,
-      gfAway
+      gfAway,
+      gpHome,
+      gpAway
     });
   }
 
@@ -323,7 +339,15 @@ function processData() {
   }
 
   const results = [];
+  let skippedLowGP = 0;
+
   matches.forEach(m => {
+    // FILTRO CLAVE: solo procesar si ambos tienen GP ≥ 8
+    if (m.gpHome < 8 || m.gpAway < 8) {
+      skippedLowGP++;
+      return;
+    }
+
     const calc = calcMarkets(m.gfHome, m.gfAway);
 
     calc.markets.forEach(mk => {
@@ -337,7 +361,9 @@ function processData() {
           prob: mk.pOver,
           cuotaJusta: (1 / mk.pOver).toFixed(2),
           gfLocal: calc.lambdaHome.toFixed(2),
-          gfVisita: calc.lambdaAway.toFixed(2)
+          gfVisita: calc.lambdaAway.toFixed(2),
+          gpLocal: m.gpHome,
+          gpVisita: m.gpAway
         });
       }
       if (mk.pUnder >= 0.5) {
@@ -349,7 +375,9 @@ function processData() {
           prob: mk.pUnder,
           cuotaJusta: (1 / mk.pUnder).toFixed(2),
           gfLocal: calc.lambdaHome.toFixed(2),
-          gfVisita: calc.lambdaAway.toFixed(2)
+          gfVisita: calc.lambdaAway.toFixed(2),
+          gpLocal: m.gpHome,
+          gpVisita: m.gpAway
         });
       }
     });
@@ -358,10 +386,10 @@ function processData() {
   // Ordenar por probabilidad descendente
   results.sort((a, b) => b.prob - a.prob);
 
-  renderResults(results);
+  renderResults(results, matches.length, skippedLowGP);
 }
 
-function renderResults(results) {
+function renderResults(results, totalMatches, skipped) {
   const tbody = document.getElementById('resultsBody');
   tbody.innerHTML = '';
 
@@ -381,6 +409,8 @@ function renderResults(results) {
       <td contenteditable="true" class="empty">—</td>
       <td>${r.gfLocal}</td>
       <td>${r.gfVisita}</td>
+      <td>${r.gpLocal}</td>
+      <td>${r.gpVisita}</td>
       <td contenteditable="true">0.00</td>
       <td contenteditable="true">Pendiente</td>
       <td contenteditable="true">0.00</td>
@@ -391,33 +421,8 @@ function renderResults(results) {
 
   // Stats
   document.getElementById('stats').innerHTML = `
-    <div class="stat-box"><span>Partidos procesados</span><strong>${new Set(results.map(r => r.local + r.visitante)).size}</strong></div>
+    <div class="stat-box"><span>Partidos detectados</span><strong>${totalMatches}</strong></div>
+    <div class="stat-box"><span>Descartados (GP &lt; 8)</span><strong>${skipped}</strong></div>
+    <div class="stat-box"><span>Partidos válidos (GP ≥ 8)</span><strong>${totalMatches - skipped}</strong></div>
     <div class="stat-box"><span>Picks generados (≥50%)</span><strong>${results.length}</strong></div>
-    <div class="stat-box"><span>Promedio probabilidad</span><strong>${results.length ? (results.reduce((a,b)=>a+b.prob,0)/results.length*100).toFixed(1) : 0}%</strong></div>
-  `;
-
-  document.getElementById('resultsCard').style.display = 'block';
-}
-
-function clearAll() {
-  document.getElementById('inputData').value = '';
-  document.getElementById('resultsBody').innerHTML = '';
-  document.getElementById('resultsCard').style.display = 'none';
-}
-
-function copyResults() {
-  const table = document.getElementById('resultsTable');
-  let text = '';
-  // Headers
-  const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
-  text += headers.join('\t') + '\n';
-  // Rows
-  table.querySelectorAll('tbody tr').forEach(tr => {
-    const cells = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
-    text += cells.join('\t') + '\n';
-  });
-  navigator.clipboard.writeText(text).then(() => alert('Resultados copiados al portapapeles'));
-}
-</script>
-</body>
-</html>
+    <div class="stat-box"><span>Promedio probabilidad</span><strong>
