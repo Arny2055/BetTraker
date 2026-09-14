@@ -1,675 +1,461 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>EV Strategy Hub - Quantitative Dashboard</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#080C14',
-                        cardBg: 'rgba(15, 23, 42, 0.65)',
-                        cardBorder: 'rgba(255, 255, 255, 0.08)',
-                        neonGreen: '#00FF87',
-                        neonRed: '#FF2E63',
-                        neonBlue: '#00F0FF',
-                        neonPurple: '#7000FF',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-
-    <!-- FontAwesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuantumBet Analytics | Modelo Poisson & +EV</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --sat: env(safe-area-inset-top);
-            --sab: env(safe-area-inset-bottom);
+            --bg-dark: #090d16;
+            --card-bg: rgba(18, 26, 43, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-green: #00ffaa;
+            --accent-blue: #00bfff;
+            --accent-red: #ff4757;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background-color: #080C14;
-            color: #F3F4F6;
-            font-family: 'Inter', sans-serif;
-            padding-top: var(--sat);
-            padding-bottom: calc(var(--sab) + 75px);
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
         }
 
-        /* Glassmorphism Styling */
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.70);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .glass-input {
-            background: rgba(2, 6, 23, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #FFFFFF;
-            transition: all 0.2s ease;
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .glass-input:focus {
-            border-color: #00F0FF;
-            box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+        header h1 {
+            font-size: 1.8rem;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        header h1 span {
+            color: var(--accent-green);
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 360px 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
             outline: none;
+            transition: border-color 0.2s;
         }
 
-        .tabular-nums {
-            font-variant-numeric: tabular-nums;
+        input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        button.btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #00bfff, #00ffaa);
+            border: none;
+            border-radius: 6px;
+            color: #000;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+
+        button.btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .metric-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .metric-box .label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .metric-box .val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+        }
+
+        td.mono {
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(8, 12, 20, 0.5);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 2px;
+        .badge-ev {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
         }
 
-        /* Neon Glows */
-        .glow-green {
-            box-shadow: 0 0 15px rgba(0, 255, 135, 0.2);
-        }
-        .glow-blue {
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-        }
-        .glow-red {
-            box-shadow: 0 0 15px rgba(255, 46, 99, 0.2);
+        .badge-positive {
+            background: rgba(0, 255, 170, 0.15);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
         }
 
-        /* Touch Optimization for iPhone 14 */
-        .touch-target {
-            min-height: 44px;
-            min-width: 44px;
+        .badge-negative {
+            background: rgba(255, 71, 87, 0.15);
+            color: var(--accent-red);
+        }
+
+        .matrix-table {
+            margin-top: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+
+        .matrix-table th, .matrix-table td {
+            padding: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .matrix-table th {
+            background: rgba(255, 255, 255, 0.03);
         }
     </style>
 </head>
-<body class="min-h-screen antialiased selection:bg-neonBlue selection:text-black">
+<body>
 
-    <!-- TOP HEADER / METRICS BANNER -->
-    <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 py-3 bg-darkBg/80 backdrop-blur-md">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-neonBlue to-neonPurple flex items-center justify-center text-black font-extrabold text-sm shadow-lg shadow-neonBlue/20">
-                    EV
-                </div>
-                <div>
-                    <h1 class="text-xs font-bold tracking-wider text-gray-400 uppercase">Strategy Hub</h1>
-                    <div class="text-sm font-extrabold text-white flex items-center gap-1.5">
-                        <span id="headerBankroll" class="tabular-nums text-neonBlue">$1,000.00</span>
-                        <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-neonGreen font-semibold border border-neonGreen/20">LIVE</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Global KPI Summary -->
-            <div class="flex items-center gap-3 text-right">
-                <div>
-                    <p class="text-[10px] text-gray-400 font-medium">Bets Saved</p>
-                    <p id="headerBetCount" class="text-xs font-bold tabular-nums text-white">0</p>
-                </div>
-                <div class="h-6 w-[1px] bg-white/10"></div>
-                <div>
-                    <p class="text-[10px] text-gray-400 font-medium">Avg EV%</p>
-                    <p id="headerAvgEV" class="text-xs font-bold tabular-nums text-neonGreen">+0.0%</p>
-                </div>
-            </div>
-        </div>
+<div class="container">
+    <header>
+        <h1>QUANTUM<span>BET</span> ANALYTICS</h1>
+        <p>Modelo Cuantitativo de Selección de Valor (+EV) mediante Distribución de Poisson</p>
     </header>
 
-    <!-- MAIN CONTAINER (iPhone 14 Width Constrained) -->
-    <main class="max-w-md mx-auto px-4 py-4 space-y-5">
+    <div class="grid-layout">
+        <!-- Panel de Entradas -->
+        <div class="card">
+            <div class="card-title">Configuración del Partido</div>
+            
+            <div class="form-group">
+                <label>Promedio Goles de la Liga</label>
+                <input type="number" id="leagueAvg" step="0.01" value="2.65">
+            </div>
 
-        <!-- TAB NAVIGATION -->
-        <div class="glass-panel p-1 rounded-xl flex items-center justify-between text-xs font-semibold gap-1">
-            <button onclick="switchTab('calculator')" id="tab-calculator" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all bg-neonBlue/20 text-neonBlue border border-neonBlue/40">
-                <i class="fa-solid font-black fa-calculator"></i>
-                <span>Calc</span>
-            </button>
-            <button onclick="switchTab('simulation')" id="tab-simulation" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>Monte Carlo</span>
-            </button>
-            <button onclick="switchTab('opportunities')" id="tab-opportunities" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white">
-                <i class="fa-solid fa-bolt text-amber-400"></i>
-                <span>Feed</span>
-            </button>
-            <button onclick="switchTab('tracker')" id="tab-tracker" class="touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white">
-                <i class="fa-solid fa-list-check"></i>
-                <span>Log</span>
-            </button>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ataque Local (xG/Goles)</label>
+                    <input type="number" id="homeAtt" step="0.01" value="1.75">
+                </div>
+                <div class="form-group">
+                    <label>Defensa Local (Recibidos)</label>
+                    <input type="number" id="homeDef" step="0.01" value="0.90">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ataque Visita (xG/Goles)</label>
+                    <input type="number" id="awayAtt" step="0.01" value="1.20">
+                </div>
+                <div class="form-group">
+                    <label>Defensa Visita (Recibidos)</label>
+                    <input type="number" id="awayDef" step="0.01" value="1.40">
+                </div>
+            </div>
+
+            <div class="card-title" style="margin-top: 15px;">Cuotas Casa de Apuestas</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cuota 1 (Local)</label>
+                    <input type="number" id="odds1" step="0.01" value="2.10">
+                </div>
+                <div class="form-group">
+                    <label>Cuota X (Empate)</label>
+                    <input type="number" id="oddsX" step="0.01" value="3.40">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cuota 2 (Visita)</label>
+                    <input type="number" id="odds2" step="0.01" value="3.60">
+                </div>
+                <div class="form-group">
+                    <label>Cuota Over 2.5</label>
+                    <input type="number" id="oddsOver" step="0.01" value="1.95">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Bankroll Total ($)</label>
+                <input type="number" id="bankroll" value="1000">
+            </div>
+
+            <button class="btn-primary" onclick="calculateModel()">Ejecutar Análisis</button>
         </div>
 
-        <!-- SECTION 1: CALCULATOR MODULE -->
-        <section id="sec-calculator" class="space-y-4">
-            <div class="glass-panel rounded-2xl p-4 space-y-4 relative overflow-hidden">
-                <div class="flex items-center justify-between border-b border-white/10 pb-2">
-                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-microchip text-neonBlue"></i> Quantitative EV Calculator
-                    </h2>
-                    <span id="valueBadge" class="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/10 text-neonGreen border border-neonGreen/30 uppercase tracking-wider glow-green">
-                        +EV Detected
-                    </span>
+        <!-- Resultados -->
+        <div class="card">
+            <div class="card-title">Resultados del Modelo & Detección de Valor</div>
+
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <div class="label">xG Esperado Local</div>
+                    <div class="val" id="expHome" style="color: var(--accent-blue);">0.00</div>
                 </div>
-
-                <!-- Input Controls Grid -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-medium text-gray-400 flex items-center gap-1">
-                            <span>Bookmaker Odds</span>
-                            <i class="fa-solid fa-circle-info text-[9px] text-gray-500" title="Decimal odds offered by bookmaker"></i>
-                        </label>
-                        <input type="number" id="inputOdds" step="0.01" value="2.10" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" oninput="calculateEV()">
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-medium text-gray-400 flex items-center gap-1">
-                            <span>Model Win Prob (%)</span>
-                            <i class="fa-solid fa-circle-info text-[9px] text-gray-500" title="Your estimated win probability"></i>
-                        </label>
-                        <input type="number" id="inputProb" step="0.1" value="52.0" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" oninput="calculateEV()">
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-medium text-gray-400">Kelly Fraction</label>
-                        <select id="inputKellyFraction" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" onchange="calculateEV()">
-                            <option value="1.0">Full Kelly (1.0)</option>
-                            <option value="0.5">Half Kelly (0.50)</option>
-                            <option value="0.25" selected>Quarter Kelly (0.25)</option>
-                            <option value="0.10">Eighth Kelly (0.10)</option>
-                        </select>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label class="text-[11px] font-medium text-gray-400">Bankroll ($)</label>
-                        <input type="number" id="inputBankroll" step="10" value="1000" class="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold tabular-nums focus:outline-none touch-target" oninput="calculateEV()">
-                    </div>
+                <div class="metric-box">
+                    <div class="label">xG Esperado Visita</div>
+                    <div class="val" id="expAway" style="color: var(--accent-blue);">0.00</div>
                 </div>
-
-                <!-- Primary Metrics Display -->
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <div class="glass-panel p-3 rounded-xl border border-white/5 bg-slate-900/40">
-                        <p class="text-[10px] text-gray-400 font-medium">Expected Value (EV)</p>
-                        <p id="resEV" class="text-xl font-extrabold tabular-nums text-neonGreen mt-0.5">+9.20%</p>
-                    </div>
-                    <div class="glass-panel p-3 rounded-xl border border-white/5 bg-slate-900/40">
-                        <p class="text-[10px] text-gray-400 font-medium">Fair Odds (No Vig)</p>
-                        <p id="resFairOdds" class="text-xl font-extrabold tabular-nums text-neonBlue mt-0.5">1.92</p>
-                    </div>
-                </div>
-
-                <!-- Stake & Profit Grid -->
-                <div class="grid grid-cols-3 gap-2 pt-1">
-                    <div class="p-2.5 rounded-xl bg-white/5 border border-white/5 text-center">
-                        <p class="text-[9px] text-gray-400 uppercase font-semibold">Implied Prob</p>
-                        <p id="resImplied" class="text-xs font-bold tabular-nums text-white mt-1">47.62%</p>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-neonBlue/10 border border-neonBlue/30 text-center">
-                        <p class="text-[9px] text-neonBlue uppercase font-bold">Rec. Stake</p>
-                        <p id="resStake" class="text-xs font-extrabold tabular-nums text-neonBlue mt-1">$20.83</p>
-                        <p id="resStakePct" class="text-[9px] text-neonBlue/80 font-medium">(2.08%)</p>
-                    </div>
-                    <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-center">
-                        <p class="text-[9px] text-neonGreen uppercase font-bold">Exp. Profit</p>
-                        <p id="resExpProfit" class="text-xs font-extrabold tabular-nums text-neonGreen mt-1">+$1.92</p>
-                    </div>
-                </div>
-
-                <!-- Bet Saver Action Button -->
-                <button onclick="saveCurrentBet()" class="touch-target w-full py-3 rounded-xl bg-gradient-to-r from-neonBlue to-neonPurple text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-neonBlue/20 active:scale-[0.98] transition-transform">
-                    <i class="fa-solid fa-bookmark"></i>
-                    Log Bet to Active Strategy
-                </button>
-            </div>
-        </section>
-
-        <!-- SECTION 2: MONTE CARLO SIMULATION MODULE -->
-        <section id="sec-simulation" class="space-y-4 hidden">
-            <div class="glass-panel rounded-2xl p-4 space-y-4">
-                <div class="flex items-center justify-between border-b border-white/10 pb-2">
-                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-neonPurple"></i> Monte Carlo Bankroll Projection
-                    </h2>
-                    <span class="text-[10px] text-gray-400">100 Bet Trajectory</span>
-                </div>
-
-                <div class="p-3 bg-black/40 rounded-xl border border-white/5 space-y-2">
-                    <div class="flex justify-between text-xs font-medium">
-                        <span class="text-gray-400">Simulated Win Rate:</span>
-                        <span id="simWinRate" class="tabular-nums text-white">52.0%</span>
-                    </div>
-                    <div class="flex justify-between text-xs font-medium">
-                        <span class="text-gray-400">Kelly Fractional Stake:</span>
-                        <span id="simKellyFrac" class="tabular-nums text-neonBlue">2.08% / bet</span>
-                    </div>
-                    <div class="flex justify-between text-xs font-medium">
-                        <span class="text-gray-400">Expected Growth:</span>
-                        <span id="simExpGrowth" class="tabular-nums text-neonGreen font-bold">+19.2%</span>
-                    </div>
-                </div>
-
-                <!-- Chart Canvas Container -->
-                <div class="relative w-full h-64 bg-slate-950/60 rounded-xl p-2 border border-white/5">
-                    <canvas id="monteCarloChart"></canvas>
-                </div>
-
-                <button onclick="runMonteCarlo()" class="touch-target w-full py-2.5 rounded-xl glass-panel border border-neonPurple/40 text-neonPurple hover:bg-neonPurple/10 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all">
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                    Re-Run Simulation (100 Iterations)
-                </button>
-            </div>
-        </section>
-
-        <!-- SECTION 3: OPPORTUNITIES FEED MODULE -->
-        <section id="sec-opportunities" class="space-y-3 hidden">
-            <div class="flex items-center justify-between px-1">
-                <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-bolt text-amber-400"></i> High Value +EV Opportunities
-                </h2>
-                <span class="text-[10px] text-gray-400">Live Scraped Feed</span>
-            </div>
-
-            <!-- Opportunities List Container -->
-            <div id="opportunitiesContainer" class="space-y-2.5">
-                <!-- Dynamic Content Populated via JS -->
-            </div>
-        </section>
-
-        <!-- SECTION 4: STRATEGY & BET LOG MODULE -->
-        <section id="sec-tracker" class="space-y-4 hidden">
-            <div class="glass-panel rounded-2xl p-4 space-y-4">
-                <div class="flex items-center justify-between border-b border-white/10 pb-2">
-                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
-                        <i class="fa-solid fa-folder-open text-neonBlue"></i> Active Strategy Log
-                    </h2>
-                    <button onclick="clearLog()" class="text-[10px] text-neonRed font-semibold hover:underline">
-                        Clear History
-                    </button>
-                </div>
-
-                <div id="betLogContainer" class="space-y-2.5 max-h-80 overflow-y-auto pr-1">
-                    <!-- Dynamic Log Items -->
+                <div class="metric-box">
+                    <div class="label">Margin / Vigo</div>
+                    <div class="val" id="bookieMargin" style="color: var(--text-muted);">0.0%</div>
                 </div>
             </div>
-        </section>
 
-    </main>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mercado</th>
+                            <th>Prob. Modelo</th>
+                            <th>Cuota Justa</th>
+                            <th>Cuota Casa</th>
+                            <th>Valor (+EV)</th>
+                            <th>Kelly (1/4)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTable">
+                        <!-- Generado por JS -->
+                    </tbody>
+                </table>
+            </div>
 
-    <!-- FIXED BOTTOM NAVIGATION BAR (iPhone Optimized) -->
-    <nav class="fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/10 bg-darkBg/90 backdrop-blur-xl px-4 py-2">
-        <div class="max-w-md mx-auto flex items-center justify-around">
-            <button onclick="switchTab('calculator')" id="nav-calculator" class="flex flex-col items-center gap-1 text-neonBlue touch-target justify-center w-16">
-                <i class="fa-solid fa-calculator text-base"></i>
-                <span class="text-[10px] font-medium">Calc</span>
-            </button>
-            <button onclick="switchTab('simulation')" id="nav-simulation" class="flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16">
-                <i class="fa-solid fa-chart-line text-base"></i>
-                <span class="text-[10px] font-medium">Sim</span>
-            </button>
-            <button onclick="switchTab('opportunities')" id="nav-opportunities" class="flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16">
-                <i class="fa-solid fa-bolt text-base"></i>
-                <span class="text-[10px] font-medium">Feed</span>
-            </button>
-            <button onclick="switchTab('tracker')" id="nav-tracker" class="flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16">
-                <i class="fa-solid fa-list-check text-base"></i>
-                <span class="text-[10px] font-medium">Log</span>
-            </button>
+            <div class="card-title" style="margin-top: 25px;">Matriz de Marcadores Exactos (%)</div>
+            <div class="table-container">
+                <table class="matrix-table" id="matrixTable">
+                    <!-- Generado por JS -->
+                </table>
+            </div>
         </div>
-    </nav>
+    </div>
+</div>
 
-    <!-- JAVASCRIPT ARCHITECTURE -->
-    <script>
-        // GLOBAL STATE MANAGEMENT
-        let currentCalculatedBet = {};
-        let betHistory = JSON.parse(localStorage.getItem('ev_hub_history') || '[]');
-        let monteCarloChartInstance = null;
+<script>
+    function factorial(n) {
+        if (n === 0 || n === 1) return 1;
+        let res = 1;
+        for (let i = 2; i <= n; i++) res *= i;
+        return res;
+    }
 
-        // MOCK OPPORTUNITIES DATA
-        const opportunitiesFeed = [
-            { id: 1, match: "Real Madrid vs Barcelona", market: "Over 2.5 Goals", odds: 1.95, prob: 56.5, league: "La Liga" },
-            { id: 2, match: "Arsenal vs Chelsea", market: "BTTS Yes", odds: 1.85, prob: 59.0, league: "Premier League" },
-            { id: 3, match: "Lakers vs Celtics", market: "Lakers +4.5 AH", odds: 2.05, prob: 53.0, league: "NBA" },
-            { id: 4, match: "Bayern Munich vs Dortmund", market: "Bayern Win & Over 1.5", odds: 1.75, prob: 62.0, league: "Bundesliga" },
-            { id: 5, match: "Man City vs Liverpool", market: "First Half Over 0.5", odds: 1.50, prob: 72.0, league: "Premier League" }
+    function poisson(k, lambda) {
+        return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+    }
+
+    function calculateModel() {
+        const avgG = parseFloat(document.getElementById('leagueAvg').value);
+        const hAtt = parseFloat(document.getElementById('homeAtt').value);
+        const hDef = parseFloat(document.getElementById('homeDef').value);
+        const aAtt = parseFloat(document.getElementById('awayAtt').value);
+        const aDef = parseFloat(document.getElementById('awayDef').value);
+
+        const o1 = parseFloat(document.getElementById('odds1').value);
+        const oX = parseFloat(document.getElementById('oddsX').value);
+        const o2 = parseFloat(document.getElementById('odds2').value);
+        const oOver = parseFloat(document.getElementById('oddsOver').value);
+        const bank = parseFloat(document.getElementById('bankroll').value);
+
+        // Expectativa de Goles (xG)
+        const lambdaHome = (hAtt / avgG) * (aDef / avgG) * avgG;
+        const lambdaAway = (aAtt / avgG) * (hDef / avgG) * avgG;
+
+        document.getElementById('expHome').innerText = lambdaHome.toFixed(2);
+        document.getElementById('expAway').innerText = lambdaAway.toFixed(2);
+
+        // Calcular Margen de la casa de apuestas (Vigo) en 1X2
+        const margin = ((1/o1 + 1/oX + 1/o2) - 1) * 100;
+        document.getElementById('bookieMargin').innerText = margin.toFixed(2) + '%';
+
+        // Construir Matriz de Poisson (0 a 5 goles)
+        let p1 = 0, pX = 0, p2 = 0, pOver25 = 0;
+        let matrix = Array(6).fill(0).map(() => Array(6).fill(0));
+
+        let matrixHTML = '<thead><tr><th>Local \\ Visita</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead><tbody>';
+
+        for (let i = 0; i <= 5; i++) {
+            matrixHTML += `<tr><th>${i}</th>`;
+            for (let j = 0; j <= 5; j++) {
+                const prob = poisson(i, lambdaHome) * poisson(j, lambdaAway);
+                matrix[i][j] = prob;
+
+                if (i > j) p1 += prob;
+                else if (i === j) pX += prob;
+                else p2 += prob;
+
+                if (i + j > 2.5) pOver25 += prob;
+
+                matrixHTML += `<td>${(prob * 100).toFixed(1)}%</td>`;
+            }
+            matrixHTML += '</tr>';
+        }
+        matrixHTML += '</tbody>';
+        document.getElementById('matrixTable').innerHTML = matrixHTML;
+
+        // Evaluación de Mercados
+        const markets = [
+            { name: 'Gana Local (1)', prob: p1, odds: o1 },
+            { name: 'Empate (X)', prob: pX, odds: oX },
+            { name: 'Gana Visita (2)', prob: p2, odds: o2 },
+            { name: 'Over 2.5 Goles', prob: pOver25, odds: oOver }
         ];
 
-        // INITIALIZATION
-        document.addEventListener('DOMContentLoaded', () => {
-            calculateEV();
-            renderOpportunitiesFeed();
-            renderBetLog();
-            initMonteCarloChart();
-            updateGlobalHeaderMetrics();
+        let resultsHTML = '';
+
+        markets.forEach(m => {
+            const fairOdds = 1 / m.prob;
+            const ev = (m.prob * m.odds) - 1;
+            
+            // Fractional Kelly (1/4 Kelly)
+            let kellyPercent = 0;
+            let kellyAmount = 0;
+            if (ev > 0) {
+                const b = m.odds - 1;
+                kellyPercent = ((b * m.prob - (1 - m.prob)) / b) * 0.25;
+                kellyAmount = bank * Math.max(0, kellyPercent);
+            }
+
+            const evClass = ev > 0 ? 'badge-positive' : 'badge-negative';
+            const evDisplay = (ev * 100).toFixed(2) + '%';
+
+            resultsHTML += `
+                <tr>
+                    <td><strong>${m.name}</strong></td>
+                    <td class="mono">${(m.prob * 100).toFixed(1)}%</td>
+                    <td class="mono">${fairOdds.toFixed(2)}</td>
+                    <td class="mono">${m.odds.toFixed(2)}</td>
+                    <td><span class="badge-ev ${evClass}">${evDisplay}</span></td>
+                    <td class="mono">${ev > 0 ? '$' + kellyAmount.toFixed(1) + ' (' + (kellyPercent * 100).toFixed(1) + '%)' : '-'}</td>
+                </tr>
+            `;
         });
 
-        // TAB SWITCHER LOGIC
-        function switchTab(tabId) {
-            const tabs = ['calculator', 'simulation', 'opportunities', 'tracker'];
-            tabs.forEach(t => {
-                const sec = document.getElementById(`sec-${t}`);
-                const btnTab = document.getElementById(`tab-${t}`);
-                const btnNav = document.getElementById(`nav-${t}`);
+        document.getElementById('resultsTable').innerHTML = resultsHTML;
+    }
 
-                if (t === tabId) {
-                    sec.classList.remove('hidden');
-                    
-                    // Tab Styles
-                    btnTab.className = 'touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all bg-neonBlue/20 text-neonBlue border border-neonBlue/40';
-                    btnNav.className = 'flex flex-col items-center gap-1 text-neonBlue touch-target justify-center w-16';
-                } else {
-                    sec.classList.add('hidden');
-                    
-                    // Tab Styles
-                    btnTab.className = 'touch-target flex-1 rounded-lg py-2 flex items-center justify-center gap-1.5 transition-all text-gray-400 hover:text-white';
-                    btnNav.className = 'flex flex-col items-center gap-1 text-gray-400 touch-target justify-center w-16';
-                }
-            });
+    // Ejecución inicial al cargar la página
+    window.onload = calculateModel;
+</script>
 
-            if (tabId === 'simulation') {
-                runMonteCarlo();
-            }
-        }
-
-        // CORE QUANTITATIVE MATHEMATICAL CALCULATIONS
-        function calculateEV() {
-            const odds = parseFloat(document.getElementById('inputOdds').value) || 0;
-            const probPct = parseFloat(document.getElementById('inputProb').value) || 0;
-            const kellyFraction = parseFloat(document.getElementById('inputKellyFraction').value) || 0.25;
-            const bankroll = parseFloat(document.getElementById('inputBankroll').value) || 0;
-
-            const prob = probPct / 100;
-            const impliedProb = odds > 0 ? (1 / odds) : 0;
-            
-            // Expected Value (EV%) = (Prob * (Odds - 1)) - (1 - Prob)
-            const evFraction = (prob * (odds - 1)) - (1 - prob);
-            const evPercentage = evFraction * 100;
-
-            // Fair Odds = 1 / Probability
-            const fairOdds = prob > 0 ? (1 / prob) : 0;
-
-            // Kelly Criterion Formula: f* = (p(b+1) - 1) / b   where b = odds - 1
-            const b = odds - 1;
-            let fullKellyStakePct = b > 0 ? ((prob * (b + 1) - 1) / b) : 0;
-            if (fullKellyStakePct < 0) fullKellyStakePct = 0; // No bet if negative EV
-
-            const adjustedStakePct = fullKellyStakePct * kellyFraction;
-            const stakeAmount = bankroll * adjustedStakePct;
-            const expectedProfit = stakeAmount * evFraction;
-
-            // DOM UPDATES
-            document.getElementById('resEV').innerText = (evPercentage >= 0 ? '+' : '') + evPercentage.toFixed(2) + '%';
-            document.getElementById('resEV').className = `text-xl font-extrabold tabular-nums mt-0.5 ${evPercentage >= 0 ? 'text-neonGreen' : 'text-neonRed'}`;
-
-            document.getElementById('resFairOdds').innerText = fairOdds > 0 ? fairOdds.toFixed(2) : '0.00';
-            document.getElementById('resImplied').innerText = (impliedProb * 100).toFixed(2) + '%';
-            document.getElementById('resStake').innerText = '$' + stakeAmount.toFixed(2);
-            document.getElementById('resStakePct').innerText = '(' + (adjustedStakePct * 100).toFixed(2) + '%)';
-            document.getElementById('resExpProfit').innerText = (expectedProfit >= 0 ? '+$' : '-$') + Math.abs(expectedProfit).toFixed(2);
-
-            // Badge Update
-            const valueBadge = document.getElementById('valueBadge');
-            if (evPercentage > 0) {
-                valueBadge.innerText = '+EV VALUE DETECTED';
-                valueBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/10 text-neonGreen border border-neonGreen/30 uppercase tracking-wider glow-green';
-            } else {
-                valueBadge.innerText = '-EV NO VALUE';
-                valueBadge.className = 'text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-rose-500/10 text-neonRed border border-neonRed/30 uppercase tracking-wider glow-red';
-            }
-
-            // Save state for Logging
-            currentCalculatedBet = {
-                odds: odds,
-                probPct: probPct,
-                evPct: evPercentage,
-                stake: stakeAmount,
-                stakePct: adjustedStakePct * 100,
-                expProfit: expectedProfit,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-        }
-
-        // OPPORTUNITIES FEED RENDERER
-        function renderOpportunitiesFeed() {
-            const container = document.getElementById('opportunitiesContainer');
-            container.innerHTML = '';
-
-            opportunitiesFeed.forEach(item => {
-                const implied = (1 / item.odds) * 100;
-                const ev = ((item.prob / 100 * (item.odds - 1)) - (1 - item.prob / 100)) * 100;
-
-                const card = document.createElement('div');
-                card.className = 'glass-panel p-3.5 rounded-xl flex items-center justify-between border border-white/5 hover:border-neonBlue/30 transition-all';
-                card.innerHTML = `
-                    <div class="space-y-1 pr-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/10 text-gray-300 uppercase">${item.league}</span>
-                            <span class="text-[10px] font-extrabold text-neonGreen">+${ev.toFixed(1)}% EV</span>
-                        </div>
-                        <p class="text-xs font-bold text-white leading-tight">${item.match}</p>
-                        <p class="text-[11px] text-neonBlue font-semibold">${item.market}</p>
-                    </div>
-                    <div class="flex flex-col items-end gap-1.5 min-w-[85px]">
-                        <div class="text-right">
-                            <span class="text-[10px] text-gray-400 block">Book Odds</span>
-                            <span class="text-sm font-extrabold text-white tabular-nums">${item.odds.toFixed(2)}</span>
-                        </div>
-                        <button onclick="loadOpportunityIntoCalc(${item.odds}, ${item.prob})" class="touch-target px-3 py-1.5 rounded-lg bg-neonBlue/20 hover:bg-neonBlue/30 text-neonBlue text-[11px] font-bold border border-neonBlue/40 flex items-center gap-1 active:scale-95 transition-transform">
-                            <i class="fa-solid fa-bolt"></i> Load
-                        </button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function loadOpportunityIntoCalc(odds, prob) {
-            document.getElementById('inputOdds').value = odds;
-            document.getElementById('inputProb').value = prob;
-            switchTab('calculator');
-            calculateEV();
-        }
-
-        // MONTE CARLO SIMULATION LOGIC
-        function initMonteCarloChart() {
-            const ctx = document.getElementById('monteCarloChart').getContext('2d');
-            monteCarloChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 101}, (_, i) => i),
-                    datasets: []
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        x: {
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#6B7280', font: { size: 9 } }
-                        },
-                        y: {
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: { color: '#6B7280', font: { size: 9 } }
-                        }
-                    },
-                    elements: {
-                        line: { borderWidth: 1.5, tension: 0.2 },
-                        point: { radius: 0 }
-                    }
-                }
-            });
-        }
-
-        function runMonteCarlo() {
-            if (!monteCarloChartInstance) return;
-
-            const startingBankroll = parseFloat(document.getElementById('inputBankroll').value) || 1000;
-            const odds = parseFloat(document.getElementById('inputOdds').value) || 2.0;
-            const winProb = (parseFloat(document.getElementById('inputProb').value) || 50) / 100;
-            const kellyFrac = parseFloat(document.getElementById('inputKellyFraction').value) || 0.25;
-
-            // Kelly Stake Fraction
-            const b = odds - 1;
-            let fullKelly = b > 0 ? ((winProb * (b + 1) - 1) / b) : 0;
-            if (fullKelly < 0) fullKelly = 0;
-            const stakeFraction = fullKelly * kellyFrac;
-
-            document.getElementById('simWinRate').innerText = (winProb * 100).toFixed(1) + '%';
-            document.getElementById('simKellyFrac').innerText = (stakeFraction * 100).toFixed(2) + '% / bet';
-
-            const numSimulations = 5;
-            const numBets = 100;
-            const datasets = [];
-
-            let totalFinalBankroll = 0;
-
-            for (let sim = 0; sim < numSimulations; sim++) {
-                let currentBank = startingBankroll;
-                const path = [currentBank];
-
-                for (let bet = 1; bet <= numBets; bet++) {
-                    const stake = currentBank * stakeFraction;
-                    const won = Math.random() < winProb;
-                    
-                    if (won) {
-                        currentBank += stake * (odds - 1);
-                    } else {
-                        currentBank -= stake;
-                    }
-                    path.push(currentBank);
-                }
-
-                totalFinalBankroll += currentBank;
-
-                const isMain = sim === 0;
-                datasets.push({
-                    data: path,
-                    borderColor: isMain ? '#00FF87' : 'rgba(0, 240, 255, 0.3)',
-                    borderWidth: isMain ? 2 : 1
-                });
-            }
-
-            const avgFinal = totalFinalBankroll / numSimulations;
-            const growthPct = ((avgFinal - startingBankroll) / startingBankroll) * 100;
-            document.getElementById('simExpGrowth').innerText = (growthPct >= 0 ? '+' : '') + growthPct.toFixed(1) + '%';
-
-            monteCarloChartInstance.data.datasets = datasets;
-            monteCarloChartInstance.update();
-        }
-
-        // BET LOGGING & LOCALSTORAGE MANAGEMENT
-        function saveCurrentBet() {
-            if (!currentCalculatedBet.odds) return;
-
-            betHistory.unshift({...currentCalculatedBet, id: Date.now()});
-            localStorage.setItem('ev_hub_history', JSON.stringify(betHistory));
-            
-            renderBetLog();
-            updateGlobalHeaderMetrics();
-
-            // Provide visual feedback
-            switchTab('tracker');
-        }
-
-        function renderBetLog() {
-            const container = document.getElementById('betLogContainer');
-            container.innerHTML = '';
-
-            if (betHistory.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-500 text-xs">
-                        <i class="fa-solid fa-box-open text-2xl mb-2 block"></i>
-                        No bets logged yet in this session.
-                    </div>
-                `;
-                return;
-            }
-
-            betHistory.forEach(bet => {
-                const item = document.createElement('div');
-                item.className = 'glass-panel p-3 rounded-xl flex items-center justify-between border border-white/5 text-xs';
-                item.innerHTML = `
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-extrabold ${bet.evPct >= 0 ? 'text-neonGreen' : 'text-neonRed'} tabular-nums">
-                                ${bet.evPct >= 0 ? '+' : ''}${bet.evPct.toFixed(2)}% EV
-                            </span>
-                            <span class="text-[10px] text-gray-500">${bet.timestamp}</span>
-                        </div>
-                        <p class="text-[11px] text-gray-300 mt-0.5">
-                            Odds: <span class="text-white font-bold tabular-nums">${bet.odds.toFixed(2)}</span> | 
-                            Win Prob: <span class="text-white font-bold tabular-nums">${bet.probPct.toFixed(1)}%</span>
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-[10px] text-gray-400 block">Stake</span>
-                        <span class="font-bold text-neonBlue tabular-nums">$${bet.stake.toFixed(2)}</span>
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        function clearLog() {
-            if (confirm("Are you sure you want to clear your logged bet history?")) {
-                betHistory = [];
-                localStorage.removeItem('ev_hub_history');
-                renderBetLog();
-                updateGlobalHeaderMetrics();
-            }
-        }
-
-        function updateGlobalHeaderMetrics() {
-            const betCount = betHistory.length;
-            document.getElementById('headerBetCount').innerText = betCount;
-
-            if (betCount > 0) {
-                const sumEV = betHistory.reduce((acc, curr) => acc + curr.evPct, 0);
-                const avgEV = sumEV / betCount;
-                document.getElementById('headerAvgEV').innerText = (avgEV >= 0 ? '+' : '') + avgEV.toFixed(1) + '%';
-                document.getElementById('headerAvgEV').className = `text-xs font-bold tabular-nums ${avgEV >= 0 ? 'text-neonGreen' : 'text-neonRed'}`;
-            } else {
-                document.getElementById('headerAvgEV').innerText = '+0.0%';
-                document.getElementById('headerAvgEV').className = 'text-xs font-bold tabular-nums text-neonGreen';
-            }
-
-            const bankroll = parseFloat(document.getElementById('inputBankroll').value) || 1000;
-            document.getElementById('headerBankroll').innerText = '$' + bankroll.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-        }
-    </script>
 </body>
 </html>
