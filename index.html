@@ -3,234 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuantumBet Analytics | Modelo Poisson & +EV</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <title>Quantum BetDevig & EV Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #090d16;
-            --card-bg: rgba(18, 26, 43, 0.7);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --accent-green: #00ffaa;
-            --accent-blue: #00bfff;
-            --accent-red: #ff4757;
+            --bg-primary: #0a0e17;
+            --bg-card: rgba(18, 26, 43, 0.75);
+            --bg-input: rgba(10, 15, 29, 0.85);
+            --border-glow: rgba(0, 242, 254, 0.18);
+            --accent-cyan: #00f2fe;
+            --accent-green: #00ff87;
+            --accent-red: #ff3366;
+            --accent-amber: #ffaa00;
             --text-main: #e2e8f0;
-            --text-muted: #94a3b8;
+            --text-muted: #64748b;
+            --font-main: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-main);
         }
 
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(0, 242, 254, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(0, 255, 135, 0.05) 0%, transparent 40%);
             color: var(--text-main);
-            padding: 20px;
             min-height: 100vh;
+            padding: 24px 12px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(0, 242, 254, 0.05);
         }
 
         header {
             text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 18px;
         }
 
         header h1 {
             font-size: 1.8rem;
-            color: #fff;
-            letter-spacing: -0.5px;
-        }
-
-        header h1 span {
-            color: var(--accent-green);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
         }
 
         header p {
             color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-top: 4px;
+            font-size: 0.88rem;
         }
 
-        .grid-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-
-        @media (min-width: 900px) {
-            .grid-layout {
-                grid-template-columns: 360px 1fr;
-            }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
+        .market-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px;
             border-radius: 12px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .card-title {
-            font-size: 1rem;
+        .market-btn {
+            flex: 1;
+            padding: 12px 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
             font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--accent-blue);
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .market-btn.active {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(0, 255, 135, 0.15));
+            color: #ffffff;
+            border: 1px solid rgba(0, 242, 254, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 242, 254, 0.15);
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .option-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .option-card:hover {
+            border-color: rgba(0, 242, 254, 0.3);
+        }
+
+        .option-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .form-group {
+        .input-group {
             margin-bottom: 12px;
         }
 
-        .form-group label {
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .input-group label {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             color: var(--text-muted);
             margin-bottom: 4px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        input {
+        .input-group input {
             width: 100%;
-            padding: 8px 12px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus {
-            border-color: var(--accent-blue);
-        }
-
-        button.btn-primary {
-            width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #00bfff, #00ffaa);
-            border: none;
-            border-radius: 6px;
-            color: #000;
-            font-weight: 700;
-            font-size: 0.95rem;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: opacity 0.2s;
-        }
-
-        button.btn-primary:hover {
-            opacity: 0.9;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .metric-box {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
-            padding: 12px;
-            text-align: center;
+            padding: 10px 12px;
+            color: #ffffff;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s;
         }
 
-        .metric-box .label {
-            font-size: 0.7rem;
+        .input-group input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+        }
+
+        .margin-banner {
+            background: rgba(0, 242, 254, 0.04);
+            border: 1px dashed rgba(0, 242, 254, 0.25);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .margin-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .margin-item span.label {
+            font-size: 0.75rem;
             color: var(--text-muted);
             text-transform: uppercase;
+            font-weight: 600;
         }
 
-        .metric-box .val {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.2rem;
+        .margin-item span.val {
+            font-size: 1.25rem;
+            font-family: var(--font-mono);
             font-weight: 700;
-            margin-top: 4px;
+            color: #ffffff;
         }
 
         .table-container {
             overflow-x: auto;
-            margin-top: 15px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
             text-align: left;
         }
 
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
         th {
-            color: var(--text-muted);
-            font-weight: 600;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px 14px;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            font-size: 0.7rem;
+            color: var(--text-muted);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+            font-weight: 700;
         }
 
-        td.mono {
-            font-family: 'JetBrains Mono', monospace;
+        td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.9rem;
         }
 
-        .badge-ev {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
+        .font-mono {
+            font-family: var(--font-mono);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 0.75rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
         }
 
-        .badge-positive {
-            background: rgba(0, 255, 170, 0.15);
+        .badge-ev-pos {
+            background: rgba(0, 255, 135, 0.15);
             color: var(--accent-green);
-            border: 1px solid var(--accent-green);
+            border: 1px solid rgba(0, 255, 135, 0.4);
         }
 
-        .badge-negative {
-            background: rgba(255, 71, 87, 0.15);
+        .badge-ev-neg {
+            background: rgba(255, 51, 102, 0.15);
             color: var(--accent-red);
+            border: 1px solid rgba(255, 51, 102, 0.4);
         }
 
-        .matrix-table {
-            margin-top: 15px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            text-align: center;
+        .badge-ev-neutral {
+            background: rgba(255, 170, 0, 0.15);
+            color: var(--accent-amber);
+            border: 1px solid rgba(255, 170, 0, 0.4);
         }
 
-        .matrix-table th, .matrix-table td {
-            padding: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .matrix-table th {
-            background: rgba(255, 255, 255, 0.03);
+        @media (max-width: 600px) {
+            .container {
+                padding: 18px 14px;
+            }
+            .grid-inputs {
+                grid-template-columns: 1fr;
+            }
+            .market-selector {
+                flex-direction: column;
+            }
+            th, td {
+                padding: 10px 8px;
+                font-size: 0.82rem;
+            }
         }
     </style>
 </head>
@@ -238,223 +282,166 @@
 
 <div class="container">
     <header>
-        <h1>QUANTUM<span>BET</span> ANALYTICS</h1>
-        <p>Modelo Cuantitativo de Selección de Valor (+EV) mediante Distribución de Poisson</p>
+        <h1>Quantum Devig & EV Finder</h1>
+        <p>Eliminación de margen (Proporcional) + Búsqueda de Valor por Modelo Poisson</p>
     </header>
 
-    <div class="grid-layout">
-        <!-- Panel de Entradas -->
-        <div class="card">
-            <div class="card-title">Configuración del Partido</div>
-            
-            <div class="form-group">
-                <label>Promedio Goles de la Liga</label>
-                <input type="number" id="leagueAvg" step="0.01" value="2.65">
-            </div>
+    <div class="market-selector">
+        <button class="market-btn active" onclick="switchMarket('1X2')">Mercado 1X2</button>
+        <button class="market-btn" onclick="switchMarket('OU')">Over / Under</button>
+        <button class="market-btn" onclick="switchMarket('BTTS')">Both Teams To Score</button>
+    </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Ataque Local (xG/Goles)</label>
-                    <input type="number" id="homeAtt" step="0.01" value="1.75">
-                </div>
-                <div class="form-group">
-                    <label>Defensa Local (Recibidos)</label>
-                    <input type="number" id="homeDef" step="0.01" value="0.90">
-                </div>
-            </div>
+    <div class="grid-inputs" id="inputsContainer">
+        <!-- Renderizado dinámico vía JavaScript -->
+    </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Ataque Visita (xG/Goles)</label>
-                    <input type="number" id="awayAtt" step="0.01" value="1.20">
-                </div>
-                <div class="form-group">
-                    <label>Defensa Visita (Recibidos)</label>
-                    <input type="number" id="awayDef" step="0.01" value="1.40">
-                </div>
-            </div>
-
-            <div class="card-title" style="margin-top: 15px;">Cuotas Casa de Apuestas</div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Cuota 1 (Local)</label>
-                    <input type="number" id="odds1" step="0.01" value="2.10">
-                </div>
-                <div class="form-group">
-                    <label>Cuota X (Empate)</label>
-                    <input type="number" id="oddsX" step="0.01" value="3.40">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Cuota 2 (Visita)</label>
-                    <input type="number" id="odds2" step="0.01" value="3.60">
-                </div>
-                <div class="form-group">
-                    <label>Cuota Over 2.5</label>
-                    <input type="number" id="oddsOver" step="0.01" value="1.95">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Bankroll Total ($)</label>
-                <input type="number" id="bankroll" value="1000">
-            </div>
-
-            <button class="btn-primary" onclick="calculateModel()">Ejecutar Análisis</button>
+    <div class="margin-banner">
+        <div class="margin-item">
+            <span class="label">Overround (Suma Prob. Implícitas)</span>
+            <span class="val" id="overroundVal">0.00%</span>
         </div>
-
-        <!-- Resultados -->
-        <div class="card">
-            <div class="card-title">Resultados del Modelo & Detección de Valor</div>
-
-            <div class="metrics-grid">
-                <div class="metric-box">
-                    <div class="label">xG Esperado Local</div>
-                    <div class="val" id="expHome" style="color: var(--accent-blue);">0.00</div>
-                </div>
-                <div class="metric-box">
-                    <div class="label">xG Esperado Visita</div>
-                    <div class="val" id="expAway" style="color: var(--accent-blue);">0.00</div>
-                </div>
-                <div class="metric-box">
-                    <div class="label">Margin / Vigo</div>
-                    <div class="val" id="bookieMargin" style="color: var(--text-muted);">0.0%</div>
-                </div>
-            </div>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Mercado</th>
-                            <th>Prob. Modelo</th>
-                            <th>Cuota Justa</th>
-                            <th>Cuota Casa</th>
-                            <th>Valor (+EV)</th>
-                            <th>Kelly (1/4)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsTable">
-                        <!-- Generado por JS -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card-title" style="margin-top: 25px;">Matriz de Marcadores Exactos (%)</div>
-            <div class="table-container">
-                <table class="matrix-table" id="matrixTable">
-                    <!-- Generado por JS -->
-                </table>
-            </div>
+        <div class="margin-item">
+            <span class="label">Margen de la Casa</span>
+            <span class="val" id="marginVal" style="color: var(--accent-amber);">0.00%</span>
         </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Opción</th>
+                    <th>Cuota Bookie</th>
+                    <th>Prob. Implícita</th>
+                    <th>Prob. Real (Sin Margen)</th>
+                    <th>Cuota Justa (Fair)</th>
+                    <th>Prob. Poisson</th>
+                    <th>EV (%)</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTable">
+                <!-- Resultados renderizados dinámicamente -->
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    function factorial(n) {
-        if (n === 0 || n === 1) return 1;
-        let res = 1;
-        for (let i = 2; i <= n; i++) res *= i;
-        return res;
+    let currentMarket = '1X2';
+
+    const marketConfigs = {
+        '1X2': [
+            { id: '1', name: 'Local (1)', defaultOdd: 2.10, defaultPoisson: 46.50 },
+            { id: 'X', name: 'Empate (X)', defaultOdd: 3.40, defaultPoisson: 27.20 },
+            { id: '2', name: 'Visitante (2)', defaultOdd: 3.60, defaultPoisson: 26.30 }
+        ],
+        'OU': [
+            { id: 'O', name: 'Over 2.5', defaultOdd: 1.90, defaultPoisson: 53.50 },
+            { id: 'U', name: 'Under 2.5', defaultOdd: 1.95, defaultPoisson: 46.50 }
+        ],
+        'BTTS': [
+            { id: 'Y', name: 'BTTS Sí', defaultOdd: 1.85, defaultPoisson: 56.00 },
+            { id: 'N', name: 'BTTS No', defaultOdd: 2.00, defaultPoisson: 44.00 }
+        ]
+    };
+
+    function switchMarket(market) {
+        currentMarket = market;
+        document.querySelectorAll('.market-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText.includes(market) || (market === 'OU' && btn.innerText.includes('Over')) || (market === 'BTTS' && btn.innerText.includes('Both')));
+        });
+        renderInputs();
+        calculate();
     }
 
-    function poisson(k, lambda) {
-        return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
-    }
+    function renderInputs() {
+        const container = document.getElementById('inputsContainer');
+        container.innerHTML = '';
+        const config = marketConfigs[currentMarket];
 
-    function calculateModel() {
-        const avgG = parseFloat(document.getElementById('leagueAvg').value);
-        const hAtt = parseFloat(document.getElementById('homeAtt').value);
-        const hDef = parseFloat(document.getElementById('homeDef').value);
-        const aAtt = parseFloat(document.getElementById('awayAtt').value);
-        const aDef = parseFloat(document.getElementById('awayDef').value);
-
-        const o1 = parseFloat(document.getElementById('odds1').value);
-        const oX = parseFloat(document.getElementById('oddsX').value);
-        const o2 = parseFloat(document.getElementById('odds2').value);
-        const oOver = parseFloat(document.getElementById('oddsOver').value);
-        const bank = parseFloat(document.getElementById('bankroll').value);
-
-        // Expectativa de Goles (xG)
-        const lambdaHome = (hAtt / avgG) * (aDef / avgG) * avgG;
-        const lambdaAway = (aAtt / avgG) * (hDef / avgG) * avgG;
-
-        document.getElementById('expHome').innerText = lambdaHome.toFixed(2);
-        document.getElementById('expAway').innerText = lambdaAway.toFixed(2);
-
-        // Calcular Margen de la casa de apuestas (Vigo) en 1X2
-        const margin = ((1/o1 + 1/oX + 1/o2) - 1) * 100;
-        document.getElementById('bookieMargin').innerText = margin.toFixed(2) + '%';
-
-        // Construir Matriz de Poisson (0 a 5 goles)
-        let p1 = 0, pX = 0, p2 = 0, pOver25 = 0;
-        let matrix = Array(6).fill(0).map(() => Array(6).fill(0));
-
-        let matrixHTML = '<thead><tr><th>Local \\ Visita</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead><tbody>';
-
-        for (let i = 0; i <= 5; i++) {
-            matrixHTML += `<tr><th>${i}</th>`;
-            for (let j = 0; j <= 5; j++) {
-                const prob = poisson(i, lambdaHome) * poisson(j, lambdaAway);
-                matrix[i][j] = prob;
-
-                if (i > j) p1 += prob;
-                else if (i === j) pX += prob;
-                else p2 += prob;
-
-                if (i + j > 2.5) pOver25 += prob;
-
-                matrixHTML += `<td>${(prob * 100).toFixed(1)}%</td>`;
-            }
-            matrixHTML += '</tr>';
-        }
-        matrixHTML += '</tbody>';
-        document.getElementById('matrixTable').innerHTML = matrixHTML;
-
-        // Evaluación de Mercados
-        const markets = [
-            { name: 'Gana Local (1)', prob: p1, odds: o1 },
-            { name: 'Empate (X)', prob: pX, odds: oX },
-            { name: 'Gana Visita (2)', prob: p2, odds: o2 },
-            { name: 'Over 2.5 Goles', prob: pOver25, odds: oOver }
-        ];
-
-        let resultsHTML = '';
-
-        markets.forEach(m => {
-            const fairOdds = 1 / m.prob;
-            const ev = (m.prob * m.odds) - 1;
-            
-            // Fractional Kelly (1/4 Kelly)
-            let kellyPercent = 0;
-            let kellyAmount = 0;
-            if (ev > 0) {
-                const b = m.odds - 1;
-                kellyPercent = ((b * m.prob - (1 - m.prob)) / b) * 0.25;
-                kellyAmount = bank * Math.max(0, kellyPercent);
-            }
-
-            const evClass = ev > 0 ? 'badge-positive' : 'badge-negative';
-            const evDisplay = (ev * 100).toFixed(2) + '%';
-
-            resultsHTML += `
-                <tr>
-                    <td><strong>${m.name}</strong></td>
-                    <td class="mono">${(m.prob * 100).toFixed(1)}%</td>
-                    <td class="mono">${fairOdds.toFixed(2)}</td>
-                    <td class="mono">${m.odds.toFixed(2)}</td>
-                    <td><span class="badge-ev ${evClass}">${evDisplay}</span></td>
-                    <td class="mono">${ev > 0 ? '$' + kellyAmount.toFixed(1) + ' (' + (kellyPercent * 100).toFixed(1) + '%)' : '-'}</td>
-                </tr>
+        config.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'option-card';
+            card.innerHTML = `
+                <h3>${item.name}</h3>
+                <div class="input-group">
+                    <label>Cuota Casa de Apuestas</label>
+                    <input type="number" id="odd_${item.id}" step="0.01" value="${item.defaultOdd}" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>Probabilidad Poisson (%)</label>
+                    <input type="number" id="poisson_${item.id}" step="0.1" value="${item.defaultPoisson}" oninput="calculate()">
+                </div>
             `;
+            container.appendChild(card);
+        });
+    }
+
+    function calculate() {
+        const config = marketConfigs[currentMarket];
+        let totalImplicit = 0;
+        const data = [];
+
+        // 1. Obtener valores y calcular probabilidades implícitas
+        config.forEach(item => {
+            const odd = parseFloat(document.getElementById(`odd_${item.id}`).value) || 0;
+            const poisson = parseFloat(document.getElementById(`poisson_${item.id}`).value) || 0;
+            const implicitProb = odd > 0 ? (1 / odd) : 0;
+            totalImplicit += implicitProb;
+
+            data.push({
+                name: item.name,
+                odd: odd,
+                poisson: poisson / 100,
+                implicitProb: implicitProb
+            });
         });
 
-        document.getElementById('resultsTable').innerHTML = resultsHTML;
+        // 2. Margen de la casa
+        const margin = totalImplicit > 0 ? (totalImplicit - 1) * 100 : 0;
+        const overround = totalImplicit * 100;
+
+        document.getElementById('overroundVal').innerText = `${overround.toFixed(2)}%`;
+        document.getElementById('marginVal').innerText = `${margin.toFixed(2)}%`;
+
+        // 3. Devigging proporcional y cálculo de EV
+        const tbody = document.getElementById('resultsTable');
+        tbody.innerHTML = '';
+
+        data.forEach(item => {
+            const realProb = totalImplicit > 0 ? (item.implicitProb / totalImplicit) : 0;
+            const fairOdd = realProb > 0 ? (1 / realProb) : 0;
+            
+            // Expected Value (+EV): (Probabilidad Modelo * Cuota Bookie) - 1
+            const ev = (item.poisson * item.odd) - 1;
+            const evPercent = ev * 100;
+
+            let evBadgeClass = 'badge-ev-neutral';
+            if (evPercent > 0) evBadgeClass = 'badge-ev-pos';
+            else if (evPercent < 0) evBadgeClass = 'badge-ev-neg';
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight:700; color: var(--accent-cyan);">${item.name}</td>
+                <td class="font-mono">${item.odd.toFixed(2)}</td>
+                <td class="font-mono">${(item.implicitProb * 100).toFixed(2)}%</td>
+                <td class="font-mono" style="font-weight:700; color: var(--accent-green);">${(realProb * 100).toFixed(2)}%</td>
+                <td class="font-mono">${fairOdd > 0 ? fairOdd.toFixed(2) : '-'}</td>
+                <td class="font-mono">${(item.poisson * 100).toFixed(2)}%</td>
+                <td>
+                    <span class="badge ${evBadgeClass}">
+                        ${evPercent >= 0 ? '+' : ''}${evPercent.toFixed(2)}%
+                    </span>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    // Ejecución inicial al cargar la página
-    window.onload = calculateModel;
+    // Inicializar al cargar
+    renderInputs();
+    calculate();
 </script>
 
 </body>
