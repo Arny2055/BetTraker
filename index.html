@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Quantum Predictive Engine v4.5 - Super Monster Edition</title>
+  <title>Quantum Predictive Engine v5.0 - Ultimate Monster Edition</title>
   
   <!-- CDNs: Tailwind CSS, Chart.js, Lucide Icons, Supabase JS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -28,26 +28,29 @@
     }
   </script>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
   <!-- Header / Status Bar -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="p-2 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-lg text-white shadow-lg shadow-indigo-500/30">
+        <div class="p-2 bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
           <i data-lucide="brain-circuit" class="w-6 h-6"></i>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-wide bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
-            QUANTUM MONSTER ENGINE v4.5
+          <h1 class="text-lg font-black tracking-wider bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+            QUANTUM MONSTER ENGINE v5.0
           </h1>
-          <p class="text-[10px] text-slate-400 font-mono">1X2 • OVER/UNDER • BTTS • DIXON-COLES • MONTE CARLO (10K)</p>
+          <p class="text-[10px] text-slate-400 font-mono tracking-tight">FULL MATCH & HT • 8x8 DIXON-COLES • KELLY CRITERION • BRIER SCORE</p>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
+        <button onclick="exportDataJSON()" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 text-xs flex items-center gap-1.5 transition-all" title="Exportar Respaldo JSON">
+          <i data-lucide="download" class="w-4 h-4"></i> Exportar
+        </button>
         <button onclick="toggleConfigModal()" class="flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition-all">
-          <i data-lucide="settings" class="w-4 h-4"></i> Credenciales API
+          <i data-lucide="settings" class="w-4 h-4"></i> API & Bot
         </button>
         <span id="supabase-status" class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
           <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Offline
@@ -57,127 +60,173 @@
   </header>
 
   <!-- Main Container -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Control Inputs & Main Grid -->
+    <!-- Inputs & Main Control Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
       <!-- Input Parameters -->
-      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
-        <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-400"></i> Parámetros de Entrada
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl relative overflow-hidden backdrop-blur-sm space-y-4">
+        <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+          <span class="flex items-center gap-2"><i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i> Parámetros Cuantitativos</span>
+          <span class="text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Model Settings</span>
         </h2>
 
-        <form id="calc-form" class="space-y-4">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">λ Local (xG Local)</label>
-              <input type="number" step="0.01" id="lambdaHome" value="1.85" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">μ Visitante (xG Visita)</label>
-              <input type="number" step="0.01" id="lambdaAway" value="1.15" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Ajuste Dixon-Coles (ρ)</label>
-              <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-slate-400 mb-1">Cuota Evaluación (Odd)</label>
-              <input type="number" step="0.01" id="oddMarket" value="1.95" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
-            </div>
-          </div>
-
+        <form id="calc-form" class="space-y-3">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Identificador de Partido / Evento</label>
-            <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            <label class="block text-[11px] font-medium text-slate-400 mb-1">Identificador del Evento</label>
+            <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">λ Local (xG FT)</label>
+              <input type="number" step="0.01" id="lambdaHome" value="1.85" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">μ Visitante (xG FT)</label>
+              <input type="number" step="0.01" id="lambdaAway" value="1.15" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">% xG en HT (Local)</label>
+              <input type="number" step="1" id="htRatioHome" value="45" min="10" max="90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">% xG en HT (Visita)</label>
+              <input type="number" step="1" id="htRatioAway" value="42" min="10" max="90" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Dixon-Coles (ρ)</label>
+              <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Bankroll ($ Total)</label>
+              <input type="number" step="10" id="bankroll" value="1000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+          </div>
+
+          <hr class="border-slate-800/80 my-2">
+
+          <!-- Evaluador de Cuota Específica -->
+          <div class="grid grid-cols-2 gap-3 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/50">
+            <div>
+              <label class="block text-[10px] font-semibold text-indigo-400 uppercase tracking-wider mb-1">Mercado a Evaluar</label>
+              <select id="evalMarket" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-200">
+                <option value="1">1 (Local FT)</option>
+                <option value="X">X (Empate FT)</option>
+                <option value="2">2 (Visita FT)</option>
+                <option value="O25">Over 2.5 FT</option>
+                <option value="U25">Under 2.5 FT</option>
+                <option value="BTTS_Y">BTTS Sí FT</option>
+                <option value="BTTS_N">BTTS No FT</option>
+                <option value="HT_BTTS_Y">BTTS Sí 1H</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-indigo-400 uppercase tracking-wider mb-1">Cuota Casa (Odd)</label>
+              <input type="number" step="0.01" id="evalOdd" value="2.10" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-xs text-white">
+            </div>
           </div>
 
           <div class="pt-2 grid grid-cols-2 gap-3">
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
-              <i data-lucide="cpu" class="w-4 h-4"></i> Ejecutar
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 text-xs">
+              <i data-lucide="cpu" class="w-4 h-4"></i> Calcular
             </button>
-            <button type="button" onclick="sendTelegramAlert()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-2">
+            <button type="button" onclick="sendTelegramAlert()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2 rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-2 text-xs">
               <i data-lucide="send" class="w-4 h-4 text-sky-400"></i> Telegram
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Live KPI Metrics: Mercado 1X2 -->
-      <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <!-- Live KPIs & EV Engine Dashboard -->
+      <div class="lg:col-span-2 space-y-4">
         
-        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-400">1 (Victoria Local)</span>
-            <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">1X2</span>
+        <!-- 1X2 Full Time Grid -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between">
+            <span class="text-[11px] font-semibold text-slate-400 flex justify-between">Local (1) <span class="text-[9px] text-emerald-400">FT</span></span>
+            <div class="my-1"><span id="kpi-home" class="text-2xl font-black text-emerald-400">0.0%</span></div>
+            <span class="text-[10px] text-slate-500">Fair Odd: <b id="odd-home" class="text-slate-200">0.00</b></span>
           </div>
-          <div class="my-2">
-            <span id="kpi-home" class="text-3xl font-black text-emerald-400">0.0%</span>
+
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between">
+            <span class="text-[11px] font-semibold text-slate-400 flex justify-between">Empate (X) <span class="text-[9px] text-amber-400">FT</span></span>
+            <div class="my-1"><span id="kpi-draw" class="text-2xl font-black text-amber-400">0.0%</span></div>
+            <span class="text-[10px] text-slate-500">Fair Odd: <b id="odd-draw" class="text-slate-200">0.00</b></span>
           </div>
-          <span class="text-[10px] text-slate-500">Cuota Justa: <span id="odd-home" class="text-slate-300 font-bold">0.00</span></span>
+
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between">
+            <span class="text-[11px] font-semibold text-slate-400 flex justify-between">Visita (2) <span class="text-[9px] text-rose-400">FT</span></span>
+            <div class="my-1"><span id="kpi-away" class="text-2xl font-black text-rose-400">0.0%</span></div>
+            <span class="text-[10px] text-slate-500">Fair Odd: <b id="odd-away" class="text-slate-200">0.00</b></span>
+          </div>
         </div>
 
-        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-400">X (Empate)</span>
-            <span class="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20">1X2</span>
+        <!-- Calculated Value & Kelly Stake Banner -->
+        <div class="bg-gradient-to-r from-indigo-950/60 via-slate-900/80 to-purple-950/60 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between shadow-xl">
+          <div class="space-y-0.5">
+            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest block">Evaluación de Apuesta de Valor (EV)</span>
+            <div class="text-sm font-bold text-white flex items-center gap-2">
+              <span id="ev-market-name">Mercado: -</span>
+              <span id="ev-badge" class="px-2 py-0.5 text-[10px] rounded-md bg-slate-800 text-slate-300 border border-slate-700">Esperando</span>
+            </div>
           </div>
-          <div class="my-2">
-            <span id="kpi-draw" class="text-3xl font-black text-amber-400">0.0%</span>
+          <div class="text-right">
+            <div id="ev-value" class="text-xl font-black text-slate-200">+0.0% EV</div>
+            <div class="text-[10px] text-slate-400">Stake Kelly (1/4): <b id="kelly-stake" class="text-indigo-300">$0.00 (0%)</b></div>
           </div>
-          <span class="text-[10px] text-slate-500">Cuota Justa: <span id="odd-draw" class="text-slate-300 font-bold">0.00</span></span>
         </div>
 
-        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-slate-400">2 (Victoria Visitante)</span>
-            <span class="text-[10px] bg-rose-500/10 text-rose-400 px-2 py-0.5 rounded border border-rose-500/20">1X2</span>
+        <!-- Comprehensive Markets Grid (FT & HT) -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i> Desglose Multimercado Avanzado
+            </h3>
+            <span class="text-[10px] text-slate-500">Matrix Size: 8x8 Exact Poisson</span>
           </div>
-          <div class="my-2">
-            <span id="kpi-away" class="text-3xl font-black text-rose-400">0.0%</span>
-          </div>
-          <span class="text-[10px] text-slate-500">Cuota Justa: <span id="odd-away" class="text-slate-300 font-bold">0.00</span></span>
-        </div>
 
-        <!-- Seccion de Mercados Avanzados: Over/Under y BTTS -->
-        <div class="sm:col-span-3 bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-            <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i> Mercados de Goles & BTTS</span>
-            <span class="text-[10px] text-slate-500">Dixon-Coles & Monte Carlo</span>
-          </h3>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <!-- Over/Under 1.5 -->
-            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span class="text-[11px] font-semibold text-slate-400 block mb-1">Over / Under 1.5</span>
-              <div class="text-xs text-slate-200">Over: <b id="kpi-over15" class="text-indigo-400">0.0%</b></div>
-              <div class="text-xs text-slate-200">Under: <b id="kpi-under15" class="text-slate-400">0.0%</b></div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            
+            <!-- FT Over/Under 1.5 & 2.5 -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5">
+              <span class="text-[10px] font-bold text-slate-400 block mb-1">Líneas Goles FT</span>
+              <div class="text-[11px] text-slate-300 flex justify-between">O1.5: <b id="kpi-o15" class="text-indigo-400">0.0%</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">O2.5: <b id="kpi-o25" class="text-indigo-400">0.0%</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">U2.5: <b id="kpi-u25" class="text-slate-400">0.0%</b></div>
             </div>
 
-            <!-- Over/Under 2.5 -->
-            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span class="text-[11px] font-semibold text-slate-400 block mb-1">Over / Under 2.5</span>
-              <div class="text-xs text-slate-200">Over: <b id="kpi-over25" class="text-indigo-400">0.0%</b></div>
-              <div class="text-xs text-slate-200">Under: <b id="kpi-under25" class="text-slate-400">0.0%</b></div>
+            <!-- FT Over/Under 3.5 & BTTS -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5">
+              <span class="text-[10px] font-bold text-slate-400 block mb-1">O3.5 & BTTS FT</span>
+              <div class="text-[11px] text-slate-300 flex justify-between">O3.5: <b id="kpi-o35" class="text-indigo-400">0.0%</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">BTTS Sí: <b id="kpi-btts-yes" class="text-emerald-400">0.0%</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">BTTS No: <b id="kpi-btts-no" class="text-rose-400">0.0%</b></div>
             </div>
 
-            <!-- Over/Under 3.5 -->
-            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span class="text-[11px] font-semibold text-slate-400 block mb-1">Over / Under 3.5</span>
-              <div class="text-xs text-slate-200">Over: <b id="kpi-over35" class="text-indigo-400">0.0%</b></div>
-              <div class="text-xs text-slate-200">Under: <b id="kpi-under35" class="text-slate-400">0.0%</b></div>
+            <!-- First Half (1H / HT) Markets -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5">
+              <span class="text-[10px] font-bold text-slate-400 block mb-1">Primera Mitad (1H)</span>
+              <div class="text-[11px] text-slate-300 flex justify-between">1H 1X2: <b id="kpi-ht-1x2" class="text-amber-400">0/0/0</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">1H O0.5: <b id="kpi-ht-o05" class="text-indigo-400">0.0%</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">1H O1.5: <b id="kpi-ht-o15" class="text-indigo-400">0.0%</b></div>
             </div>
 
-            <!-- BTTS (Both Teams To Score) -->
-            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3">
-              <span class="text-[11px] font-semibold text-slate-400 block mb-1">BTTS (Ambos Anotan)</span>
-              <div class="text-xs text-slate-200">Sí: <b id="kpi-btts-yes" class="text-emerald-400">0.0%</b></div>
-              <div class="text-xs text-slate-200">No: <b id="kpi-btts-no" class="text-rose-400">0.0%</b></div>
+            <!-- 1H BTTS & Risk Metrics -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5">
+              <span class="text-[10px] font-bold text-slate-400 block mb-1">1H BTTS & Métricas</span>
+              <div class="text-[11px] text-slate-300 flex justify-between">1H BTTS Sí: <b id="kpi-ht-btts-yes" class="text-emerald-400">0.0%</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">1H BTTS No: <b id="kpi-ht-btts-no" class="text-rose-400">0.0%</b></div>
+              <div class="text-[11px] text-slate-300 flex justify-between">Brier Exp: <b id="kpi-brier" class="text-slate-400">0.000</b></div>
             </div>
+
           </div>
         </div>
 
@@ -185,15 +234,15 @@
 
     </div>
 
-    <!-- Chart: Matrix Distribution -->
+    <!-- Chart: Matrix Distribution & Exact Scores -->
     <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 relative">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-400"></i> Distribución de Probabilidad de Marcadores Exactos
+          <i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-400"></i> Distribución de Probabilidades de Marcador Exacto (Top 12)
         </h3>
-        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">Dixon-Coles 6x6</span>
+        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2.5 py-0.5 rounded-full border border-indigo-500/20">8x8 Matrix Computed</span>
       </div>
-      <div class="h-52">
+      <div class="h-48">
         <canvas id="matrixChart"></canvas>
       </div>
     </div>
@@ -203,9 +252,9 @@
   <!-- Modal Config (Supabase + Telegram) -->
   <div id="configModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i data-lucide="database" class="w-5 h-5 text-indigo-400"></i> Configuración de Integraciones
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="database" class="w-4 h-4 text-indigo-400"></i> Integraciones & API Setup
         </h3>
         <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
@@ -230,13 +279,13 @@
         </div>
       </div>
 
-      <button onclick="saveConfigurations()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 rounded-xl transition-all">
-        Guardar Configuración
+      <button onclick="saveConfigurations()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30">
+        Guardar Ajustes
       </button>
     </div>
   </div>
 
-  <!-- Core Engine Logic -->
+  <!-- Core Math & Logic Engine Script -->
   <script>
     lucide.createIcons();
 
@@ -249,7 +298,10 @@
     function initApp() {
       configKeys.forEach(k => {
         const val = localStorage.getItem('qmt_' + k);
-        if(val) document.getElementById('cfg-' + k.replace(/[AZ]/g, letter => `-${letter.toLowerCase()}`)).value = val;
+        if(val) {
+          const el = document.getElementById('cfg-' + k.replace(/([A-Z])/g, '-$1').toLowerCase());
+          if (el) el.value = val;
+        }
       });
 
       const url = localStorage.getItem('qmt_supaUrl');
@@ -260,7 +312,7 @@
           supabaseClient = supabase.createClient(url, key);
           document.getElementById('supabase-status').className = "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
           document.getElementById('supabase-status').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Conectado`;
-        } catch(e) { console.error("Supabase Error:", e); }
+        } catch(e) { console.error("Supabase error:", e); }
       }
 
       initChart();
@@ -280,6 +332,7 @@
       initApp();
     }
 
+    // Mathematical Engine Functions
     function factorial(n) {
       if (n === 0 || n === 1) return 1;
       let res = 1;
@@ -302,83 +355,153 @@
     function runEngine() {
       const lambda = parseFloat(document.getElementById('lambdaHome').value) || 1.0;
       const mu = parseFloat(document.getElementById('lambdaAway').value) || 1.0;
+      const htRatioH = (parseFloat(document.getElementById('htRatioHome').value) || 45) / 100;
+      const htRatioA = (parseFloat(document.getElementById('htRatioAway').value) || 42) / 100;
       const rho = parseFloat(document.getElementById('rho').value) || 0.0;
-      const oddMarket = parseFloat(document.getElementById('oddMarket').value) || 1.0;
+      const bankroll = parseFloat(document.getElementById('bankroll').value) || 1000;
 
+      const lambdaHT = lambda * htRatioH;
+      const muHT = mu * htRatioA;
+
+      // Full Time Variables
       let pHome = 0, pDraw = 0, pAway = 0;
-      let pOver15 = 0, pOver25 = 0, pOver35 = 0;
-      let pBttsYes = 0;
+      let pO15 = 0, pO25 = 0, pU25 = 0, pO35 = 0;
+      let pBttsYes = 0, pBttsNo = 0;
 
-      const labels = [];
-      const dataPoints = [];
+      // Half Time Variables
+      let htHome = 0, htDraw = 0, htAway = 0;
+      let htO05 = 0, htO15 = 0, htBttsYes = 0;
 
-      // Dixon-Coles Matrix 6x6
-      for (let x = 0; x <= 5; x++) {
-        for (let y = 0; y <= 5; y++) {
+      const scoreList = [];
+
+      // 8x8 Exact Bivariate Dixon-Coles Matrix computation
+      for (let x = 0; x <= 7; x++) {
+        for (let y = 0; y <= 7; y++) {
           const rawP = poisson(x, lambda) * poisson(y, mu);
           const tau = dixonColesTau(x, y, lambda, mu, rho);
           const prob = rawP * tau;
 
-          // 1X2
           if (x > y) pHome += prob;
           else if (x === y) pDraw += prob;
           else pAway += prob;
 
-          // Over / Under
-          const totalGoals = x + y;
-          if (totalGoals > 1.5) pOver15 += prob;
-          if (totalGoals > 2.5) pOver25 += prob;
-          if (totalGoals > 3.5) pOver35 += prob;
+          const goals = x + y;
+          if (goals > 1.5) pO15 += prob;
+          if (goals > 2.5) pO25 += prob;
+          if (goals > 3.5) pO35 += prob;
 
-          // BTTS
           if (x > 0 && y > 0) pBttsYes += prob;
 
-          // Chart data (top scores)
-          if (x <= 3 && y <= 3) {
-            labels.push(`${x}-${y}`);
-            dataPoints.push((prob * 100).toFixed(2));
-          }
+          scoreList.push({ score: `${x}-${y}`, prob: prob });
         }
       }
 
-      const pUnder15 = 1 - pOver15;
-      const pUnder25 = 1 - pOver25;
-      const pUnder35 = 1 - pOver35;
-      const pBttsNo = 1 - pBttsYes;
+      pU25 = 1 - pO25;
+      pBttsNo = 1 - pBttsYes;
 
-      // Fair Odds 1X2
-      const oddH = (1 / pHome).toFixed(2);
-      const oddD = (1 / pDraw).toFixed(2);
-      const oddA = (1 / pAway).toFixed(2);
+      // 1H Bivariate Matrix Computation
+      for (let x = 0; x <= 5; x++) {
+        for (let y = 0; y <= 5; y++) {
+          const probHT = poisson(x, lambdaHT) * poisson(y, muHT);
+          if (x > y) htHome += probHT;
+          else if (x === y) htDraw += probHT;
+          else htAway += probHT;
 
-      // Render KPIs
+          if ((x + y) > 0.5) htO05 += probHT;
+          if ((x + y) > 1.5) htO15 += probHT;
+          if (x > 0 && y > 0) htBttsYes += probHT;
+        }
+      }
+
+      // Render 1X2 & Fair Odds
       document.getElementById('kpi-home').innerText = (pHome * 100).toFixed(1) + '%';
       document.getElementById('kpi-draw').innerText = (pDraw * 100).toFixed(1) + '%';
       document.getElementById('kpi-away').innerText = (pAway * 100).toFixed(1) + '%';
 
-      document.getElementById('odd-home').innerText = oddH;
-      document.getElementById('odd-draw').innerText = oddD;
-      document.getElementById('odd-away').innerText = oddA;
+      document.getElementById('odd-home').innerText = (1 / pHome).toFixed(2);
+      document.getElementById('odd-draw').innerText = (1 / pDraw).toFixed(2);
+      document.getElementById('odd-away').innerText = (1 / pAway).toFixed(2);
 
-      // Render Over/Under
-      document.getElementById('kpi-over15').innerText = (pOver15 * 100).toFixed(1) + '%';
-      document.getElementById('kpi-under15').innerText = (pUnder15 * 100).toFixed(1) + '%';
-      document.getElementById('kpi-over25').innerText = (pOver25 * 100).toFixed(1) + '%';
-      document.getElementById('kpi-under25').innerText = (pUnder25 * 100).toFixed(1) + '%';
-      document.getElementById('kpi-over35').innerText = (pOver35 * 100).toFixed(1) + '%';
-      document.getElementById('kpi-under35').innerText = (pUnder35 * 100).toFixed(1) + '%';
-
-      // Render BTTS
+      // Render Markets
+      document.getElementById('kpi-o15').innerText = (pO15 * 100).toFixed(1) + '%';
+      document.getElementById('kpi-o25').innerText = (pO25 * 100).toFixed(1) + '%';
+      document.getElementById('kpi-u25').innerText = (pU25 * 100).toFixed(1) + '%';
+      document.getElementById('kpi-o35').innerText = (pO35 * 100).toFixed(1) + '%';
       document.getElementById('kpi-btts-yes').innerText = (pBttsYes * 100).toFixed(1) + '%';
       document.getElementById('kpi-btts-no').innerText = (pBttsNo * 100).toFixed(1) + '%';
 
-      updateChart(labels, dataPoints);
+      document.getElementById('kpi-ht-1x2').innerText = `${(htHome*100).toFixed(0)}/${(htDraw*100).toFixed(0)}/${(htAway*100).toFixed(0)}%`;
+      document.getElementById('kpi-ht-o05').innerText = (htO05 * 100).toFixed(1) + '%';
+      document.getElementById('kpi-ht-o15').innerText = (htO15 * 100).toFixed(1) + '%';
+      document.getElementById('kpi-ht-btts-yes').innerText = (htBttsYes * 100).toFixed(1) + '%';
+      document.getElementById('kpi-ht-btts-no').innerText = ((1 - htBttsYes) * 100).toFixed(1) + '%';
+
+      // Expected Brier Score Calculation
+      const brierExp = (Math.pow(1 - pHome, 2) + Math.pow(pDraw, 2) + Math.pow(pAway, 2)) * pHome +
+                       (Math.pow(pHome, 2) + Math.pow(1 - pDraw, 2) + Math.pow(pAway, 2)) * pDraw +
+                       (Math.pow(pHome, 2) + Math.pow(pDraw, 2) + Math.pow(1 - pAway, 2)) * pAway;
+      document.getElementById('kpi-brier').innerText = brierExp.toFixed(3);
+
+      // Evaluate Selected Market EV & Kelly
+      const evalMarket = document.getElementById('evalMarket').value;
+      const evalOdd = parseFloat(document.getElementById('evalOdd').value) || 1.0;
+      let targetProb = 0;
+      let mktName = "";
+
+      switch(evalMarket) {
+        case '1': targetProb = pHome; mktName = "Victoria Local (1)"; break;
+        case 'X': targetProb = pDraw; mktName = "Empate (X)"; break;
+        case '2': targetProb = pAway; mktName = "Victoria Visita (2)"; break;
+        case 'O25': targetProb = pO25; mktName = "Over 2.5 FT"; break;
+        case 'U25': targetProb = pU25; mktName = "Under 2.5 FT"; break;
+        case 'BTTS_Y': targetProb = pBttsYes; mktName = "BTTS Sí FT"; break;
+        case 'BTTS_N': targetProb = pBttsNo; mktName = "BTTS No FT"; break;
+        case 'HT_BTTS_Y': targetProb = htBttsYes; mktName = "BTTS Sí 1H"; break;
+      }
+
+      // Discard strategy filter check for Poisson probabilities >= 60% on BTTS Yes or Over 2.5
+      let filterDiscarded = false;
+      if ((evalMarket === 'O25' || evalMarket === 'BTTS_Y') && targetProb >= 0.60) {
+        filterDiscarded = true;
+      }
+
+      const ev = ((targetProb * evalOdd) - 1) * 100;
+      
+      // Kelly Criterion Quarter Stake Formula: f* = (bp - q) / b / 4
+      const b = evalOdd - 1;
+      const q = 1 - targetProb;
+      let kellyPct = b > 0 ? ((b * targetProb - q) / b) / 4 : 0;
+      if (kellyPct < 0 || filterDiscarded) kellyPct = 0;
+
+      const kellyAmount = bankroll * kellyPct;
+
+      document.getElementById('ev-market-name').innerText = `Mercado: ${mktName}`;
+      document.getElementById('ev-value').innerText = (ev >= 0 ? '+' : '') + ev.toFixed(1) + '% EV';
+      document.getElementById('ev-value').className = ev > 0 && !filterDiscarded ? "text-xl font-black text-emerald-400" : "text-xl font-black text-rose-400";
+      
+      const badge = document.getElementById('ev-badge');
+      if (filterDiscarded) {
+        badge.innerText = "Descartado (Regla ≥60%)";
+        badge.className = "px-2 py-0.5 text-[10px] rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30";
+      } else if (ev > 0) {
+        badge.innerText = "Apuesta de Valor";
+        badge.className = "px-2 py-0.5 text-[10px] rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+      } else {
+        badge.innerText = "Sin Valor";
+        badge.className = "px-2 py-0.5 text-[10px] rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/30";
+      }
+
+      document.getElementById('kelly-stake').innerText = `$${kellyAmount.toFixed(2)} (${(kellyPct * 100).toFixed(1)}%)`;
+
+      // Sort Top Scores for Charting
+      scoreList.sort((a, b) => b.prob - a.prob);
+      const topScores = scoreList.slice(0, 12);
+      updateChart(topScores.map(s => s.score), topScores.map(s => (s.prob * 100).toFixed(2)));
 
       currentResults = {
         match: document.getElementById('matchLabel').value,
-        lambda, mu, pHome, pDraw, pAway,
-        pOver15, pOver25, pOver35,
-        pBttsYes, pBttsNo
+        lambda, mu, pHome, pDraw, pAway, pO25, pBttsYes,
+        evalMarket: mktName, evalOdd, ev, kellyAmount, filterDiscarded
       };
 
       // Save to Supabase
@@ -390,10 +513,11 @@
           prob_home: pHome,
           prob_draw: pDraw,
           prob_away: pAway,
-          prob_over25: pOver25,
+          prob_over25: pO25,
           prob_btts_yes: pBttsYes,
+          ev_eval: ev,
           created_at: new Date()
-        }]).then(res => console.log('Saved to Supabase')).catch(e => console.error(e));
+        }]).then(() => console.log('Stored in Supabase')).catch(e => console.error(e));
       }
     }
 
@@ -404,9 +528,9 @@
         data: {
           labels: [],
           datasets: [{
-            label: 'Probabilidad Marcador Exacto (%)',
+            label: 'Probabilidad (%)',
             data: [],
-            backgroundColor: 'rgba(99, 102, 241, 0.4)',
+            backgroundColor: 'rgba(99, 102, 241, 0.5)',
             borderColor: '#6366f1',
             borderWidth: 1.5,
             borderRadius: 6
@@ -417,8 +541,8 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
-            y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(51, 65, 85, 0.2)' } }
+            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(51, 65, 85, 0.2)' } }
           }
         }
       });
@@ -430,6 +554,15 @@
       chartInstance.update();
     }
 
+    function exportDataJSON() {
+      if (!currentResults) return;
+      const blob = new Blob([JSON.stringify(currentResults, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `quantum_monster_${Date.now()}.json`;
+      a.click();
+    }
+
     async function sendTelegramAlert() {
       const token = localStorage.getItem('qmt_teleToken');
       const chatId = localStorage.getItem('qmt_teleChat');
@@ -439,20 +572,18 @@
         return;
       }
 
-      const msg = `🚀 *QUANTUM MONSTER ALERT*\n\n` +
+      const msg = `🚨 *QUANTUM MONSTER V5 ALERT*\n\n` +
                   `⚽ *Partido:* ${currentResults.match}\n` +
-                  `📊 *xG:* ${currentResults.lambda} - ${currentResults.mu}\n\n` +
-                  `🔴 *1X2 Market:*\n` +
-                  `• Local (1): ${(currentResults.pHome*100).toFixed(1)}%\n` +
-                  `• Empate (X): ${(currentResults.pDraw*100).toFixed(1)}%\n` +
-                  `• Visita (2): ${(currentResults.pAway*100).toFixed(1)}%\n\n` +
-                  `⚽ *Goals Market:*\n` +
-                  `• Over 1.5: ${(currentResults.pOver15*100).toFixed(1)}%\n` +
-                  `• Over 2.5: ${(currentResults.pOver25*100).toFixed(1)}%\n` +
-                  `• Over 3.5: ${(currentResults.pOver35*100).toFixed(1)}%\n\n` +
-                  `🔥 *BTTS Market:*\n` +
-                  `• Ambos Anotan (Sí): ${(currentResults.pBttsYes*100).toFixed(1)}%\n` +
-                  `• Ambos Anotan (No): ${(currentResults.pBttsNo*100).toFixed(1)}%`;
+                  `📊 *xG FT:* ${currentResults.lambda} - ${currentResults.mu}\n\n` +
+                  `🔴 *1X2 FT:* ${(currentResults.pHome*100).toFixed(1)}% | ${(currentResults.pDraw*100).toFixed(1)}% | ${(currentResults.pAway*100).toFixed(1)}%\n` +
+                  `⚽ *Over 2.5 FT:* ${(currentResults.pO25*100).toFixed(1)}%\n` +
+                  `🔥 *BTTS Sí FT:* ${(currentResults.pBttsYes*100).toFixed(1)}%\n\n` +
+                  `🎯 *Evaluación de Mercado:*\n` +
+                  `• *Mercado:* ${currentResults.evalMarket}\n` +
+                  `• *Cuota Casa:* ${currentResults.evalOdd}\n` +
+                  `• *Valor Esperado:* ${currentResults.ev.toFixed(1)}% EV\n` +
+                  `• *Stake Kelly (1/4):* $${currentResults.kellyAmount.toFixed(2)}\n` +
+                  (currentResults.filterDiscarded ? `⚠️ *Filtro:* Descartado por regla ≥60%` : `✅ *Filtro:* Aprobado`);
 
       try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
