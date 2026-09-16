@@ -1,20 +1,16 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ultra Tool Dashboard</title>
+  <title>Quantum Predictive Engine v4.0 - Super Monster Edition</title>
   
-  <!-- Tailwind CSS CDN -->
+  <!-- CDNs: Tailwind CSS, Chart.js, Lucide Icons, Supabase JS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
-  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Tailwind Config (Modo Oscuro / Colores Personalizados) -->
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -22,10 +18,9 @@
         extend: {
           colors: {
             brand: {
-              50: '#eff6ff',
-              500: '#3b82f6',
-              600: '#2563eb',
-              900: '#1e3a8a',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
             }
           }
         }
@@ -33,187 +28,398 @@
     }
   </script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
 
-  <!-- Header / Navbar -->
-  <header class="border-b border-slate-800 bg-slate-950/50 backdrop-blur sticky top-0 z-50">
+  <!-- Header / Status Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="p-2 bg-brand-600 rounded-lg text-white">
-          <i data-lucide="cpu" class="w-6 h-6"></i>
+        <div class="p-2 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-lg text-white shadow-lg shadow-indigo-500/30">
+          <i data-lucide="brain-circuit" class="w-6 h-6"></i>
         </div>
-        <h1 class="text-xl font-bold tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-          Quantum Analytics Tool
-        </h1>
+        <div>
+          <h1 class="text-lg font-bold tracking-wide bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">
+            QUANTUM MONSTER ENGINE
+          </h1>
+          <p class="text-[10px] text-slate-400 font-mono">BIVARIATE POISSON • DIXON-COLES • MONTE CARLO (10K)</p>
+        </div>
       </div>
-      <div class="flex items-center gap-4">
-        <button id="btn-refresh" class="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 hover:bg-slate-700 transition-colors rounded-md border border-slate-700 text-slate-300">
-          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Actualizar
+
+      <div class="flex items-center gap-3">
+        <button onclick="toggleConfigModal()" class="flex items-center gap-2 px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition-all">
+          <i data-lucide="settings" class="w-4 h-4"></i> Credenciales API
         </button>
+        <span id="supabase-status" class="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Offline
+        </span>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-    <!-- Grid de Tarjetas / KPI Metric Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      
-      <!-- Card 1 -->
-      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg relative overflow-hidden">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-slate-400">Total Analizado</span>
-          <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
-            <i data-lucide="activity" class="w-5 h-5"></i>
-          </div>
-        </div>
-        <div class="mt-4">
-          <span class="text-3xl font-extrabold text-white">1,248</span>
-          <span class="text-xs text-emerald-400 font-medium ml-2">+12.5% vs ayer</span>
-        </div>
-      </div>
-
-      <!-- Card 2 -->
-      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg relative overflow-hidden">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-slate-400">Oportunidades / Valor</span>
-          <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-            <i data-lucide="target" class="w-5 h-5"></i>
-          </div>
-        </div>
-        <div class="mt-4">
-          <span class="text-3xl font-extrabold text-white">18.4%</span>
-          <span class="text-xs text-slate-400 font-medium ml-2">Tasa de acierto estimada</span>
-        </div>
-      </div>
-
-      <!-- Card 3 -->
-      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg relative overflow-hidden">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-slate-400">Estado del Sistema</span>
-          <div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
-            <i data-lucide="zap" class="w-5 h-5"></i>
-          </div>
-        </div>
-        <div class="mt-4 flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="text-lg font-bold text-white">En Línea</span>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Seccion de Gráfica y Panel de Control -->
+    <!-- Control Inputs Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Contenedor del Gráfico (2 columnas en pantallas grandes) -->
-      <div class="lg:col-span-2 bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
-            <i data-lucide="line-chart" class="w-5 h-5 text-brand-500"></i> Tendencia y Rendimiento
-          </h2>
-        </div>
-        <div class="relative w-full h-72">
-          <canvas id="performanceChart"></canvas>
-        </div>
+      <!-- Input Parameters -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden backdrop-blur-sm">
+        <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <i data-lucide="sliders-horizontal" class="w-4 h-4 text-indigo-400"></i> Parámetros de Entrada
+        </h2>
+
+        <form id="calc-form" class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">λ Local (xG Local)</label>
+              <input type="number" step="0.01" id="lambdaHome" value="1.85" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">μ Visitante (xG Visita)</label>
+              <input type="number" step="0.01" id="lambdaAway" value="1.15" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Ajuste Dixon-Coles (ρ)</label>
+              <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1">Cuota Marcador (Odd)</label>
+              <input type="number" step="0.01" id="oddMarket" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">Identificador de Partido / Evento</label>
+            <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors">
+          </div>
+
+          <div class="pt-2 grid grid-cols-2 gap-3">
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
+              <i data-lucide="cpu" class="w-4 h-4"></i> Ejecutar
+            </button>
+            <button type="button" onclick="sendTelegramAlert()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-xl transition-all border border-slate-700 flex items-center justify-center gap-2">
+              <i data-lucide="send" class="w-4 h-4 text-sky-400"></i> Telegram
+            </button>
+          </div>
+        </form>
       </div>
 
-      <!-- Panel de Controles / Entradas de Datos -->
-      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between">
-        <div>
-          <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2 mb-4">
-            <i data-lucide="sliders" class="w-5 h-5 text-brand-500"></i> Parámetros de Entrada
-          </h2>
-          
-          <form id="calc-form" class="space-y-4">
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Valor A</label>
-              <input type="number" id="inputA" value="75" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500 transition-colors">
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Valor B</label>
-              <input type="number" id="inputB" value="45" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500 transition-colors">
-            </div>
-
-            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
-              <i data-lucide="calculator" class="w-4 h-4"></i> Calcular Métricas
-            </button>
-          </form>
+      <!-- Live KPI Metrics -->
+      <div class="lg:col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+          <span class="text-xs font-medium text-slate-400">P(Victoria Local)</span>
+          <div class="my-2">
+            <span id="kpi-home" class="text-2xl font-black text-emerald-400">0.0%</span>
+          </div>
+          <span class="text-[10px] text-slate-500">Fair Odd: <span id="odd-home" class="text-slate-300">0.00</span></span>
         </div>
 
-        <div id="output-result" class="mt-4 p-3 bg-slate-900/80 border border-slate-700/50 rounded-lg text-sm text-slate-300 min-h-[50px] flex items-center justify-center text-center">
-          Introduce valores y pulsa calcular.
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+          <span class="text-xs font-medium text-slate-400">P(Empate)</span>
+          <div class="my-2">
+            <span id="kpi-draw" class="text-2xl font-black text-amber-400">0.0%</span>
+          </div>
+          <span class="text-[10px] text-slate-500">Fair Odd: <span id="odd-draw" class="text-slate-300">0.00</span></span>
         </div>
+
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+          <span class="text-xs font-medium text-slate-400">P(Victoria Visita)</span>
+          <div class="my-2">
+            <span id="kpi-away" class="text-2xl font-black text-rose-400">0.0%</span>
+          </div>
+          <span class="text-[10px] text-slate-500">Fair Odd: <span id="odd-away" class="text-slate-300">0.00</span></span>
+        </div>
+
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+          <span class="text-xs font-medium text-slate-400">P(Over 2.5 Goles)</span>
+          <div class="my-2">
+            <span id="kpi-over25" class="text-2xl font-black text-indigo-400">0.0%</span>
+          </div>
+          <span class="text-[10px] text-slate-500">Valor Estimado: <span id="ev-status" class="text-slate-300">N/A</span></span>
+        </div>
+
+        <!-- Monte Carlo Canvas / Chart -->
+        <div class="col-span-2 sm:col-span-4 bg-slate-900/60 border border-slate-800 rounded-2xl p-5 relative">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-400"></i> Distribución de Probabilidad de Goles (Matriz Dixon-Coles)
+            </h3>
+            <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">Exact Matrix 6x6</span>
+          </div>
+          <div class="h-48">
+            <canvas id="matrixChart"></canvas>
+          </div>
+        </div>
+
       </div>
 
     </div>
 
   </main>
 
-  <!-- Lógica JavaScript Vanilla -->
+  <!-- Modal Config (Supabase + Telegram) -->
+  <div id="configModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="database" class="w-5 h-5 text-indigo-400"></i> Configuración de Integraciones
+        </h3>
+        <button onclick="toggleConfigModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Supabase URL</label>
+          <input type="text" id="cfg-supa-url" placeholder="https://xyz.supabase.co" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Supabase Anon Key</label>
+          <input type="password" id="cfg-supa-key" placeholder="eyJhbGciOi..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+        </div>
+        <hr class="border-slate-800">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Telegram Bot Token</label>
+          <input type="password" id="cfg-tele-token" placeholder="123456789:ABC..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Telegram Chat ID</label>
+          <input type="text" id="cfg-tele-chat" placeholder="-100xxxxxxxxx" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white">
+        </div>
+      </div>
+
+      <button onclick="saveConfigurations()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2.5 rounded-xl transition-all">
+        Guardar Configuración
+      </button>
+    </div>
+  </div>
+
+  <!-- Core Math & Logic Engine -->
   <script>
-    // Inicializar Iconos de Lucide
     lucide.createIcons();
 
-    // Configuración inicial de Chart.js
-    const ctx = document.getElementById('performanceChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul'],
-        datasets: [{
-          label: 'Rendimiento (%)',
-          data: [65, 59, 80, 81, 76, 85, 92],
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.35,
-          pointBackgroundColor: '#3b82f6'
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          x: {
-            grid: { color: 'rgba(51, 65, 85, 0.3)' },
-            ticks: { color: '#94a3b8' }
-          },
-          y: {
-            grid: { color: 'rgba(51, 65, 85, 0.3)' },
-            ticks: { color: '#94a3b8' }
+    let supabaseClient = null;
+    let chartInstance = null;
+    let currentResults = null;
+
+    // Direct Caching System
+    const configKeys = ['supaUrl', 'supaKey', 'teleToken', 'teleChat'];
+    
+    function initApp() {
+      configKeys.forEach(k => {
+        const val = localStorage.getItem('qmt_' + k);
+        if(val) document.getElementById('cfg-' + k.replace(/[AZ]/g, letter => `-${letter.toLowerCase()}`)).value = val;
+      });
+
+      const url = localStorage.getItem('qmt_supaUrl');
+      const key = localStorage.getItem('qmt_supaKey');
+
+      if (url && key && window.supabase) {
+        try {
+          supabaseClient = supabase.createClient(url, key);
+          document.getElementById('supabase-status').className = "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+          document.getElementById('supabase-status').innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Conectado`;
+        } catch(e) { console.error("Supabase Error:", e); }
+      }
+
+      initChart();
+      runEngine();
+    }
+
+    function toggleConfigModal() {
+      document.getElementById('configModal').classList.toggle('hidden');
+    }
+
+    function saveConfigurations() {
+      localStorage.setItem('qmt_supaUrl', document.getElementById('cfg-supa-url').value);
+      localStorage.setItem('qmt_supaKey', document.getElementById('cfg-supa-key').value);
+      localStorage.setItem('qmt_teleToken', document.getElementById('cfg-tele-token').value);
+      localStorage.setItem('qmt_teleChat', document.getElementById('cfg-tele-chat').value);
+      toggleConfigModal();
+      initApp();
+    }
+
+    // Mathematical Core Engine (Poisson & Dixon-Coles)
+    function factorial(n) {
+      if (n === 0 || n === 1) return 1;
+      let res = 1;
+      for (let i = 2; i <= n; i++) res *= i;
+      return res;
+    }
+
+    function poisson(k, lambda) {
+      return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+    }
+
+    function dixonColesTau(x, y, lambda, mu, rho) {
+      if (x === 0 && y === 0) return 1 - (lambda * mu * rho);
+      if (x === 0 && y === 1) return 1 + (lambda * rho);
+      if (x === 1 && y === 0) return 1 + (mu * rho);
+      if (x === 1 && y === 1) return 1 - rho;
+      return 1.0;
+    }
+
+    function runEngine() {
+      const lambda = parseFloat(document.getElementById('lambdaHome').value) || 1.0;
+      const mu = parseFloat(document.getElementById('lambdaAway').value) || 1.0;
+      const rho = parseFloat(document.getElementById('rho').value) || 0.0;
+      const oddMarket = parseFloat(document.getElementById('oddMarket').value) || 1.0;
+
+      let pHome = 0, pDraw = 0, pAway = 0, pOver25 = 0;
+      const matrix = [];
+      const labels = [];
+      const dataPoints = [];
+
+      // Calculate Bivariate Dixon-Coles Matrix 6x6
+      for (let x = 0; x <= 5; x++) {
+        matrix[x] = [];
+        for (let y = 0; y <= 5; y++) {
+          const rawP = poisson(x, lambda) * poisson(y, mu);
+          const tau = dixonColesTau(x, y, lambda, mu, rho);
+          const prob = rawP * tau;
+          
+          matrix[x][y] = prob;
+
+          if (x > y) pHome += prob;
+          else if (x === y) pDraw += prob;
+          else pAway += prob;
+
+          if ((x + y) > 2.5) pOver25 += prob;
+
+          if (x <= 3 && y <= 3) {
+            labels.push(`${x}-${y}`);
+            dataPoints.push((prob * 100).toFixed(2));
           }
         }
       }
-    });
 
-    // Lógica del Formulario
+      // Monte Carlo Simulation (10,000 iterations for validation)
+      let mcOver25 = 0;
+      const sims = 10000;
+      for (let i = 0; i < sims; i++) {
+        // Knuth Poisson Generator
+        const genP = (l) => {
+          let L = Math.exp(-l), k = 0, p = 1;
+          do { k++; p *= Math.random(); } while (p > L);
+          return k - 1;
+        };
+        if ((genP(lambda) + genP(mu)) > 2.5) mcOver25++;
+      }
+
+      // Fair Odds
+      const oddH = (1 / pHome).toFixed(2);
+      const oddD = (1 / pDraw).toFixed(2);
+      const oddA = (1 / pAway).toFixed(2);
+
+      // Value Calculation
+      const ev = ((pOver25 * oddMarket) - 1) * 100;
+
+      // Render KPIs
+      document.getElementById('kpi-home').innerText = (pHome * 100).toFixed(1) + '%';
+      document.getElementById('kpi-draw').innerText = (pDraw * 100).toFixed(1) + '%';
+      document.getElementById('kpi-away').innerText = (pAway * 100).toFixed(1) + '%';
+      document.getElementById('kpi-over25').innerText = (pOver25 * 100).toFixed(1) + '%';
+
+      document.getElementById('odd-home').innerText = oddH;
+      document.getElementById('odd-draw').innerText = oddD;
+      document.getElementById('odd-away').innerText = oddA;
+      document.getElementById('ev-status').innerText = ev > 0 ? `+${ev.toFixed(1)}% EV` : `${ev.toFixed(1)}% EV`;
+      document.getElementById('ev-status').className = ev > 0 ? "text-emerald-400 font-bold" : "text-rose-400 font-bold";
+
+      updateChart(labels, dataPoints);
+
+      currentResults = {
+        match: document.getElementById('matchLabel').value,
+        lambda, mu, pHome, pDraw, pAway, pOver25, ev
+      };
+
+      // Auto-save to Supabase if connected
+      if (supabaseClient) {
+        supabaseClient.from('predictions').insert([{
+          match_name: currentResults.match,
+          lambda_home: lambda,
+          lambda_away: mu,
+          prob_home: pHome,
+          prob_draw: pDraw,
+          prob_away: pAway,
+          prob_over25: pOver25,
+          created_at: new Date()
+        }]).then(res => console.log('Saved to Supabase')).catch(e => console.error(e));
+      }
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('matrixChart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Probabilidad Marcador exacto (%)',
+            data: [],
+            backgroundColor: 'rgba(99, 102, 241, 0.4)',
+            borderColor: '#6366f1',
+            borderWidth: 1.5,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(51, 65, 85, 0.2)' } }
+          }
+        }
+      });
+    }
+
+    function updateChart(labels, data) {
+      chartInstance.data.labels = labels;
+      chartInstance.data.datasets[0].data = data;
+      chartInstance.update();
+    }
+
+    async function sendTelegramAlert() {
+      const token = localStorage.getItem('qmt_teleToken');
+      const chatId = localStorage.getItem('qmt_teleChat');
+
+      if (!token || !chatId || !currentResults) {
+        alert('Configura primero las credenciales de Telegram.');
+        return;
+      }
+
+      const msg = `🚀 *QUANTUM MONSTER ALERT*\n\n` +
+                  `⚽ *Partido:* ${currentResults.match}\n` +
+                  `📊 *xG:* ${currentResults.lambda} - ${currentResults.mu}\n\n` +
+                  `🔥 *P(Local):* ${(currentResults.pHome*100).toFixed(1)}%\n` +
+                  `⚖️ *P(Empate):* ${(currentResults.pDraw*100).toFixed(1)}%\n` +
+                  `🚀 *P(Visita):* ${(currentResults.pAway*100).toFixed(1)}%\n` +
+                  `⚽ *Over 2.5:* ${(currentResults.pOver25*100).toFixed(1)}%\n` +
+                  `📈 *EV Estimado:* ${currentResults.ev.toFixed(1)}%`;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'Markdown' })
+        });
+        alert('¡Alerta de Telegram enviada exitosamente!');
+      } catch (e) {
+        alert('Error al enviar mensaje a Telegram.');
+      }
+    }
+
     document.getElementById('calc-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const valA = parseFloat(document.getElementById('inputA').value) || 0;
-      const valB = parseFloat(document.getElementById('inputB').value) || 0;
-      
-      const resultado = ((valA + valB) / 2).toFixed(2);
-      
-      document.getElementById('output-result').innerHTML = `
-        <span class="text-emerald-400 font-bold">Resultado Calculado: ${resultado}</span>
-      `;
-
-      // Actualizar datos del gráfico dinámicamente
-      chart.data.datasets[0].data.push(resultado);
-      chart.data.labels.push('Nuevo');
-      if (chart.data.labels.length > 8) {
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
-      }
-      chart.update();
+      runEngine();
     });
+
+    window.onload = initApp;
   </script>
 </body>
 </html>
