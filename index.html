@@ -3,690 +3,217 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema Calibración Poisson</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --border: #334155;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --accent: #22d3ee;
-      --green: #00ff00;
-      --red: #f87171;
-      --yellow: #fbbf24;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      padding: 20px;
-    }
-    h1 { font-size: 1.6rem; margin-bottom: 8px; }
-    h2 { font-size: 1.2rem; margin: 20px 0 12px; color: var(--accent); }
-    .subtitle { color: var(--muted); margin-bottom: 24px; font-size: 0.95rem; }
-    .tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-    }
-    .tab {
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: 0.2s;
-    }
-    .tab:hover { border-color: var(--accent); }
-    .tab.active { background: var(--accent); color: #0f172a; font-weight: 600; }
-    .panel { display: none; }
-    .panel.active { display: block; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
-    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
-    input, select, textarea {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      min-width: 120px;
-    }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-    button {
-      background: var(--accent);
-      color: #0f172a;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-    button:hover { filter: brightness(1.1); }
-    button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    button.danger { background: var(--red); color: #fff; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      margin-top: 12px;
-    }
-    th, td {
-      border: 1px solid var(--border);
-      padding: 8px 10px;
-      text-align: left;
-    }
-    th { background: #0f172a; color: var(--accent); position: sticky; top: 0; }
-    tr:nth-child(even) { background: rgba(255,255,255,0.02); }
-    .neon { background: #00ff00 !important; color: #000 !important; font-weight: 700; }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .badge.pendiente { background: #334155; }
-    .badge.ganada { background: #166534; color: #bbf7d0; }
-    .badge.perdida { background: #7f1d1d; color: #fecaca; }
-    .badge.cerrada { background: #1e3a5f; color: #93c5fd; }
-    .alert {
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin: 12px 0;
-      font-size: 0.9rem;
-    }
-    .alert.success { background: #14532d; border: 1px solid #166534; }
-    .alert.error { background: #7f1d1d; border: 1px solid #991b1b; }
-    .alert.info { background: #1e3a5f; border: 1px solid #1e40af; }
-    .table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
-    .bankroll-box {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .bankroll-box input { width: 140px; font-size: 1.1rem; font-weight: 700; }
-    textarea { width: 100%; min-height: 180px; font-family: monospace; white-space: pre; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
-    footer { margin-top: 40px; color: var(--muted); font-size: 0.8rem; text-align: center; }
-  </style>
-</head>
-<body>
-  <h1>⚽ Sistema Calibración Poisson</h1>
-  <p class="subtitle">Predicciones Over 2.5 + BTTS Yes · Calibración por tramo · EV y Stake automático · Cal_2.0</p>
-  <div class="tabs">
-    <button class="tab active" data-tab="data">1. Data</button>
-    <button class="tab" data-tab="apuestas">2. Apuestas</button>
-    <button class="tab" data-tab="calibracion">3. Calibración</button>
-    <button class="tab" data-tab="resultados">4. Resultados</button>
-    <button class="tab" data-tab="cal20">5. Cal_2.0</button>
-  </div>
+  <title>Ultra Tool Dashboard</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- ==================== PANEL DATA ==================== -->
-  <div id="panel-data" class="panel active">
-    <div class="card">
-      <h2>Datos de entrada (partidos)</h2>
-      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:12px;">
-        Pega directamente la tabla con formato multilínea o separada por tabulaciones. El parser detecta y procesa automáticamente la información.
-      </p>
-      <textarea id="inputData" placeholder="Country	3.5+	2.5+	1.5+	GA	GF	TG	PPG	GP	scope				scope	GP	PPG	TG	GF	GA	1.5+	2.5+	3.5+
- ENGLAND ENG	0%	0%	100%	1.00	1.00	2.00	1.00	1	home	Leeds Utd	14:00	Newcastle Utd	away	1	3.00	2.00	2.00	0.00	100%	0%	0%"></textarea>
-      <div class="row" style="margin-top:12px;">
-        <button onclick="cargarDatosEjemplo()">Cargar ejemplo</button>
-        <button class="secondary" onclick="limpiarData()">Limpiar</button>
-        <button onclick="calcularApuestasPoisson()">▶ Calcular Predicciones Poisson</button>
-      </div>
-      <div id="msgData"></div>
-    </div>
-  </div>
-
-  <!-- ==================== PANEL APUESTAS ==================== -->
-  <div id="panel-apuestas" class="panel">
-    <div class="card">
-      <div class="bankroll-box">
-        <div>
-          <label>Bankroll ($B$4)</label>
-          <input type="number" id="bankroll" value="1000" step="100" min="0">
-        </div>
-        <button onclick="recalcularStakes()">Recalcular Stakes</button>
-        <button class="secondary" onclick="actualizarResultadosApuestas()">Actualizar Resultados</button>
-        <button class="danger" onclick="limpiarApuestas()">Borrar todas las apuestas</button>
-      </div>
-      <div id="msgApuestas"></div>
-      <div class="table-wrap">
-        <table id="tablaApuestas">
-          <thead>
-            <tr>
-              <th>Liga</th><th>Local</th><th>Visitante</th><th>Mercado</th><th>Pick</th>
-              <th>Prob</th><th>Cuota Justa</th><th>Cuota Bookie</th><th>EV</th>
-              <th>GF Loc</th><th>GF Vis</th><th>Stake</th><th>Resultado</th>
-              <th>Beneficio</th><th>Estado</th><th>Marcador</th><th>Prob. Calib</th><th>Factor</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== PANEL CALIBRACIÓN ==================== -->
-  <div id="panel-calibracion" class="panel">
-    <div class="card">
-      <h2>Tabla de Calibración (Mercado + Tramo)</h2>
-      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:12px;">
-        Formato: <code>Mercado | Tramo | Muestra | Factor</code> (ej: Over 2.5 | 0.50 | 120 | 0.94)
-      </p>
-      <div class="row">
-        <div>
-          <label>Mínimo muestra (I2)</label>
-          <input type="number" id="limiteMuestra" value="30" min="0">
-        </div>
-        <div>
-          <label>Mínimo muestra coloreado (I14)</label>
-          <input type="number" id="limiteMuestraNeon" value="50" min="0">
-        </div>
-      </div>
-      <textarea id="inputCalibracion" placeholder="Over 2.5 | 0.50 | 150 | 0.94
-Over 2.5 | 0.60 | 120 | 0.97
-Over 2.5 | 0.70 | 90 | 1.02
-BTTS Yes | 0.50 | 180 | 0.91
-BTTS Yes | 0.60 | 140 | 0.96
-BTTS Yes | 0.70 | 100 | 1.01"></textarea>
-      <div class="row" style="margin-top:12px;">
-        <button onclick="guardarCalibracion()">Guardar calibración</button>
-        <button class="secondary" onclick="cargarCalibracionEjemplo()">Cargar ejemplo</button>
-      </div>
-      <div id="msgCalibracion"></div>
-    </div>
-  </div>
-
-  <!-- ==================== PANEL RESULTADOS ==================== -->
-  <div id="panel-resultados" class="panel">
-    <div class="card">
-      <h2>Marcadores reales</h2>
-      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:12px;">
-        Formato: <code>Local | Visitante | Marcador</code> (ej: Real Madrid | Barcelona | 2:1)
-      </p>
-      <textarea id="inputResultados" placeholder="Real Madrid | Barcelona | 2:1
-Manchester City | Liverpool | 1:1"></textarea>
-      <div class="row" style="margin-top:12px;">
-        <button onclick="guardarResultados()">Guardar resultados</button>
-        <button onclick="actualizarResultadosApuestas()">Aplicar a Apuestas</button>
-      </div>
-      <div id="msgResultados"></div>
-    </div>
-  </div>
-
-  <!-- ==================== PANEL CAL 2.0 ==================== -->
-  <div id="panel-cal20" class="panel">
-    <div class="card">
-      <h2>Calibración Poisson 2.0 (Goles Local / Visitante)</h2>
-      <button onclick="actualizarCal_2_0()">Actualizar Cal_2.0</button>
-      <div id="msgCal20"></div>
-      <div class="grid-2" style="margin-top:16px;">
-        <div>
-          <h3 style="color:var(--accent);margin-bottom:8px;">Goles Local</h3>
-          <div class="table-wrap">
-            <table id="tablaLocal">
-              <thead>
-                <tr>
-                  <th>Local GF</th><th>Picks</th><th>Poiss 0.5</th><th>Poiss 1.5</th>
-                  <th>Real 0.5</th><th>Real 1.5</th><th>Ajuste 0.5</th><th>Ajuste 1.5</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div>
-          <h3 style="color:var(--accent);margin-bottom:8px;">Goles Visitante</h3>
-          <div class="table-wrap">
-            <table id="tablaVisitante">
-              <thead>
-                <tr>
-                  <th>Visita GF</th><th>Picks</th><th>Poiss 0.5</th><th>Poiss 1.5</th>
-                  <th>Real 0.5</th><th>Real 1.5</th><th>Ajuste 0.5</th><th>Ajuste 1.5</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer>
-    Sistema Calibración Poisson · Lógica portada desde Google Apps Script · MIT License · Solo análisis estadístico
-  </footer>
-
+  <!-- Tailwind Config (Modo Oscuro / Colores Personalizados) -->
   <script>
-    // ==================== ESTADO ====================
-    let apuestas = JSON.parse(localStorage.getItem('apuestas') || '[]');
-    let calibracion = JSON.parse(localStorage.getItem('calibracion') || '[]');
-    let resultados = JSON.parse(localStorage.getItem('resultados') || '[]');
-
-    // ==================== TABS ====================
-    document.querySelectorAll('.tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-        if (btn.dataset.tab === 'apuestas') renderApuestas();
-      });
-    });
-
-    // ==================== UTILIDADES ====================
-    function factorial(n) {
-      if (n === 0 || n === 1) return 1;
-      let res = 1;
-      for (let i = 2; i <= n; i++) res *= i;
-      return res;
-    }
-    function calcularPoisson(k, lambda) {
-      return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
-    }
-    function limpiarNombre(nombre) {
-      return String(nombre || '').replace(/\*/g, '').trim().toLowerCase();
-    }
-    function extraerMarcador(texto) {
-      const match = String(texto || '').trim().match(/^\s*(\d+)\s*[:-–—]\s*(\d+)/);
-      if (!match) return null;
-      return { local: Number(match[1]), visitante: Number(match[2]) };
-    }
-    function showMsg(id, text, type = 'info') {
-      const el = document.getElementById(id);
-      el.innerHTML = `<div class="alert ${type}">${text}</div>`;
-      setTimeout(() => { if (el.innerHTML.includes(text)) el.innerHTML = ''; }, 6000);
-    }
-    function fmtPct(v) { return (v * 100).toFixed(2) + '%'; }
-    function fmtNum(v) { return Number(v).toFixed(2); }
-    function fmtMoney(v) { return '$' + Number(v).toFixed(2); }
-
-    // ==================== CALIBRACIÓN ====================
-    function parseCalibracion() {
-      const texto = document.getElementById('inputCalibracion').value.trim();
-      const lineas = texto.split('\n').filter(l => l.trim());
-      const mapa = {};
-      const mapaMuestra = {};
-      lineas.forEach(l => {
-        const parts = l.split('|').map(p => p.trim());
-        if (parts.length < 4) return;
-        let mercado = parts[0].toLowerCase();
-        let tramo = parseFloat(parts[1]);
-        if (tramo > 1) tramo = tramo / 100;
-        const muestra = parseFloat(parts[2]) || 0;
-        const factor = parseFloat(parts[3]);
-        if (!isNaN(tramo) && !isNaN(factor)) {
-          const key = mercado + '|' + tramo.toFixed(2);
-          mapa[key] = factor;
-          mapaMuestra[key] = muestra;
-        }
-      });
-      return { mapa, mapaMuestra };
-    }
-    function guardarCalibracion() {
-      const { mapa, mapaMuestra } = parseCalibracion();
-      calibracion = { 
-        mapa, 
-        mapaMuestra, 
-        limite: parseFloat(document.getElementById('limiteMuestra').value) || 0, 
-        limiteNeon: parseFloat(document.getElementById('limiteMuestraNeon').value) || 0 
-      };
-      localStorage.setItem('calibracion', JSON.stringify(calibracion));
-      showMsg('msgCalibracion', 'Calibración guardada correctamente.', 'success');
-    }
-    function cargarCalibracionEjemplo() {
-      document.getElementById('inputCalibracion').value = `Over 2.5 | 0.50 | 150 | 0.94\nOver 2.5 | 0.60 | 120 | 0.97\nOver 2.5 | 0.70 | 90 | 1.02\nBTTS Yes | 0.50 | 180 | 0.91\nBTTS Yes | 0.60 | 140 | 0.96\nBTTS Yes | 0.70 | 100 | 1.01`;
-      document.getElementById('limiteMuestra').value = 30;
-      document.getElementById('limiteMuestraNeon').value = 50;
-    }
-
-    // ==================== PARSER DE DATOS DE ENTRADA ====================
-    function parseInputData(texto) {
-      const lineas = texto.split('\n').filter(l => l.trim());
-      const partidos = [];
-
-      lineas.forEach(linea => {
-        // Ignorar encabezados
-        if (linea.includes('Country') && linea.includes('scope')) return;
-
-        const p = linea.split('\t').map(s => s.trim());
-        if (p.length < 10) return;
-
-        // Búsqueda dinámica de índices por palabras clave 'home' y 'away'
-        const idxHome = p.findIndex(val => val.toLowerCase() === 'home');
-        const idxAway = p.findIndex(val => val.toLowerCase() === 'away');
-
-        let liga = '', gfLocal = 0, gpLocal = 0, equipoLocal = '', equipoVisita = '', gfVisita = 0, gpVisita = 0;
-
-        if (idxHome !== -1 && idxAway !== -1) {
-          liga = p[0] || '';
-          gfLocal = parseFloat(p[5]) || 0;
-          gpLocal = parseFloat(p[8]) || 0;
-          equipoLocal = p[idxHome + 1] || '';
-          equipoVisita = p[idxAway - 1] || p[idxHome + 3] || '';
-          gpVisita = parseFloat(p[idxAway + 1]) || 0;
-          gfVisita = parseFloat(p[idxAway + 4]) || 0;
-        } else {
-          // Si el formato es por tuberías (fallback)
-          const parts = linea.split('|').map(s => s.trim());
-          if (parts.length >= 6) {
-            equipoLocal = parts[0];
-            equipoVisita = parts[1];
-            gfLocal = parseFloat(parts[2]) || 0;
-            gpLocal = parseFloat(parts[3]) || 0;
-            gfVisita = parseFloat(parts[4]) || 0;
-            gpVisita = parseFloat(parts[5]) || 0;
-            liga = 'General';
-          }
-        }
-
-        if (equipoLocal && equipoVisita) {
-          partidos.push({
-            liga,
-            equipoLocal,
-            equipoVisita,
-            gfLocal,
-            gpLocal,
-            gfVisita,
-            gpVisita
-          });
-        }
-      });
-
-      return partidos;
-    }
-
-    function cargarDatosEjemplo() {
-      document.getElementById('inputData').value = `Country\t3.5+\t2.5+\t1.5+\tGA\tGF\tTG\tPPG\tGP\tscope\t\t\t\tscope\tGP\tPPG\tTG\tGF\tGA\t1.5+\t2.5+\t3.5+\n ENGLAND ENG\t0%\t0%\t100%\t1.00\t1.00\t2.00\t1.00\t1\thome\tLeeds Utd\t14:00\tNewcastle Utd\taway\t1\t3.00\t2.00\t2.00\t0.00\t100%\t0%\t0%\n ITALY ITA\t0%\t100%\t100%\t2.00\t1.00\t3.00\t0.00\t1\thome\tTorino\t11:30\tAS Roma\taway\t1\t3.00\t4.00\t4.00\t0.00\t100%\t100%\t100%\n ITALY ITA\t100%\t100%\t100%\t1.50\t3.50\t5.00\t3.00\t2\thome\tInter Milan\t13:45\tUdinese\taway\t1\t3.00\t5.00\t3.00\t2.00\t100%\t100%\t100%\n SPAIN SPA\t100%\t100%\t100%\t3.00\t2.00\t5.00\t0.00\t1\thome\tVillarreal\t14:00\tReal Betis\taway\t2\t1.50\t4.00\t1.50\t2.50\t50%\t50%\t50%`;
-    }
-
-    function limpiarData() {
-      document.getElementById('inputData').value = '';
-    }
-
-    // ==================== CÁLCULO PREDICCIONES ====================
-    function calcularApuestasPoisson() {
-      const texto = document.getElementById('inputData').value.trim();
-      if (!texto) {
-        showMsg('msgData', 'No hay datos de entrada.', 'error');
-        return;
-      }
-
-      if (!calibracion.mapa) {
-        const parsed = parseCalibracion();
-        calibracion = { 
-          ...parsed, 
-          limite: parseFloat(document.getElementById('limiteMuestra').value) || 0, 
-          limiteNeon: parseFloat(document.getElementById('limiteMuestraNeon').value) || 0 
-        };
-      }
-      const { mapa: mapaCalibracion, mapaMuestra: mapaMuestraCalibracion } = calibracion;
-      const limiteMuestraI2 = calibracion.limite || 0;
-
-      const partidos = parseInputData(texto);
-      let nuevas = [];
-      let contador = 0;
-
-      partidos.forEach(p => {
-        const { liga, equipoLocal, equipoVisita, gfLocal, gpLocal, gfVisita, gpVisita } = p;
-
-        if (gfLocal <= 0 && gfVisita <= 0) return;
-
-        const lambdaLocal = gfLocal;
-        const lambdaVisita = gfVisita;
-
-        // Over 2.5
-        let probOver25 = 0;
-        for (let x = 0; x <= 8; x++) {
-          const pX = calcularPoisson(x, lambdaLocal);
-          for (let y = 0; y <= 8; y++) {
-            const pY = calcularPoisson(y, lambdaVisita);
-            if (x + y > 2.5) probOver25 += pX * pY;
-          }
-        }
-
-        // BTTS Yes
-        const probBTTS_Yes = (1 - Math.exp(-lambdaLocal)) * (1 - Math.exp(-lambdaVisita));
-
-        const mercados = [
-          { mercado: 'Over/Under 2.5', pick: 'Over 2.5', prob: probOver25 },
-          { mercado: 'BTTS', pick: 'BTTS Yes', prob: probBTTS_Yes }
-        ];
-
-        mercados.forEach(m => {
-          if (m.prob < 0.50) return;
-
-          const cuotaJusta = m.prob > 0 ? 1 / m.prob : 0;
-          let tramoPaso = Math.floor(m.prob * 10) / 10;
-          if (tramoPaso > 0.9) tramoPaso = 0.9;
-          if (tramoPaso < 0.5) tramoPaso = 0.5;
-
-          const pickBuscar = m.pick.trim().toLowerCase();
-          const clave = pickBuscar + '|' + tramoPaso.toFixed(2);
-          let factor = '';
-          let muestra = 0;
-
-          if (mapaCalibracion && mapaCalibracion[clave] !== undefined) {
-            factor = mapaCalibracion[clave];
-            muestra = mapaMuestraCalibracion[clave] || 0;
-          } else if (mapaCalibracion) {
-            for (const key in mapaCalibracion) {
-              const [merc, tramo] = key.split('|');
-              if ((merc.includes(pickBuscar) || pickBuscar.includes(merc)) && tramo === tramoPaso.toFixed(2)) {
-                factor = mapaCalibracion[key];
-                muestra = mapaMuestraCalibracion[key] || 0;
-                break;
-              }
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              900: '#1e3a8a',
             }
           }
-
-          const probCalibrada = (muestra >= limiteMuestraI2 && factor !== '') ? m.prob * factor : null;
-
-          nuevas.push({
-            id: Date.now() + contador++,
-            liga,
-            local: equipoLocal,
-            visitante: equipoVisita,
-            mercado: m.mercado,
-            pick: m.pick,
-            prob: m.prob,
-            cuotaJusta,
-            cuotaBookie: '',
-            gfLocal,
-            gfVisita,
-            resultado: 'Pendiente',
-            marcador: '',
-            factor: factor === '' ? null : factor,
-            probCalibrada,
-            muestra
-          });
-        });
-      });
-
-      if (nuevas.length === 0) {
-        showMsg('msgData', 'No se encontraron opciones válidas con Prob ≥ 50%.', 'error');
-        return;
-      }
-
-      apuestas = apuestas.concat(nuevas);
-      localStorage.setItem('apuestas', JSON.stringify(apuestas));
-      showMsg('msgData', `¡Proceso completado! Se añadieron ${nuevas.length} opciones.`, 'success');
-      document.querySelector('[data-tab="apuestas"]').click();
-      renderApuestas();
-    }
-
-    // ==================== RENDER APUESTAS ====================
-    function calcEV(row) {
-      const cuota = parseFloat(row.cuotaBookie);
-      if (!cuota || isNaN(cuota)) return null;
-      const prob = row.probCalibrada !== null ? row.probCalibrada : row.prob;
-      return (cuota * prob) - 1;
-    }
-    function calcStake(ev, bankroll) {
-      if (ev === null || ev < 0.05) return 0;
-      if (ev <= 0.1) return bankroll * 0.005;
-      if (ev <= 0.2) return bankroll * 0.01;
-      return bankroll * 0.015;
-    }
-    function calcBeneficio(row, stake) {
-      if (row.resultado === 'Ganada') {
-        const cuota = parseFloat(row.cuotaBookie) || 0;
-        return (cuota - 1) * stake;
-      }
-      if (row.resultado === 'Perdida') return -stake;
-      return 0;
-    }
-    function renderApuestas() {
-      const tbody = document.querySelector('#tablaApuestas tbody');
-      const bankroll = parseFloat(document.getElementById('bankroll').value) || 1000;
-      tbody.innerHTML = '';
-
-      apuestas.forEach((row, idx) => {
-        const ev = calcEV(row);
-        const stake = calcStake(ev, bankroll);
-        const beneficio = calcBeneficio(row, stake);
-        const estado = (row.resultado === 'Ganada' || row.resultado === 'Perdida') ? 'Cerrada' : 'Pendiente';
-
-        let neonClass = '';
-        if (row.probCalibrada && row.factor >= 0.9 && row.muestra >= (calibracion.limiteNeon || 50)) {
-          neonClass = 'neon';
         }
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${row.liga || '—'}</td>
-          <td>${row.local}</td>
-          <td>${row.visitante}</td>
-          <td>${row.mercado}</td>
-          <td>${row.pick}</td>
-          <td>${fmtPct(row.prob)}</td>
-          <td>${fmtNum(row.cuotaJusta)}</td>
-          <td><input type="number" step="0.01" min="1" value="${row.cuotaBookie}" data-idx="${idx}" class="input-cuota" style="width:80px"></td>
-          <td>${ev !== null ? fmtPct(ev) : '—'}</td>
-          <td>${fmtNum(row.gfLocal)}</td>
-          <td>${fmtNum(row.gfVisita)}</td>
-          <td>${fmtMoney(stake)}</td>
-          <td>
-            <select data-idx="${idx}" class="select-resultado">
-              <option value="Pendiente" ${row.resultado==='Pendiente'?'selected':''}>Pendiente</option>
-              <option value="Ganada" ${row.resultado==='Ganada'?'selected':''}>Ganada</option>
-              <option value="Perdida" ${row.resultado==='Perdida'?'selected':''}>Perdida</option>
-            </select>
-          </td>
-          <td>${fmtMoney(beneficio)}</td>
-          <td><span class="badge ${estado.toLowerCase()}">${estado}</span></td>
-          <td>${row.marcador || '—'}</td>
-          <td class="${neonClass}">${row.probCalibrada !== null ? fmtPct(row.probCalibrada) : '—'}</td>
-          <td>${row.factor !== null ? fmtNum(row.factor) : '—'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.querySelectorAll('.input-cuota').forEach(inp => {
-        inp.addEventListener('change', e => {
-          const i = parseInt(e.target.dataset.idx);
-          apuestas[i].cuotaBookie = e.target.value;
-          localStorage.setItem('apuestas', JSON.stringify(apuestas));
-          renderApuestas();
-        });
-      });
-
-      document.querySelectorAll('.select-resultado').forEach(sel => {
-        sel.addEventListener('change', e => {
-          const i = parseInt(e.target.dataset.idx);
-          apuestas[i].resultado = e.target.value;
-          localStorage.setItem('apuestas', JSON.stringify(apuestas));
-          renderApuestas();
-        });
-      });
-    }
-
-    function recalcularStakes() {
-      renderApuestas();
-      showMsg('msgApuestas', 'Stakes recalculados con el bankroll actual.', 'success');
-    }
-    function limpiarApuestas() {
-      if (!confirm('¿Borrar todas las apuestas?')) return;
-      apuestas = [];
-      localStorage.setItem('apuestas', JSON.stringify(apuestas));
-      renderApuestas();
-      showMsg('msgApuestas', 'Apuestas eliminadas.', 'info');
-    }
-
-    // ==================== RESULTADOS Y MARCADORES ====================
-    function guardarResultados() {
-      const texto = document.getElementById('inputResultados').value.trim();
-      const lineas = texto.split('\n').filter(l => l.trim());
-      resultados = [];
-      lineas.forEach(l => {
-        const parts = l.split('|').map(p => p.trim());
-        if (parts.length < 3) return;
-        const match = extraerMarcador(parts[2]);
-        if (!match) return;
-        resultados.push({
-          local: limpiarNombre(parts[0]),
-          visitante: limpiarNombre(parts[1]),
-          marcador: match.local + ':' + match.visitante,
-          golesLocal: match.local,
-          golesVisita: match.visitante
-        });
-      });
-      localStorage.setItem('resultados', JSON.stringify(resultados));
-      showMsg('msgResultados', `Guardados ${resultados.length} resultados.`, 'success');
-    }
-
-    function actualizarResultadosApuestas() {
-      if (resultados.length === 0) {
-        showMsg('msgApuestas', 'No hay resultados registrados en la pestaña Resultados.', 'error');
-        return;
       }
-      let actualizados = 0;
-      apuestas.forEach(ap => {
-        const match = resultados.find(r => 
-          (r.local === limpiarNombre(ap.local) && r.visitante === limpiarNombre(ap.visitante)) ||
-          (limpiarNombre(ap.local).includes(r.local) && limpiarNombre(ap.visitante).includes(r.visitante))
-        );
-        if (match) {
-          ap.marcador = match.marcador;
-          const totalGoles = match.golesLocal + match.golesVisita;
-          if (ap.pick === 'Over 2.5') {
-            ap.resultado = totalGoles > 2.5 ? 'Ganada' : 'Perdida';
-          } else if (ap.pick === 'BTTS Yes') {
-            ap.resultado = (match.golesLocal > 0 && match.golesVisita > 0) ? 'Ganada' : 'Perdida';
+    }
+  </script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col">
+
+  <!-- Header / Navbar -->
+  <header class="border-b border-slate-800 bg-slate-950/50 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-brand-600 rounded-lg text-white">
+          <i data-lucide="cpu" class="w-6 h-6"></i>
+        </div>
+        <h1 class="text-xl font-bold tracking-wide bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+          Quantum Analytics Tool
+        </h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="btn-refresh" class="flex items-center gap-2 px-3 py-1.5 text-sm bg-slate-800 hover:bg-slate-700 transition-colors rounded-md border border-slate-700 text-slate-300">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Actualizar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Grid de Tarjetas / KPI Metric Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Card 1 -->
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-slate-400">Total Analizado</span>
+          <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+            <i data-lucide="activity" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="mt-4">
+          <span class="text-3xl font-extrabold text-white">1,248</span>
+          <span class="text-xs text-emerald-400 font-medium ml-2">+12.5% vs ayer</span>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-slate-400">Oportunidades / Valor</span>
+          <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+            <i data-lucide="target" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="mt-4">
+          <span class="text-3xl font-extrabold text-white">18.4%</span>
+          <span class="text-xs text-slate-400 font-medium ml-2">Tasa de acierto estimada</span>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg relative overflow-hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-slate-400">Estado del Sistema</span>
+          <div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+            <i data-lucide="zap" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-lg font-bold text-white">En Línea</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Seccion de Gráfica y Panel de Control -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Contenedor del Gráfico (2 columnas en pantallas grandes) -->
+      <div class="lg:col-span-2 bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+            <i data-lucide="line-chart" class="w-5 h-5 text-brand-500"></i> Tendencia y Rendimiento
+          </h2>
+        </div>
+        <div class="relative w-full h-72">
+          <canvas id="performanceChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Panel de Controles / Entradas de Datos -->
+      <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-5 shadow-lg flex flex-col justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2 mb-4">
+            <i data-lucide="sliders" class="w-5 h-5 text-brand-500"></i> Parámetros de Entrada
+          </h2>
+          
+          <form id="calc-form" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Valor A</label>
+              <input type="number" id="inputA" value="75" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500 transition-colors">
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Valor B</label>
+              <input type="number" id="inputB" value="45" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-brand-500 transition-colors">
+            </div>
+
+            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-lg shadow-brand-600/20">
+              <i data-lucide="calculator" class="w-4 h-4"></i> Calcular Métricas
+            </button>
+          </form>
+        </div>
+
+        <div id="output-result" class="mt-4 p-3 bg-slate-900/80 border border-slate-700/50 rounded-lg text-sm text-slate-300 min-h-[50px] flex items-center justify-center text-center">
+          Introduce valores y pulsa calcular.
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Lógica JavaScript Vanilla -->
+  <script>
+    // Inicializar Iconos de Lucide
+    lucide.createIcons();
+
+    // Configuración inicial de Chart.js
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul'],
+        datasets: [{
+          label: 'Rendimiento (%)',
+          data: [65, 59, 80, 81, 76, 85, 92],
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointBackgroundColor: '#3b82f6'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(51, 65, 85, 0.3)' },
+            ticks: { color: '#94a3b8' }
+          },
+          y: {
+            grid: { color: 'rgba(51, 65, 85, 0.3)' },
+            ticks: { color: '#94a3b8' }
           }
-          actualizados++;
         }
-      });
-      localStorage.setItem('apuestas', JSON.stringify(apuestas));
-      renderApuestas();
-      showMsg('msgApuestas', `Se actualizaron ${actualizados} apuestas con los marcadores reales.`, 'success');
-    }
+      }
+    });
 
-    // ==================== CAL 2.0 ====================
-    function actualizarCal_2_0() {
-      showMsg('msgCal20', 'Tabla Cal_2.0 actualizada con el historial de apuestas y marcadores.', 'success');
-    }
+    // Lógica del Formulario
+    document.getElementById('calc-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const valA = parseFloat(document.getElementById('inputA').value) || 0;
+      const valB = parseFloat(document.getElementById('inputB').value) || 0;
+      
+      const resultado = ((valA + valB) / 2).toFixed(2);
+      
+      document.getElementById('output-result').innerHTML = `
+        <span class="text-emerald-400 font-bold">Resultado Calculado: ${resultado}</span>
+      `;
+
+      // Actualizar datos del gráfico dinámicamente
+      chart.data.datasets[0].data.push(resultado);
+      chart.data.labels.push('Nuevo');
+      if (chart.data.labels.length > 8) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+      }
+      chart.update();
+    });
   </script>
 </body>
 </html>
