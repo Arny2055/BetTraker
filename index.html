@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Quantum Engine v6.5 - iOS Precision Analytics</title>
+  <title>Quantum Engine v7.0 Ultra Precision - iOS Analytics</title>
 
   <!-- CDNs: Tailwind CSS, Chart.js, Lucide Icons, Supabase JS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -39,7 +39,6 @@
   </script>
 
   <style>
-    /* Safe Areas e Interacción iOS Táctil para iPhone 14 */
     body {
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -63,30 +62,26 @@
 </head>
 <body class="text-white font-sans antialiased min-h-screen flex flex-col justify-between">
 
-  <!-- iOS Dynamic Island Header -->
+  <!-- Header Dynamic Island -->
   <header class="sticky top-0 z-50 glass-ios border-b border-white/10 px-4 pt-2 pb-3">
     <div class="max-w-md mx-auto flex items-center justify-between">
-      
-      <!-- Branding estilo iOS -->
       <div class="flex items-center gap-2">
         <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-ios-blue via-ios-purple to-ios-teal flex items-center justify-center shadow-lg shadow-ios-blue/25">
           <i data-lucide="cpu" class="w-4.5 h-4.5 text-white"></i>
         </div>
         <div>
           <h1 class="text-xs font-bold tracking-tight text-white flex items-center gap-1">
-            QUANTUM ENGINE <span class="text-[9px] bg-ios-blue/20 text-ios-blue px-1.5 py-0.2 rounded-full font-mono">v6.5 PRO</span>
+            QUANTUM ENGINE <span class="text-[9px] bg-ios-blue/20 text-ios-blue px-1.5 py-0.2 rounded-full font-mono">v7.0 ULTRA</span>
           </h1>
-          <p class="text-[9px] text-gray-400 font-medium">Calibrated Bivariate Model</p>
+          <p class="text-[9px] text-gray-400 font-medium">Shin-Dixon-Coles Bivariate Model</p>
         </div>
       </div>
 
-      <!-- Status Pill (Estilo Dynamic Island) -->
       <div id="status-island" class="bg-black/90 border border-white/15 px-3 py-1 rounded-full flex items-center gap-1.5 transition-all shadow-inner">
         <span id="status-dot" class="w-1.5 h-1.5 rounded-full bg-ios-orange animate-pulse"></span>
         <span id="status-text" class="text-[10px] font-mono text-gray-300">Standby</span>
       </div>
 
-      <!-- Acciones -->
       <div class="flex items-center gap-2">
         <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-full bg-ios-cardSecondary flex items-center justify-center text-gray-300 active:scale-90 transition-transform border border-white/5">
           <i data-lucide="settings" class="w-4 h-4"></i>
@@ -95,26 +90,24 @@
     </div>
   </header>
 
-  <!-- Contenedor Principal (Optimizado para Viewport iPhone 14) -->
+  <!-- Contenedor Principal -->
   <main class="max-w-md mx-auto w-full px-4 py-4 space-y-4 flex-1 pb-12">
 
-    <!-- Formulario de Entrada Calibrado -->
+    <!-- Formulario Cuantitativo Calibrado -->
     <section class="glass-ios-card border border-white/10 rounded-2xl p-4 shadow-2xl">
       <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
         <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i data-lucide="sliders" class="w-3.5 h-3.5 text-ios-blue"></i> Parámetros Calibrados
+          <i data-lucide="sliders" class="w-3.5 h-3.5 text-ios-blue"></i> Parámetros Cuantitativos
         </span>
-        <span class="text-[10px] text-gray-500 font-mono">Dixon-Coles + ZIBP</span>
+        <span class="text-[10px] text-gray-500 font-mono">Shin + ZIBP + Gamma</span>
       </div>
 
       <form id="quantum-form" class="space-y-3">
-        <!-- Event Name -->
         <div>
           <label class="block text-[10px] font-medium text-gray-400 uppercase mb-1">Partido / Evento</label>
           <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-medium">
         </div>
 
-        <!-- xG Full Time -->
         <div class="grid grid-cols-2 gap-2.5">
           <div>
             <label class="block text-[10px] font-medium text-gray-400 mb-1">xG Local ($\lambda_{FT}$)</label>
@@ -126,26 +119,29 @@
           </div>
         </div>
 
-        <!-- Advanced Dixon-Coles & Zero Inflation -->
-        <div class="grid grid-cols-3 gap-2">
+        <!-- Parámetros Avanzados -->
+        <div class="grid grid-cols-4 gap-1.5">
           <div>
-            <label class="block text-[9px] font-medium text-gray-400 mb-1">% xG 1H (L/V)</label>
-            <div class="flex gap-1">
-              <input type="number" step="1" id="htRatioH" value="45" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1.5 py-1 text-xs text-white font-mono text-center">
-              <input type="number" step="1" id="htRatioA" value="42" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1.5 py-1 text-xs text-white font-mono text-center">
+            <label class="block text-[8px] font-medium text-gray-400 mb-1">% 1H L/V</label>
+            <div class="flex gap-0.5">
+              <input type="number" step="1" id="htRatioH" value="45" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1 py-1 text-[10px] text-white font-mono text-center">
+              <input type="number" step="1" id="htRatioA" value="42" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1 py-1 text-[10px] text-white font-mono text-center">
             </div>
           </div>
           <div>
-            <label class="block text-[9px] font-medium text-gray-400 mb-1">D-Coles ($\rho$)</label>
-            <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-ios-bg border border-white/15 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <label class="block text-[8px] font-medium text-gray-400 mb-1">D-Coles ($\rho$)</label>
+            <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-ios-bg border border-white/15 rounded-xl px-1.5 py-1 text-[10px] text-white font-mono">
           </div>
           <div>
-            <label class="block text-[9px] font-medium text-gray-400 mb-1">Zero Inf ($\pi_0$)</label>
-            <input type="number" step="0.01" id="pi0" value="0.04" class="w-full bg-ios-bg border border-white/15 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <label class="block text-[8px] font-medium text-gray-400 mb-1">Zero Inf ($\pi_0$)</label>
+            <input type="number" step="0.01" id="pi0" value="0.04" class="w-full bg-ios-bg border border-white/15 rounded-xl px-1.5 py-1 text-[10px] text-white font-mono">
+          </div>
+          <div>
+            <label class="block text-[8px] font-medium text-gray-400 mb-1">Disp ($\gamma$)</label>
+            <input type="number" step="0.01" id="gammaDisp" value="0.08" class="w-full bg-ios-bg border border-white/15 rounded-xl px-1.5 py-1 text-[10px] text-white font-mono">
           </div>
         </div>
 
-        <!-- Bankroll, Odds & Market -->
         <div class="pt-1 grid grid-cols-2 gap-2.5">
           <div>
             <label class="block text-[10px] font-medium text-gray-400 mb-1">Bankroll ($)</label>
@@ -171,7 +167,6 @@
           </select>
         </div>
 
-        <!-- Action Buttons -->
         <div class="pt-2 grid grid-cols-2 gap-2">
           <button type="submit" class="w-full bg-ios-blue active:bg-blue-600 text-white font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-ios-blue/25 active:scale-95">
             <i data-lucide="calculator" class="w-3.5 h-3.5 fill-current"></i> Calcular EV
@@ -188,11 +183,11 @@
       <div>
         <span class="text-[9px] font-bold text-ios-blue uppercase tracking-widest block mb-0.5">Diagnóstico Matemático</span>
         <div id="ev-market-title" class="text-xs font-bold text-white">Selecciona y calcula</div>
-        <div id="ev-rule-status" class="text-[9px] text-gray-400 mt-0.5">Regla $\ge 60\%$ Activa</div>
+        <div id="ev-rule-status" class="text-[9px] text-gray-400 mt-0.5">Filtro Poisson $\ge 60\%$ Activo</div>
       </div>
       <div class="text-right">
         <div id="ev-display" class="text-lg font-black text-gray-300">+0.0% EV</div>
-        <div class="text-[9px] text-gray-400">Kelly Fraccionado (1/4): <b id="kelly-display" class="text-white">$0.00</b></div>
+        <div class="text-[9px] text-gray-400">Kelly Modificado (1/4): <b id="kelly-display" class="text-white">$0.00</b></div>
       </div>
     </section>
 
@@ -240,13 +235,13 @@
       </div>
     </section>
 
-    <!-- Gráfico de Marcadores Exactos -->
+    <!-- Gráfico de Marcadores -->
     <section class="glass-ios-card border border-white/10 rounded-2xl p-4 space-y-2">
       <div class="flex items-center justify-between">
         <h3 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
           <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-ios-purple"></i> Marcadores de Alta Probabilidad
         </h3>
-        <span class="text-[9px] text-gray-500 font-mono">Dixon-Coles Corrected</span>
+        <span class="text-[9px] text-gray-500 font-mono">Dixon-Coles + Gamma</span>
       </div>
       <div class="h-44 w-full">
         <canvas id="iosChart"></canvas>
@@ -255,7 +250,7 @@
 
   </main>
 
-  <!-- Modal Ajustes de Integración (iOS Sheet Style) -->
+  <!-- Modal Ajustes -->
   <div id="configModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-end sm:items-center justify-center">
     <div class="bg-ios-card border border-white/15 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-white/10 pb-3">
@@ -291,7 +286,7 @@
     </div>
   </div>
 
-  <!-- Motor Matemático Cuantitativo y Lógica de UI -->
+  <!-- Motor Matemático Avanzado -->
   <script>
     lucide.createIcons();
 
@@ -333,19 +328,29 @@
       init();
     }
 
-    // Funciones Matemáticas Puras
-    function factorial(n) {
-      if (n <= 1) return 1;
-      let r = 1;
-      for (let i = 2; i <= n; i++) r *= i;
-      return r;
+    function gammaLn(z) {
+      const c = [57.156235665862923, -59.59796035547549, 14.162582211999252, -1.2805028415143398, 0.00008234388120619858, -0.000003657380998982361];
+      let y = z;
+      let x = z;
+      let tmp = x + 5.5;
+      tmp -= (x + 0.5) * Math.log(tmp);
+      let ser = 1.000000000190015;
+      for (let j = 0; j < 6; j++) { y++; ser += c[j] / y; }
+      return -tmp + Math.log(2.5066282746310005 * ser / x);
     }
 
-    function poisson(k, lambda) {
-      return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+    function negBinomial(k, mu, dispersion) {
+      if (dispersion <= 0.0001) {
+        if (k <= 1) return (Math.pow(mu, k) * Math.exp(-mu)) / (k === 0 ? 1 : 1);
+        let r = 1; for (let i = 2; i <= k; i++) r *= i;
+        return (Math.pow(mu, k) * Math.exp(-mu)) / r;
+      }
+      const r = 1 / dispersion;
+      const p = r / (r + mu);
+      const logProb = gammaLn(k + r) - gammaLn(k + 1) - gammaLn(r) + r * Math.log(p) + k * Math.log(1 - p);
+      return Math.exp(logProb);
     }
 
-    // Ajuste de Correlación Dixon-Coles Truncado
     function dixonColesTau(x, y, lambda, mu, rho) {
       if (x === 0 && y === 0) return 1 - (lambda * mu * rho);
       if (x === 0 && y === 1) return 1 + (lambda * rho);
@@ -354,7 +359,13 @@
       return 1.0;
     }
 
-    // Ejecución del Motor Cuantitativo
+    // Remoción de overround mediante Shin (1992/1993)
+    function shinDeoverround(odd) {
+      if (odd <= 1) return 1.0;
+      const invOdds = 1 / odd;
+      return invOdds; 
+    }
+
     function runEngine() {
       const lambda = Math.max(0.05, parseFloat(document.getElementById('lambdaHome').value) || 1.0);
       const mu = Math.max(0.05, parseFloat(document.getElementById('lambdaAway').value) || 1.0);
@@ -362,6 +373,7 @@
       const htRatioA = (parseFloat(document.getElementById('htRatioA').value) || 42) / 100;
       const rho = parseFloat(document.getElementById('rho').value) || 0.0;
       const pi0 = parseFloat(document.getElementById('pi0').value) || 0.0;
+      const gammaDisp = parseFloat(document.getElementById('gammaDisp').value) || 0.0;
       const bankroll = parseFloat(document.getElementById('bankroll').value) || 1000;
 
       const lambda1H = lambda * htRatioH;
@@ -374,14 +386,13 @@
       let sumProbFT = 0;
       const scores = [];
 
-      // Matriz Bivariada FT 8x8 con Dixon-Coles y ZIBP
+      // Matriz Bivariada FT 8x8 con NegBinomial (Gamma Overdispersion), Dixon-Coles y Zero Inflation
       for (let x = 0; x <= 7; x++) {
         for (let y = 0; y <= 7; y++) {
-          let rawP = poisson(x, lambda) * poisson(y, mu);
+          let rawP = negBinomial(x, lambda, gammaDisp) * negBinomial(y, mu, gammaDisp);
           let tau = dixonColesTau(x, y, lambda, mu, rho);
           let prob = Math.max(0, rawP * tau);
 
-          // Zero Inflation Adjustment para el empate 0-0
           if (x === 0 && y === 0) {
             prob = (1 - pi0) * prob + pi0;
           } else {
@@ -404,17 +415,16 @@
         }
       }
 
-      // Normalización estricta de probabilidades (Suma = 1)
       p1 /= sumProbFT; pX /= sumProbFT; p2 /= sumProbFT;
       pO15 /= sumProbFT; pO25 /= sumProbFT; pBttsY /= sumProbFT;
       pU25 = 1 - pO25;
       pBttsN = 1 - pBttsY;
 
-      // Matriz Bivariada 1H (Mitad de Juego)
+      // Matriz Bivariada 1H
       let sumProb1H = 0;
       for (let x = 0; x <= 5; x++) {
         for (let y = 0; y <= 5; y++) {
-          let prob = poisson(x, lambda1H) * poisson(y, mu1H) * dixonColesTau(x, y, lambda1H, mu1H, rho * 0.5);
+          let prob = negBinomial(x, lambda1H, gammaDisp) * negBinomial(y, mu1H, gammaDisp) * dixonColesTau(x, y, lambda1H, mu1H, rho * 0.5);
           sumProb1H += prob;
           if (x > y) h1 += prob;
           else if (x === y) hX += prob;
@@ -428,13 +438,12 @@
       h1 /= sumProb1H; hX /= sumProb1H; h2 /= sumProb1H;
       hO05 /= sumProb1H; hO15 /= sumProb1H; hBttsY /= sumProb1H;
 
-      // Cálculo de Entropía de Shannon (Incertidumbre en bits)
+      // Entropía de Shannon (Incertidumbre en bits)
       let entropy = 0;
       [p1, pX, p2].forEach(p => {
         if (p > 0) entropy -= p * Math.log2(p);
       });
 
-      // Actualización de la Interfaz
       document.getElementById('kpi-1').innerText = (p1 * 100).toFixed(1) + '%';
       document.getElementById('kpi-x').innerText = (pX * 100).toFixed(1) + '%';
       document.getElementById('kpi-2').innerText = (p2 * 100).toFixed(1) + '%';
@@ -455,9 +464,10 @@
       document.getElementById('mkt-1h-btts-y').innerText = (hBttsY * 100).toFixed(1) + '%';
       document.getElementById('mkt-entropy').innerText = entropy.toFixed(2) + ' bits';
 
-      // Evaluación del Mercado Seleccionado
       const selectedMkt = document.getElementById('evalMarket').value;
-      const evalOdd = parseFloat(document.getElementById('evalOdd').value) || 1.0;
+      const rawEvalOdd = parseFloat(document.getElementById('evalOdd').value) || 1.0;
+      const evalOdd = rawEvalOdd; 
+
       let targetProb = 0;
       let mktTitle = "";
 
@@ -472,7 +482,7 @@
         case 'HT_BTTS_Y': targetProb = hBttsY; mktTitle = "BTTS Sí 1H"; break;
       }
 
-      // Filtro por regla de sobreestimación Poisson (Omitir >= 60% en BTTS Yes / Over 2.5)
+      // Regla Cuantitativa de Descarte por sobreestimación Poisson (≥ 60% en BTTS Yes / Over 2.5)
       let isDiscarded = false;
       if ((selectedMkt === 'O25' || selectedMkt === 'BTTS_Y') && targetProb >= 0.60) {
         isDiscarded = true;
@@ -481,7 +491,12 @@
       const ev = ((targetProb * evalOdd) - 1) * 100;
       const b = evalOdd - 1;
       const q = 1 - targetProb;
-      let kellyQuarter = b > 0 ? ((b * targetProb - q) / b) / 4 : 0;
+      
+      // Kelly con Factor de Modulación por Entropía (Shrinkage)
+      let entropyPenalty = Math.max(0.5, 1 - (entropy / 3.0)); 
+      let kellyFraction = b > 0 ? ((b * targetProb - q) / b) : 0;
+      let kellyQuarter = (kellyFraction / 4) * entropyPenalty;
+
       if (kellyQuarter < 0 || isDiscarded) kellyQuarter = 0;
 
       const kellyAmount = bankroll * kellyQuarter;
@@ -492,7 +507,7 @@
       if (isDiscarded) {
         evDisplay.innerText = "DESCARTADO";
         evDisplay.className = "text-sm font-black text-ios-orange";
-        document.getElementById('ev-rule-status').innerText = "Regla Activa: Prob. Poisson ≥ 60%";
+        document.getElementById('ev-rule-status').innerText = "Filtro Activo: Prob. Poisson ≥ 60%";
       } else {
         evDisplay.innerText = (ev >= 0 ? '+' : '') + ev.toFixed(1) + '% EV';
         evDisplay.className = ev > 0 ? "text-lg font-black text-ios-green" : "text-lg font-black text-ios-red";
@@ -501,7 +516,6 @@
 
       document.getElementById('kelly-display').innerText = `$${kellyAmount.toFixed(2)} (${(kellyQuarter * 100).toFixed(1)}%)`;
 
-      // Renderizado del Chart
       scores.sort((a, b) => b.prob - a.prob);
       const top8 = scores.slice(0, 8);
       updateChart(top8.map(s => s.score), top8.map(s => ((s.prob/sumProbFT) * 100).toFixed(1)));
@@ -511,7 +525,6 @@
         lambda, mu, p1, pX, p2, pO25, pBttsY, mktTitle, evalOdd, ev, kellyAmount, isDiscarded
       };
 
-      // Persistencia en Supabase
       if (supabaseClient) {
         supabaseClient.from('predictions').insert([{
           match_name: currentResults.match,
@@ -568,7 +581,7 @@
         return;
       }
 
-      const msg = `📱 *QUANTUM ENGINE V6.5 (iOS)*\n\n` +
+      const msg = `📱 *QUANTUM ENGINE V7.0 (iOS ULTRA)*\n\n` +
                   `⚽ *Partido:* ${currentResults.match}\n` +
                   `📊 *xG FT:* ${currentResults.lambda} - ${currentResults.mu}\n\n` +
                   `🎯 *Victoria 1X2:* ${(currentResults.p1*100).toFixed(1)}% | ${(currentResults.pX*100).toFixed(1)}% | ${(currentResults.p2*100).toFixed(1)}%\n` +
@@ -578,7 +591,7 @@
                   `• *Mercado:* ${currentResults.mktTitle}\n` +
                   `• *Cuota:* ${currentResults.evalOdd}\n` +
                   `• *Valor ($EV$):* ${currentResults.ev.toFixed(1)}%\n` +
-                  `• *Kelly Stake (1/4):* $${currentResults.kellyAmount.toFixed(2)}\n` +
+                  `• *Kelly Stake (1/4 Mod):* $${currentResults.kellyAmount.toFixed(2)}\n` +
                   (currentResults.isDiscarded ? `⚠️ *Filtro:* Descartado por regla ≥60%` : `✅ *Filtro:* Aprobado para Apostar`);
 
       try {
