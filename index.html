@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Quantum Engine v6.0 - iOS Native Edition</title>
+  <title>Quantum Engine v6.5 - iOS Precision Analytics</title>
 
   <!-- CDNs: Tailwind CSS, Chart.js, Lucide Icons, Supabase JS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -29,7 +29,8 @@
               green: '#30d158',
               red: '#ff453a',
               orange: '#ff9f0a',
-              purple: '#bf5af2'
+              purple: '#bf5af2',
+              teal: '#64d2ff'
             }
           }
         }
@@ -38,7 +39,7 @@
   </script>
 
   <style>
-    /* Estilos nativos de iOS */
+    /* Safe Areas e Interacción iOS Táctil para iPhone 14 */
     body {
       -webkit-tap-highlight-color: transparent;
       user-select: none;
@@ -47,102 +48,104 @@
       padding-bottom: env(safe-area-inset-bottom);
     }
     .glass-ios {
-      background: rgba(28, 28, 30, 0.75);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      background: rgba(28, 28, 30, 0.82);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
     }
     .glass-ios-card {
-      background: rgba(44, 44, 46, 0.6);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      background: rgba(44, 44, 46, 0.65);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
     }
-    /* Ocultar barra de desplazamiento manteniendo scroll */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="text-white font-sans antialiased min-h-screen flex flex-col justify-between">
 
-  <!-- Simulación Dynamic Island / Barra Superior de Estado -->
+  <!-- iOS Dynamic Island Header -->
   <header class="sticky top-0 z-50 glass-ios border-b border-white/10 px-4 pt-2 pb-3">
     <div class="max-w-md mx-auto flex items-center justify-between">
       
-      <!-- Lado Izquierdo: Branding estilo iOS -->
+      <!-- Branding estilo iOS -->
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-ios-blue to-ios-purple flex items-center justify-center shadow-lg shadow-ios-blue/20">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-ios-blue via-ios-purple to-ios-teal flex items-center justify-center shadow-lg shadow-ios-blue/25">
           <i data-lucide="cpu" class="w-4.5 h-4.5 text-white"></i>
         </div>
         <div>
           <h1 class="text-xs font-bold tracking-tight text-white flex items-center gap-1">
-            QUANTUM ENGINE <span class="text-[9px] bg-ios-blue/20 text-ios-blue px-1.5 py-0.2 rounded-full font-mono">v6.0</span>
+            QUANTUM ENGINE <span class="text-[9px] bg-ios-blue/20 text-ios-blue px-1.5 py-0.2 rounded-full font-mono">v6.5 PRO</span>
           </h1>
-          <p class="text-[9px] text-gray-400 font-medium">iPhone 14 Precision Mode</p>
+          <p class="text-[9px] text-gray-400 font-medium">Calibrated Bivariate Model</p>
         </div>
       </div>
 
-      <!-- Centro: Status Pill (Estilo Dynamic Island) -->
-      <div id="status-island" class="bg-black/80 border border-white/15 px-3 py-1 rounded-full flex items-center gap-1.5 transition-all">
+      <!-- Status Pill (Estilo Dynamic Island) -->
+      <div id="status-island" class="bg-black/90 border border-white/15 px-3 py-1 rounded-full flex items-center gap-1.5 transition-all shadow-inner">
         <span id="status-dot" class="w-1.5 h-1.5 rounded-full bg-ios-orange animate-pulse"></span>
         <span id="status-text" class="text-[10px] font-mono text-gray-300">Standby</span>
       </div>
 
-      <!-- Lado Derecho: Acciones -->
+      <!-- Acciones -->
       <div class="flex items-center gap-2">
-        <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-full bg-ios-cardSecondary flex items-center justify-center text-gray-300 active:scale-95 transition-transform">
+        <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-full bg-ios-cardSecondary flex items-center justify-center text-gray-300 active:scale-90 transition-transform border border-white/5">
           <i data-lucide="settings" class="w-4 h-4"></i>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Contenedor Principal (Optimizado para viewport de 390px - iPhone 14) -->
+  <!-- Contenedor Principal (Optimizado para Viewport iPhone 14) -->
   <main class="max-w-md mx-auto w-full px-4 py-4 space-y-4 flex-1 pb-12">
 
-    <!-- Formulario de Entrada (Estilo iOS Grouped Table) -->
+    <!-- Formulario de Entrada Calibrado -->
     <section class="glass-ios-card border border-white/10 rounded-2xl p-4 shadow-2xl">
       <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
         <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i data-lucide="sliders" class="w-3.5 h-3.5 text-ios-blue"></i> Variables del Modelo
+          <i data-lucide="sliders" class="w-3.5 h-3.5 text-ios-blue"></i> Parámetros Calibrados
         </span>
-        <span class="text-[10px] text-gray-500 font-mono">xG / Dixon-Coles</span>
+        <span class="text-[10px] text-gray-500 font-mono">Dixon-Coles + ZIBP</span>
       </div>
 
       <form id="quantum-form" class="space-y-3">
         <!-- Event Name -->
         <div>
-          <label class="block text-[10px] font-medium text-gray-400 uppercase mb-1">Evento / Partido</label>
+          <label class="block text-[10px] font-medium text-gray-400 uppercase mb-1">Partido / Evento</label>
           <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-medium">
         </div>
 
         <!-- xG Full Time -->
         <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-[10px] font-medium text-gray-400 mb-1">xG Local ($\lambda$ FT)</label>
+            <label class="block text-[10px] font-medium text-gray-400 mb-1">xG Local ($\lambda_{FT}$)</label>
             <input type="number" step="0.01" id="lambdaHome" value="1.85" required class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
           </div>
           <div>
-            <label class="block text-[10px] font-medium text-gray-400 mb-1">xG Visita ($\mu$ FT)</label>
+            <label class="block text-[10px] font-medium text-gray-400 mb-1">xG Visita ($\mu_{FT}$)</label>
             <input type="number" step="0.01" id="lambdaAway" value="1.15" required class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
           </div>
         </div>
 
-        <!-- HT Percentages & Dixon-Coles -->
+        <!-- Advanced Dixon-Coles & Zero Inflation -->
         <div class="grid grid-cols-3 gap-2">
           <div>
-            <label class="block text-[9px] font-medium text-gray-400 mb-1">% xG 1H (L)</label>
-            <input type="number" step="1" id="htRatioH" value="45" class="w-full bg-ios-bg border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
-          </div>
-          <div>
-            <label class="block text-[9px] font-medium text-gray-400 mb-1">% xG 1H (V)</label>
-            <input type="number" step="1" id="htRatioA" value="42" class="w-full bg-ios-bg border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <label class="block text-[9px] font-medium text-gray-400 mb-1">% xG 1H (L/V)</label>
+            <div class="flex gap-1">
+              <input type="number" step="1" id="htRatioH" value="45" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1.5 py-1 text-xs text-white font-mono text-center">
+              <input type="number" step="1" id="htRatioA" value="42" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1.5 py-1 text-xs text-white font-mono text-center">
+            </div>
           </div>
           <div>
             <label class="block text-[9px] font-medium text-gray-400 mb-1">D-Coles ($\rho$)</label>
-            <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-ios-bg border border-white/15 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-ios-bg border border-white/15 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+          </div>
+          <div>
+            <label class="block text-[9px] font-medium text-gray-400 mb-1">Zero Inf ($\pi_0$)</label>
+            <input type="number" step="0.01" id="pi0" value="0.04" class="w-full bg-ios-bg border border-white/15 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
           </div>
         </div>
 
-        <!-- Bankroll & Market Evaluation -->
+        <!-- Bankroll, Odds & Market -->
         <div class="pt-1 grid grid-cols-2 gap-2.5">
           <div>
             <label class="block text-[10px] font-medium text-gray-400 mb-1">Bankroll ($)</label>
@@ -170,26 +173,26 @@
 
         <!-- Action Buttons -->
         <div class="pt-2 grid grid-cols-2 gap-2">
-          <button type="submit" class="w-full bg-ios-blue active:bg-blue-600 text-white font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-ios-blue/25">
-            <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Ejecutar
+          <button type="submit" class="w-full bg-ios-blue active:bg-blue-600 text-white font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-ios-blue/25 active:scale-95">
+            <i data-lucide="calculator" class="w-3.5 h-3.5 fill-current"></i> Calcular EV
           </button>
-          <button type="button" onclick="sendTelegramAlert()" class="w-full bg-ios-cardSecondary hover:bg-white/10 text-ios-blue font-semibold py-2.5 rounded-xl text-xs transition-all border border-ios-blue/30 flex items-center justify-center gap-1.5">
+          <button type="button" onclick="sendTelegramAlert()" class="w-full bg-ios-cardSecondary hover:bg-white/10 text-ios-blue font-semibold py-2.5 rounded-xl text-xs transition-all border border-ios-blue/30 flex items-center justify-center gap-1.5 active:scale-95">
             <i data-lucide="send" class="w-3.5 h-3.5"></i> Telegram
           </button>
         </div>
       </form>
     </section>
 
-    <!-- EV & Kelly Banner -->
+    <!-- EV & Dynamic Stake Banner -->
     <section id="ev-container" class="glass-ios-card border border-white/10 rounded-2xl p-4 shadow-xl flex items-center justify-between">
       <div>
-        <span class="text-[9px] font-bold text-ios-blue uppercase tracking-widest block mb-0.5">Diagnóstico del Mercado</span>
+        <span class="text-[9px] font-bold text-ios-blue uppercase tracking-widest block mb-0.5">Diagnóstico Matemático</span>
         <div id="ev-market-title" class="text-xs font-bold text-white">Selecciona y calcula</div>
-        <div id="ev-rule-status" class="text-[9px] text-gray-400 mt-0.5">Estrategia: Regla $\ge 60\%$ Activa</div>
+        <div id="ev-rule-status" class="text-[9px] text-gray-400 mt-0.5">Regla $\ge 60\%$ Activa</div>
       </div>
       <div class="text-right">
         <div id="ev-display" class="text-lg font-black text-gray-300">+0.0% EV</div>
-        <div class="text-[9px] text-gray-400">Kelly 1/4: <b id="kelly-display" class="text-white">$0.00</b></div>
+        <div class="text-[9px] text-gray-400">Kelly Fraccionado (1/4): <b id="kelly-display" class="text-white">$0.00</b></div>
       </div>
     </section>
 
@@ -212,11 +215,11 @@
       </div>
     </section>
 
-    <!-- Tablas de Mercados Extendidos -->
+    <!-- Matriz de Probabilidades Extendidas -->
     <section class="glass-ios-card border border-white/10 rounded-2xl p-4 space-y-3">
       <h3 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center justify-between border-b border-white/10 pb-2">
-        <span class="flex items-center gap-1.5"><i data-lucide="layers" class="w-3.5 h-3.5 text-ios-blue"></i> Probabilidades Clave</span>
-        <span class="text-[9px] text-gray-500 font-mono">8x8 Matrix Bivariate</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="layers" class="w-3.5 h-3.5 text-ios-blue"></i> Métrica Avanzada</span>
+        <span class="text-[9px] text-gray-500 font-mono">Bivariate Matrix 8x8</span>
       </h3>
 
       <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
@@ -233,7 +236,7 @@
         <div class="flex justify-between items-center"><span class="text-gray-400">1H BTTS Sí:</span> <b id="mkt-1h-btts-y" class="font-mono text-ios-green">0.0%</b></div>
 
         <div class="flex justify-between items-center"><span class="text-gray-400">BTTS No FT:</span> <b id="mkt-btts-n" class="font-mono text-ios-red">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-gray-400">Entropía:</span> <b id="mkt-entropy" class="font-mono text-gray-400">0.00 bits</b></div>
+        <div class="flex justify-between items-center"><span class="text-gray-400">Entropía:</span> <b id="mkt-entropy" class="font-mono text-ios-purple">0.00 bits</b></div>
       </div>
     </section>
 
@@ -241,7 +244,7 @@
     <section class="glass-ios-card border border-white/10 rounded-2xl p-4 space-y-2">
       <div class="flex items-center justify-between">
         <h3 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
-          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-ios-purple"></i> Top Marcadores Exactos
+          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-ios-purple"></i> Marcadores de Alta Probabilidad
         </h3>
         <span class="text-[9px] text-gray-500 font-mono">Dixon-Coles Corrected</span>
       </div>
@@ -252,12 +255,12 @@
 
   </main>
 
-  <!-- Modal de Configuración estilo iOS Sheet -->
-  <div id="configModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-end sm:items-center justify-center">
+  <!-- Modal Ajustes de Integración (iOS Sheet Style) -->
+  <div id="configModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-end sm:items-center justify-center">
     <div class="bg-ios-card border border-white/15 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-white/10 pb-3">
         <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="database" class="w-4 h-4 text-ios-blue"></i> Ajustes de Integración
+          <i data-lucide="database" class="w-4 h-4 text-ios-blue"></i> Configuración de Integración
         </h3>
         <button onclick="toggleConfigModal()" class="w-7 h-7 rounded-full bg-ios-cardSecondary flex items-center justify-center text-gray-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
@@ -282,13 +285,13 @@
         </div>
       </div>
 
-      <button onclick="saveConfigurations()" class="w-full bg-ios-blue text-white font-semibold py-3 rounded-xl text-xs transition-all shadow-lg shadow-ios-blue/30">
-        Guardar Configuración
+      <button onclick="saveConfigurations()" class="w-full bg-ios-blue text-white font-semibold py-3 rounded-xl text-xs transition-all shadow-lg shadow-ios-blue/30 active:scale-95">
+        Guardar Credenciales
       </button>
     </div>
   </div>
 
-  <!-- Lógica Matemática Real y Control de UI -->
+  <!-- Motor Matemático Cuantitativo y Lógica de UI -->
   <script>
     lucide.createIcons();
 
@@ -296,7 +299,6 @@
     let chartInstance = null;
     let currentResults = null;
 
-    // Inicialización del entorno
     function init() {
       const url = localStorage.getItem('qmt_supaUrl');
       const key = localStorage.getItem('qmt_supaKey');
@@ -343,6 +345,7 @@
       return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
     }
 
+    // Ajuste de Correlación Dixon-Coles Truncado
     function dixonColesTau(x, y, lambda, mu, rho) {
       if (x === 0 && y === 0) return 1 - (lambda * mu * rho);
       if (x === 0 && y === 1) return 1 + (lambda * rho);
@@ -351,13 +354,14 @@
       return 1.0;
     }
 
-    // Motor Principal de Cálculos Bivariados
+    // Ejecución del Motor Cuantitativo
     function runEngine() {
       const lambda = Math.max(0.05, parseFloat(document.getElementById('lambdaHome').value) || 1.0);
       const mu = Math.max(0.05, parseFloat(document.getElementById('lambdaAway').value) || 1.0);
       const htRatioH = (parseFloat(document.getElementById('htRatioH').value) || 45) / 100;
       const htRatioA = (parseFloat(document.getElementById('htRatioA').value) || 42) / 100;
       const rho = parseFloat(document.getElementById('rho').value) || 0.0;
+      const pi0 = parseFloat(document.getElementById('pi0').value) || 0.0;
       const bankroll = parseFloat(document.getElementById('bankroll').value) || 1000;
 
       const lambda1H = lambda * htRatioH;
@@ -370,12 +374,19 @@
       let sumProbFT = 0;
       const scores = [];
 
-      // Computación Matriz 8x8 Full Time
+      // Matriz Bivariada FT 8x8 con Dixon-Coles y ZIBP
       for (let x = 0; x <= 7; x++) {
         for (let y = 0; y <= 7; y++) {
-          const rawP = poisson(x, lambda) * poisson(y, mu);
-          const tau = dixonColesTau(x, y, lambda, mu, rho);
-          const prob = Math.max(0, rawP * tau);
+          let rawP = poisson(x, lambda) * poisson(y, mu);
+          let tau = dixonColesTau(x, y, lambda, mu, rho);
+          let prob = Math.max(0, rawP * tau);
+
+          // Zero Inflation Adjustment para el empate 0-0
+          if (x === 0 && y === 0) {
+            prob = (1 - pi0) * prob + pi0;
+          } else {
+            prob = (1 - pi0) * prob;
+          }
 
           sumProbFT += prob;
 
@@ -393,17 +404,17 @@
         }
       }
 
-      // Normalización para consistencia probabilística estricta (Suma = 1)
+      // Normalización estricta de probabilidades (Suma = 1)
       p1 /= sumProbFT; pX /= sumProbFT; p2 /= sumProbFT;
       pO15 /= sumProbFT; pO25 /= sumProbFT; pBttsY /= sumProbFT;
       pU25 = 1 - pO25;
       pBttsN = 1 - pBttsY;
 
-      // Computación Matriz 1H
+      // Matriz Bivariada 1H (Mitad de Juego)
       let sumProb1H = 0;
       for (let x = 0; x <= 5; x++) {
         for (let y = 0; y <= 5; y++) {
-          const prob = poisson(x, lambda1H) * poisson(y, mu1H) * dixonColesTau(x, y, lambda1H, mu1H, rho * 0.5);
+          let prob = poisson(x, lambda1H) * poisson(y, mu1H) * dixonColesTau(x, y, lambda1H, mu1H, rho * 0.5);
           sumProb1H += prob;
           if (x > y) h1 += prob;
           else if (x === y) hX += prob;
@@ -417,13 +428,13 @@
       h1 /= sumProb1H; hX /= sumProb1H; h2 /= sumProb1H;
       hO05 /= sumProb1H; hO15 /= sumProb1H; hBttsY /= sumProb1H;
 
-      // Entropía de Shannon (Incertidumbre del evento)
+      // Cálculo de Entropía de Shannon (Incertidumbre en bits)
       let entropy = 0;
       [p1, pX, p2].forEach(p => {
         if (p > 0) entropy -= p * Math.log2(p);
       });
 
-      // Renderizado UI
+      // Actualización de la Interfaz
       document.getElementById('kpi-1').innerText = (p1 * 100).toFixed(1) + '%';
       document.getElementById('kpi-x').innerText = (pX * 100).toFixed(1) + '%';
       document.getElementById('kpi-2').innerText = (p2 * 100).toFixed(1) + '%';
@@ -461,7 +472,7 @@
         case 'HT_BTTS_Y': targetProb = hBttsY; mktTitle = "BTTS Sí 1H"; break;
       }
 
-      // Aplicar filtro estratégico de sobreestimación Poisson (Omitir >= 60% en BTTS Yes / Over 2.5)
+      // Filtro por regla de sobreestimación Poisson (Omitir >= 60% en BTTS Yes / Over 2.5)
       let isDiscarded = false;
       if ((selectedMkt === 'O25' || selectedMkt === 'BTTS_Y') && targetProb >= 0.60) {
         isDiscarded = true;
@@ -479,28 +490,28 @@
       const evDisplay = document.getElementById('ev-display');
       
       if (isDiscarded) {
-        evDisplay.innerText = "DESACARTADO";
+        evDisplay.innerText = "DESCARTADO";
         evDisplay.className = "text-sm font-black text-ios-orange";
-        document.getElementById('ev-rule-status').innerText = "Filtrado: Prob. Poisson ≥ 60%";
+        document.getElementById('ev-rule-status').innerText = "Regla Activa: Prob. Poisson ≥ 60%";
       } else {
         evDisplay.innerText = (ev >= 0 ? '+' : '') + ev.toFixed(1) + '% EV';
         evDisplay.className = ev > 0 ? "text-lg font-black text-ios-green" : "text-lg font-black text-ios-red";
-        document.getElementById('ev-rule-status').innerText = ev > 0 ? "Apuesta Aprobada con Valor" : "Sin Valor Analítico";
+        document.getElementById('ev-rule-status').innerText = ev > 0 ? "Entrada Aprobada con Valor" : "Sin Valor Analítico";
       }
 
       document.getElementById('kelly-display').innerText = `$${kellyAmount.toFixed(2)} (${(kellyQuarter * 100).toFixed(1)}%)`;
 
       // Renderizado del Chart
       scores.sort((a, b) => b.prob - a.prob);
-      const top10 = scores.slice(0, 8);
-      updateChart(top10.map(s => s.score), top10.map(s => ((s.prob/sumProbFT) * 100).toFixed(1)));
+      const top8 = scores.slice(0, 8);
+      updateChart(top8.map(s => s.score), top8.map(s => ((s.prob/sumProbFT) * 100).toFixed(1)));
 
       currentResults = {
         match: document.getElementById('matchLabel').value,
         lambda, mu, p1, pX, p2, pO25, pBttsY, mktTitle, evalOdd, ev, kellyAmount, isDiscarded
       };
 
-      // Guardar en Supabase si la conexión está disponible
+      // Persistencia en Supabase
       if (supabaseClient) {
         supabaseClient.from('predictions').insert([{
           match_name: currentResults.match,
@@ -513,7 +524,7 @@
           prob_btts_yes: pBttsY,
           ev_eval: ev,
           created_at: new Date()
-        }]).then(() => console.log('Saved to Supabase')).catch(e => console.error(e));
+        }]).then(() => console.log('Stored in Supabase')).catch(e => console.error(e));
       }
     }
 
@@ -553,11 +564,11 @@
       const chatId = localStorage.getItem('qmt_teleChat');
 
       if (!token || !chatId || !currentResults) {
-        alert('Ingresa las credenciales de Telegram en Configuración.');
+        alert('Configura los tokens de Telegram en el panel de ajustes.');
         return;
       }
 
-      const msg = `📱 *QUANTUM ENGINE V6 (iOS)*\n\n` +
+      const msg = `📱 *QUANTUM ENGINE V6.5 (iOS)*\n\n` +
                   `⚽ *Partido:* ${currentResults.match}\n` +
                   `📊 *xG FT:* ${currentResults.lambda} - ${currentResults.mu}\n\n` +
                   `🎯 *Victoria 1X2:* ${(currentResults.p1*100).toFixed(1)}% | ${(currentResults.pX*100).toFixed(1)}% | ${(currentResults.p2*100).toFixed(1)}%\n` +
@@ -576,8 +587,8 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'Markdown' })
         });
-        alert('¡Alerta enviada a Telegram con éxito!');
-      } catch(e) { alert('Error al contactar con la API de Telegram.'); }
+        alert('¡Alerta enviada a Telegram!');
+      } catch(e) { alert('Error enviando la alerta a Telegram.'); }
     }
 
     document.getElementById('quantum-form').addEventListener('submit', (e) => {
