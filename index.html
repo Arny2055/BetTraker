@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>Quantum Engine v7.0 Ultra Precision - iOS Analytics</title>
+  <title>EV Strategy Hub - Quantum Analytics Engine</title>
 
   <!-- CDNs: Tailwind CSS, Chart.js, Lucide Icons, Supabase JS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -17,20 +17,23 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'system-ui', 'sans-serif'],
-            mono: ['"SF Mono"', 'ui-monospace', 'monospace']
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace']
           },
           colors: {
-            ios: {
-              bg: '#000000',
-              card: '#1c1c1e',
-              cardSecondary: '#2c2c2e',
-              blue: '#0a84ff',
-              green: '#30d158',
-              red: '#ff453a',
-              orange: '#ff9f0a',
-              purple: '#bf5af2',
-              teal: '#64d2ff'
+            hub: {
+              bg: '#0B0F17',
+              card: '#111827',
+              cardBorder: '#1F293D',
+              accent: '#3B82F6',
+              accentHover: '#2563EB',
+              green: '#10B981',
+              greenGlow: 'rgba(16, 185, 129, 0.15)',
+              red: '#EF4444',
+              redGlow: 'rgba(239, 68, 68, 0.15)',
+              amber: '#F59E0B',
+              purple: '#8B5CF6',
+              darkMuted: '#1E293B'
             }
           }
         }
@@ -42,48 +45,48 @@
     body {
       -webkit-tap-highlight-color: transparent;
       user-select: none;
-      background-color: #000000;
+      background-color: #0B0F17;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
     }
-    .glass-ios {
-      background: rgba(28, 28, 30, 0.82);
-      backdrop-filter: blur(25px);
-      -webkit-backdrop-filter: blur(25px);
+    .hub-glass {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
-    .glass-ios-card {
-      background: rgba(44, 44, 46, 0.65);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+    .hub-card {
+      background-color: #111827;
+      border: 1px solid #1F293D;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="text-white font-sans antialiased min-h-screen flex flex-col justify-between">
+<body class="text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between">
 
-  <!-- Header Dynamic Island -->
-  <header class="sticky top-0 z-50 glass-ios border-b border-white/10 px-4 pt-2 pb-3">
+  <!-- Header EV Strategy Hub -->
+  <header class="sticky top-0 z-50 hub-glass border-b border-hub-cardBorder px-4 py-3">
     <div class="max-w-md mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-ios-blue via-ios-purple to-ios-teal flex items-center justify-center shadow-lg shadow-ios-blue/25">
-          <i data-lucide="cpu" class="w-4.5 h-4.5 text-white"></i>
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-hub-accent via-indigo-600 to-hub-purple flex items-center justify-center shadow-lg shadow-hub-accent/20">
+          <i data-lucide="trending-up" class="w-5 h-5 text-white"></i>
         </div>
         <div>
-          <h1 class="text-xs font-bold tracking-tight text-white flex items-center gap-1">
-            QUANTUM ENGINE <span class="text-[9px] bg-ios-blue/20 text-ios-blue px-1.5 py-0.2 rounded-full font-mono">v7.0 ULTRA</span>
+          <h1 class="text-xs font-black tracking-wider uppercase text-white flex items-center gap-1.5">
+            EV STRATEGY HUB
+            <span class="text-[9px] bg-hub-accent/20 text-hub-accent border border-hub-accent/30 px-1.5 py-0.5 rounded-md font-mono">v7.0 QUANTUM</span>
           </h1>
-          <p class="text-[9px] text-gray-400 font-medium">Shin-Dixon-Coles Bivariate Model</p>
+          <p class="text-[10px] text-slate-400 font-medium">Bivariate Brier-Calibrated Engine</p>
         </div>
       </div>
 
-      <div id="status-island" class="bg-black/90 border border-white/15 px-3 py-1 rounded-full flex items-center gap-1.5 transition-all shadow-inner">
-        <span id="status-dot" class="w-1.5 h-1.5 rounded-full bg-ios-orange animate-pulse"></span>
-        <span id="status-text" class="text-[10px] font-mono text-gray-300">Standby</span>
-      </div>
-
       <div class="flex items-center gap-2">
-        <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-full bg-ios-cardSecondary flex items-center justify-center text-gray-300 active:scale-90 transition-transform border border-white/5">
+        <div id="status-island" class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-inner">
+          <span id="status-dot" class="w-2 h-2 rounded-full bg-hub-amber animate-pulse"></span>
+          <span id="status-text" class="text-[10px] font-mono text-slate-400">Standby</span>
+        </div>
+
+        <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white active:scale-95 transition-all">
           <i data-lucide="settings" class="w-4 h-4"></i>
         </button>
       </div>
@@ -93,69 +96,69 @@
   <!-- Contenedor Principal -->
   <main class="max-w-md mx-auto w-full px-4 py-4 space-y-4 flex-1 pb-12">
 
-    <!-- Formulario Cuantitativo Calibrado -->
-    <section class="glass-ios-card border border-white/10 rounded-2xl p-4 shadow-2xl">
-      <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
-        <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i data-lucide="sliders" class="w-3.5 h-3.5 text-ios-blue"></i> Parámetros Cuantitativos
+    <!-- Formulario Parámetros EV Hub -->
+    <section class="hub-card rounded-2xl p-4 shadow-xl">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-800/80 pb-2.5">
+        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="sliders" class="w-4 h-4 text-hub-accent"></i> Parámetros de Entrada
         </span>
-        <span class="text-[10px] text-gray-500 font-mono">Shin + ZIBP + Gamma</span>
+        <span class="text-[10px] text-slate-500 font-mono">Shin + Dixon-Coles</span>
       </div>
 
       <form id="quantum-form" class="space-y-3">
         <div>
-          <label class="block text-[10px] font-medium text-gray-400 uppercase mb-1">Partido / Evento</label>
-          <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-medium">
+          <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Evento / Enfrentamiento</label>
+          <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-medium transition-colors">
         </div>
 
         <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-[10px] font-medium text-gray-400 mb-1">xG Local ($\lambda_{FT}$)</label>
-            <input type="number" step="0.01" id="lambdaHome" value="1.85" required class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">xG Local ($\lambda_{FT}$)</label>
+            <input type="number" step="0.01" id="lambdaHome" value="1.85" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
           </div>
           <div>
-            <label class="block text-[10px] font-medium text-gray-400 mb-1">xG Visita ($\mu_{FT}$)</label>
-            <input type="number" step="0.01" id="lambdaAway" value="1.15" required class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">xG Visita ($\mu_{FT}$)</label>
+            <input type="number" step="0.01" id="lambdaAway" value="1.15" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
           </div>
         </div>
 
         <!-- Parámetros Avanzados -->
-        <div class="grid grid-cols-4 gap-1.5">
+        <div class="grid grid-cols-4 gap-2">
           <div>
-            <label class="block text-[8px] font-medium text-gray-400 mb-1">% 1H L/V</label>
-            <div class="flex gap-0.5">
-              <input type="number" step="1" id="htRatioH" value="45" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1 py-1 text-[10px] text-white font-mono text-center">
-              <input type="number" step="1" id="htRatioA" value="42" class="w-1/2 bg-ios-bg border border-white/15 rounded-lg px-1 py-1 text-[10px] text-white font-mono text-center">
+            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">% 1H L/V</label>
+            <div class="flex gap-1">
+              <input type="number" step="1" id="htRatioH" value="45" class="w-1/2 bg-slate-950 border border-slate-800 rounded-lg px-1 py-1.5 text-[10px] text-slate-100 font-mono text-center">
+              <input type="number" step="1" id="htRatioA" value="42" class="w-1/2 bg-slate-950 border border-slate-800 rounded-lg px-1 py-1.5 text-[10px] text-slate-100 font-mono text-center">
             </div>
           </div>
           <div>
-            <label class="block text-[8px] font-medium text-gray-400 mb-1">D-Coles ($\rho$)</label>
-            <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-ios-bg border border-white/15 rounded-xl px-1.5 py-1 text-[10px] text-white font-mono">
+            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">D-Coles ($\rho$)</label>
+            <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-1.5 py-1.5 text-[10px] text-slate-100 font-mono text-center">
           </div>
           <div>
-            <label class="block text-[8px] font-medium text-gray-400 mb-1">Zero Inf ($\pi_0$)</label>
-            <input type="number" step="0.01" id="pi0" value="0.04" class="w-full bg-ios-bg border border-white/15 rounded-xl px-1.5 py-1 text-[10px] text-white font-mono">
+            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">Zero Inf ($\pi_0$)</label>
+            <input type="number" step="0.01" id="pi0" value="0.04" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-1.5 py-1.5 text-[10px] text-slate-100 font-mono text-center">
           </div>
           <div>
-            <label class="block text-[8px] font-medium text-gray-400 mb-1">Disp ($\gamma$)</label>
-            <input type="number" step="0.01" id="gammaDisp" value="0.08" class="w-full bg-ios-bg border border-white/15 rounded-xl px-1.5 py-1 text-[10px] text-white font-mono">
+            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">Disp ($\gamma$)</label>
+            <input type="number" step="0.01" id="gammaDisp" value="0.08" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-1.5 py-1.5 text-[10px] text-slate-100 font-mono text-center">
           </div>
         </div>
 
         <div class="pt-1 grid grid-cols-2 gap-2.5">
           <div>
-            <label class="block text-[10px] font-medium text-gray-400 mb-1">Bankroll ($)</label>
-            <input type="number" step="10" id="bankroll" value="1000" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Banca Total ($)</label>
+            <input type="number" step="10" id="bankroll" value="1000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
           </div>
           <div>
-            <label class="block text-[10px] font-medium text-gray-400 mb-1">Cuota Casa</label>
-            <input type="number" step="0.01" id="evalOdd" value="2.10" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-ios-blue font-mono">
+            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Cuota Casa</label>
+            <input type="number" step="0.01" id="evalOdd" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
           </div>
         </div>
 
         <div>
-          <label class="block text-[10px] font-medium text-gray-400 mb-1">Mercado a Evaluar EV</label>
-          <select id="evalMarket" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-ios-blue font-medium">
+          <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mercado Objetivo</label>
+          <select id="evalMarket" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-medium transition-colors">
             <option value="1">Victoria Local (1 FT)</option>
             <option value="X">Empate (X FT)</option>
             <option value="2">Victoria Visita (2 FT)</option>
@@ -167,126 +170,126 @@
           </select>
         </div>
 
-        <div class="pt-2 grid grid-cols-2 gap-2">
-          <button type="submit" class="w-full bg-ios-blue active:bg-blue-600 text-white font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-ios-blue/25 active:scale-95">
-            <i data-lucide="calculator" class="w-3.5 h-3.5 fill-current"></i> Calcular EV
+        <div class="pt-2 grid grid-cols-2 gap-2.5">
+          <button type="submit" class="w-full bg-hub-accent hover:bg-hub-accentHover text-white font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-hub-accent/20 active:scale-95">
+            <i data-lucide="calculator" class="w-4 h-4"></i> Calcular Valor
           </button>
-          <button type="button" onclick="sendTelegramAlert()" class="w-full bg-ios-cardSecondary hover:bg-white/10 text-ios-blue font-semibold py-2.5 rounded-xl text-xs transition-all border border-ios-blue/30 flex items-center justify-center gap-1.5 active:scale-95">
-            <i data-lucide="send" class="w-3.5 h-3.5"></i> Telegram
+          <button type="button" onclick="sendTelegramAlert()" class="w-full bg-slate-900 hover:bg-slate-800 text-hub-accent border border-hub-accent/30 font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 active:scale-95">
+            <i data-lucide="send" class="w-4 h-4"></i> Telegram Bot
           </button>
         </div>
       </form>
     </section>
 
-    <!-- EV & Dynamic Stake Banner -->
-    <section id="ev-container" class="glass-ios-card border border-white/10 rounded-2xl p-4 shadow-xl flex items-center justify-between">
+    <!-- Tarjeta del Diagnóstico EV & Stake Hub -->
+    <section id="ev-container" class="hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-accent">
       <div>
-        <span class="text-[9px] font-bold text-ios-blue uppercase tracking-widest block mb-0.5">Diagnóstico Matemático</span>
-        <div id="ev-market-title" class="text-xs font-bold text-white">Selecciona y calcula</div>
-        <div id="ev-rule-status" class="text-[9px] text-gray-400 mt-0.5">Filtro Poisson $\ge 60\%$ Activo</div>
+        <span class="text-[9px] font-black text-hub-accent uppercase tracking-widest block mb-0.5">Diagnóstico del Algoritmo</span>
+        <div id="ev-market-title" class="text-sm font-black text-white">Selecciona y calcula</div>
+        <div id="ev-rule-status" class="text-[10px] text-slate-400 mt-0.5">Filtro de Descarte Poisson $\ge 60\%$ Activo</div>
       </div>
       <div class="text-right">
-        <div id="ev-display" class="text-lg font-black text-gray-300">+0.0% EV</div>
-        <div class="text-[9px] text-gray-400">Kelly Modificado (1/4): <b id="kelly-display" class="text-white">$0.00</b></div>
+        <div id="ev-display" class="text-xl font-black text-slate-400">+0.0% EV</div>
+        <div class="text-[10px] text-slate-400">Kelly 1/4 (Shrinkage): <b id="kelly-display" class="text-slate-100 font-mono">$0.00</b></div>
       </div>
     </section>
 
     <!-- KPI Grid 1X2 Full Time -->
-    <section class="grid grid-cols-3 gap-2">
-      <div class="glass-ios-card border border-white/10 rounded-2xl p-3 text-center">
-        <span class="text-[10px] text-gray-400 block font-medium">Local (1)</span>
-        <span id="kpi-1" class="text-base font-extrabold text-ios-green my-0.5 block">0.0%</span>
-        <span class="text-[9px] text-gray-500 font-mono">Fair: <b id="odd-1" class="text-gray-300">0.00</b></span>
+    <section class="grid grid-cols-3 gap-2.5">
+      <div class="hub-card rounded-2xl p-3 text-center">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Local (1)</span>
+        <span id="kpi-1" class="text-lg font-black text-hub-green my-0.5 block">0.0%</span>
+        <span class="text-[9px] text-slate-500 font-mono">Fair: <b id="odd-1" class="text-slate-300">0.00</b></span>
       </div>
-      <div class="glass-ios-card border border-white/10 rounded-2xl p-3 text-center">
-        <span class="text-[10px] text-gray-400 block font-medium">Empate (X)</span>
-        <span id="kpi-x" class="text-base font-extrabold text-ios-orange my-0.5 block">0.0%</span>
-        <span class="text-[9px] text-gray-500 font-mono">Fair: <b id="odd-x" class="text-gray-300">0.00</b></span>
+      <div class="hub-card rounded-2xl p-3 text-center">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Empate (X)</span>
+        <span id="kpi-x" class="text-lg font-black text-hub-amber my-0.5 block">0.0%</span>
+        <span class="text-[9px] text-slate-500 font-mono">Fair: <b id="odd-x" class="text-slate-300">0.00</b></span>
       </div>
-      <div class="glass-ios-card border border-white/10 rounded-2xl p-3 text-center">
-        <span class="text-[10px] text-gray-400 block font-medium">Visita (2)</span>
-        <span id="kpi-2" class="text-base font-extrabold text-ios-red my-0.5 block">0.0%</span>
-        <span class="text-[9px] text-gray-500 font-mono">Fair: <b id="odd-2" class="text-gray-300">0.00</b></span>
+      <div class="hub-card rounded-2xl p-3 text-center">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Visita (2)</span>
+        <span id="kpi-2" class="text-lg font-black text-hub-red my-0.5 block">0.0%</span>
+        <span class="text-[9px] text-slate-500 font-mono">Fair: <b id="odd-2" class="text-slate-300">0.00</b></span>
       </div>
     </section>
 
     <!-- Matriz de Probabilidades Extendidas -->
-    <section class="glass-ios-card border border-white/10 rounded-2xl p-4 space-y-3">
-      <h3 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center justify-between border-b border-white/10 pb-2">
-        <span class="flex items-center gap-1.5"><i data-lucide="layers" class="w-3.5 h-3.5 text-ios-blue"></i> Métrica Avanzada</span>
-        <span class="text-[9px] text-gray-500 font-mono">Bivariate Matrix 8x8</span>
+    <section class="hub-card rounded-2xl p-4 space-y-3 shadow-xl">
+      <h3 class="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+        <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-hub-accent"></i> Métricas Cuantitativas</span>
+        <span class="text-[9px] text-slate-500 font-mono">Matrix Bivariada 8x8</span>
       </h3>
 
-      <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-        <div class="flex justify-between items-center"><span class="text-gray-400">Over 1.5 FT:</span> <b id="mkt-o15" class="font-mono text-white">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-gray-400">1H 1X2:</span> <b id="mkt-1h-1x2" class="font-mono text-ios-orange">0/0/0%</b></div>
+      <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
+        <div class="flex justify-between items-center"><span class="text-slate-400">Over 1.5 FT:</span> <b id="mkt-o15" class="font-mono text-slate-100">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">1H 1X2:</span> <b id="mkt-1h-1x2" class="font-mono text-hub-amber">0/0/0%</b></div>
 
-        <div class="flex justify-between items-center"><span class="text-gray-400">Over 2.5 FT:</span> <b id="mkt-o25" class="font-mono text-ios-blue">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-gray-400">1H Over 0.5:</span> <b id="mkt-1h-o05" class="font-mono text-white">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">Over 2.5 FT:</span> <b id="mkt-o25" class="font-mono text-hub-accent">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">1H Over 0.5:</span> <b id="mkt-1h-o05" class="font-mono text-slate-100">0.0%</b></div>
 
-        <div class="flex justify-between items-center"><span class="text-gray-400">Under 2.5 FT:</span> <b id="mkt-u25" class="font-mono text-white">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-gray-400">1H Over 1.5:</span> <b id="mkt-1h-o15" class="font-mono text-white">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">Under 2.5 FT:</span> <b id="mkt-u25" class="font-mono text-slate-100">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">1H Over 1.5:</span> <b id="mkt-1h-o15" class="font-mono text-slate-100">0.0%</b></div>
 
-        <div class="flex justify-between items-center"><span class="text-gray-400">BTTS Sí FT:</span> <b id="mkt-btts-y" class="font-mono text-ios-green">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-gray-400">1H BTTS Sí:</span> <b id="mkt-1h-btts-y" class="font-mono text-ios-green">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">BTTS Sí FT:</span> <b id="mkt-btts-y" class="font-mono text-hub-green">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">1H BTTS Sí:</span> <b id="mkt-1h-btts-y" class="font-mono text-hub-green">0.0%</b></div>
 
-        <div class="flex justify-between items-center"><span class="text-gray-400">BTTS No FT:</span> <b id="mkt-btts-n" class="font-mono text-ios-red">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-gray-400">Entropía:</span> <b id="mkt-entropy" class="font-mono text-ios-purple">0.00 bits</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">BTTS No FT:</span> <b id="mkt-btts-n" class="font-mono text-hub-red">0.0%</b></div>
+        <div class="flex justify-between items-center"><span class="text-slate-400">Entropía:</span> <b id="mkt-entropy" class="font-mono text-hub-purple">0.00 bits</b></div>
       </div>
     </section>
 
-    <!-- Gráfico de Marcadores -->
-    <section class="glass-ios-card border border-white/10 rounded-2xl p-4 space-y-2">
+    <!-- Gráfico de Marcadores EV Hub Style -->
+    <section class="hub-card rounded-2xl p-4 space-y-2.5 shadow-xl">
       <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
-          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-ios-purple"></i> Marcadores de Alta Probabilidad
+        <h3 class="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 text-hub-purple"></i> Marcadores Más Probables
         </h3>
-        <span class="text-[9px] text-gray-500 font-mono">Dixon-Coles + Gamma</span>
+        <span class="text-[9px] text-slate-500 font-mono">Dixon-Coles + Gamma</span>
       </div>
-      <div class="h-44 w-full">
-        <canvas id="iosChart"></canvas>
+      <div class="h-44 w-full pt-1">
+        <canvas id="hubChart"></canvas>
       </div>
     </section>
 
   </main>
 
-  <!-- Modal Ajustes -->
-  <div id="configModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-end sm:items-center justify-center">
-    <div class="bg-ios-card border border-white/15 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i data-lucide="database" class="w-4 h-4 text-ios-blue"></i> Configuración de Integración
+  <!-- Modal Ajustes (Supabase & Telegram) -->
+  <div id="configModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="hub-card border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="database" class="w-4 h-4 text-hub-accent"></i> Credenciales de Integración
         </h3>
-        <button onclick="toggleConfigModal()" class="w-7 h-7 rounded-full bg-ios-cardSecondary flex items-center justify-center text-gray-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button onclick="toggleConfigModal()" class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-gray-400 mb-1">Supabase URL</label>
-          <input type="text" id="cfg-supa-url" placeholder="https://xyz.supabase.co" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-white font-mono">
+          <label class="block text-slate-400 mb-1 font-medium">Supabase URL</label>
+          <input type="text" id="cfg-supa-url" placeholder="https://xyz.supabase.co" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
         </div>
         <div>
-          <label class="block text-gray-400 mb-1">Supabase Key</label>
-          <input type="password" id="cfg-supa-key" placeholder="eyJhbGci..." class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-white font-mono">
+          <label class="block text-slate-400 mb-1 font-medium">Supabase Key</label>
+          <input type="password" id="cfg-supa-key" placeholder="eyJhbGci..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
         </div>
-        <hr class="border-white/10 my-1">
+        <hr class="border-slate-800 my-1">
         <div>
-          <label class="block text-gray-400 mb-1">Telegram Bot Token</label>
-          <input type="password" id="cfg-tele-token" placeholder="123456789:ABC..." class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-white font-mono">
+          <label class="block text-slate-400 mb-1 font-medium">Telegram Bot Token</label>
+          <input type="password" id="cfg-tele-token" placeholder="123456789:ABC..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
         </div>
         <div>
-          <label class="block text-gray-400 mb-1">Telegram Chat ID</label>
-          <input type="text" id="cfg-tele-chat" placeholder="-100xxxxxxxxx" class="w-full bg-ios-bg border border-white/15 rounded-xl px-3 py-2 text-white font-mono">
+          <label class="block text-slate-400 mb-1 font-medium">Telegram Chat ID</label>
+          <input type="text" id="cfg-tele-chat" placeholder="-100xxxxxxxxx" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
         </div>
       </div>
 
-      <button onclick="saveConfigurations()" class="w-full bg-ios-blue text-white font-semibold py-3 rounded-xl text-xs transition-all shadow-lg shadow-ios-blue/30 active:scale-95">
-        Guardar Credenciales
+      <button onclick="saveConfigurations()" class="w-full bg-hub-accent hover:bg-hub-accentHover text-white font-bold py-3 rounded-xl text-xs transition-all shadow-lg shadow-hub-accent/20 active:scale-95">
+        Guardar Configuración
       </button>
     </div>
   </div>
 
-  <!-- Motor Matemático Avanzado -->
+  <!-- Motor Cuantitativo Completo -->
   <script>
     lucide.createIcons();
 
@@ -295,18 +298,18 @@
     let currentResults = null;
 
     function init() {
-      const url = localStorage.getItem('qmt_supaUrl');
-      const key = localStorage.getItem('qmt_supaKey');
+      const url = localStorage.getItem('hub_supaUrl');
+      const key = localStorage.getItem('hub_supaKey');
 
       if(url) document.getElementById('cfg-supa-url').value = url;
       if(key) document.getElementById('cfg-supa-key').value = key;
-      document.getElementById('cfg-tele-token').value = localStorage.getItem('qmt_teleToken') || '';
-      document.getElementById('cfg-tele-chat').value = localStorage.getItem('qmt_teleChat') || '';
+      document.getElementById('cfg-tele-token').value = localStorage.getItem('hub_teleToken') || '';
+      document.getElementById('cfg-tele-chat').value = localStorage.getItem('hub_teleChat') || '';
 
       if (url && key && window.supabase) {
         try {
           supabaseClient = supabase.createClient(url, key);
-          document.getElementById('status-dot').className = "w-1.5 h-1.5 rounded-full bg-ios-green";
+          document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-hub-green";
           document.getElementById('status-text').innerText = "Online";
         } catch(e) { console.error("Supabase Error:", e); }
       }
@@ -320,10 +323,10 @@
     }
 
     function saveConfigurations() {
-      localStorage.setItem('qmt_supaUrl', document.getElementById('cfg-supa-url').value);
-      localStorage.setItem('qmt_supaKey', document.getElementById('cfg-supa-key').value);
-      localStorage.setItem('qmt_teleToken', document.getElementById('cfg-tele-token').value);
-      localStorage.setItem('qmt_teleChat', document.getElementById('cfg-tele-chat').value);
+      localStorage.setItem('hub_supaUrl', document.getElementById('cfg-supa-url').value);
+      localStorage.setItem('hub_supaKey', document.getElementById('cfg-supa-key').value);
+      localStorage.setItem('hub_teleToken', document.getElementById('cfg-tele-token').value);
+      localStorage.setItem('hub_teleChat', document.getElementById('cfg-tele-chat').value);
       toggleConfigModal();
       init();
     }
@@ -359,13 +362,6 @@
       return 1.0;
     }
 
-    // Remoción de overround mediante Shin (1992/1993)
-    function shinDeoverround(odd) {
-      if (odd <= 1) return 1.0;
-      const invOdds = 1 / odd;
-      return invOdds; 
-    }
-
     function runEngine() {
       const lambda = Math.max(0.05, parseFloat(document.getElementById('lambdaHome').value) || 1.0);
       const mu = Math.max(0.05, parseFloat(document.getElementById('lambdaAway').value) || 1.0);
@@ -386,7 +382,7 @@
       let sumProbFT = 0;
       const scores = [];
 
-      // Matriz Bivariada FT 8x8 con NegBinomial (Gamma Overdispersion), Dixon-Coles y Zero Inflation
+      // Matriz Bivariada FT 8x8
       for (let x = 0; x <= 7; x++) {
         for (let y = 0; y <= 7; y++) {
           let rawP = negBinomial(x, lambda, gammaDisp) * negBinomial(y, mu, gammaDisp);
@@ -438,7 +434,7 @@
       h1 /= sumProb1H; hX /= sumProb1H; h2 /= sumProb1H;
       hO05 /= sumProb1H; hO15 /= sumProb1H; hBttsY /= sumProb1H;
 
-      // Entropía de Shannon (Incertidumbre en bits)
+      // Entropía de Shannon
       let entropy = 0;
       [p1, pX, p2].forEach(p => {
         if (p > 0) entropy -= p * Math.log2(p);
@@ -465,8 +461,7 @@
       document.getElementById('mkt-entropy').innerText = entropy.toFixed(2) + ' bits';
 
       const selectedMkt = document.getElementById('evalMarket').value;
-      const rawEvalOdd = parseFloat(document.getElementById('evalOdd').value) || 1.0;
-      const evalOdd = rawEvalOdd; 
+      const evalOdd = parseFloat(document.getElementById('evalOdd').value) || 1.0;
 
       let targetProb = 0;
       let mktTitle = "";
@@ -492,7 +487,7 @@
       const b = evalOdd - 1;
       const q = 1 - targetProb;
       
-      // Kelly con Factor de Modulación por Entropía (Shrinkage)
+      // Kelly con Factor de Modulación por Entropía
       let entropyPenalty = Math.max(0.5, 1 - (entropy / 3.0)); 
       let kellyFraction = b > 0 ? ((b * targetProb - q) / b) : 0;
       let kellyQuarter = (kellyFraction / 4) * entropyPenalty;
@@ -503,14 +498,23 @@
 
       document.getElementById('ev-market-title').innerText = mktTitle;
       const evDisplay = document.getElementById('ev-display');
+      const container = document.getElementById('ev-container');
       
       if (isDiscarded) {
         evDisplay.innerText = "DESCARTADO";
-        evDisplay.className = "text-sm font-black text-ios-orange";
+        evDisplay.className = "text-sm font-black text-hub-amber";
+        container.className = "hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-amber";
         document.getElementById('ev-rule-status').innerText = "Filtro Activo: Prob. Poisson ≥ 60%";
       } else {
         evDisplay.innerText = (ev >= 0 ? '+' : '') + ev.toFixed(1) + '% EV';
-        evDisplay.className = ev > 0 ? "text-lg font-black text-ios-green" : "text-lg font-black text-ios-red";
+        if (ev > 0) {
+          evDisplay.className = "text-xl font-black text-hub-green";
+          container.className = "hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-green";
+        } else {
+          evDisplay.innerText = ev.toFixed(1) + '% EV';
+          evDisplay.className = "text-xl font-black text-hub-red";
+          container.className = "hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-red";
+        }
         document.getElementById('ev-rule-status').innerText = ev > 0 ? "Entrada Aprobada con Valor" : "Sin Valor Analítico";
       }
 
@@ -542,15 +546,17 @@
     }
 
     function initChart() {
-      const ctx = document.getElementById('iosChart').getContext('2d');
+      const ctx = document.getElementById('hubChart').getContext('2d');
       chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: [],
           datasets: [{
             data: [],
-            backgroundColor: '#0a84ff',
-            borderRadius: 8,
+            backgroundColor: '#3B82F6',
+            borderColor: '#2563EB',
+            borderWidth: 1,
+            borderRadius: 6,
             borderSkipped: false
           }]
         },
@@ -559,8 +565,8 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: '#8e8e93', font: { size: 10, family: '-apple-system' } }, grid: { display: false } },
-            y: { ticks: { color: '#8e8e93', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            x: { ticks: { color: '#94A3B8', font: { size: 10, family: 'Inter' } }, grid: { display: false } },
+            y: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
           }
         }
       });
@@ -573,26 +579,26 @@
     }
 
     async function sendTelegramAlert() {
-      const token = localStorage.getItem('qmt_teleToken');
-      const chatId = localStorage.getItem('qmt_teleChat');
+      const token = localStorage.getItem('hub_teleToken');
+      const chatId = localStorage.getItem('hub_teleChat');
 
       if (!token || !chatId || !currentResults) {
         alert('Configura los tokens de Telegram en el panel de ajustes.');
         return;
       }
 
-      const msg = `📱 *QUANTUM ENGINE V7.0 (iOS ULTRA)*\n\n` +
+      const msg = `⚡ *EV STRATEGY HUB (QUANTUM V7.0)*\n\n` +
                   `⚽ *Partido:* ${currentResults.match}\n` +
                   `📊 *xG FT:* ${currentResults.lambda} - ${currentResults.mu}\n\n` +
                   `🎯 *Victoria 1X2:* ${(currentResults.p1*100).toFixed(1)}% | ${(currentResults.pX*100).toFixed(1)}% | ${(currentResults.p2*100).toFixed(1)}%\n` +
                   `⚽ *Over 2.5 FT:* ${(currentResults.pO25*100).toFixed(1)}%\n` +
                   `🔥 *BTTS Sí FT:* ${(currentResults.pBttsY*100).toFixed(1)}%\n\n` +
-                  `💡 *Evaluación de Mercado:*\n` +
+                  `💡 *Diagnóstico EV:*\n` +
                   `• *Mercado:* ${currentResults.mktTitle}\n` +
                   `• *Cuota:* ${currentResults.evalOdd}\n` +
                   `• *Valor ($EV$):* ${currentResults.ev.toFixed(1)}%\n` +
                   `• *Kelly Stake (1/4 Mod):* $${currentResults.kellyAmount.toFixed(2)}\n` +
-                  (currentResults.isDiscarded ? `⚠️ *Filtro:* Descartado por regla ≥60%` : `✅ *Filtro:* Aprobado para Apostar`);
+                  (currentResults.isDiscarded ? `⚠️ *Filtro:* Descartado por regla ≥60%` : `✅ *Filtro:* Entrada Aprobada`);
 
       try {
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
