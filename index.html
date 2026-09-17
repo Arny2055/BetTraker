@@ -33,12 +33,35 @@
             </div>
         </div>
 
-        <!-- Controls / URL selector -->
+        <!-- Controls / URL & Preset selector -->
         <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <!-- Dropdown de accesos rápidos para España -->
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-1.5 w-full sm:w-auto">
+                <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+                <select id="presetSpainSelect" class="bg-transparent text-xs text-slate-200 outline-none w-full sm:w-48 cursor-pointer">
+                    <option value="" class="bg-slate-900">-- Seleccionar LaLiga --</option>
+                    <optgroup label="LaLiga Primera División (SP1)" class="bg-slate-900 font-semibold text-emerald-400">
+                        <option value="https://football-data.co.uk/mmz4281/2526/SP1.csv" selected class="text-slate-200">LaLiga 2025/2026</option>
+                        <option value="https://football-data.co.uk/mmz4281/2425/SP1.csv" class="text-slate-200">LaLiga 2024/2025</option>
+                        <option value="https://football-data.co.uk/mmz4281/2324/SP1.csv" class="text-slate-200">LaLiga 2023/2024</option>
+                        <option value="https://football-data.co.uk/mmz4281/2223/SP1.csv" class="text-slate-200">LaLiga 2022/2023</option>
+                        <option value="https://football-data.co.uk/mmz4281/2122/SP1.csv" class="text-slate-200">LaLiga 2021/2022</option>
+                    </optgroup>
+                    <optgroup label="LaLiga2 Segunda División (SP2)" class="bg-slate-900 font-semibold text-cyan-400">
+                        <option value="https://football-data.co.uk/mmz4281/2526/SP2.csv" class="text-slate-200">LaLiga2 2025/2026</option>
+                        <option value="https://football-data.co.uk/mmz4281/2425/SP2.csv" class="text-slate-200">LaLiga2 2024/2025</option>
+                        <option value="https://football-data.co.uk/mmz4281/2324/SP2.csv" class="text-slate-200">LaLiga2 2023/2024</option>
+                        <option value="https://football-data.co.uk/mmz4281/2223/SP2.csv" class="text-slate-200">LaLiga2 2022/2023</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Input personalizado para URL de CSV -->
             <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-1.5 w-full sm:w-auto">
                 <i data-lucide="link" class="w-4 h-4 text-slate-400"></i>
-                <input type="text" id="csvUrl" value="https://football-data.co.uk/mmz4281/2526/I1.csv" class="bg-transparent text-xs text-slate-200 outline-none w-full sm:w-80" placeholder="URL del archivo CSV">
+                <input type="text" id="csvUrl" value="https://football-data.co.uk/mmz4281/2526/SP1.csv" class="bg-transparent text-xs text-slate-200 outline-none w-full sm:w-72" placeholder="URL del archivo CSV">
             </div>
+
             <button id="btnLoad" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-600/20">
                 <i data-lucide="refresh-cw" class="w-4 h-4" id="iconRefresh"></i> <span id="lblBtnLoad">Cargar CSV</span>
             </button>
@@ -268,6 +291,14 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             fetchCSV();
+        });
+
+        // Sincronizar el selector desplegable con el campo de URL
+        document.getElementById('presetSpainSelect').addEventListener('change', (e) => {
+            if (e.target.value) {
+                document.getElementById('csvUrl').value = e.target.value;
+                fetchCSV();
+            }
         });
 
         document.getElementById('btnLoad').addEventListener('click', fetchCSV);
