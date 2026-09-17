@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- PapaParse para parsear CSVs -->
+    <!-- PapaParse -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
@@ -56,7 +56,7 @@
                     <h2 class="font-semibold text-sm text-slate-200 uppercase tracking-wider">Filtro Dinámico de Jornadas</h2>
                 </div>
                 <div class="text-xs text-slate-400" id="infoJornadas">
-                    Cargando datos...
+                    Esperando datos...
                 </div>
             </div>
 
@@ -73,7 +73,7 @@
                     </div>
                 </div>
 
-                <!-- Botones rápidos de ventanas -->
+                <!-- Botones rápidos -->
                 <div class="flex flex-wrap gap-2 justify-center">
                     <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="full">Todas</button>
                     <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="last5">Últimas 5 J</button>
@@ -81,7 +81,7 @@
                     <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="firstHalf">Primera Vuelta</button>
                 </div>
 
-                <!-- Resumen Global de la Ventana -->
+                <!-- Resumen Global -->
                 <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800 grid grid-cols-3 gap-2 text-center">
                     <div>
                         <div class="text-[10px] text-slate-400 uppercase">Partidos</div>
@@ -133,9 +133,7 @@
                                 <th class="py-2.5 px-1 text-center text-rose-400" title="Fuerza de Defensa Local">FD_L</th>
                             </tr>
                         </thead>
-                        <tbody id="tbHome" class="divide-y divide-slate-800/60 font-medium">
-                            <!-- Filas dinámicas -->
-                        </tbody>
+                        <tbody id="tbHome" class="divide-y divide-slate-800/60 font-medium"></tbody>
                     </table>
                 </div>
             </div>
@@ -171,16 +169,14 @@
                                 <th class="py-2.5 px-1 text-center text-rose-400" title="Fuerza de Defensa Visitante">FD_V</th>
                             </tr>
                         </thead>
-                        <tbody id="tbAway" class="divide-y divide-slate-800/60 font-medium">
-                            <!-- Filas dinámicas -->
-                        </tbody>
+                        <tbody id="tbAway" class="divide-y divide-slate-800/60 font-medium"></tbody>
                     </table>
                 </div>
             </div>
 
         </section>
 
-        <!-- Calculadora de Probabilidades Poisson para Partidos Individuales -->
+        <!-- Calculadora Poisson -->
         <section class="glass rounded-2xl p-6 border border-slate-800">
             <div class="flex items-center gap-2 mb-6">
                 <i data-lucide="calculator" class="w-5 h-5 text-emerald-400"></i>
@@ -190,15 +186,11 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-2">Equipo Local</label>
-                    <select id="selHomeTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition">
-                        <!-- Opciones dinámicas -->
-                    </select>
+                    <select id="selHomeTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition"></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-2">Equipo Visitante</label>
-                    <select id="selAwayTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition">
-                        <!-- Opciones dinámicas -->
-                    </select>
+                    <select id="selAwayTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition"></select>
                 </div>
                 <div class="flex items-end">
                     <button id="btnCalculateMatch" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
@@ -207,9 +199,8 @@
                 </div>
             </div>
 
-            <!-- Panel de Resultados de la Simulación -->
+            <!-- Panel Resultados Poisson -->
             <div id="poissonResults" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-800">
-                <!-- Expectativa xG -->
                 <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
                     <div class="text-xs text-slate-400 font-semibold uppercase">Goles Esperados (xG)</div>
                     <div class="flex justify-around items-center pt-2">
@@ -225,7 +216,6 @@
                     </div>
                 </div>
 
-                <!-- Mercado 1X2 -->
                 <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
                     <div class="text-xs text-slate-400 font-semibold uppercase">Probabilidades 1X2</div>
                     <div class="grid grid-cols-3 gap-2 pt-2 text-xs">
@@ -247,7 +237,6 @@
                     </div>
                 </div>
 
-                <!-- Mercado Over/Under & BTTS -->
                 <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
                     <div class="text-xs text-slate-400 font-semibold uppercase">Mercados Alternativos</div>
                     <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
@@ -266,28 +255,31 @@
 
     </main>
 
-    <!-- Footer -->
     <footer class="glass border-t border-slate-800 text-center py-4 text-xs text-slate-500">
         BetAGS Quantitative Analytics &copy; 2026 — Basado en distribuciones de Poisson y Football-Data.co.uk
     </footer>
 
-    <!-- Script Lógico -->
     <script>
         let rawData = [];
         let matchesWithRounds = [];
         let maxJornada = 1;
 
-        // Inicializar Iconos
         lucide.createIcons();
 
-        // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', () => {
             fetchCSV();
         });
 
         document.getElementById('btnLoad').addEventListener('click', fetchCSV);
 
-        function setUIStateLoading(isLoading) {
+        function updateStatus(msg, isError = false) {
+            const info = document.getElementById('infoJornadas');
+            info.innerText = msg;
+            if (isError) info.className = "text-xs text-rose-400 font-semibold";
+            else info.className = "text-xs text-emerald-400 font-medium";
+        }
+
+        function setUIStateLoading(isLoading, msg = 'Cargando...') {
             const btn = document.getElementById('btnLoad');
             const label = document.getElementById('lblBtnLoad');
             const icon = document.getElementById('iconRefresh');
@@ -295,7 +287,7 @@
             if (isLoading) {
                 btn.disabled = true;
                 btn.classList.add('opacity-50', 'cursor-not-allowed');
-                label.innerText = 'Cargando...';
+                label.innerText = msg;
                 icon.classList.add('animate-spin');
             } else {
                 btn.disabled = false;
@@ -305,66 +297,81 @@
             }
         }
 
-        function fetchCSV() {
+        // MOTOR RESILIENTE CON TRIPLE FALLBACK
+        async function fetchCSV() {
             const rawUrl = document.getElementById('csvUrl').value.trim();
             if (!rawUrl) {
-                alert('Por favor ingresa una URL válida.');
+                alert('Ingresa una URL válida.');
                 return;
             }
 
-            setUIStateLoading(true);
+            setUIStateLoading(true, 'Iniciando...');
+            
+            // Intento 1: Directo
+            updateStatus('Intento 1: Descarga directa...');
+            let csvText = await tryFetch(rawUrl);
 
-            // Intentar descarga directa inicial
-            Papa.parse(rawUrl, {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    setUIStateLoading(false);
-                    if (results.data && results.data.length > 0) {
-                        rawData = results.data;
-                        procesarDatos();
-                    } else {
-                        alert('El archivo CSV descargado no contiene datos válidos.');
-                    }
-                },
-                error: function(err) {
-                    console.warn('Fallo en descarga directa (posible bloqueo CORS). Reintentando mediante Proxy AllOrigins...', err);
-                    
-                    // Fallback mediante Proxy CORS transparente
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`;
-                    
-                    Papa.parse(proxyUrl, {
-                        download: true,
-                        header: true,
-                        skipEmptyLines: true,
-                        complete: function(results) {
-                            setUIStateLoading(false);
-                            if (results.data && results.data.length > 0) {
-                                rawData = results.data;
-                                procesarDatos();
-                            } else {
-                                alert('No se pudieron procesar los datos recibidos a través del proxy CORS.');
-                            }
-                        },
-                        error: function(proxyErr) {
-                            setUIStateLoading(false);
-                            alert('Error definitivo al procesar o descargar el archivo CSV. Revisa la URL o la conexión.');
-                            console.error('Error final CORS/Fetch:', proxyErr);
+            // Intento 2: Proxy AllOrigins JSON
+            if (!csvText) {
+                updateStatus('Intento 2: Proxy AllOrigins...');
+                const proxy1 = `https://api.allorigins.win/get?url=${encodeURIComponent(rawUrl)}`;
+                let res = await tryFetchJson(proxy1);
+                if (res && res.contents) csvText = res.contents;
+            }
+
+            // Intento 3: Proxy CorsProxy.io
+            if (!csvText) {
+                updateStatus('Intento 3: Proxy CorsProxy...');
+                const proxy2 = `https://corsproxy.io/?${encodeURIComponent(rawUrl)}`;
+                csvText = await tryFetch(proxy2);
+            }
+
+            setUIStateLoading(false);
+
+            if (csvText) {
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if (results.data && results.data.length > 0) {
+                            rawData = results.data;
+                            procesarDatos();
+                        } else {
+                            updateStatus('El CSV descargado no contiene datos procesables.', true);
                         }
-                    });
-                }
-            });
+                    }
+                });
+            } else {
+                updateStatus('Error al conectar con el servidor. Verifica la URL o la red.', true);
+                alert('No se pudo descargar el archivo CSV. Los proxies públicos fallaron o la URL es inaccesible.');
+            }
+        }
+
+        async function tryFetch(url) {
+            try {
+                let res = await fetch(url);
+                if (res.ok) return await res.text();
+            } catch (e) {
+                console.warn('Fetch fallido para:', url, e);
+            }
+            return null;
+        }
+
+        async function tryFetchJson(url) {
+            try {
+                let res = await fetch(url);
+                if (res.ok) return await res.json();
+            } catch (e) {
+                console.warn('Fetch JSON fallido para:', url, e);
+            }
+            return null;
         }
 
         function procesarDatos() {
-            if (!rawData || rawData.length === 0) return;
-
-            // Filtrar filas válidas que tengan goles
             let validMatches = rawData.filter(m => m.HomeTeam && m.AwayTeam && m.FTHG !== undefined && m.FTAG !== undefined && m.FTHG !== "" && m.FTAG !== "");
 
             if (validMatches.length === 0) {
-                alert('No se encontraron partidos jugados válidos en la estructura del CSV.');
+                updateStatus('No se encontraron filas con partidos jugados válidos.', true);
                 return;
             }
 
@@ -390,21 +397,18 @@
 
             maxJornada = Math.max(...matchesWithRounds.map(m => m.round));
 
-            // Actualizar controles de rango
             const rInicio = document.getElementById('rangeInicio');
             const rFin = document.getElementById('rangeFin');
 
             rInicio.min = 1; rInicio.max = maxJornada; rInicio.value = 1;
             rFin.min = 1; rFin.max = maxJornada; rFin.value = maxJornada;
 
-            document.getElementById('infoJornadas').innerText = `Total Equipos: ${totalTeams} | Jornadas Detectadas: ${maxJornada} | Total Partidos: ${matchesWithRounds.length}`;
+            updateStatus(`Equipos: ${totalTeams} | Jornadas: ${maxJornada} | Total Partidos: ${matchesWithRounds.length}`);
 
-            // Llenar selectores de equipos
             let sortedTeams = Array.from(teamsCount).sort();
             let selH = document.getElementById('selHomeTeam');
             let selA = document.getElementById('selAwayTeam');
-            selH.innerHTML = '';
-            selA.innerHTML = '';
+            selH.innerHTML = ''; selA.innerHTML = '';
             sortedTeams.forEach(t => {
                 selH.innerHTML += `<option value="${t}">${t}</option>`;
                 selA.innerHTML += `<option value="${t}">${t}</option>`;
@@ -414,7 +418,6 @@
             actualizarVista();
         }
 
-        // Listeners para los controles de jornadas
         document.getElementById('rangeInicio').addEventListener('input', (e) => {
             let vStart = parseInt(e.target.value);
             let vEnd = parseInt(document.getElementById('rangeFin').value);
@@ -429,7 +432,6 @@
             actualizarVista();
         });
 
-        // Botones de filtro rápido
         document.querySelectorAll('.btnQuickFilter').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 let action = e.target.getAttribute('data-window');
@@ -460,10 +462,8 @@
             document.getElementById('lblJornadaInicio').innerText = jInicio;
             document.getElementById('lblJornadaFin').innerText = jFin;
 
-            // Filtrar partidos
             let filteredMatches = matchesWithRounds.filter(m => m.round >= jInicio && m.round <= jFin);
 
-            // Calcular Estadísticas Globales
             let totalP = filteredMatches.length;
             let totalGoles = filteredMatches.reduce((acc, m) => acc + m.hg + m.ag, 0);
             let victoriasLocales = filteredMatches.filter(m => m.hg > m.ag).length;
@@ -475,7 +475,6 @@
             document.getElementById('lblHomeMatchesCount').innerText = `${totalP} Partidos`;
             document.getElementById('lblAwayMatchesCount').innerText = `${totalP} Partidos`;
 
-            // Generar Tablas L / V
             renderTablas(filteredMatches);
         }
 
@@ -491,7 +490,6 @@
                 totalHomeGoals += m.hg;
                 totalAwayGoals += m.ag;
 
-                // Stats Local
                 if (!homeStats[m.home]) homeStats[m.home] = { name: m.home, gp:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
                 homeStats[m.home].gp++;
                 homeStats[m.home].gf += m.hg;
@@ -500,7 +498,6 @@
                 else if (m.hg === m.ag) { homeStats[m.home].d++; homeStats[m.home].pts += 1; }
                 else { homeStats[m.home].l++; }
 
-                // Stats Visita
                 if (!awayStats[m.away]) awayStats[m.away] = { name: m.away, gp:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
                 awayStats[m.away].gp++;
                 awayStats[m.away].gf += m.ag;
@@ -513,11 +510,9 @@
             let avgHomeGoals = totalMatches > 0 ? (totalHomeGoals / totalMatches) : 1.5;
             let avgAwayGoals = totalMatches > 0 ? (totalAwayGoals / totalMatches) : 1.2;
 
-            // Ordenar por Pts, DG, GF
             let arrHome = Object.values(homeStats).sort((a,b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
             let arrAway = Object.values(awayStats).sort((a,b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
 
-            // Render Tablas HTML
             let tbHomeHTML = '';
             arrHome.forEach((t, i) => {
                 let ppg = (t.pts / t.gp).toFixed(2);
@@ -577,13 +572,13 @@
             document.getElementById('tbAway').innerHTML = tbAwayHTML;
         }
 
-        // CÁLCULO DE POISSON
+        // SIMULADOR POISSON
         document.getElementById('btnCalculateMatch').addEventListener('click', () => {
             const hTeam = document.getElementById('selHomeTeam').value;
             const aTeam = document.getElementById('selAwayTeam').value;
 
             if (hTeam === aTeam) {
-                alert('Selecciona dos equipos diferentes.');
+                alert('Selecciona dos equipos distintos.');
                 return;
             }
 
@@ -602,7 +597,7 @@
             let aMatches = filteredMatches.filter(m => m.away === aTeam);
 
             if (hMatches.length === 0 || aMatches.length === 0) {
-                alert('Uno de los equipos no tiene suficientes partidos en el rango de jornadas seleccionado.');
+                alert('Uno de los equipos no posee registros en la ventana de jornadas especificada.');
                 return;
             }
 
