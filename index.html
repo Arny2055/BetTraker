@@ -1,621 +1,618 @@
 <!DOCTYPE html>
-<html lang="es" class="dark">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
-  <title>EV Strategy Hub - Quantum Analytics Engine</title>
-
-  <!-- CDNs: Tailwind CSS, Chart.js, Lucide Icons, Supabase JS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Fira Code', 'ui-monospace', 'monospace']
-          },
-          colors: {
-            hub: {
-              bg: '#0B0F17',
-              card: '#111827',
-              cardBorder: '#1F293D',
-              accent: '#3B82F6',
-              accentHover: '#2563EB',
-              green: '#10B981',
-              greenGlow: 'rgba(16, 185, 129, 0.15)',
-              red: '#EF4444',
-              redGlow: 'rgba(239, 68, 68, 0.15)',
-              amber: '#F59E0B',
-              purple: '#8B5CF6',
-              darkMuted: '#1E293B'
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    body {
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      background-color: #0B0F17;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    .hub-glass {
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-    .hub-card {
-      background-color: #111827;
-      border: 1px solid #1F293D;
-    }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetAGS - Master Stats & Poisson Engine</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- PapaParse para parsear CSVs de Football-Data -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
-<body class="text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col custom-scrollbar">
 
-  <!-- Header EV Strategy Hub -->
-  <header class="sticky top-0 z-50 hub-glass border-b border-hub-cardBorder px-4 py-3">
-    <div class="max-w-md mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-hub-accent via-indigo-600 to-hub-purple flex items-center justify-center shadow-lg shadow-hub-accent/20">
-          <i data-lucide="trending-up" class="w-5 h-5 text-white"></i>
-        </div>
-        <div>
-          <h1 class="text-xs font-black tracking-wider uppercase text-white flex items-center gap-1.5">
-            EV STRATEGY HUB
-            <span class="text-[9px] bg-hub-accent/20 text-hub-accent border border-hub-accent/30 px-1.5 py-0.5 rounded-md font-mono">v7.0 QUANTUM</span>
-          </h1>
-          <p class="text-[10px] text-slate-400 font-medium">Bivariate Brier-Calibrated Engine</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <div id="status-island" class="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-inner">
-          <span id="status-dot" class="w-2 h-2 rounded-full bg-hub-amber animate-pulse"></span>
-          <span id="status-text" class="text-[10px] font-mono text-slate-400">Standby</span>
-        </div>
-
-        <button onclick="toggleConfigModal()" class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white active:scale-95 transition-all">
-          <i data-lucide="settings" class="w-4 h-4"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Contenedor Principal -->
-  <main class="max-w-md mx-auto w-full px-4 py-4 space-y-4 flex-1 pb-12">
-
-    <!-- Formulario Parámetros EV Hub -->
-    <section class="hub-card rounded-2xl p-4 shadow-xl">
-      <div class="flex items-center justify-between mb-3 border-b border-slate-800/80 pb-2.5">
-        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="sliders" class="w-4 h-4 text-hub-accent"></i> Parámetros de Entrada
-        </span>
-        <span class="text-[10px] text-slate-500 font-mono">Shin + Dixon-Coles</span>
-      </div>
-
-      <form id="quantum-form" class="space-y-3">
-        <div>
-          <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Evento / Enfrentamiento</label>
-          <input type="text" id="matchLabel" value="Real Madrid vs Barcelona" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-medium transition-colors">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">xG Local ($\lambda_{FT}$)</label>
-            <input type="number" step="0.01" id="lambdaHome" value="1.85" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
-          </div>
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">xG Visita ($\mu_{FT}$)</label>
-            <input type="number" step="0.01" id="lambdaAway" value="1.15" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
-          </div>
-        </div>
-
-        <!-- Parámetros Avanzados -->
-        <div class="grid grid-cols-4 gap-2">
-          <div>
-            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">% 1H L/V</label>
-            <div class="flex gap-1">
-              <input type="number" step="1" id="htRatioH" value="45" class="w-1/2 bg-slate-950 border border-slate-800 rounded-lg px-1 py-1.5 text-[10px] text-slate-100 font-mono text-center">
-              <input type="number" step="1" id="htRatioA" value="42" class="w-1/2 bg-slate-950 border border-slate-800 rounded-lg px-1 py-1.5 text-[10px] text-slate-100 font-mono text-center">
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 border-b border-slate-800 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+                <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
             </div>
-          </div>
-          <div>
-            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">D-Coles ($\rho$)</label>
-            <input type="number" step="0.01" id="rho" value="-0.13" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-1.5 py-1.5 text-[10px] text-slate-100 font-mono text-center">
-          </div>
-          <div>
-            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">Zero Inf ($\pi_0$)</label>
-            <input type="number" step="0.01" id="pi0" value="0.04" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-1.5 py-1.5 text-[10px] text-slate-100 font-mono text-center">
-          </div>
-          <div>
-            <label class="block text-[8px] font-bold text-slate-400 uppercase tracking-wider mb-1">Disp ($\gamma$)</label>
-            <input type="number" step="0.01" id="gammaDisp" value="0.08" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-1.5 py-1.5 text-[10px] text-slate-100 font-mono text-center">
-          </div>
+            <div>
+                <h1 class="font-bold text-xl tracking-wide bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">BetAGS Poisson & Stats Engine</h1>
+                <p class="text-xs text-slate-400">Generador de tablas Local/Visita filtradas por jornadas & Análisis de Poisson</p>
+            </div>
         </div>
 
-        <div class="pt-1 grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Banca Total ($)</label>
-            <input type="number" step="10" id="bankroll" value="1000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
-          </div>
-          <div>
-            <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Cuota Casa</label>
-            <input type="number" step="0.01" id="evalOdd" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-mono transition-colors">
-          </div>
+        <!-- Controls / URL selector -->
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-1.5 w-full sm:w-auto">
+                <i data-lucide="link" class="w-4 h-4 text-slate-400"></i>
+                <input type="text" id="csvUrl" value="https://football-data.co.uk/mmz4281/2526/I1.csv" class="bg-transparent text-xs text-slate-200 outline-none w-full sm:w-80" placeholder="URL del archivo CSV">
+            </div>
+            <button id="btnLoad" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-600/20">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Cargar CSV
+            </button>
         </div>
+    </header>
 
-        <div>
-          <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Mercado Objetivo</label>
-          <select id="evalMarket" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-hub-accent font-medium transition-colors">
-            <option value="1">Victoria Local (1 FT)</option>
-            <option value="X">Empate (X FT)</option>
-            <option value="2">Victoria Visita (2 FT)</option>
-            <option value="O25">Over 2.5 Goles FT</option>
-            <option value="U25">Under 2.5 Goles FT</option>
-            <option value="BTTS_Y">Ambos Anotan (BTTS Sí FT)</option>
-            <option value="BTTS_N">Ambos Anotan (BTTS No FT)</option>
-            <option value="HT_BTTS_Y">Ambos Anotan 1H (BTTS Sí 1H)</option>
-          </select>
-        </div>
+    <!-- Main Content -->
+    <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 md:p-6 space-y-6">
 
-        <div class="pt-2 grid grid-cols-2 gap-2.5">
-          <button type="submit" class="w-full bg-hub-accent hover:bg-hub-accentHover text-white font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-hub-accent/20 active:scale-95">
-            <i data-lucide="calculator" class="w-4 h-4"></i> Calcular Valor
-          </button>
-          <button type="button" onclick="sendTelegramAlert()" class="w-full bg-slate-900 hover:bg-slate-800 text-hub-accent border border-hub-accent/30 font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 active:scale-95">
-            <i data-lucide="send" class="w-4 h-4"></i> Telegram Bot
-          </button>
-        </div>
-      </form>
-    </section>
+        <!-- Selector de Ventana de Jornadas -->
+        <section class="glass rounded-2xl p-5 border border-slate-800">
+            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-5 h-5 text-emerald-400"></i>
+                    <h2 class="font-semibold text-sm text-slate-200 uppercase tracking-wider">Filtro Dinámico de Jornadas</h2>
+                </div>
+                <div class="text-xs text-slate-400" id="infoJornadas">
+                    Cargando datos...
+                </div>
+            </div>
 
-    <!-- Tarjeta del Diagnóstico EV & Stake Hub -->
-    <section id="ev-container" class="hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-accent">
-      <div>
-        <span class="text-[9px] font-black text-hub-accent uppercase tracking-widest block mb-0.5">Diagnóstico del Algoritmo</span>
-        <div id="ev-market-title" class="text-sm font-black text-white">Selecciona y calcula</div>
-        <div id="ev-rule-status" class="text-[10px] text-slate-400 mt-0.5">Filtro de Descarte Poisson $\ge 60\%$ Activo</div>
-      </div>
-      <div class="text-right">
-        <div id="ev-display" class="text-xl font-black text-slate-400">+0.0% EV</div>
-        <div class="text-[10px] text-slate-400">Kelly 1/4 (Shrinkage): <b id="kelly-display" class="text-slate-100 font-mono">$0.00</b></div>
-      </div>
-    </section>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+                <!-- Rango desde - hasta -->
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400 flex justify-between">
+                        <span>Desde Jornada: <b id="lblJornadaInicio" class="text-emerald-400">1</b></span>
+                        <span>Hasta Jornada: <b id="lblJornadaFin" class="text-emerald-400">1</b></span>
+                    </label>
+                    <div class="flex gap-4 items-center">
+                        <input type="range" id="rangeInicio" min="1" max="38" value="1" class="w-full accent-emerald-500 bg-slate-800">
+                        <input type="range" id="rangeFin" min="1" max="38" value="38" class="w-full accent-emerald-500 bg-slate-800">
+                    </div>
+                </div>
 
-    <!-- KPI Grid 1X2 Full Time -->
-    <section class="grid grid-cols-3 gap-2.5">
-      <div class="hub-card rounded-2xl p-3 text-center">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Local (1)</span>
-        <span id="kpi-1" class="text-lg font-black text-hub-green my-0.5 block">0.0%</span>
-        <span class="text-[9px] text-slate-500 font-mono">Fair: <b id="odd-1" class="text-slate-300">0.00</b></span>
-      </div>
-      <div class="hub-card rounded-2xl p-3 text-center">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Empate (X)</span>
-        <span id="kpi-x" class="text-lg font-black text-hub-amber my-0.5 block">0.0%</span>
-        <span class="text-[9px] text-slate-500 font-mono">Fair: <b id="odd-x" class="text-slate-300">0.00</b></span>
-      </div>
-      <div class="hub-card rounded-2xl p-3 text-center">
-        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Visita (2)</span>
-        <span id="kpi-2" class="text-lg font-black text-hub-red my-0.5 block">0.0%</span>
-        <span class="text-[9px] text-slate-500 font-mono">Fair: <b id="odd-2" class="text-slate-300">0.00</b></span>
-      </div>
-    </section>
+                <!-- Botones rápidos de ventanas -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="full">Todas</button>
+                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="last5">Últimas 5 J</button>
+                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="last10">Últimas 10 J</button>
+                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="firstHalf">Primera Vuelta</button>
+                </div>
 
-    <!-- Matriz de Probabilidades Extendidas -->
-    <section class="hub-card rounded-2xl p-4 space-y-3 shadow-xl">
-      <h3 class="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-        <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-hub-accent"></i> Métricas Cuantitativas</span>
-        <span class="text-[9px] text-slate-500 font-mono">Matrix Bivariada 8x8</span>
-      </h3>
+                <!-- Resumen Global de la Ventana -->
+                <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800 grid grid-cols-3 gap-2 text-center">
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase">Partidos</div>
+                        <div id="statTotalPartidos" class="text-base font-bold text-slate-100">0</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase">Goles / Part</div>
+                        <div id="statPromGoles" class="text-base font-bold text-emerald-400">0.00</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-400 uppercase">% Local (1)</div>
+                        <div id="statPctLocal" class="text-base font-bold text-cyan-400">0%</div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-      <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs">
-        <div class="flex justify-between items-center"><span class="text-slate-400">Over 1.5 FT:</span> <b id="mkt-o15" class="font-mono text-slate-100">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-slate-400">1H 1X2:</span> <b id="mkt-1h-1x2" class="font-mono text-hub-amber">0/0/0%</b></div>
+        <!-- Tablas L/V -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Home Table -->
+            <div class="glass rounded-2xl p-5 border border-slate-800 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400">
+                            <i data-lucide="home" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-100">Tabla de Rendimiento Local (Home)</h3>
+                    </div>
+                    <span class="text-xs bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full border border-blue-500/20 font-medium" id="lblHomeMatchesCount">0 Partidos</span>
+                </div>
 
-        <div class="flex justify-between items-center"><span class="text-slate-400">Over 2.5 FT:</span> <b id="mkt-o25" class="font-mono text-hub-accent">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-slate-400">1H Over 0.5:</span> <b id="mkt-1h-o05" class="font-mono text-slate-100">0.0%</b></div>
+                <div class="overflow-x-auto custom-scrollbar flex-1">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-semibold bg-slate-900/50">
+                                <th class="py-2.5 px-2">#</th>
+                                <th class="py-2.5 px-2">Equipo</th>
+                                <th class="py-2.5 px-1 text-center">PJ</th>
+                                <th class="py-2.5 px-1 text-center">G</th>
+                                <th class="py-2.5 px-1 text-center">E</th>
+                                <th class="py-2.5 px-1 text-center">P</th>
+                                <th class="py-2.5 px-1 text-center">GF</th>
+                                <th class="py-2.5 px-1 text-center">GC</th>
+                                <th class="py-2.5 px-1 text-center">DG</th>
+                                <th class="py-2.5 px-1 text-center text-emerald-400">Pts</th>
+                                <th class="py-2.5 px-1 text-center text-cyan-400">PPG</th>
+                                <th class="py-2.5 px-1 text-center text-amber-400" title="Fuerza de Ataque Local">FA_L</th>
+                                <th class="py-2.5 px-1 text-center text-rose-400" title="Fuerza de Defensa Local">FD_L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbHome" class="divide-y divide-slate-800/60 font-medium">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-        <div class="flex justify-between items-center"><span class="text-slate-400">Under 2.5 FT:</span> <b id="mkt-u25" class="font-mono text-slate-100">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-slate-400">1H Over 1.5:</span> <b id="mkt-1h-o15" class="font-mono text-slate-100">0.0%</b></div>
+            <!-- Away Table -->
+            <div class="glass rounded-2xl p-5 border border-slate-800 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400">
+                            <i data-lucide="plane" class="w-4 h-4"></i>
+                        </div>
+                        <h3 class="font-bold text-base text-slate-100">Tabla de Rendimiento Visitante (Away)</h3>
+                    </div>
+                    <span class="text-xs bg-purple-500/10 text-purple-400 px-2.5 py-1 rounded-full border border-purple-500/20 font-medium" id="lblAwayMatchesCount">0 Partidos</span>
+                </div>
 
-        <div class="flex justify-between items-center"><span class="text-slate-400">BTTS Sí FT:</span> <b id="mkt-btts-y" class="font-mono text-hub-green">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-slate-400">1H BTTS Sí:</span> <b id="mkt-1h-btts-y" class="font-mono text-hub-green">0.0%</b></div>
+                <div class="overflow-x-auto custom-scrollbar flex-1">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 text-slate-400 font-semibold bg-slate-900/50">
+                                <th class="py-2.5 px-2">#</th>
+                                <th class="py-2.5 px-2">Equipo</th>
+                                <th class="py-2.5 px-1 text-center">PJ</th>
+                                <th class="py-2.5 px-1 text-center">G</th>
+                                <th class="py-2.5 px-1 text-center">E</th>
+                                <th class="py-2.5 px-1 text-center">P</th>
+                                <th class="py-2.5 px-1 text-center">GF</th>
+                                <th class="py-2.5 px-1 text-center">GC</th>
+                                <th class="py-2.5 px-1 text-center">DG</th>
+                                <th class="py-2.5 px-1 text-center text-emerald-400">Pts</th>
+                                <th class="py-2.5 px-1 text-center text-cyan-400">PPG</th>
+                                <th class="py-2.5 px-1 text-center text-amber-400" title="Fuerza de Ataque Visitante">FA_V</th>
+                                <th class="py-2.5 px-1 text-center text-rose-400" title="Fuerza de Defensa Visitante">FD_V</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbAway" class="divide-y divide-slate-800/60 font-medium">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-        <div class="flex justify-between items-center"><span class="text-slate-400">BTTS No FT:</span> <b id="mkt-btts-n" class="font-mono text-hub-red">0.0%</b></div>
-        <div class="flex justify-between items-center"><span class="text-slate-400">Entropía:</span> <b id="mkt-entropy" class="font-mono text-hub-purple">0.00 bits</b></div>
-      </div>
-    </section>
+        </section>
 
-    <!-- Gráfico de Marcadores EV Hub Style -->
-    <section class="hub-card rounded-2xl p-4 space-y-2.5 shadow-xl">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-black text-slate-200 uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="bar-chart-3" class="w-4 h-4 text-hub-purple"></i> Marcadores Más Probables
-        </h3>
-        <span class="text-[9px] text-slate-500 font-mono">Dixon-Coles + Gamma</span>
-      </div>
-      <div class="h-44 w-full pt-1">
-        <canvas id="hubChart"></canvas>
-      </div>
-    </section>
+        <!-- Calculadora de Probabilidades Poisson para Partidos Individuales -->
+        <section class="glass rounded-2xl p-6 border border-slate-800">
+            <div class="flex items-center gap-2 mb-6">
+                <i data-lucide="calculator" class="w-5 h-5 text-emerald-400"></i>
+                <h2 class="font-bold text-lg text-slate-100">Simulador de Probabilidades de Poisson en Tiempo Real</h2>
+            </div>
 
-  </main>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-2">Equipo Local</label>
+                    <select id="selHomeTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-2">Equipo Visitante</label>
+                    <select id="selAwayTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition">
+                        <!-- Opciones dinámicas -->
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="btnCalculateMatch" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+                        <i data-lucide="zap" class="w-4 h-4"></i> Calcular Probabilidades Poisson
+                    </button>
+                </div>
+            </div>
 
-  <!-- Modal Ajustes (Supabase & Telegram) -->
-  <div id="configModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="hub-card border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
-          <i data-lucide="database" class="w-4 h-4 text-hub-accent"></i> Credenciales de Integración
-        </h3>
-        <button onclick="toggleConfigModal()" class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
+            <!-- Panel de Resultados de la Simulación -->
+            <div id="poissonResults" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-800">
+                <!-- Expectativa xG -->
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Goles Esperados (xG)</div>
+                    <div class="flex justify-around items-center pt-2">
+                        <div>
+                            <span id="txtHomeTeamName" class="text-xs text-slate-300 font-medium">Local</span>
+                            <div id="xGHome" class="text-2xl font-black text-emerald-400">0.00</div>
+                        </div>
+                        <span class="text-slate-600 font-bold">vs</span>
+                        <div>
+                            <span id="txtAwayTeamName" class="text-xs text-slate-300 font-medium">Visita</span>
+                            <div id="xGAway" class="text-2xl font-black text-cyan-400">0.00</div>
+                        </div>
+                    </div>
+                </div>
 
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block text-slate-400 mb-1 font-medium">Supabase URL</label>
-          <input type="text" id="cfg-supa-url" placeholder="https://xyz.supabase.co" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1 font-medium">Supabase Key</label>
-          <input type="password" id="cfg-supa-key" placeholder="eyJhbGci..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
-        </div>
-        <hr class="border-slate-800 my-1">
-        <div>
-          <label class="block text-slate-400 mb-1 font-medium">Telegram Bot Token</label>
-          <input type="password" id="cfg-tele-token" placeholder="123456789:ABC..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
-        </div>
-        <div>
-          <label class="block text-slate-400 mb-1 font-medium">Telegram Chat ID</label>
-          <input type="text" id="cfg-tele-chat" placeholder="-100xxxxxxxxx" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-100 font-mono">
-        </div>
-      </div>
+                <!-- Mercado 1X2 -->
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Probabilidades 1X2</div>
+                    <div class="grid grid-cols-3 gap-2 pt-2 text-xs">
+                        <div class="bg-slate-800/60 p-2 rounded-lg">
+                            <div class="text-slate-400">1 (Local)</div>
+                            <div id="prob1" class="font-bold text-emerald-400 text-sm">0%</div>
+                            <div id="cuota1" class="text-[10px] text-slate-500">@0.00</div>
+                        </div>
+                        <div class="bg-slate-800/60 p-2 rounded-lg">
+                            <div class="text-slate-400">X (Empate)</div>
+                            <div id="probX" class="font-bold text-amber-400 text-sm">0%</div>
+                            <div id="cuotaX" class="text-[10px] text-slate-500">@0.00</div>
+                        </div>
+                        <div class="bg-slate-800/60 p-2 rounded-lg">
+                            <div class="text-slate-400">2 (Visita)</div>
+                            <div id="prob2" class="font-bold text-cyan-400 text-sm">0%</div>
+                            <div id="cuota2" class="text-[10px] text-slate-500">@0.00</div>
+                        </div>
+                    </div>
+                </div>
 
-      <button onclick="saveConfigurations()" class="w-full bg-hub-accent hover:bg-hub-accentHover text-white font-bold py-3 rounded-xl text-xs transition-all shadow-lg shadow-hub-accent/20 active:scale-95">
-        Guardar Configuración
-      </button>
-    </div>
-  </div>
+                <!-- Mercado Over/Under & BTTS -->
+                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
+                    <div class="text-xs text-slate-400 font-semibold uppercase">Mercados Alternativos</div>
+                    <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
+                        <div class="bg-slate-800/60 p-2 rounded-lg">
+                            <div class="text-slate-400">Over 2.5</div>
+                            <div id="probOver25" class="font-bold text-emerald-400 text-sm">0%</div>
+                        </div>
+                        <div class="bg-slate-800/60 p-2 rounded-lg">
+                            <div class="text-slate-400">BTTS (Sí)</div>
+                            <div id="probBTTS" class="font-bold text-purple-400 text-sm">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-  <!-- Motor Cuantitativo Completo -->
-  <script>
-    lucide.createIcons();
+    </main>
 
-    let supabaseClient = null;
-    let chartInstance = null;
-    let currentResults = null;
+    <!-- Footer -->
+    <footer class="glass border-t border-slate-800 text-center py-4 text-xs text-slate-500">
+        BetAGS Quantitative Analytics &copy; 2026 — Basado en distribuciones de Poisson y Football-Data.co.uk
+    </footer>
 
-    function init() {
-      const url = localStorage.getItem('hub_supaUrl');
-      const key = localStorage.getItem('hub_supaKey');
+    <!-- Script Lógico -->
+    <script>
+        let rawData = [];
+        let matchesWithRounds = [];
+        let maxJornada = 1;
 
-      if(url) document.getElementById('cfg-supa-url').value = url;
-      if(key) document.getElementById('cfg-supa-key').value = key;
-      document.getElementById('cfg-tele-token').value = localStorage.getItem('hub_teleToken') || '';
-      document.getElementById('cfg-tele-chat').value = localStorage.getItem('hub_teleChat') || '';
+        // Inicializar Iconos
+        lucide.createIcons();
 
-      if (url && key && window.supabase) {
-        try {
-          supabaseClient = supabase.createClient(url, key);
-          document.getElementById('status-dot').className = "w-2 h-2 rounded-full bg-hub-green";
-          document.getElementById('status-text').innerText = "Online";
-        } catch(e) { console.error("Supabase Error:", e); }
-      }
-
-      initChart();
-      runEngine();
-    }
-
-    function toggleConfigModal() {
-      document.getElementById('configModal').classList.toggle('hidden');
-    }
-
-    function saveConfigurations() {
-      localStorage.setItem('hub_supaUrl', document.getElementById('cfg-supa-url').value);
-      localStorage.setItem('hub_supaKey', document.getElementById('cfg-supa-key').value);
-      localStorage.setItem('hub_teleToken', document.getElementById('cfg-tele-token').value);
-      localStorage.setItem('hub_teleChat', document.getElementById('cfg-tele-chat').value);
-      toggleConfigModal();
-      init();
-    }
-
-    function gammaLn(z) {
-      const c = [57.156235665862923, -59.59796035547549, 14.162582211999252, -1.2805028415143398, 0.00008234388120619858, -0.000003657380998982361];
-      let y = z;
-      let x = z;
-      let tmp = x + 5.5;
-      tmp -= (x + 0.5) * Math.log(tmp);
-      let ser = 1.000000000190015;
-      for (let j = 0; j < 6; j++) { y++; ser += c[j] / y; }
-      return -tmp + Math.log(2.5066282746310005 * ser / x);
-    }
-
-    function negBinomial(k, mu, dispersion) {
-      if (dispersion <= 0.0001) {
-        if (k <= 1) return (Math.pow(mu, k) * Math.exp(-mu)) / (k === 0 ? 1 : 1);
-        let r = 1; for (let i = 2; i <= k; i++) r *= i;
-        return (Math.pow(mu, k) * Math.exp(-mu)) / r;
-      }
-      const r = 1 / dispersion;
-      const p = r / (r + mu);
-      const logProb = gammaLn(k + r) - gammaLn(k + 1) - gammaLn(r) + r * Math.log(p) + k * Math.log(1 - p);
-      return Math.exp(logProb);
-    }
-
-    function dixonColesTau(x, y, lambda, mu, rho) {
-      if (x === 0 && y === 0) return 1 - (lambda * mu * rho);
-      if (x === 0 && y === 1) return 1 + (lambda * rho);
-      if (x === 1 && y === 0) return 1 + (mu * rho);
-      if (x === 1 && y === 1) return 1 - rho;
-      return 1.0;
-    }
-
-    function runEngine() {
-      const lambda = Math.max(0.05, parseFloat(document.getElementById('lambdaHome').value) || 1.0);
-      const mu = Math.max(0.05, parseFloat(document.getElementById('lambdaAway').value) || 1.0);
-      const htRatioH = (parseFloat(document.getElementById('htRatioH').value) || 45) / 100;
-      const htRatioA = (parseFloat(document.getElementById('htRatioA').value) || 42) / 100;
-      const rho = parseFloat(document.getElementById('rho').value) || 0.0;
-      const pi0 = parseFloat(document.getElementById('pi0').value) || 0.0;
-      const gammaDisp = parseFloat(document.getElementById('gammaDisp').value) || 0.0;
-      const bankroll = parseFloat(document.getElementById('bankroll').value) || 1000;
-
-      const lambda1H = lambda * htRatioH;
-      const mu1H = mu * htRatioA;
-
-      let p1 = 0, pX = 0, p2 = 0;
-      let pO15 = 0, pO25 = 0, pU25 = 0, pBttsY = 0, pBttsN = 0;
-      let h1 = 0, hX = 0, h2 = 0, hO05 = 0, hO15 = 0, hBttsY = 0;
-      
-      let sumProbFT = 0;
-      const scores = [];
-
-      // Matriz Bivariada FT 8x8
-      for (let x = 0; x <= 7; x++) {
-        for (let y = 0; y <= 7; y++) {
-          let rawP = negBinomial(x, lambda, gammaDisp) * negBinomial(y, mu, gammaDisp);
-          let tau = dixonColesTau(x, y, lambda, mu, rho);
-          let prob = Math.max(0, rawP * tau);
-
-          if (x === 0 && y === 0) {
-            prob = (1 - pi0) * prob + pi0;
-          } else {
-            prob = (1 - pi0) * prob;
-          }
-
-          sumProbFT += prob;
-
-          if (x > y) p1 += prob;
-          else if (x === y) pX += prob;
-          else p2 += prob;
-
-          const g = x + y;
-          if (g > 1.5) pO15 += prob;
-          if (g > 2.5) pO25 += prob;
-
-          if (x > 0 && y > 0) pBttsY += prob;
-
-          scores.push({ score: `${x}-${y}`, prob: prob });
-        }
-      }
-
-      p1 /= sumProbFT; pX /= sumProbFT; p2 /= sumProbFT;
-      pO15 /= sumProbFT; pO25 /= sumProbFT; pBttsY /= sumProbFT;
-      pU25 = 1 - pO25;
-      pBttsN = 1 - pBttsY;
-
-      // Matriz Bivariada 1H
-      let sumProb1H = 0;
-      for (let x = 0; x <= 5; x++) {
-        for (let y = 0; y <= 5; y++) {
-          let prob = negBinomial(x, lambda1H, gammaDisp) * negBinomial(y, mu1H, gammaDisp) * dixonColesTau(x, y, lambda1H, mu1H, rho * 0.5);
-          sumProb1H += prob;
-          if (x > y) h1 += prob;
-          else if (x === y) hX += prob;
-          else h2 += prob;
-
-          if ((x + y) > 0.5) hO05 += prob;
-          if ((x + y) > 1.5) hO15 += prob;
-          if (x > 0 && y > 0) hBttsY += prob;
-        }
-      }
-      h1 /= sumProb1H; hX /= sumProb1H; h2 /= sumProb1H;
-      hO05 /= sumProb1H; hO15 /= sumProb1H; hBttsY /= sumProb1H;
-
-      // Entropía de Shannon
-      let entropy = 0;
-      [p1, pX, p2].forEach(p => {
-        if (p > 0) entropy -= p * Math.log2(p);
-      });
-
-      document.getElementById('kpi-1').innerText = (p1 * 100).toFixed(1) + '%';
-      document.getElementById('kpi-x').innerText = (pX * 100).toFixed(1) + '%';
-      document.getElementById('kpi-2').innerText = (p2 * 100).toFixed(1) + '%';
-
-      document.getElementById('odd-1').innerText = (1 / p1).toFixed(2);
-      document.getElementById('odd-x').innerText = (1 / pX).toFixed(2);
-      document.getElementById('odd-2').innerText = (1 / p2).toFixed(2);
-
-      document.getElementById('mkt-o15').innerText = (pO15 * 100).toFixed(1) + '%';
-      document.getElementById('mkt-o25').innerText = (pO25 * 100).toFixed(1) + '%';
-      document.getElementById('mkt-u25').innerText = (pU25 * 100).toFixed(1) + '%';
-      document.getElementById('mkt-btts-y').innerText = (pBttsY * 100).toFixed(1) + '%';
-      document.getElementById('mkt-btts-n').innerText = (pBttsN * 100).toFixed(1) + '%';
-
-      document.getElementById('mkt-1h-1x2').innerText = `${(h1*100).toFixed(0)}/${(hX*100).toFixed(0)}/${(h2*100).toFixed(0)}%`;
-      document.getElementById('mkt-1h-o05').innerText = (hO05 * 100).toFixed(1) + '%';
-      document.getElementById('mkt-1h-o15').innerText = (hO15 * 100).toFixed(1) + '%';
-      document.getElementById('mkt-1h-btts-y').innerText = (hBttsY * 100).toFixed(1) + '%';
-      document.getElementById('mkt-entropy').innerText = entropy.toFixed(2) + ' bits';
-
-      const selectedMkt = document.getElementById('evalMarket').value;
-      const evalOdd = parseFloat(document.getElementById('evalOdd').value) || 1.0;
-
-      let targetProb = 0;
-      let mktTitle = "";
-
-      switch(selectedMkt) {
-        case '1': targetProb = p1; mktTitle = "Victoria Local (1 FT)"; break;
-        case 'X': targetProb = pX; mktTitle = "Empate (X FT)"; break;
-        case '2': targetProb = p2; mktTitle = "Victoria Visita (2 FT)"; break;
-        case 'O25': targetProb = pO25; mktTitle = "Over 2.5 FT"; break;
-        case 'U25': targetProb = pU25; mktTitle = "Under 2.5 FT"; break;
-        case 'BTTS_Y': targetProb = pBttsY; mktTitle = "BTTS Sí FT"; break;
-        case 'BTTS_N': targetProb = pBttsN; mktTitle = "BTTS No FT"; break;
-        case 'HT_BTTS_Y': targetProb = hBttsY; mktTitle = "BTTS Sí 1H"; break;
-      }
-
-      // Regla Cuantitativa de Descarte por sobreestimación Poisson (≥ 60% en BTTS Yes / Over 2.5)
-      let isDiscarded = false;
-      if ((selectedMkt === 'O25' || selectedMkt === 'BTTS_Y') && targetProb >= 0.60) {
-        isDiscarded = true;
-      }
-
-      const ev = ((targetProb * evalOdd) - 1) * 100;
-      const b = evalOdd - 1;
-      const q = 1 - targetProb;
-      
-      // Kelly con Factor de Modulación por Entropía
-      let entropyPenalty = Math.max(0.5, 1 - (entropy / 3.0)); 
-      let kellyFraction = b > 0 ? ((b * targetProb - q) / b) : 0;
-      let kellyQuarter = (kellyFraction / 4) * entropyPenalty;
-
-      if (kellyQuarter < 0 || isDiscarded) kellyQuarter = 0;
-
-      const kellyAmount = bankroll * kellyQuarter;
-
-      document.getElementById('ev-market-title').innerText = mktTitle;
-      const evDisplay = document.getElementById('ev-display');
-      const container = document.getElementById('ev-container');
-      
-      if (isDiscarded) {
-        evDisplay.innerText = "DESCARTADO";
-        evDisplay.className = "text-sm font-black text-hub-amber";
-        container.className = "hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-amber";
-        document.getElementById('ev-rule-status').innerText = "Filtro Activo: Prob. Poisson ≥ 60%";
-      } else {
-        evDisplay.innerText = (ev >= 0 ? '+' : '') + ev.toFixed(1) + '% EV';
-        if (ev > 0) {
-          evDisplay.className = "text-xl font-black text-hub-green";
-          container.className = "hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-green";
-        } else {
-          evDisplay.innerText = ev.toFixed(1) + '% EV';
-          evDisplay.className = "text-xl font-black text-hub-red";
-          container.className = "hub-card rounded-2xl p-4 shadow-xl flex items-center justify-between border-l-4 border-l-hub-red";
-        }
-        document.getElementById('ev-rule-status').innerText = ev > 0 ? "Entrada Aprobada con Valor" : "Sin Valor Analítico";
-      }
-
-      document.getElementById('kelly-display').innerText = `$${kellyAmount.toFixed(2)} (${(kellyQuarter * 100).toFixed(1)}%)`;
-
-      scores.sort((a, b) => b.prob - a.prob);
-      const top8 = scores.slice(0, 8);
-      updateChart(top8.map(s => s.score), top8.map(s => ((s.prob/sumProbFT) * 100).toFixed(1)));
-
-      currentResults = {
-        match: document.getElementById('matchLabel').value,
-        lambda, mu, p1, pX, p2, pO25, pBttsY, mktTitle, evalOdd, ev, kellyAmount, isDiscarded
-      };
-
-      if (supabaseClient) {
-        supabaseClient.from('predictions').insert([{
-          match_name: currentResults.match,
-          lambda_home: lambda,
-          lambda_away: mu,
-          prob_home: p1,
-          prob_draw: pX,
-          prob_away: p2,
-          prob_over25: pO25,
-          prob_btts_yes: pBttsY,
-          ev_eval: ev,
-          created_at: new Date()
-        }]).then(() => console.log('Stored in Supabase')).catch(e => console.error(e));
-      }
-    }
-
-    function initChart() {
-      const ctx = document.getElementById('hubChart').getContext('2d');
-      chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: [],
-          datasets: [{
-            data: [],
-            backgroundColor: '#3B82F6',
-            borderColor: '#2563EB',
-            borderWidth: 1,
-            borderRadius: 6,
-            borderSkipped: false
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { ticks: { color: '#94A3B8', font: { size: 10, family: 'Inter' } }, grid: { display: false } },
-            y: { ticks: { color: '#94A3B8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
-          }
-        }
-      });
-    }
-
-    function updateChart(labels, data) {
-      chartInstance.data.labels = labels;
-      chartInstance.data.datasets[0].data = data;
-      chartInstance.update();
-    }
-
-    async function sendTelegramAlert() {
-      const token = localStorage.getItem('hub_teleToken');
-      const chatId = localStorage.getItem('hub_teleChat');
-
-      if (!token || !chatId || !currentResults) {
-        alert('Configura los tokens de Telegram en el panel de ajustes.');
-        return;
-      }
-
-      const msg = `⚡ *EV STRATEGY HUB (QUANTUM V7.0)*\n\n` +
-                  `⚽ *Partido:* ${currentResults.match}\n` +
-                  `📊 *xG FT:* ${currentResults.lambda} - ${currentResults.mu}\n\n` +
-                  `🎯 *Victoria 1X2:* ${(currentResults.p1*100).toFixed(1)}% | ${(currentResults.pX*100).toFixed(1)}% | ${(currentResults.p2*100).toFixed(1)}%\n` +
-                  `⚽ *Over 2.5 FT:* ${(currentResults.pO25*100).toFixed(1)}%\n` +
-                  `🔥 *BTTS Sí FT:* ${(currentResults.pBttsY*100).toFixed(1)}%\n\n` +
-                  `💡 *Diagnóstico EV:*\n` +
-                  `• *Mercado:* ${currentResults.mktTitle}\n` +
-                  `• *Cuota:* ${currentResults.evalOdd}\n` +
-                  `• *Valor ($EV$):* ${currentResults.ev.toFixed(1)}%\n` +
-                  `• *Kelly Stake (1/4 Mod):* $${currentResults.kellyAmount.toFixed(2)}\n` +
-                  (currentResults.isDiscarded ? `⚠️ *Filtro:* Descartado por regla ≥60%` : `✅ *Filtro:* Entrada Aprobada`);
-
-      try {
-        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'Markdown' })
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCSV();
         });
-        alert('¡Alerta enviada a Telegram!');
-      } catch(e) { alert('Error enviando la alerta a Telegram.'); }
-    }
 
-    document.getElementById('quantum-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      runEngine();
-    });
+        document.getElementById('btnLoad').addEventListener('click', fetchCSV);
 
-    window.onload = init;
-  </script>
+        function fetchCSV() {
+            const url = document.getElementById('csvUrl').value.trim();
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    rawData = results.data;
+                    procesarDatos();
+                },
+                error: function(err) {
+                    alert('Error al descargar el archivo CSV. Verifica la URL.');
+                    console.error(err);
+                }
+            });
+        }
+
+        function procesarDatos() {
+            if (!rawData || rawData.length === 0) return;
+
+            // Filtrar filas válidas que tengan goles
+            let validMatches = rawData.filter(m => m.HomeTeam && m.AwayTeam && m.FTHG !== undefined && m.FTAG !== undefined && m.FTHG !== "" && m.FTAG !== "");
+
+            let teamsCount = new Set();
+            validMatches.forEach(m => {
+                teamsCount.add(m.HomeTeam);
+                teamsCount.add(m.AwayTeam);
+            });
+            let totalTeams = teamsCount.size;
+            let matchesPerRound = Math.floor(totalTeams / 2) || 10;
+
+            matchesWithRounds = validMatches.map((m, idx) => {
+                let round = Math.floor(idx / matchesPerRound) + 1;
+                return {
+                    home: m.HomeTeam.trim(),
+                    away: m.AwayTeam.trim(),
+                    hg: parseInt(m.FTHG, 10),
+                    ag: parseInt(m.FTAG, 10),
+                    round: round,
+                    date: m.Date
+                };
+            });
+
+            maxJornada = Math.max(...matchesWithRounds.map(m => m.round));
+
+            // Actualizar controles de rango
+            const rInicio = document.getElementById('rangeInicio');
+            const rFin = document.getElementById('rangeFin');
+
+            rInicio.min = 1; rInicio.max = maxJornada; rInicio.value = 1;
+            rFin.min = 1; rFin.max = maxJornada; rFin.value = maxJornada;
+
+            document.getElementById('infoJornadas').innerText = `Total Equipos: ${totalTeams} | Jornadas Detectadas: ${maxJornada} | Total Partidos: ${matchesWithRounds.length}`;
+
+            // Llenar selectores de equipos
+            let sortedTeams = Array.from(teamsCount).sort();
+            let selH = document.getElementById('selHomeTeam');
+            let selA = document.getElementById('selAwayTeam');
+            selH.innerHTML = '';
+            selA.innerHTML = '';
+            sortedTeams.forEach(t => {
+                selH.innerHTML += `<option value="${t}">${t}</option>`;
+                selA.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+            if(sortedTeams.length > 1) selA.selectedIndex = 1;
+
+            actualizarVista();
+        }
+
+        // Listeners para los controles de jornadas
+        document.getElementById('rangeInicio').addEventListener('input', (e) => {
+            let vStart = parseInt(e.target.value);
+            let vEnd = parseInt(document.getElementById('rangeFin').value);
+            if(vStart > vEnd) document.getElementById('rangeFin').value = vStart;
+            actualizarVista();
+        });
+
+        document.getElementById('rangeFin').addEventListener('input', (e) => {
+            let vEnd = parseInt(e.target.value);
+            let vStart = parseInt(document.getElementById('rangeInicio').value);
+            if(vEnd < vStart) document.getElementById('rangeInicio').value = vEnd;
+            actualizarVista();
+        });
+
+        // Botones de filtro rápido
+        document.querySelectorAll('.btnQuickFilter').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                let action = e.target.getAttribute('data-window');
+                const rInicio = document.getElementById('rangeInicio');
+                const rFin = document.getElementById('rangeFin');
+
+                if (action === 'full') {
+                    rInicio.value = 1;
+                    rFin.value = maxJornada;
+                } else if (action === 'last5') {
+                    rInicio.value = Math.max(1, maxJornada - 4);
+                    rFin.value = maxJornada;
+                } else if (action === 'last10') {
+                    rInicio.value = Math.max(1, maxJornada - 9);
+                    rFin.value = maxJornada;
+                } else if (action === 'firstHalf') {
+                    rInicio.value = 1;
+                    rFin.value = Math.floor(maxJornada / 2);
+                }
+                actualizarVista();
+            });
+        });
+
+        function actualizarVista() {
+            let jInicio = parseInt(document.getElementById('rangeInicio').value);
+            let jFin = parseInt(document.getElementById('rangeFin').value);
+
+            document.getElementById('lblJornadaInicio').innerText = jInicio;
+            document.getElementById('lblJornadaFin').innerText = jFin;
+
+            // Filtrar partidos
+            let filteredMatches = matchesWithRounds.filter(m => m.round >= jInicio && m.round <= jFin);
+
+            // Calcular Estadísticas Globales
+            let totalP = filteredMatches.length;
+            let totalGoles = filteredMatches.reduce((acc, m) => acc + m.hg + m.ag, 0);
+            let victoriasLocales = filteredMatches.filter(m => m.hg > m.ag).length;
+
+            document.getElementById('statTotalPartidos').innerText = totalP;
+            document.getElementById('statPromGoles').innerText = totalP > 0 ? (totalGoles / totalP).toFixed(2) : "0.00";
+            document.getElementById('statPctLocal').innerText = totalP > 0 ? ((victoriasLocales / totalP) * 100).toFixed(1) + "%" : "0%";
+
+            document.getElementById('lblHomeMatchesCount').innerText = `${totalP} Partidos`;
+            document.getElementById('lblAwayMatchesCount').innerText = `${totalP} Partidos`;
+
+            // Generar Tablas L / V
+            renderTablas(filteredMatches);
+        }
+
+        function renderTablas(matches) {
+            let homeStats = {};
+            let awayStats = {};
+
+            let totalHomeGoals = 0;
+            let totalAwayGoals = 0;
+            let totalMatches = matches.length;
+
+            matches.forEach(m => {
+                totalHomeGoals += m.hg;
+                totalAwayGoals += m.ag;
+
+                // Stats Local
+                if (!homeStats[m.home]) homeStats[m.home] = { name: m.home, gp:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+                homeStats[m.home].gp++;
+                homeStats[m.home].gf += m.hg;
+                homeStats[m.home].ga += m.ag;
+                if (m.hg > m.ag) { homeStats[m.home].w++; homeStats[m.home].pts += 3; }
+                else if (m.hg === m.ag) { homeStats[m.home].d++; homeStats[m.home].pts += 1; }
+                else { homeStats[m.home].l++; }
+
+                // Stats Visita
+                if (!awayStats[m.away]) awayStats[m.away] = { name: m.away, gp:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
+                awayStats[m.away].gp++;
+                awayStats[m.away].gf += m.ag;
+                awayStats[m.away].ga += m.hg;
+                if (m.ag > m.hg) { awayStats[m.away].w++; awayStats[m.away].pts += 3; }
+                else if (m.ag === m.hg) { awayStats[m.away].d++; awayStats[m.away].pts += 1; }
+                else { awayStats[m.away].l++; }
+            });
+
+            let avgHomeGoals = totalMatches > 0 ? (totalHomeGoals / totalMatches) : 1.5;
+            let avgAwayGoals = totalMatches > 0 ? (totalAwayGoals / totalMatches) : 1.2;
+
+            // Ordenar por Pts, DG, GF
+            let arrHome = Object.values(homeStats).sort((a,b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
+            let arrAway = Object.values(awayStats).sort((a,b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
+
+            // Render Tablas HTML
+            let tbHomeHTML = '';
+            arrHome.forEach((t, i) => {
+                let ppg = (t.pts / t.gp).toFixed(2);
+                let gd = t.gf - t.ga;
+                let gdStr = gd > 0 ? `+${gd}` : gd;
+
+                let fa_l = ((t.gf / t.gp) / avgHomeGoals).toFixed(2);
+                let fd_l = ((t.ga / t.gp) / avgAwayGoals).toFixed(2);
+
+                tbHomeHTML += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-2 px-2 text-slate-500 font-bold">${i+1}</td>
+                        <td class="py-2 px-2 font-bold text-slate-200">${t.name}</td>
+                        <td class="py-2 px-1 text-center text-slate-400">${t.gp}</td>
+                        <td class="py-2 px-1 text-center text-emerald-400">${t.w}</td>
+                        <td class="py-2 px-1 text-center text-amber-400">${t.d}</td>
+                        <td class="py-2 px-1 text-center text-rose-400">${t.l}</td>
+                        <td class="py-2 px-1 text-center text-slate-300">${t.gf}</td>
+                        <td class="py-2 px-1 text-center text-slate-400">${t.ga}</td>
+                        <td class="py-2 px-1 text-center font-semibold ${gd >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${gdStr}</td>
+                        <td class="py-2 px-1 text-center font-black text-emerald-400">${t.pts}</td>
+                        <td class="py-2 px-1 text-center font-bold text-cyan-400">${ppg}</td>
+                        <td class="py-2 px-1 text-center text-amber-300 font-medium">${fa_l}</td>
+                        <td class="py-2 px-1 text-center text-rose-300 font-medium">${fd_l}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('tbHome').innerHTML = tbHomeHTML;
+
+            let tbAwayHTML = '';
+            arrAway.forEach((t, i) => {
+                let ppg = (t.pts / t.gp).toFixed(2);
+                let gd = t.gf - t.ga;
+                let gdStr = gd > 0 ? `+${gd}` : gd;
+
+                let fa_v = ((t.gf / t.gp) / avgAwayGoals).toFixed(2);
+                let fd_v = ((t.ga / t.gp) / avgHomeGoals).toFixed(2);
+
+                tbAwayHTML += `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-2 px-2 text-slate-500 font-bold">${i+1}</td>
+                        <td class="py-2 px-2 font-bold text-slate-200">${t.name}</td>
+                        <td class="py-2 px-1 text-center text-slate-400">${t.gp}</td>
+                        <td class="py-2 px-1 text-center text-emerald-400">${t.w}</td>
+                        <td class="py-2 px-1 text-center text-amber-400">${t.d}</td>
+                        <td class="py-2 px-1 text-center text-rose-400">${t.l}</td>
+                        <td class="py-2 px-1 text-center text-slate-300">${t.gf}</td>
+                        <td class="py-2 px-1 text-center text-slate-400">${t.ga}</td>
+                        <td class="py-2 px-1 text-center font-semibold ${gd >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${gdStr}</td>
+                        <td class="py-2 px-1 text-center font-black text-emerald-400">${t.pts}</td>
+                        <td class="py-2 px-1 text-center font-bold text-cyan-400">${ppg}</td>
+                        <td class="py-2 px-1 text-center text-amber-300 font-medium">${fa_v}</td>
+                        <td class="py-2 px-1 text-center text-rose-300 font-medium">${fd_v}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById('tbAway').innerHTML = tbAwayHTML;
+        }
+
+        // CÁLCULO DE POISSON
+        document.getElementById('btnCalculateMatch').addEventListener('click', () => {
+            const hTeam = document.getElementById('selHomeTeam').value;
+            const aTeam = document.getElementById('selAwayTeam').value;
+
+            if (hTeam === aTeam) {
+                alert('Selecciona dos equipos diferentes.');
+                return;
+            }
+
+            let jInicio = parseInt(document.getElementById('rangeInicio').value);
+            let jFin = parseInt(document.getElementById('rangeFin').value);
+            let filteredMatches = matchesWithRounds.filter(m => m.round >= jInicio && m.round <= jFin);
+
+            if (filteredMatches.length === 0) return;
+
+            let totalHomeGoals = filteredMatches.reduce((acc, m) => acc + m.hg, 0);
+            let totalAwayGoals = filteredMatches.reduce((acc, m) => acc + m.ag, 0);
+            let avgHomeGoals = totalHomeGoals / filteredMatches.length;
+            let avgAwayGoals = totalAwayGoals / filteredMatches.length;
+
+            let hMatches = filteredMatches.filter(m => m.home === hTeam);
+            let aMatches = filteredMatches.filter(m => m.away === aTeam);
+
+            if (hMatches.length === 0 || aMatches.length === 0) {
+                alert('Uno de los equipos no tiene suficientes partidos en el rango de jornadas seleccionado.');
+                return;
+            }
+
+            let fa_l = (hMatches.reduce((acc, m) => acc + m.hg, 0) / hMatches.length) / avgHomeGoals;
+            let fd_v = (aMatches.reduce((acc, m) => acc + m.ag, 0) / aMatches.length) / avgHomeGoals;
+
+            let fa_v = (aMatches.reduce((acc, m) => acc + m.ag, 0) / aMatches.length) / avgAwayGoals;
+            let fd_l = (hMatches.reduce((acc, m) => acc + m.ag, 0) / hMatches.length) / avgAwayGoals;
+
+            let lambda_l = fa_l * fd_v * avgHomeGoals;
+            let mu_v = fa_v * fd_l * avgAwayGoals;
+
+            let matrix = [];
+            for (let i = 0; i < 8; i++) {
+                matrix[i] = [];
+                for (let j = 0; j < 8; j++) {
+                    matrix[i][j] = poissonPMF(i, lambda_l) * poissonPMF(j, mu_v);
+                }
+            }
+
+            let p1 = 0, pX = 0, p2 = 0;
+            let pUnder25 = 0;
+            let pBTTS_No = 0;
+
+            for (let i = 0; i < 8; i++) {
+                for (let j = 0; j < 8; j++) {
+                    let prob = matrix[i][j];
+                    if (i > j) p1 += prob;
+                    else if (i === j) pX += prob;
+                    else p2 += prob;
+
+                    if (i + j < 2.5) pUnder25 += prob;
+                    if (i === 0 || j === 0) pBTTS_No += prob;
+                }
+            }
+
+            let pOver25 = 1 - pUnder25;
+            let pBTTS_Yes = 1 - (pBTTS_No - matrix[0][0]);
+
+            document.getElementById('txtHomeTeamName').innerText = hTeam;
+            document.getElementById('txtAwayTeamName').innerText = aTeam;
+            document.getElementById('xGHome').innerText = lambda_l.toFixed(2);
+            document.getElementById('xGAway').innerText = mu_v.toFixed(2);
+
+            document.getElementById('prob1').innerText = (p1 * 100).toFixed(1) + "%";
+            document.getElementById('probX').innerText = (pX * 100).toFixed(1) + "%";
+            document.getElementById('prob2').innerText = (p2 * 100).toFixed(1) + "%";
+
+            document.getElementById('cuota1').innerText = "@" + (1 / p1).toFixed(2);
+            document.getElementById('cuotaX').innerText = "@" + (1 / pX).toFixed(2);
+            document.getElementById('cuota2').innerText = "@" + (1 / p2).toFixed(2);
+
+            document.getElementById('probOver25').innerText = (pOver25 * 100).toFixed(1) + "%";
+            document.getElementById('probBTTS').innerText = (pBTTS_Yes * 100).toFixed(1) + "%";
+
+            document.getElementById('poissonResults').classList.remove('hidden');
+        });
+
+        function poissonPMF(k, lambda) {
+            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+        }
+
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let res = 1;
+            for (let i = 2; i <= n; i++) res *= i;
+            return res;
+        }
+    </script>
 </body>
 </html>
