@@ -3,699 +3,665 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BetAGS - Master Stats & Poisson Engine</title>
+    <title>BetAGS - Gestor y Analizador de Datos</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- PapaParse -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col custom-scrollbar">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
     <!-- Header -->
-    <header class="glass sticky top-0 z-50 border-b border-slate-800 px-6 py-4 flex flex-wrap justify-between items-center gap-4">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
-                <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg font-bold flex items-center justify-center">
+                    <i data-lucide="database" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        BetAGS <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded">Data Vault</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Analizador y Almacén Multitabla</p>
+                </div>
             </div>
-            <div>
-                <h1 class="font-bold text-xl tracking-wide bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">BetAGS Poisson & Stats Engine</h1>
-                <p class="text-xs text-slate-400">Generador de tablas Local/Visita filtradas por jornadas & Análisis de Poisson</p>
+            <div class="flex items-center gap-2">
+                <button id="btnOpenPasteModal" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Pegar Tabla
+                </button>
             </div>
-        </div>
-
-        <!-- Controls / URL & Preset selector -->
-        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-            <!-- Dropdown de accesos rápidos para España -->
-            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-1.5 w-full sm:w-auto">
-                <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-                <select id="presetSpainSelect" class="bg-transparent text-xs text-slate-200 outline-none w-full sm:w-48 cursor-pointer">
-                    <option value="" class="bg-slate-900">-- Seleccionar LaLiga --</option>
-                    <optgroup label="LaLiga Primera División (SP1)" class="bg-slate-900 font-semibold text-emerald-400">
-                        <option value="https://football-data.co.uk/mmz4281/2526/SP1.csv" selected class="text-slate-200">LaLiga 2025/2026</option>
-                        <option value="https://football-data.co.uk/mmz4281/2425/SP1.csv" class="text-slate-200">LaLiga 2024/2025</option>
-                        <option value="https://football-data.co.uk/mmz4281/2324/SP1.csv" class="text-slate-200">LaLiga 2023/2024</option>
-                        <option value="https://football-data.co.uk/mmz4281/2223/SP1.csv" class="text-slate-200">LaLiga 2022/2023</option>
-                        <option value="https://football-data.co.uk/mmz4281/2122/SP1.csv" class="text-slate-200">LaLiga 2021/2022</option>
-                    </optgroup>
-                    <optgroup label="LaLiga2 Segunda División (SP2)" class="bg-slate-900 font-semibold text-cyan-400">
-                        <option value="https://football-data.co.uk/mmz4281/2526/SP2.csv" class="text-slate-200">LaLiga2 2025/2026</option>
-                        <option value="https://football-data.co.uk/mmz4281/2425/SP2.csv" class="text-slate-200">LaLiga2 2024/2025</option>
-                        <option value="https://football-data.co.uk/mmz4281/2324/SP2.csv" class="text-slate-200">LaLiga2 2023/2024</option>
-                        <option value="https://football-data.co.uk/mmz4281/2223/SP2.csv" class="text-slate-200">LaLiga2 2022/2023</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <!-- Input personalizado para URL de CSV -->
-            <div class="flex items-center gap-2 bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-1.5 w-full sm:w-auto">
-                <i data-lucide="link" class="w-4 h-4 text-slate-400"></i>
-                <input type="text" id="csvUrl" value="https://football-data.co.uk/mmz4281/2526/SP1.csv" class="bg-transparent text-xs text-slate-200 outline-none w-full sm:w-72" placeholder="URL del archivo CSV">
-            </div>
-
-            <button id="btnLoad" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded-xl transition flex items-center gap-2 shadow-lg shadow-emerald-600/20">
-                <i data-lucide="refresh-cw" class="w-4 h-4" id="iconRefresh"></i> <span id="lblBtnLoad">Cargar CSV</span>
-            </button>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-[1600px] w-full mx-auto p-4 md:p-6 space-y-6">
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-        <!-- Selector de Ventana de Jornadas -->
-        <section class="glass rounded-2xl p-5 border border-slate-800">
-            <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="sliders" class="w-5 h-5 text-emerald-400"></i>
-                    <h2 class="font-semibold text-sm text-slate-200 uppercase tracking-wider">Filtro Dinámico de Jornadas</h2>
-                </div>
-                <div class="text-xs text-slate-400" id="infoJornadas">
-                    Esperando datos...
-                </div>
+        <!-- Sidebar: Saved Tables List -->
+        <aside class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-4 h-[calc(100vh-120px)] sticky top-20">
+            <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+                <h2 class="font-semibold text-slate-200 flex items-center gap-2">
+                    <i data-lucide="folder-open" class="w-4 h-4 text-blue-400"></i> Tablas Guardadas
+                </h2>
+                <span id="savedCount" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">0</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                <!-- Rango desde - hasta -->
-                <div class="space-y-2">
-                    <label class="text-xs text-slate-400 flex justify-between">
-                        <span>Desde Jornada: <b id="lblJornadaInicio" class="text-emerald-400">1</b></span>
-                        <span>Hasta Jornada: <b id="lblJornadaFin" class="text-emerald-400">1</b></span>
-                    </label>
-                    <div class="flex gap-4 items-center">
-                        <input type="range" id="rangeInicio" min="1" max="38" value="1" class="w-full accent-emerald-500 bg-slate-800">
-                        <input type="range" id="rangeFin" min="1" max="38" value="38" class="w-full accent-emerald-500 bg-slate-800">
-                    </div>
-                </div>
+            <!-- List Container -->
+            <div id="savedTablesList" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2">
+                <!-- Dynamic Content -->
+            </div>
 
-                <!-- Botones rápidos -->
-                <div class="flex flex-wrap gap-2 justify-center">
-                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="full">Todas</button>
-                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="last5">Últimas 5 J</button>
-                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="last10">Últimas 10 J</button>
-                    <button class="btnQuickFilter px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition" data-window="firstHalf">Primera Vuelta</button>
-                </div>
+            <!-- Global Action -->
+            <div class="pt-2 border-t border-slate-800">
+                <button id="btnClearAll" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Borrar Todo el Historial
+                </button>
+            </div>
+        </aside>
 
-                <!-- Resumen Global -->
-                <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800 grid grid-cols-3 gap-2 text-center">
+        <!-- Main Workspace -->
+        <section class="lg:col-span-3 flex flex-col gap-6">
+
+            <!-- Active Table Info / Controls -->
+            <div id="noDataState" class="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+                <div class="bg-slate-800/50 p-4 rounded-full text-slate-500 mb-4">
+                    <i data-lucide="clipboard-x" class="w-12 h-12"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-300 mb-1">No hay datos seleccionados</h3>
+                <p class="text-slate-500 text-sm max-w-md mb-6">Pega un bloque de texto separado por tabuladores (copiado directamente de Excel o sitios de datos) para guardarlo y analizarlo.</p>
+                <button id="btnOpenPasteModalEmpty" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Pegar Primera Tabla
+                </button>
+            </div>
+
+            <div id="activeDataContainer" class="hidden flex-col gap-6">
+
+                <!-- Header Info -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4">
                     <div>
-                        <div class="text-[10px] text-slate-400 uppercase">Partidos</div>
-                        <div id="statTotalPartidos" class="text-base font-bold text-slate-100">0</div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-slate-400 uppercase">Goles / Part</div>
-                        <div id="statPromGoles" class="text-base font-bold text-emerald-400">0.00</div>
-                    </div>
-                    <div>
-                        <div class="text-[10px] text-slate-400 uppercase">% Local (1)</div>
-                        <div id="statPctLocal" class="text-base font-bold text-cyan-400">0%</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Tablas L/V -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            <!-- Home Table -->
-            <div class="glass rounded-2xl p-5 border border-slate-800 flex flex-col">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <div class="p-1.5 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-400">
-                            <i data-lucide="home" class="w-4 h-4"></i>
+                        <div class="flex items-center gap-3">
+                            <h2 id="activeTableTitle" class="text-lg font-bold text-white">Nombre de Tabla</h2>
+                            <span id="activeTableBadge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded font-mono">0 Filas</span>
                         </div>
-                        <h3 class="font-bold text-base text-slate-100">Tabla de Rendimiento Local (Home)</h3>
+                        <p id="activeTableDate" class="text-xs text-slate-400 mt-0.5">Guardado el: --</p>
                     </div>
-                    <span class="text-xs bg-blue-500/10 text-blue-400 px-2.5 py-1 rounded-full border border-blue-500/20 font-medium" id="lblHomeMatchesCount">0 Partidos</span>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <button id="btnExportCsv" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar CSV
+                        </button>
+                        <button id="btnDeleteActive" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                            <i data-lucide="trash" class="w-3.5 h-3.5"></i> Eliminar Tabla
+                        </button>
+                    </div>
                 </div>
 
-                <div class="overflow-x-auto custom-scrollbar flex-1">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 font-semibold bg-slate-900/50">
-                                <th class="py-2.5 px-2">#</th>
-                                <th class="py-2.5 px-2">Equipo</th>
-                                <th class="py-2.5 px-1 text-center">PJ</th>
-                                <th class="py-2.5 px-1 text-center">G</th>
-                                <th class="py-2.5 px-1 text-center">E</th>
-                                <th class="py-2.5 px-1 text-center">P</th>
-                                <th class="py-2.5 px-1 text-center">GF</th>
-                                <th class="py-2.5 px-1 text-center">GC</th>
-                                <th class="py-2.5 px-1 text-center">DG</th>
-                                <th class="py-2.5 px-1 text-center text-emerald-400">Pts</th>
-                                <th class="py-2.5 px-1 text-center text-cyan-400">PPG</th>
-                                <th class="py-2.5 px-1 text-center text-amber-400" title="Fuerza de Ataque Local">FA_L</th>
-                                <th class="py-2.5 px-1 text-center text-rose-400" title="Fuerza de Defensa Local">FD_L</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbHome" class="divide-y divide-slate-800/60 font-medium"></tbody>
-                    </table>
+                <!-- Stats Overview Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Total Partidos</span>
+                        <p id="statTotalMatches" class="text-2xl font-bold text-white mt-1">0</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">Promedio Goles/Partido</span>
+                        <p id="statAvgGoals" class="text-2xl font-bold text-blue-400 mt-1">0.00</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">% Over 2.5 Goles</span>
+                        <p id="statOver25" class="text-2xl font-bold text-amber-400 mt-1">0%</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                        <span class="text-xs text-slate-400">% BTTS (Ambos Anotan)</span>
+                        <p id="statBTTS" class="text-2xl font-bold text-emerald-400 mt-1">0%</p>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Away Table -->
-            <div class="glass rounded-2xl p-5 border border-slate-800 flex flex-col">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <div class="p-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400">
-                            <i data-lucide="plane" class="w-4 h-4"></i>
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                        <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i> Distribución de Resultados (FTR)
+                        </h3>
+                        <div class="h-48">
+                            <canvas id="chartResults"></canvas>
                         </div>
-                        <h3 class="font-bold text-base text-slate-100">Tabla de Rendimiento Visitante (Away)</h3>
                     </div>
-                    <span class="text-xs bg-purple-500/10 text-purple-400 px-2.5 py-1 rounded-full border border-purple-500/20 font-medium" id="lblAwayMatchesCount">0 Partidos</span>
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                        <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                            <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-400"></i> Marcadores Más Frecuentes
+                        </h3>
+                        <div class="h-48">
+                            <canvas id="chartScores"></canvas>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="overflow-x-auto custom-scrollbar flex-1">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-slate-800 text-slate-400 font-semibold bg-slate-900/50">
-                                <th class="py-2.5 px-2">#</th>
-                                <th class="py-2.5 px-2">Equipo</th>
-                                <th class="py-2.5 px-1 text-center">PJ</th>
-                                <th class="py-2.5 px-1 text-center">G</th>
-                                <th class="py-2.5 px-1 text-center">E</th>
-                                <th class="py-2.5 px-1 text-center">P</th>
-                                <th class="py-2.5 px-1 text-center">GF</th>
-                                <th class="py-2.5 px-1 text-center">GC</th>
-                                <th class="py-2.5 px-1 text-center">DG</th>
-                                <th class="py-2.5 px-1 text-center text-emerald-400">Pts</th>
-                                <th class="py-2.5 px-1 text-center text-cyan-400">PPG</th>
-                                <th class="py-2.5 px-1 text-center text-amber-400" title="Fuerza de Ataque Visitante">FA_V</th>
-                                <th class="py-2.5 px-1 text-center text-rose-400" title="Fuerza de Defensa Visitante">FD_V</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbAway" class="divide-y divide-slate-800/60 font-medium"></tbody>
-                    </table>
+                <!-- Data Table View -->
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+                    <!-- Table Search & Filters -->
+                    <div class="p-3 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center gap-4">
+                        <div class="relative flex-1 max-w-xs">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
+                            <input type="text" id="tableSearch" placeholder="Buscar equipo, fecha..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
+                        </div>
+                        <span id="filteredRowsCount" class="text-xs text-slate-400 font-mono">Mostrando 0 registros</span>
+                    </div>
+
+                    <!-- Scrollable Table -->
+                    <div class="overflow-x-auto overflow-y-auto max-h-[500px] custom-scrollbar">
+                        <table class="w-full text-xs text-left text-slate-300 whitespace-nowrap">
+                            <thead id="tableHeader" class="bg-slate-800 text-slate-400 sticky top-0 z-10 border-b border-slate-700">
+                                <!-- Dynamic Headers -->
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-slate-800/60 font-mono">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
             </div>
 
-        </section>
-
-        <!-- Calculadora Poisson -->
-        <section class="glass rounded-2xl p-6 border border-slate-800">
-            <div class="flex items-center gap-2 mb-6">
-                <i data-lucide="calculator" class="w-5 h-5 text-emerald-400"></i>
-                <h2 class="font-bold text-lg text-slate-100">Simulador de Probabilidades de Poisson en Tiempo Real</h2>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-2">Equipo Local</label>
-                    <select id="selHomeTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-2">Equipo Visitante</label>
-                    <select id="selAwayTeam" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-3 outline-none focus:border-emerald-500 transition"></select>
-                </div>
-                <div class="flex items-end">
-                    <button id="btnCalculateMatch" class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
-                        <i data-lucide="zap" class="w-4 h-4"></i> Calcular Probabilidades Poisson
-                    </button>
-                </div>
-            </div>
-
-            <!-- Panel Resultados Poisson -->
-            <div id="poissonResults" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-800">
-                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
-                    <div class="text-xs text-slate-400 font-semibold uppercase">Goles Esperados (xG)</div>
-                    <div class="flex justify-around items-center pt-2">
-                        <div>
-                            <span id="txtHomeTeamName" class="text-xs text-slate-300 font-medium">Local</span>
-                            <div id="xGHome" class="text-2xl font-black text-emerald-400">0.00</div>
-                        </div>
-                        <span class="text-slate-600 font-bold">vs</span>
-                        <div>
-                            <span id="txtAwayTeamName" class="text-xs text-slate-300 font-medium">Visita</span>
-                            <div id="xGAway" class="text-2xl font-black text-cyan-400">0.00</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
-                    <div class="text-xs text-slate-400 font-semibold uppercase">Probabilidades 1X2</div>
-                    <div class="grid grid-cols-3 gap-2 pt-2 text-xs">
-                        <div class="bg-slate-800/60 p-2 rounded-lg">
-                            <div class="text-slate-400">1 (Local)</div>
-                            <div id="prob1" class="font-bold text-emerald-400 text-sm">0%</div>
-                            <div id="cuota1" class="text-[10px] text-slate-500">@0.00</div>
-                        </div>
-                        <div class="bg-slate-800/60 p-2 rounded-lg">
-                            <div class="text-slate-400">X (Empate)</div>
-                            <div id="probX" class="font-bold text-amber-400 text-sm">0%</div>
-                            <div id="cuotaX" class="text-[10px] text-slate-500">@0.00</div>
-                        </div>
-                        <div class="bg-slate-800/60 p-2 rounded-lg">
-                            <div class="text-slate-400">2 (Visita)</div>
-                            <div id="prob2" class="font-bold text-cyan-400 text-sm">0%</div>
-                            <div id="cuota2" class="text-[10px] text-slate-500">@0.00</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 text-center space-y-2">
-                    <div class="text-xs text-slate-400 font-semibold uppercase">Mercados Alternativos</div>
-                    <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
-                        <div class="bg-slate-800/60 p-2 rounded-lg">
-                            <div class="text-slate-400">Over 2.5</div>
-                            <div id="probOver25" class="font-bold text-emerald-400 text-sm">0%</div>
-                        </div>
-                        <div class="bg-slate-800/60 p-2 rounded-lg">
-                            <div class="text-slate-400">BTTS (Sí)</div>
-                            <div id="probBTTS" class="font-bold text-purple-400 text-sm">0%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </section>
 
     </main>
 
-    <footer class="glass border-t border-slate-800 text-center py-4 text-xs text-slate-500">
-        BetAGS Quantitative Analytics &copy; 2026 — Basado en distribuciones de Poisson y Football-Data.co.uk
-    </footer>
+    <!-- Modal Paste Data -->
+    <div id="pasteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 flex flex-col gap-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="clipboard-paste" class="w-5 h-5 text-blue-400"></i> Pegar Nueva Tabla de Datos
+                </h3>
+                <button id="btnClosePasteModal" class="text-slate-400 hover:text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
 
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Nombre o Etiqueta de la Tabla</label>
+                <input type="text" id="tableNameInput" placeholder="Ej: La Liga 2025/26 - Jornada 1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Pega los datos aquí (Tab Separated / Excel copy)</label>
+                <textarea id="rawPasteData" rows="10" placeholder="Pega el bloque de texto desde Excel, TSV o TXT aquí..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs font-mono text-slate-300 focus:outline-none focus:border-blue-500 custom-scrollbar"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button id="btnCancelPaste" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition">Cancelar</button>
+                <button id="btnSavePastedData" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Tabla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
     <script>
-        let rawData = [];
-        let matchesWithRounds = [];
-        let maxJornada = 1;
+        // Data Store
+        let savedTables = JSON.parse(localStorage.getItem('betags_saved_tables')) || [];
+        let activeTableId = null;
+        let chartResultsInstance = null;
+        let chartScoresInstance = null;
 
-        lucide.createIcons();
+        // Default Data provided by user
+        const initialUserData = `Div\tDate\tTime\tHomeTeam\tAwayTeam\tFTHG\tFTAG\tFTR\tHTHG\tHTAG\tHTR\tHS\tAS\tHST\tAST\tHF\tAF\tHC\tAC\tHY\tAY\tHR\tAR\tB365H\tB365D\tB365A\tBFDH\tBFDD\tBFDA\tBMGMH\tBMGMD\tBMGMA\tBVH\tBVD\tBVA\tBWH\tBWD\tBWA\tCLH\tCLD\tCLA\tLBH\tLBD\tLBA\tPSH\tPSD\tPSA\tMaxH\tMaxD\tMaxA\tAvgH\tAvgD\tAvgA\tBFEH\tBFED\tBFEA\tB365>2.5\tB365<2.5\tP>2.5\tP<2.5\tMax>2.5\tMax<2.5\tAvg>2.5\tAvg<2.5\tBFE>2.5\tBFE<2.5\tAHh\tB365AHH\tB365AHA\tPAHH\tPAHA\tMaxAHH\tMaxAHA\tAvgAHH\tAvgAHA\tBFEAHH\tBFEAHA\tB365CH\tB365CD\tB365CA\tBFDCH\tBFDCD\tBFDCA\tBMGMCH\tBMGMCD\tBMGMCA\tBVCH\tBVCD\tBVCA\tBWCH\tBWCD\tBWCA\tCLCH\tCLCD\tCLCA\tLBCH\tLBCD\tLBCA\tPSCH\tPSCD\tPSCA\tMaxCH\tMaxCD\tMaxCA\tAvgCH\tAvgCD\tAvgCA\tBFECH\tBFECD\tBFECA\tB365C>2.5\tB365C<2.5\tPC>2.5\tPC<2.5\tMaxC>2.5\tMaxC<2.5\tAvgC>2.5\tAvgC<2.5\tBFEC>2.5\tBFEC<2.5\tAHCh\tB365CAHH\tB365CAHA\tPCAHH\tPCAHA\tMaxCAHH\tMaxCAHA\tAvgCAHH\tAvgCAHA\tBFECAHH\tBFECAHA
+SP1\t15/08/2025\t18:00\tGirona\tVallecano\t1\t3\tA\t0\t3\tA\t7\t16\t2\t5\t8\t17\t2\t4\t0\t1\t1\t0\t2.25\t3.25\t3.3\t2.3\t3.2\t3.25\t2.17\t3.25\t3.25\t2.25\t3.3\t3.25\t2.25\t3.25\t3.25\t2.25\t3.3\t3.25\t2.25\t3.25\t3.2\t2.3\t3.3\t3.45\t2.3\t3.33\t3.35\t2.24\t3.26\t3.26\t2.34\t3.4\t3.5\t2.2\t1.67\t2.24\t1.71\t2.2\t1.73\t2.14\t1.68\t2.26\t1.78\t-0.25\t1.98\t1.88\t1.97\t1.95\t1.98\t1.91\t1.84\t1.85\t1.99\t1.98\t2.45\t3.2\t3.1\t2.4\t3.2\t3.1\t2.33\t3\t3.1\t2.4\t3.25\t3\t2.35\t3.2\t3.1\t2.37\t3.2\t3.1\t2.37\t3.2\t3.1\t2.29\t3.32\t3.45\t2.45\t3.25\t3.15\t2.39\t3.15\t3.09\t2.5\t3.25\t3.35\t2.2\t1.67\t2.24\t1.72\t2.22\t1.68\t2.17\t1.66\t2.36\t1.72\t-0.25\t2.1\t1.78\t1.97\t1.95\t2.1\t1.8\t1.95\t1.75\t2.11\t1.89
+SP1\t15/08/2025\t20:30\tVillarreal\tOviedo\t2\t0\tH\t2\t0\tH\t25\t5\t10\t4\t10\t8\t10\t1\t1\t2\t0\t1\t1.4\t4.75\t8\t1.4\t4.5\t8.5\t1.34\t5\t7.5\t1.36\t4.75\t8.5\t1.4\t4.6\t8\t1.4\t4.6\t8\t1.4\t4.6\t8\t1.41\t4.76\t8.8\t1.4\t5.1\t8.5\t1.38\t4.74\t8.11\t1.41\t5.1\t9.6\t1.85\t2\t1.89\t2.02\t1.91\t2\t1.84\t1.92\t1.95\t2.02\t-1.25\t1.88\t1.98\t1.96\t1.96\t1.9\t1.98\t1.81\t1.88\t1.96\t2\t1.4\t4.75\t8\t1.36\t4.6\t9\t1.37\t4.8\t7.5\t1.36\t4.75\t9\t1.41\t4.6\t7.75\t1.4\t4.6\t8\t1.4\t4.5\t7.5\t1.4\t4.87\t8.96\t1.42\t4.9\t9\t1.39\t4.7\t8.02\t1.41\t5.2\t9.6\t1.83\t2.03\t1.85\t2.06\t1.89\t2.03\t1.82\t1.94\t1.9\t2.06\t-1.25\t1.9\t1.95\t1.93\t2\t1.94\t1.96\t1.82\t1.87\t1.96\t2.02
+SP1\t16/08/2025\t18:30\tMallorca\tBarcelona\t0\t3\tA\t0\t2\tA\t4\t24\t1\t8\t8\t17\t3\t6\t4\t1\t2\t0\t7\t5\t1.4\t7\t4.6\t1.44\t7\t4.9\t1.38\t7\t4.6\t1.44\t6.5\t4.75\t1.46\t6.5\t4.6\t1.44\t6.5\t4.6\t1.44\t6.68\t5.03\t1.45\t7\t5\t1.48\t6.75\t4.74\t1.43\t7.8\t5.2\t1.47\t1.62\t2.3\t1.64\t2.35\t1.62\t2.35\t1.6\t2.25\t1.66\t2.46\t1.25\t1.88\t1.98\t1.9\t2.01\t1.88\t1.98\t1.83\t1.85\t1.95\t1.99\t9.5\t5.5\t1.3\t9.5\t6\t1.29\t8.5\t5.5\t1.29\t9\t6\t1.29\t8.75\t5.75\t1.31\t8.5\t5.75\t1.3\t8.5\t5.5\t1.3\t8.06\t5.31\t1.39\t9.5\t7.8\t5.4\t8.7\t5.79\t1.56\t10\t5.8\t1.37\t1.44\t2.75\t1.5\t2.71\t1.47\t2.9\t1.43\t2.72\t1.49\t2.98\t1.5\t2\t1.85\t1.88\t2.05\t2\t1.93\t1.9\t1.86\t2.04\t1.94
+SP1\t16/08/2025\t20:30\tAlaves\tLevante\t2\t1\tH\t1\t0\tH\t15\t7\t4\t3\t15\t13\t10\t1\t0\t1\t0\t0\t2.15\t3\t3.8\t2.2\t3\t3.75\t2.16\t3.05\t3.55\t2.15\t3.1\t3.7\t2.25\t3\t3.5\t2.25\t3\t3.5\t2.25\t3\t3.5\t2.18\t3.18\t3.84\t2.25\t3.1\t3.8\t2.19\t3.04\t3.64\t2.28\t3.2\t3.95\t2.63\t1.5\t2.77\t1.48\t2.7\t1.5\t2.58\t1.47\t2.78\t1.52\t-0.25\t1.83\t2.03\t1.85\t2.06\t1.86\t2.03\t1.78\t1.91\t1.92\t2.07\t2.1\t3.1\t3.9\t2.1\t3.1\t4\t2.08\t2.95\t3.85\t2.05\t3.13\t4\t2.05\t3.1\t3.9\t2.1\t3.1\t3.8\t2.05\t3.1\t3.9\t2.19\t3.14\t3.93\t2.12\t3.15\t4\t2.08\t3.08\t3.92\t2.14\t3.25\t4.3\t2.63\t1.5\t2.54\t1.57\t2.63\t1.54\t2.51\t1.5\t2.66\t1.59\t-0.25\t1.8\t2.05\t1.86\t2.07\t1.8\t2.07\t1.7\t2\t1.81\t2.2
+SP1\t16/08/2025\t20:30\tValencia\tSociedad\t1\t1\tD\t0\t0\tD\t18\t13\t2\t3\t5\t11\t8\t7\t1\t2\t0\t0\t2.6\t2.9\t3.1\t2.5\t2.88\t3.2\t2.5\t2.85\t3\t2.55\t2.9\t3.1\t2.55\t2.95\t3\t2.6\t3\t3\t2.5\t2.9\t3\t2.65\t2.89\t3.23\t2.6\t3\t3.2\t2.55\t2.89\t3.07\t2.74\t2.98\t3.3\t2.75\t1.44\t2.85\t1.44\t3.05\t1.45\t2.76\t1.41\t2.94\t1.48\t0\t1.75\t2.13\t1.78\t2.17\t1.8\t2.13\t1.74\t2.01\t1.82\t2.19\t2.45\t3\t3.2\t2.4\t3\t3.2\t2.38\t2.95\t3.15\t2.45\t3.1\t3.1\t2.45\t2.95\t3.2\t2.45\t3\t3.2\t2.45\t2.9\t3.1\t2.53\t3.04\t3.3\t2.49\t3.1\t3.25\t2.43\t3\t3.18\t2.58\t3.1\t3.35\t2.63\t1.5\t2.55\t1.56\t2.63\t1.55\t2.49\t1.51\t2.68\t1.57\t-0.25\t2.1\t1.78\t2.13\t1.81\t2.1\t1.78\t1.96\t1.74\t2.18\t1.84
+SP1\t17/08/2025\t16:00\tCelta\tGetafe\t0\t2\tA\t0\t0\tD\t11\t10\t3\t3\t15\t17\t9\t3\t3\t2\t0\t0\t1.73\t3.5\t5.25\t1.73\t3.4\t5.5\t1.65\t3.6\t5.2\t1.7\t3.3\t5\t1.72\t3.5\t5.25\t1.73\t3.5\t5.25\t1.7\t3.5\t5.25\t1.76\t3.43\t5.71\t1.75\t3.65\t5.66\t1.71\t3.48\t5.25\t1.77\t3.65\t5.8\t2.38\t1.57\t2.5\t1.57\t2.4\t1.58\t2.36\t1.54\t2.52\t1.62\t-0.75\t1.98\t1.88\t2.01\t1.9\t1.98\t1.9\t1.89\t1.8\t2.01\t1.93\t1.67\t3.5\t5.75\t1.67\t3.4\t6\t1.63\t3.5\t5.6\t1.67\t3.5\t6\t1.7\t3.4\t5.75\t1.7\t3.4\t5.75\t1.7\t3.4\t5.75\t1.61\t3.73\t7.04\t1.7\t3.55\t6\t1.67\t3.48\t5.81\t1.75\t3.6\t6.4\t2.63\t1.5\t2.49\t1.58\t2.63\t1.55\t2.49\t1.51\t2.68\t1.57\t-0.75\t1.93\t1.93\t1.81\t2.15\t1.93\t1.95\t1.85\t1.84\t2\t1.99
+SP1\t17/08/2025\t18:30\tAth Bilbao\tSevilla\t3\t2\tH\t2\t0\tH\t14\t12\t3\t6\t8\t12\t10\t1\t0\t2\t0\t0\t1.57\t3.9\t6\t1.57\t3.75\t6.5\t1.47\t4.1\t6.75\t1.53\t3.7\t5.75\t1.6\t3.8\t6\t1.6\t3.8\t6\t1.6\t3.8\t5.75\t1.6\t4.05\t6.12\t1.6\t4.2\t6.75\t1.55\t3.91\t6.17\t1.61\t4\t6.8\t2.1\t1.73\t2.11\t1.78\t2.1\t1.74\t2.07\t1.71\t2.18\t1.81\t-1\t2.05\t1.8\t2.08\t1.84\t2.05\t1.85\t1.91\t1.8\t2.07\t1.86\t1.53\t3.8\t6.5\t1.57\t3.75\t6.5\t1.53\t3.8\t6.25\t1.55\t3.9\t6.5\t1.58\t3.7\t6.5\t1.57\t3.75\t6.5\t1.57\t3.7\t6.5\t1.67\t3.69\t6.24\t1.59\t3.9\t6.6\t1.56\t3.8\t6.43\t1.62\t4\t7.2\t2.2\t1.67\t2.31\t1.67\t2.25\t1.67\t2.2\t1.64\t2.28\t1.75\t-1\t2\t1.85\t2.25\t1.72\t2.04\t1.85\t1.96\t1.76\t2.11\t1.88
+SP1\t17/08/2025\t20:30\tEspanol\tAth Madrid\t2\t1\tH\t0\t1\tA\t10\t15\t5\t4\t14\t11\t1\t3\t3\t3\t0\t0\t6\t3.9\t1.57\t6.5\t3.75\t1.57\t6.1\t4\t1.52\t6\t3.6\t1.53\t6.5\t4\t1.53\t6.5\t4\t1.53\t6.5\t4\t1.53\t6.57\t3.86\t1.6\t6.66\t4\t1.6\t6.25\t3.86\t1.55\t7.2\t4\t1.62\t2.2\t1.67\t2.28\t1.68\t2.2\t1.72\t2.14\t1.66\t2.32\t1.72\t1\t1.8\t2.05\t1.83\t2.1\t1.8\t2.05\t1.77\t1.94\t1.86\t2.09\t5.5\t3.9\t1.62\t6\t3.75\t1.6\t5.6\t3.9\t1.56\t5.75\t3.9\t1.6\t5.75\t3.8\t1.62\t5.75\t3.8\t1.61\t5.5\t3.8\t1.61\t5.8\t3.89\t1.66\t6.2\t4\t1.65\t5.7\t3.86\t1.6\t6.2\t4.1\t1.66\t2\t1.85\t1.97\t1.93\t2\t1.89\t1.94\t1.82\t2.02\t1.96\t1\t1.73\t2.08\t1.76\t2.17\t1.83\t2.09\t1.73\t2\t1.81\t2.18
+SP1\t18/08/2025\t20:00\tElche\tBetis\t1\t1\tD\t0\t1\tA\t6\t12\t2\t4\t14\t13\t1\t3\t0\t1\t0\t0\t3.4\t3.3\t2.2\t3.4\t3.25\t2.2\t3.2\t3.3\t2.17\t3.25\t3.2\t2.1\t3.4\t3.25\t2.2\t3.4\t3.25\t2.2\t3.4\t3.25\t2.15\t3.45\t3.43\t2.21\t3.4\t3.4\t2.2\t3.33\t3.27\t2.17\t3.55\t3.4\t2.28\t2.2\t1.67\t2.21\t1.72\t2.2\t1.76\t2.08\t1.7\t2.24\t1.77\t0.25\t1.98\t1.88\t2\t1.91\t1.98\t1.88\t1.88\t1.76\t2\t1.94\t3.2\t3.25\t2.3\t3.2\t3.2\t2.3\t3.2\t3.15\t2.25\t3.2\t3.25\t2.3\t3.2\t3.2\t2.35\t3.2\t3.2\t2.3\t3.2\t3.1\t2.3\t3.34\t3.22\t2.4\t3.25\t3.25\t2.36\t3.2\t3.19\t2.3\t3.45\t3.3\t2.4\t2.2\t1.67\t2.3\t1.68\t2.25\t1.73\t2.16\t1.66\t2.32\t1.73\t0.25\t1.88\t1.98\t1.88\t2.04\t1.88\t2\t1.81\t1.84\t1.94\t2.04
+SP1\t19/08/2025\t20:00\tReal Madrid\tOsasuna\t1\t0\tH\t0\t0\tD\t18\t2\t5\t0\t10\t12\t7\t0\t1\t0\t0\t1\t1.22\t6.25\t13\t1.2\t6.5\t15\t1.17\t7\t13\t1.2\t6.5\t13\t1.22\t6.5\t13\t1.22\t6.5\t13\t1.22\t6.5\t13\t1.23\t6.99\t12.34\t1.23\t7\t15\t1.2\t6.66\t13.16\t1.23\t7.8\t16.5\t1.5\t2.63\t1.52\t2.6\t1.52\t2.63\t1.49\t2.56\t1.56\t2.72\t-2\t2.03\t1.78\t2.14\t1.76\t2.05\t1.81\t1.97\t1.75\t2.15\t1.83\t1.22\t7\t11\t1.22\t6.5\t13\t1.18\t6.5\t13\t1.2\t7\t13\t1.22\t6.75\t12\t1.22\t7\t11\t1.22\t6.5\t12\t1.22\t7.32\t12.82\t1.24\t7\t13\t1.21\t6.67\t12.34\t1.24\t7.4\t15\t1.44\t2.75\t1.47\t2.73\t1.46\t2.8\t1.44\t2.68\t1.48\t3.05\t-2\t2.03\t1.78\t2.07\t1.85\t2.07\t1.83\t1.97\t1.75\t2.14\t1.86
+SP1\t22/08/2025\t20:30\tBetis\tAlaves\t1\t0\tH\t1\t0\tH\t16\t11\t5\t5\t10\t17\t5\t2\t2\t3\t0\t0\t1.91\t3.4\t4.2\t1.9\t3.3\t4.5\t1.82\t3.35\t4.4\t1.9\t3.4\t4.33\t1.87\t3.4\t4.33\t1.85\t3.4\t4.33\t1.85\t3.4\t4.33\t1.92\t3.45\t4.6\t1.91\t3.5\t4.5\t1.88\t3.38\t4.37\t1.95\t3.5\t4.8\t2.2\t1.67\t2.33\t1.67\t2.3\t1.67\t2.23\t1.62\t2.36\t1.71\t-0.5\t1.9\t1.95\t1.93\t2\t1.9\t1.96\t1.84\t1.91\t1.96\t2.02\t1.83\t3.4\t4.5\t1.83\t3.4\t4.6\t1.84\t3.35\t4.3\t1.83\t3.4\t4.6\t1.85\t3.4\t4.5\t1.85\t3.4\t4.5\t1.85\t3.4\t4.4\t1.97\t3.38\t4.43\t1.86\t3.5\t4.6\t1.84\t3.4\t4.47\t1.91\t3.6\t5\t2.2\t1.67\t2.36\t1.65\t2.25\t1.67\t2.21\t1.63\t2.36\t1.72\t-0.5\t1.83\t2.03\t1.98\t1.94\t1.87\t2.03\t1.82\t1.93\t1.91\t2.09
+SP1\t23/08/2025\t16:00\tMallorca\tCelta\t1\t1\tD\t0\t1\tA\t12\t8\t4\t2\t12\t12\t3\t4\t3\t3\t0\t0\t3\t3.1\t2.55\t3\t3.1\t2.5\t2.9\t3.1\t2.45\t2.9\t3.13\t2.55\t2.95\t3.1\t2.5\t2.9\t3.1\t2.5\t2.9\t3.1\t2.5\t3.06\t3.1\t2.6\t3\t3.15\t2.6\t2.94\t3.09\t2.52\t3.1\t3.2\t2.7\t2.38\t1.57\t2.49\t1.58\t2.43\t1.6\t2.34\t1.55\t2.48\t1.63\t0\t2.1\t1.78\t2.13\t1.8\t2.1\t1.78\t2.02\t1.73\t2.13\t1.85\t3.3\t3.2\t2.3\t3.25\t3.2\t2.3\t3\t3.2\t2.33\t3.13\t3.25\t2.38\t3.1\t3.2\t2.4\t3.1\t3.2\t2.4\t3\t3.2\t2.37\t3.26\t3.16\t2.48\t3.3\t3.3\t2.5\t3.13\t3.21\t2.35\t3.3\t3.4\t2.44\t2.1\t1.73\t2.41\t1.63\t2.28\t1.73\t2.15\t1.67\t2.28\t1.77\t0.25\t1.88\t1.98\t1.83\t2.11\t1.88\t2.05\t1.82\t1.88\t1.9\t2.09
+SP1\t23/08/2025\t18:30\tAth Madrid\tElche\t1\t1\tD\t1\t1\tD\t13\t6\t6\t2\t14\t7\t10\t2\t0\t3\t0\t0\t1.25\t5.25\t15\t1.25\t5.5\t13\t1.22\t5.75\t12.5\t1.22\t6\t15\t1.25\t5.75\t12.5\t1.25\t5.75\t12\t1.25\t5.75\t12\t1.24\t6.28\t12.89\t1.25\t6\t15\t1.24\t5.74\t12.91\t1.26\t6.6\t16\t1.8\t2\t1.76\t2.12\t1.8\t2.05\t1.76\t2\t1.82\t2.14\t-1.75\t2\t1.85\t2.01\t1.88\t2\t1.85\t1.96\t1.74\t2.06\t1.91\t1.29\t5.75\t10\t1.25\t5.5\t12\t1.21\t5.8\t12.5\t1.25\t5.75\t12\t1.27\t5.75\t11.5\t1.28\t5.5\t11\t1.28\t5.5\t11\t1.27\t5.97\t13.1\t1.29\t6\t13\t1.26\t5.67\t11.58\t1.27\t6.6\t14.5\t1.67\t2.2\t1.81\t2.08\t1.8\t2.25\t1.71\t2.09\t1.79\t2.24\t-1.5\t1.83\t2.03\t1.85\t2.08\t1.85\t2.03\t1.79\t1.97\t1.89\t2.08
+SP1\t23/08/2025\t20:30\tLevante\tBarcelona\t2\t3\tA\t2\t0\tH\t8\t26\t5\t10\t10\t8\t0\t11\t3\t1\t0\t0\t11\t6\t1.25\t11\t6\t1.25\t11\t6.75\t1.19\t10.5\t6.5\t1.25\t10.5\t6.5\t1.25\t10\t6.5\t1.25\t10\t6.5\t1.25\t9.49\t6.51\t1.27\t11.5\t7\t1.26\t10.44\t6.51\t1.24\t12\t7.2\t1.27\t1.36\t3.2\t1.37\t3.08\t1.38\t3.2\t1.35\t3.02\t1.39\t3.35\t1.75\t1.98\t1.88\t1.97\t1.92\t1.98\t1.88\t1.9\t1.79\t2.03\t1.9\t12\t6.5\t1.22\t12\t7\t1.2\t11\t7\t1.19\t12\t7\t1.2\t12.5\t7\t1.22\t12\t7\t1.22\t12\t7\t1.22\t11.01\t7.39\t1.23\t13\t7.5\t1.24\t11.5\t6.95\t1.21\t14.5\t7.6\t1.24\t1.33\t3.4\t1.33\t3.37\t1.36\t3.51\t1.31\t3.33\t1.35\t3.7\t2\t1.93\t1.93\t1.89\t2.02\t1.93\t1.96\t1.86\t1.9\t1.94\t2.04
+SP1\t24/08/2025\t16:00\tOsasuna\tValencia\t1\t0\tH\t1\t0\tH\t16\t4\t4\t1\t14\t13\t3\t4\t2\t1\t0\t1\t2.4\t3.2\t3.1\t2.4\t3.1\t3.1\t2.33\t3.1\t3.1\t2.3\t3.1\t3\t2.35\t3.1\t3.2\t2.37\t3.1\t3.2\t2.3\t3.1\t3.2\t2.43\t3.16\t3.27\t2.41\t3.2\t3.25\t2.36\t3.11\t3.13\t2.5\t3.2\t3.3\t2.38\t1.57\t2.47\t1.58\t2.48\t1.6\t2.34\t1.55\t2.5\t1.64\t-0.25\t2.05\t1.8\t2.07\t1.85\t2.05\t1.8\t1.93\t1.76\t2.12\t1.84\t2.2\t3.3\t3.4\t2.25\t3.2\t3.4\t2.2\t3.1\t3.35\t2.25\t3.25\t3.3\t2.25\t3.2\t3.4\t2.25\t3.2\t3.4\t2.2\t3.1\t3.4\t2.48\t3.18\t3.22\t2.26\t3.3\t3.5\t2.23\t3.16\t3.38\t2.32\t3.3\t3.7\t2.3\t1.62\t2.38\t1.64\t2.4\t1.65\t2.28\t1.59\t2.4\t1.69\t-0.25\t1.88\t1.98\t2.12\t1.83\t1.91\t1.98\t1.84\t1.89\t1.97\t2.01
+SP1\t24/08/2025\t18:30\tSociedad\tEspanol\t2\t2\tD\t0\t2\tA\t15\t14\t7\t3\t16\t18\t5\t2\t2\t2\t0\t0\t1.8\t3.4\t5\t1.83\t3.4\t4.6\t1.8\t3.4\t4.4\t1.75\t3.3\t4.5\t1.83\t3.4\t4.6\t1.83\t3.4\t4.6\t1.83\t3.4\t4.6\t1.83\t3.49\t4.91\t1.83\t3.45\t5\t1.81\t3.39\t4.6\t1.91\t3.45\t5.2\t2.2\t1.67\t2.33\t1.65\t2.43\t1.67\t2.26\t1.59\t2.42\t1.69\t-0.5\t1.74\t1.99\t1.84\t2.08\t1.84\t2\t1.78\t1.96\t1.91\t2.07\t1.82\t3.5\t4.33\t1.9\t3.4\t4.2\t1.82\t3.35\t4.5\t1.85\t3.5\t4.33\t1.87\t3.5\t4.2\t1.85\t3.5\t4.2\t1.85\t3.5\t4.2\t1.78\t3.59\t5.24\t1.9\t3.55\t4.5\t1.85\t3.45\t4.32\t1.9\t3.65\t4.9\t1.98\t1.88\t2.19\t1.75\t2.05\t1.88\t1.98\t1.79\t2.06\t1.93\t-0.5\t1.85\t2\t1.78\t2.16\t1.88\t2\t1.83\t1.92\t1.9\t2.09
+SP1\t24/08/2025\t18:30\tVillarreal\tGirona\t5\t0\tH\t4\t0\tH\t19\t5\t7\t2\t8\t9\t8\t1\t1\t2\t0\t0\t1.53\t4.33\t6\t1.53\t4.2\t6\t1.49\t4.3\t5.8\t1.5\t4.1\t5.5\t1.55\t4.2\t5.75\t1.55\t4.2\t5.75\t1.55\t4.2\t5.5\t1.53\t4.69\t5.77\t1.55\t4.5\t6\t1.52\t4.28\t5.69\t1.59\t4.6\t6.2\t1.67\t2.2\t1.68\t2.26\t1.68\t2.25\t1.64\t2.17\t1.73\t2.3\t-1\t1.82\t1.92\t1.93\t1.98\t1.9\t1.95\t1.81\t1.89\t1.94\t2\t1.47\t4.2\t6.5\t1.5\t4.5\t6.5\t1.4\t4.6\t7\t1.45\t4.5\t6.5\t1.5\t4.5\t6\t1.48\t4.5\t6.5\t1.48\t4.4\t6.5\t1.54\t4.55\t6.17\t1.5\t4.8\t7\t1.46\t4.51\t6.61\t1.51\t5\t7\t1.67\t2.2\t1.73\t2.2\t1.68\t2.27\t1.65\t2.17\t1.73\t2.34\t-1.25\t2.05\t1.75\t2.18\t1.76\t2.05\t1.87\t1.94\t1.79\t2.15\t1.85
+SP1\t24/08/2025\t20:30\tOviedo\tReal Madrid\t0\t3\tA\t0\t1\tA\t6\t26\t3\t10\t8\t7\t1\t9\t2\t1\t0\t0\t9.5\t5.5\t1.3\t11\t5\t1.3\t10\t5.5\t1.26\t9\t4.8\t1.29\t9.75\t5.25\t1.31\t9.5\t5.25\t1.3\t9.5\t5.25\t1.3\t10.02\t5.5\t1.32\t11\t5.6\t1.33\t9.67\t5.24\t1.3\t11\t5.7\t1.34\t1.73\t2.1\t1.75\t2.15\t1.73\t2.14\t1.7\t2.09\t1.75\t2.26\t1.5\t1.9\t1.95\t1.93\t1.98\t1.93\t1.95\t1.87\t1.88\t1.97\t1.94\t8.5\t5\t1.33\t11\t5\t1.3\t9.5\t5.6\t1.26\t10.5\t5.25\t1.3\t10\t5.25\t1.32\t10\t5.25\t1.33\t9.5\t5\t1.33\t9.98\t5.53\t1.33\t11\t5.6\t1.33\t9.91\t5.27\t1.3\t12\t5.6\t1.34\t1.85\t2\t1.75\t2.18\t1.85\t2.12\t1.76\t2.03\t1.9\t2.1\t1.5\t1.8\t2.05\t1.91\t2.02\t1.92\t2.05\t1.84\t1.92\t1.91\t2.06
+SP1\t25/08/2025\t18:30\tAth Bilbao\tVallecano\t1\t0\tH\t0\t0\tD\t11\t6\t4\t1\t13\t13\t3\t6\t0\t4\t0\t0\t1.7\t3.5\t5.5\t1.73\t3.5\t5.5\t1.62\t3.65\t5.4\t1.67\t3.4\t5\t1.75\t3.6\t5\t1.75\t3.6\t5\t1.73\t3.5\t4.8\t1.71\t3.68\t5.56\t1.75\t3.7\t5.5\t1.69\t3.55\t5.18\t1.76\t3.65\t5.8\t2.2\t1.67\t2.19\t1.72\t2.25\t1.67\t2.18\t1.64\t2.26\t1.75\t-0.75\t1.95\t1.9\t1.95\t1.95\t1.95\t1.95\t1.84\t1.83\t1.99\t1.96\t1.7\t3.5\t5.5\t1.73\t3.6\t5\t1.7\t3.5\t5\t1.73\t3.6\t5\t1.73\t3.5\t5\t1.75\t3.5\t5\t1.73\t3.5\t5\t1.71\t3.71\t5.7\t1.75\t3.65\t5.5\t1.73\t3.55\t5.06\t1.79\t3.7\t5.8\t2.1\t1.73\t2.19\t1.74\t2.28\t1.73\t2.14\t1.67\t2.24\t1.77\t-0.75\t1.95\t1.9\t1.93\t2\t1.97\t1.9\t1.93\t1.81\t2.02\t1.95
+SP1\t25/08/2025\t20:30\tSevilla\tGetafe\t1\t2\tA\t1\t1\tD\t12\t9\t3\t6\t10\t24\t5\t3\t2\t2\t0\t0\t2.25\t3\t3.6\t2.25\t3\t3.6\t2.25\t3\t3.35\t2.15\t2.9\t3.4\t2.3\t3\t3.4\t2.3\t3\t3.4\t2.3\t3\t3.4\t2.24\t3.12\t3.75\t2.3\t3.1\t3.6\t2.25\t2.99\t3.46\t2.32\t3.1\t3.8\t2.63\t1.5\t2.78\t1.48\t2.63\t1.5\t2.55\t1.48\t2.84\t1.53\t-0.25\t1.9\t1.95\t1.9\t2\t1.9\t1.95\t1.82\t1.84\t1.95\t2.01\t2\t3.1\t4.33\t2.1\t3\t4\t2.02\t3\t4\t2.05\2.9\t4.4\t2.05\t3\t4.1\t2.05\t3\t4.2\t2.05\t3\t4\t2.12\t3.14\t4.2\t2.1\t3.1\t4.4\t2.05\t3.02\t4.13\t2.14\t3.2\t4.4\t3\t1.4\t2.89\t1.43\t3\t1.45\t2.75\t1.42\t3\t1.48\t-0.5\t2.05\t1.8\t2.13\t1.82\t2.07\t1.8\t2.02\t1.75\t2.15\t1.86
+SP1\t27/08/2025\t20:00\tCelta\tBetis\t1\t1\tD\t0\t1\tA\t14\t7\t5\t2\t13\t11\t10\t4\t1\t2\t0\t0\t2.2\t3.4\t3.25\t2.25\t3.4\t3.2\t2.12\t3.55\t3.1\t2.2\t3.5\t3.2\t2.2\t3.5\t3.2\t2.2\t3.5\t3.2\t2.2\t3.4\t3.2\t2.21\t3.6\t3.3\t2.25\t3.6\t3.25\t2.19\t3.48\t3.17\t2.32\t3.6\t3.3\t1.9\t1.95\t1.93\t1.95\t1.91\t1.96\t1.85\t1.9\t1.96\t2.02\t-0.25\t1.93\t1.93\t1.93\t1.98\t1.93\t1.94\t1.84\t1.9\t2\t1.96\t2.35\t3.4\t3\t2.38\t3.5\t2.88\t2.35\t3.55\t2.9\t2.3\t3.6\t2.9\t2.3\t3.4\t3\t2.3\t3.5\t3\t2.25\t3.4\t3\t2.4\t3.4\t3.15\t2.38\t3.6\t3.1\t2.32\t3.47\t2.94\t2.4\t3.55\t3.25\t1.73\t2.1\t1.78\t2.12\t1.79\t2.11\t1.74\t2.04\t1.81\t2.2\t-0.25\t2.03\t1.83\t2.07\t1.86\t2.03\t1.85\t1.95\t1.79\t2.07\t1.92
+SP1\t29/08/2025\t18:30\tElche\tLevante\t2\t0\tH\t0\t0\tD\t16\t11\t5\t1\t14\t17\t4\t2\t1\t2\t0\t0\t2.15\t3.25\t3.5\t2.2\t3.2\t3.5\t2.14\t3.2\t3.6\t2.2\t3.1\t3.6\t2.2\t3.2\t3.5\t2.2\t3.2\t3.5\t2.15\t3.2\t3.5\t2.23\t3.26\t3.66\t2.2\t3.25\t3.6\t2.17\t3.19\t3.52\t2.28\t3.3\t3.75\t2.3\t1.62\t2.37\t1.65\t2.3\t1.64\t2.24\t1.61\t2.4\t1.69\t-0.25\t1.88\t1.98\t1.91\t2.02\t1.88\t1.98\t1.79\t1.95\t1.93\t2.04\t2.15\t3.25\t3.6\t2.15\t3.2\t3.6\t2.15\t3.2\t3.6\t2.15\t3.13\t3.7\t2.15\t3.25\t3.5\t2.15\t3.25\t3.5\t2.15\t3.25\t3.5\t2.24\t3.24\t3.66\t2.19\t3.3\t3.75\t2.15\t3.2\t3.57\t2.26\t3.4\t3.75\t2.3\t1.62\t2.42\t1.63\t2.3\t1.67\t2.21\t1.63\t2.42\t1.69\t-0.25\t1.83\t2.03\t1.92\t2.01\t1.86\t2.03\t1.78\t1.96\t1.92\t2.07
+SP1\t29/08/2025\t20:30\tValencia\tGetafe\t3\t0\tH\t1\t0\tH\t7\t11\t4\t1\t18\t7\t8\t6\t2\t0\t0\t0\t2.3\t2.9\t3.6\t2.25\t2.88\t3.75\t2.25\t2.95\t3.7\t2.25\t3\t3.6\t2.25\t2.95\t3.6\t2.25\t3\t3.6\t2.25\t2.9\t3.6\t2.29\t3.06\t3.78\t2.33\t3\t3.75\t2.25\t2.94\t3.63\t2.34\t3.05\t3.95\t3\t1.4\t2.89\t1.43\t3\t1.44\t2.83\t1.4\t3\t1.49\t-0.25\t1.93\t1.93\t1.93\t1.99\t1.93\t1.93\t1.85\t1.89\t1.95\t2.02\t2.35\t2.88\t3.6\t2.3\t2.88\t3.6\t2.33\t3\t3.45\t2.3\t2.9\t3.6\t2.3\t2.95\t3.5\t2.3\t2.9\t3.5\t2.3\t2.9\t3.5\t2.38\t3.01\t3.64\t2.42\t3\t3.75\t2.31\t2.92\t3.53\t2.42\t2.98\t3.9\t3\t1.4\t2.95\t1.42\t3\t1.4\t2.93\t1.38\t3.1\t1.46\t-0.25\t1.98\t1.88\t2\t1.92\t2\t1.89\t1.9\t1.85\t2.02\t1.96
+SP1\t30/08/2025\t16:00\tAlaves\tAth Madrid\t1\t1\tD\t1\t1\tD\t5\t15\t2\t6\t10\t17\t1\t6\t2\t3\t0\t0\t4.75\t3.5\t1.8\t4.6\t3.5\t1.8\t4.7\t3.7\t1.75\t4.75\t3.5\t1.8\t4.6\t3.6\t1.78\t4.6\t3.6\t1.8\t4.5\t3.5\t1.8\t4.77\t3.61\t1.82\t4.75\t3.7\t1.83\t4.64\t3.55\t1.78\t4.9\t3.7\t1.87\t2.2\t1.67\t2.22\t1.71\t2.2\t1.73\t2.12\t1.67\t2.24\t1.74\t0.75\t1.78\t2.03\t1.81\t2.1\t1.83\t2.03\t1.75\t1.99\t1.84\t2.14\t5.5\t3.5\t1.7\t5.5\t3.5\t1.7\t5.4\t3.5\t1.72\t5.5\t3.5\t1.7\t5.25\t3.5\t1.72\t5.25\t3.5\t1.73\t5.25\t3.5\t1.7\t5.72\t3.6\t1.73\t5.5\t3.6\t1.73\t5.39\t3.51\t1.7\t5.8\t3.65\t1.78\t2.38\t1.57\t2.44\t1.61\t2.4\t1.63\t2.28\t1.59\t2.46\t1.65\t0.75\t1.87\t1.87\t1.94\t1.98\t1.92\t1.95\t1.84\t1.91\t1.93\t2.04
+SP1\t30/08/2025\t18:00\tOviedo\tSociedad\t1\t0\tH\t1\t0\tH\t8\t18\t1\t6\t7\t18\t1\t10\t2\t1\t0\t0\t3.5\t3.1\t2.25\t3.5\t3.1\t2.25\t3.6\t3.1\t2.23\t3.4\t3.13\t2.25\t3.5\t3.2\t2.2\t3.5\t3.2\t2.2\t3.4\t3.1\t2.2\t3.56\t3.12\t2.32\t3.6\t3.2\t2.28\t3.47\t3.1\t2.23\t3.7\t3.2\t2.34\t2.5\t1.53\t2.52\t1.56\t2.6\t1.55\t2.44\t1.52\t2.6\t1.59\t0.25\t1.93\t1.93\t1.93\t1.97\t1.93\t1.93\t1.9\t1.8\t1.98\t1.97\t3.3\t3.1\t2.3\t3.4\t3.2\t2.25\t3.45\t3.15\t2.25\t3.25\t3.2\t2.3\t3.4\t3.1\t2.25\t3.4\t3.1\t2.25\t3.3\t3.1\t2.25\t3.46\t3.12\t2.39\t3.55\t3.2\t2.3\t3.38\t3.12\t2.26\t3.65\t3.1\t2.44\t2.3\t1.62\t2.46\t1.6\t2.45\t1.62\t2.33\t1.57\t2.48\t1.65\t0.25\t1.88\t1.98\t1.9\t2.03\t1.93\t1.98\t1.88\t1.82\t1.94\t2.05
+SP1\t30/08/2025\t18:30\tGirona\tSevilla\t0\t2\tA\t0\t1\tA\t20\t13\t5\t4\t5\t14\t11\t3\t0\t2\t0\t0\t2.4\t3.3\t3\t2.4\t3.25\t3\t2.43\t3.35\t2.95\t2.4\t3.4\t2.9\t2.45\t3.3\t2.87\t2.45\t3.3\t2.87\t2.45\t3.25\t2.87\t2.49\t3.27\t3.07\t2.45\t3.4\t3\t2.42\t3.29\t2.94\t2.56\t3.35\t3.1\t2.05\t1.8\t2.08\t1.83\t2.1\t1.8\t2.02\t1.74\t2.1\t1.87\t0\t1.73\t2.08\t1.76\t2.18\t1.73\t2.12\t1.68\t2.08\t1.81\t2.21\t2.45\t3.1\t3.1\t2.4\t3.2\t3.1\t2.43\t3.15\t3.1\t2.4\t3.25\t3\t2.4\t3.2\t3\t2.4\t3.2\t3\t2.4\t3.2\t3\t2.54\t3.19\t3.13\t2.5\t3.3\t3.1\t2.42\t3.16\t3.04\t2.54\t3.25\t3.25\t2.2\t1.67\t2.33\t1.65\t2.23\t1.7\t2.16\t1.66\t2.34\t1.73\t-0.25\t2.1\t1.78\t2.16\t1.79\t2.1\t1.78\t2\t1.75\t2.16\t1.85
+SP1\t30/08/2025\t20:30\tReal Madrid\tMallorca\t2\t1\tH\t2\t1\tH\t17\t9\t7\t5\t12\t7\t4\t5\t2\t0\t0\t0\t1.18\t7\t15\t1.17\t7\t17\t1.19\t7\t14\t1.17\t7\t17\t1.19\t7\t15.5\t1.2\t7\t15\t1.18\t7\t15\t1.21\t7.16\t12.71\t1.2\t7\t17\t1.18\t6.96\t14.97\t1.22\t8\t18\t1.57\t2.38\t1.56\t2.5\t1.57\t2.55\t1.53\t2.39\t1.6\t2.56\t-2\t1.98\t1.88\t2\t1.89\t1.98\t1.9\t1.94\t1.82\t2.03\t1.89\t1.17\t7.5\t13\t1.17\t7.5\t17\t1.16\t8\t16\t1.15\t7.5\t17\t1.18\t7.5\t16.5\t1.18\t7.5\t15\t1.17\t7.5\t15\t1.19\t7.51\t15.22\t1.18\t8\t17\t1.16\t7.43\t15.63\t1.19\t8.6\t22\t1.44\t2.75\t1.48\t2.71\t1.5\t2.8\t1.46\t2.64\t1.52\t2.88\t-2\t1.85\t2\t1.96\t1.94\t1.86\t2\t1.82\t1.93\t1.88\t2.08
+SP1\t31/08/2025\t16:00\tCelta\tVillarreal\t1\t1\tD\t0\t0\tD\t10\t8\t2\t3\t11\t8\t1\t5\t1\t1\t0\t0\t2.75\t3.5\t2.5\t2.75\t3.5\t2.5\t2.75\t3.55\t2.43\t2.63\t3.4\t2.38\t2.75\t3.6\t2.37\t2.75\t3.6\t2.4\t2.75\t3.6\t2.37\t2.76\t3.64\t2.52\t2.75\t3.6\t2.5\t2.71\t3.53\t2.43\t2.84\t3.65\t2.6\t1.73\t2.1\t1.74\t2.18\t1.73\t2.2\t1.67\t2.12\t1.78\t2.22\t0\t2.03\t1.83\t2.05\t1.87\t2.03\t1.83\t1.94\t1.8\t2.07\t1.89\t3.2\t3.5\t2.2\t3.2\t3.4\t2.25\t3.05\t3.5\t2.28\t3.2\t3.5\t2.2\t3.1\t3.5\t2.25\t3.1\t3.5\t2.25\t3\t3.5\t2.25\t2.95\t3.4\t2.53\t3.25\t3.55\t2.28\t3.14\t3.46\t2.22\t3.35\t3.6\t2.34\t1.82\t1.92\t1.97\t1.93\t1.91\t1.98\t1.83\t1.92\t2.02\t1.96\t0.25\t1.9\t1.95\t1.77\t2.17\t1.93\t1.96\t1.87\t1.83\t1.97\t2.02
+SP1\t31/08/2025\t18:00\tBetis\tAth Bilbao\t1\t2\tA\t0\t0\tD\t9\t15\t2\t6\t9\t16\t4\t10\t1\t4\t0\t1\t3\t3.1\t2.55\t3\t3.1\t2.5\t3.05\t3.25\t2.4\t2.8\t3.13\t2.4\t2.85\t3.2\t2.55\t2.87\t3.2\t2.5\t2.87\t3.2\t2.5\t3.07\t3.15\t2.56\t3.1\t3.25\t2.55\t2.95\t3.15\t2.46\t3.2\t3.15\t2.6\t2.2\t1.67\t2.21\t1.72\t2.23\t1.67\t2.17\t1.64\t2.32\t1.72\t0.25\t1.7\t2.1\t1.76\t2.17\t1.78\t2.1\t1.73\t1.96\t1.81\t2.19\t3.25\t3.2\t2.3\t3.1\t3.2\t2.38\t3.1\t3.1\t2.43\t3.2\t3.13\t2.38\t3.2\t3.1\t2.35\t3.1\t3.1\t2.4\t3.1\t3.1\t2.4\t3.16\t3.28\t2.46\t3.25\t3.2\t2.43\t3.15\t3.14\t2.37\t3.25\t3.3\t2.52\t2.1\t1.73\t2.13\t1.79\t2.17\t1.73\t2.11\t1.69\t2.2\t1.79\t0.25\t1.88\t1.98\t1.83\t2.11\t1.88\t2.05\t1.79\t1.91\t1.86\t2.13
+SP1\t31/08/2025\t18:30\tEspanol\tOsasuna\t1\t0\tH\t0\t0\tD\t10\t10\t4\t3\t13\t14\t2\t3\t2\t3\t0\t0\t2.38\t3.2\t3.1\t2.4\t3.2\t3.1\t2.32\t3.2\t3.25\t2.3\t3.1\t3\t2.4\t3.2\t3\t2.3\t3\t2.87\t2.3\t3\t2.87\t2.43\t3.21\t3.23\t2.4\t3.2\t3.25\t2.34\t3.15\t3.09\t2.44\t3.25\t3.4\t2.2\t1.67\t2.3\t1.67\t2.33\t1.67\t2.22\t1.61\t2.36\t1.7\t-0.25\t2.03\t1.83\t2.07\t1.85\t2.03\t1.84\t1.93\t1.8\t2.07\t1.89\t2.55\t3\t3\t2.5\t3\t3.1\t2.43\t3.15\t3.1\t2.45\t3.1\t3.1\t2.45\t3.1\t3\t2.37\t2.87\t2.87\t2.37\t2.87\t2.87\t2.39\t3.22\t3.35\t2.55\t3.15\t3.15\t2.44\t3.05\t3.04\t2.62\t3.1\t3.3\t2.5\t1.53\t2.33\t1.67\t2.5\t1.58\t2.41\t1.54\t2.64\t1.6\t0\t1.78\t2.1\t1.67\t2.35\t1.78\t2.15\t1.69\t2.09\t1.78\t2.25
+SP1\t31/08/2025\t20:30\tVallecano\tBarcelona\t1\t1\tD\t0\t1\tA\t12\t12\t6\t3\t16\t8\t9\t4\t4\t1\t0\t0\t6.25\t5.5\t1.4\t7.5\t5\t1.4\t7\t5.25\t1.4\t6.5\t4.8\t1.36\t6.75\t5.25\t1.4\t7\t5.25\t1.4\t6.5\t5\t1.4\t6.92\t5.34\t1.41\t7.5\t5.5\t1.43\t6.74\t5.11\t1.39\t7.2\t5.8\t1.44\t1.44\t2.75\t1.44\t2.82\t1.44\t2.8\t1.41\t2.74\t1.47\t2.98\t1.25\t2.03\t1.83\t2.05\t1.86\t2.03\t1.83\t1.97\t1.77\t2.07\t1.86\t6.75\t5.25\t1.4\t7\t5\t1.4\t7\t5.4\t1.38\t7\t5\t1.4\t6.5\t5\t1.42\t6.5\t5\t1.4\t6.5\t5\t1.4\t6.76\t5.37\t1.42\t7\t5.4\t1.44\t6.67\t5.13\t1.4\t7.4\t5.5\t1.45\t1.44\t2.75\t1.46\t2.79\t1.45\t2.9\t1.42\t2.77\t1.49\t3\t1.25\t1.9\t1.95\t2.03\t1.9\t2\t1.95\t1.95\t1.81\t2.03\t1.94
+SP1\t12/09/2025\t20:00\tSevilla\tElche\t2\t2\tD\t1\t0\tH\t7\t5\t3\t2\t23\t19\t2\t2\t4\t3\t0\t0\t1.85\t3.4\t4.5\t1.83\t3.4\t4.6\t1.85\t3.35\t4.6\t1.83\t3.5\t4.5\t1.87\t3.4\t4.33\t1.85\t3.4\t4.33\t1.85\t3.4\t4.2\t1.88\t3.48\t4.76\t1.88\t3.5\t4.6\t1.85\t3.4\t4.47\t1.91\t3.55\t5\t2.2\t1.67\t2.23\t1.7\t2.22\t1.69\t2.18\t1.66\t2.28\t1.76\t-0.5\t1.85\t2\t1.88\t2.04\t1.86\t2\t1.83\t1.94\t1.92\t2.07\t1.9\t3.3\t4.5\t1.9\t3.3\t4.5\t1.86\t3.35\t4.6\t1.93\t3.4\t4.2\t1.87\t3.4\t4.4\t1.85\t3.4\t4.4\t1.85\t3.4\t4.33\t1.93\t3.38\t4.63\t2\t3.4\t4.7\t1.89\t3.33\t4.41\t1.97\t3.45\t4.8\t2.3\t1.62\t2.34\t1.65\t2.3\t1.64\t2.24\t1.62\t2.46\t1.67\t-0.5\t1.93\t1.93\t1.94\t1.98\t2\t2\t1.86\t1.91\t1.97\t2.02
+SP1\t13/09/2025\t13:00\tGetafe\tOviedo\t2\t0\tH\t2\t0\tH\t10\t5\t3\t1\t12\t18\t4\t3\t2\t5\t0\t1\t1.95\t3.1\t4.5\t1.95\t3.1\t4.5\t1.94\t3.1\t4.6\t1.95\t3\t4.75\t2\t3.1\t4.2\t2\t3.1\t4.2\t2\t3\t4.2\t2\t3.05\t4.81\t2.05\t3.3\t4.75\t1.96\t3.06\t4.45\t2.06\t3.1\t5\t2.75\t1.44\t2.86\t1.43\t2.8\t1.45\t2.71\t1.42\t2.94\t1.48\t-0.5\t1.98\t1.88\t2.01\t1.89\t1.98\t1.9\t1.93\t1.83\t2.06\t1.91\t2\t2.88\t4.75\t2\t2.88\t5\t1.98\t3.05\t4.6\t2\t2.8\t5\t2\t2.87\t4.75\t2\t2.9\t4.6\t2\t2.87\t4.6\t1.95\t3.11\t4.95\t2.03\t3.05\t5\t1.99\t2.91\t4.71\t2.04\t3\t5.3\t3.4\t1.33\t2.85\t1.43\t3.4\t1.37\t3.11\t1.35\t3.35\t1.4\t-0.5\t2\t1.85\t1.96\t1.93\t2.01\t1.85\t1.96\t1.81\t2.05\t1.94
+SP1\t13/09/2025\t15:15\tSociedad\tReal Madrid\t1\t2\tA\t0\t2\tA\t23\t16\t4\t6\t17\t7\t12\t4\t2\t1\t0\t1\t5\t4.33\t1.6\t5.5\t4.2\t1.62\t5.4\t4.3\t1.57\t5.75\t4.1\t1.57\t5\t4\t1.63\t5\t4\t1.61\t5\t4\t1.61\t5.3\t4.43\t1.61\t5.75\t4.33\t1.63\t5.25\t4.17\t1.59\t6\t4.4\t1.63\t1.73\t2.1\t1.79\t2.1\t1.8\t2.12\t1.73\t2.04\t1.84\t2.14\t1\t1.83\t2.03\t1.85\t2.07\t1.83\t2.04\t1.8\t1.99\t1.87\t2.08\t5.5\t4.2\t1.57\t5.5\t4.2\t1.57\t5.4\t4.4\t1.56\t5.5\t4.2\t1.57\t5.25\t4.2\t1.58\t5.25\t4.2\t1.57\t5.25\t4.2\t1.57\t5.6\t4.2\t1.62\t5.5\t4.4\t1.62\t5.36\t4.2\t1.58\t6.2\t4.4\t1.63\t1.67\t2.2\t1.68\t2.29\t1.67\t2.3\t1.63\t2.22\t1.68\t2.42\t1\t1.88\t1.98\t1.88\t2.05\t1.88\t2\t1.84\t1.94\t1.9\t2.08
+SP1\t13/09/2025\t17:30\tAth Bilbao\tAlaves\t0\t1\tA\t0\t0\tD\t12\t4\t3\t2\t17\t21\t6\t6\t4\t3\t0\t0\t1.6\t3.9\t5.75\t1.6\t3.75\t6\t1.54\t4\t6.5\t1.57\t3.8\t6.5\t1.58\t3.75\t6.25\t1.57\t3.75\t6.5\t1.57\t3.75\t6.5\t1.61\t3.86\t6.3\t1.6\t4\t6.5\t1.57\t3.83\t6.25\t1.65\t3.9\t6.8\t2.2\t1.67\t2.31\t1.66\t2.33\t1.67\t2.21\t1.62\t2.34\t1.7\t-1\t2.1\t1.78\t2.12\t1.78\t2.1\t1.83\t2.01\t1.78\t2.2\t1.81\t1.6\t3.75\t6.5\t1.57\t3.6\t7\t1.57\t3.9\t6.25\t1.6\t3.6\t6.5\t1.6\t3.7\t6.25\t1.6\t3.7\t6.5\t1.6\t3.6\t6\t1.61\t3.83\t6.6\t1.62\t3.9\t7\t1.59\t3.71\t6.26\t1.64\t3.8\t7.8\t2.38\t1.57\t2.41\t1.61\t2.38\t1.6\t2.31\t1.58\t2.48\t1.65\t-0.75\t1.78\t2.1\t1.79\t2.13\t1.8\t2.1\t1.75\t2.04\t1.84\t2.17
+SP1\t13/09/2025\t20:00\tAth Madrid\tVillarreal\t2\t0\tH\t1\t0\tH\t8\t8\t3\t1\t12\t15\t8\t3\t2\t4\t0\t0\t1.8\t3.7\t4.33\t1.83\t3.75\t4.2\t1.85\t3.6\t4.3\t1.8\t3.7\t4.5\t1.82\t3.75\t4.2\t1.8\t3.75\t4.2\t1.8\t3.7\t4.2\t1.86\t3.62\t4.51\t1.85\t4.1\t4.75\t1.81\t3.7\t4.28\t1.86\t3.85\t4.7\t1.73\t2.1\t1.76\t2.14\t1.73\t2.18\t1.7\t2.09\t1.77\t2.22\t-0.75\t2.03\t1.83\t2.12\t1.79\t2.07\t1.83\t2.01\t1.77\t2.1\t1.87\t1.75\t3.75\t4.5\t1.8\t3.75\t4.5\t1.79\t3.65\t4.6\t1.75\t3.7\t4.75\t1.78\t3.7\t4.4\t1.8\t3.7\t4.4\t1.75\t3.7\t4.4\t1.79\t3.86\t4.7\t1.8\t3.8\t4.75\t1.77\t3.68\t4.51\t1.82\t3.85\t5.1\t1.88\t1.98\t1.76\t2.16\t1.88\t2.05\t1.79\t1.99\t1.89\t2.08\t-0.75\t2.03\t1.83\t2.02\t1.9\t2.03\t1.84\t1.98\t1.81\t2.07\t1.91
+SP1\t14/09/2025\t13:00\tCelta\tGirona\t1\t1\tD\t0\t1\tA\t21\t13\t7\t8\t7\t9\t10\t3\t0\t3\t0\t0\t1.73\t3.9\t4.75\t1.7\t4\t4.6\t1.67\t4.1\t4.75\t1.65\t3.75\t4.5\t1.7\t4\t4.75\t1.7\t4\t4.6\t1.7\t3.9\t4.6\t1.71\t4.22\t4.67\t1.73\t4.2\t4.75\t1.69\t3.97\t4.61\t1.73\t4.2\t5.2\t1.73\t2.1\t1.76\t2.15\t1.76\t2.1\t1.71\t2.07\t1.79\t2.2\t-0.75\t1.9\t1.95\t1.93\t1.98\t1.9\t1.96\t1.85\t1.93\t1.92\t2.02\t1.7\t3.8\t5\t1.73\t3.75\t4.6\t1.8\t3.65\t4.4\t1.7\t3.9\t4.8\t1.72\t3.75\t4.8\t1.73\t3.75\t4.8\t1.7\t3.75\t4.8\t1.77\t3.73\t5\t1.8\t3.9\t5\t1.73\t3.75\t4.71\t1.8\t3.85\t5.3\t1.83\t2.03\t1.88\t2.03\t1.86\t2.03\t1.81\t1.96\t1.9\t2.08\t-0.75\t1.9\t1.95\t2\t1.93\t2\t1.95\t1.92\t1.85\t2.03\t1.94
+SP1\t14/09/2025\t15:15\tLevante\tBetis\t2\t2\tD\t2\t1\tH\t5\t28\t2\t9\t16\t11\t4\t12\t3\t2\t0\t0\t3.25\t3.25\t2.3\t3.2\t3.3\t2.3\t3.3\t3.35\t2.18\t3\t3.25\t2.2\t3.1\t3.25\t2.3\t3.1\t3.3\t2.3\t3.1\t3.25\t2.3\t3.4\t3.48\t2.21\t3.33\t3.45\t2.33\t3.18\t3.26\t2.25\t3.4\t3.25\t2.4\t2\t1.8\t2\t1.89\t2.05\t1.8\t1.99\t1.77\t2.16\t1.82\t0.25\t1.85\t2\t1.99\t1.92\t1.93\t2\t1.86\t1.86\t1.92\t2.05\t3.7\t3.5\t1.95\t3.5\t3.6\t2.05\t3.55\t3.45\t2.08\t3.5\t3.7\t2\t3.5\t3.5\t2.05\t3.5\t3.5\t2.05\t3.4\t3.5\t2.05\t3.52\t3.62\t2.14\t3.7\t3.7\t2.08\t3.53\t3.53\t2.03\t3.8\t3.7\t2.14\t1.73\t2.1\t1.76\t2.15\t1.78\t2.15\t1.74\t2.05\t1.8\t2.22\t0.5\t1.83\t2.03\t1.79\t2.13\t1.83\t2.06\t1.77\t2.01\t1.87\t2.12
+SP1\t14/09/2025\t17:30\tOsasuna\tVallecano\t2\t0\tH\t1\t0\tH\t9\t19\t7\t6\t13\t7\t3\t6\t3\t2\t0\t0\t2.55\t3.2\t2.9\t2.5\t3.1\t3\t2.43\t3.2\t3.05\t2.45\t3.1\t2.75\t2.55\t3.2\t2.85\t2.5\t3.2\t2.87\t2.5\t3.1\t2.87\t2.54\t3.18\t3.08\t2.66\t3.25\t3.05\t2.48\t3.15\t2.91\t2.66\t3.25\t3.05\t2.2\t1.67\t2.35\t1.64\t2.25\t1.67\t2.22\t1.62\t2.4\t1.69\t0\t1.8\t2.05\t1.77\t2.16\t1.86\t2.05\t1.78\t2\t1.84\t2.13\t2.8\t2.9\t2.8\t2.63\t2.88\t3\t2.65\t3\t2.95\t2.75\t3\t2.8\t2.7\t2.95\t2.87\t2`;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchCSV();
-        });
+        // Parse Tabular Text
+        function parseTSV(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length === 0) return null;
 
-        // Sincronizar el selector desplegable con el campo de URL
-        document.getElementById('presetSpainSelect').addEventListener('change', (e) => {
-            if (e.target.value) {
-                document.getElementById('csvUrl').value = e.target.value;
-                fetchCSV();
+            const headers = lines[0].split('\t').map(h => h.trim());
+            const rows = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cells = lines[i].split('\t').map(c => c.trim());
+                if (cells.length === headers.length) {
+                    const rowObj = {};
+                    headers.forEach((h, index) => {
+                        rowObj[h] = cells[index];
+                    });
+                    rows.push(rowObj);
+                }
             }
-        });
 
-        document.getElementById('btnLoad').addEventListener('click', fetchCSV);
-
-        function updateStatus(msg, isError = false) {
-            const info = document.getElementById('infoJornadas');
-            info.innerText = msg;
-            if (isError) info.className = "text-xs text-rose-400 font-semibold";
-            else info.className = "text-xs text-emerald-400 font-medium";
+            return { headers, rows };
         }
 
-        function setUIStateLoading(isLoading, msg = 'Cargando...') {
-            const btn = document.getElementById('btnLoad');
-            const label = document.getElementById('lblBtnLoad');
-            const icon = document.getElementById('iconRefresh');
+        // Initialize App
+        function initApp() {
+            lucide.createIcons();
 
-            if (isLoading) {
-                btn.disabled = true;
-                btn.classList.add('opacity-50', 'cursor-not-allowed');
-                label.innerText = msg;
-                icon.classList.add('animate-spin');
+            // Load default dataset if storage is empty
+            if (savedTables.length === 0) {
+                const parsed = parseTSV(initialUserData);
+                if (parsed) {
+                    const defaultItem = {
+                        id: 'table_' + Date.now(),
+                        name: 'La Liga 2025/26 - Muestras',
+                        date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                        headers: parsed.headers,
+                        rows: parsed.rows
+                    };
+                    savedTables.push(defaultItem);
+                    saveToLocalStorage();
+                }
+            }
+
+            renderSavedTablesList();
+
+            if (savedTables.length > 0) {
+                setActiveTable(savedTables[0].id);
             } else {
-                btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                label.innerText = 'Cargar CSV';
-                icon.classList.remove('animate-spin');
+                showEmptyState();
             }
+
+            setupEventListeners();
         }
 
-        // MOTOR RESILIENTE CON TRIPLE FALLBACK
-        async function fetchCSV() {
-            const rawUrl = document.getElementById('csvUrl').value.trim();
-            if (!rawUrl) {
-                alert('Ingresa una URL válida.');
-                return;
-            }
+        // Event Listeners Setup
+        function setupEventListeners() {
+            // Modal controls
+            const modal = document.getElementById('pasteModal');
+            const openBtns = [document.getElementById('btnOpenPasteModal'), document.getElementById('btnOpenPasteModalEmpty')];
+            const closeBtn = document.getElementById('btnClosePasteModal');
+            const cancelBtn = document.getElementById('btnCancelPaste');
+            const saveBtn = document.getElementById('btnSavePastedData');
 
-            setUIStateLoading(true, 'Iniciando...');
-            
-            // Intento 1: Directo
-            updateStatus('Intento 1: Descarga directa...');
-            let csvText = await tryFetch(rawUrl);
-
-            // Intento 2: Proxy AllOrigins JSON
-            if (!csvText) {
-                updateStatus('Intento 2: Proxy AllOrigins...');
-                const proxy1 = `https://api.allorigins.win/get?url=${encodeURIComponent(rawUrl)}`;
-                let res = await tryFetchJson(proxy1);
-                if (res && res.contents) csvText = res.contents;
-            }
-
-            // Intento 3: Proxy CorsProxy.io
-            if (!csvText) {
-                updateStatus('Intento 3: Proxy CorsProxy...');
-                const proxy2 = `https://corsproxy.io/?${encodeURIComponent(rawUrl)}`;
-                csvText = await tryFetch(proxy2);
-            }
-
-            setUIStateLoading(false);
-
-            if (csvText) {
-                Papa.parse(csvText, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        if (results.data && results.data.length > 0) {
-                            rawData = results.data;
-                            procesarDatos();
-                        } else {
-                            updateStatus('El CSV descargado no contiene datos procesables.', true);
-                        }
-                    }
+            openBtns.forEach(btn => {
+                if (btn) btn.addEventListener('click', () => {
+                    document.getElementById('rawPasteData').value = '';
+                    document.getElementById('tableNameInput').value = '';
+                    modal.classList.remove('hidden');
                 });
-            } else {
-                updateStatus('Error al conectar con el servidor. Verifica la URL o la red.', true);
-                alert('No se pudo descargar el archivo CSV. Los proxies públicos fallaron o la URL es inaccesible.');
-            }
+            });
+
+            [closeBtn, cancelBtn].forEach(btn => {
+                if (btn) btn.addEventListener('click', () => modal.classList.add('hidden'));
+            });
+
+            saveBtn.addEventListener('click', handleSavePastedData);
+
+            // Table Actions
+            document.getElementById('btnDeleteActive').addEventListener('click', handleDeleteActiveTable);
+            document.getElementById('btnClearAll').addEventListener('click', handleClearAll);
+            document.getElementById('btnExportCsv').addEventListener('click', handleExportCsv);
+            document.getElementById('tableSearch').addEventListener('input', handleTableSearch);
         }
 
-        async function tryFetch(url) {
-            try {
-                let res = await fetch(url);
-                if (res.ok) return await res.text();
-            } catch (e) {
-                console.warn('Fetch fallido para:', url, e);
-            }
-            return null;
-        }
+        // Handle Paste & Save
+        function handleSavePastedData() {
+            const rawText = document.getElementById('rawPasteData').value;
+            let name = document.getElementById('tableNameInput').value.trim();
 
-        async function tryFetchJson(url) {
-            try {
-                let res = await fetch(url);
-                if (res.ok) return await res.json();
-            } catch (e) {
-                console.warn('Fetch JSON fallido para:', url, e);
-            }
-            return null;
-        }
-
-        function procesarDatos() {
-            let validMatches = rawData.filter(m => m.HomeTeam && m.AwayTeam && m.FTHG !== undefined && m.FTAG !== undefined && m.FTHG !== "" && m.FTAG !== "");
-
-            if (validMatches.length === 0) {
-                updateStatus('No se encontraron filas con partidos jugados válidos.', true);
+            if (!rawText.trim()) {
+                alert('Por favor pega un texto con formato tabular.');
                 return;
             }
 
-            let teamsCount = new Set();
-            validMatches.forEach(m => {
-                teamsCount.add(m.HomeTeam.trim());
-                teamsCount.add(m.AwayTeam.trim());
-            });
-            let totalTeams = teamsCount.size;
-            let matchesPerRound = Math.floor(totalTeams / 2) || 10;
+            const parsed = parseTSV(rawText);
+            if (!parsed || parsed.rows.length === 0) {
+                alert('No se pudieron extraer filas válidas. Asegúrate de incluir el encabezado y las filas divididas por tabuladores.');
+                return;
+            }
 
-            matchesWithRounds = validMatches.map((m, idx) => {
-                let round = Math.floor(idx / matchesPerRound) + 1;
-                return {
-                    home: m.HomeTeam.trim(),
-                    away: m.AwayTeam.trim(),
-                    hg: parseInt(m.FTHG, 10),
-                    ag: parseInt(m.FTAG, 10),
-                    round: round,
-                    date: m.Date
-                };
-            });
+            if (!name) {
+                name = `Tabla de Datos #${savedTables.length + 1}`;
+            }
 
-            maxJornada = Math.max(...matchesWithRounds.map(m => m.round));
+            const newTable = {
+                id: 'table_' + Date.now(),
+                name: name,
+                date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                headers: parsed.headers,
+                rows: parsed.rows
+            };
 
-            const rInicio = document.getElementById('rangeInicio');
-            const rFin = document.getElementById('rangeFin');
+            savedTables.unshift(newTable);
+            saveToLocalStorage();
+            renderSavedTablesList();
+            setActiveTable(newTable.id);
 
-            rInicio.min = 1; rInicio.max = maxJornada; rInicio.value = 1;
-            rFin.min = 1; rFin.max = maxJornada; rFin.value = maxJornada;
-
-            updateStatus(`Equipos: ${totalTeams} | Jornadas: ${maxJornada} | Total Partidos: ${matchesWithRounds.length}`);
-
-            let sortedTeams = Array.from(teamsCount).sort();
-            let selH = document.getElementById('selHomeTeam');
-            let selA = document.getElementById('selAwayTeam');
-            selH.innerHTML = ''; selA.innerHTML = '';
-            sortedTeams.forEach(t => {
-                selH.innerHTML += `<option value="${t}">${t}</option>`;
-                selA.innerHTML += `<option value="${t}">${t}</option>`;
-            });
-            if(sortedTeams.length > 1) selA.selectedIndex = 1;
-
-            actualizarVista();
+            document.getElementById('pasteModal').classList.add('hidden');
         }
 
-        document.getElementById('rangeInicio').addEventListener('input', (e) => {
-            let vStart = parseInt(e.target.value);
-            let vEnd = parseInt(document.getElementById('rangeFin').value);
-            if(vStart > vEnd) document.getElementById('rangeFin').value = vStart;
-            actualizarVista();
-        });
-
-        document.getElementById('rangeFin').addEventListener('input', (e) => {
-            let vEnd = parseInt(e.target.value);
-            let vStart = parseInt(document.getElementById('rangeInicio').value);
-            if(vEnd < vStart) document.getElementById('rangeInicio').value = vEnd;
-            actualizarVista();
-        });
-
-        document.querySelectorAll('.btnQuickFilter').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                let action = e.target.getAttribute('data-window');
-                const rInicio = document.getElementById('rangeInicio');
-                const rFin = document.getElementById('rangeFin');
-
-                if (action === 'full') {
-                    rInicio.value = 1;
-                    rFin.value = maxJornada;
-                } else if (action === 'last5') {
-                    rInicio.value = Math.max(1, maxJornada - 4);
-                    rFin.value = maxJornada;
-                } else if (action === 'last10') {
-                    rInicio.value = Math.max(1, maxJornada - 9);
-                    rFin.value = maxJornada;
-                } else if (action === 'firstHalf') {
-                    rInicio.value = 1;
-                    rFin.value = Math.floor(maxJornada / 2);
-                }
-                actualizarVista();
-            });
-        });
-
-        function actualizarVista() {
-            let jInicio = parseInt(document.getElementById('rangeInicio').value);
-            let jFin = parseInt(document.getElementById('rangeFin').value);
-
-            document.getElementById('lblJornadaInicio').innerText = jInicio;
-            document.getElementById('lblJornadaFin').innerText = jFin;
-
-            let filteredMatches = matchesWithRounds.filter(m => m.round >= jInicio && m.round <= jFin);
-
-            let totalP = filteredMatches.length;
-            let totalGoles = filteredMatches.reduce((acc, m) => acc + m.hg + m.ag, 0);
-            let victoriasLocales = filteredMatches.filter(m => m.hg > m.ag).length;
-
-            document.getElementById('statTotalPartidos').innerText = totalP;
-            document.getElementById('statPromGoles').innerText = totalP > 0 ? (totalGoles / totalP).toFixed(2) : "0.00";
-            document.getElementById('statPctLocal').innerText = totalP > 0 ? ((victoriasLocales / totalP) * 100).toFixed(1) + "%" : "0%";
-
-            document.getElementById('lblHomeMatchesCount').innerText = `${totalP} Partidos`;
-            document.getElementById('lblAwayMatchesCount').innerText = `${totalP} Partidos`;
-
-            renderTablas(filteredMatches);
+        // Local Storage Helper
+        function saveToLocalStorage() {
+            localStorage.setItem('betags_saved_tables', JSON.stringify(savedTables));
         }
 
-        function renderTablas(matches) {
-            let homeStats = {};
-            let awayStats = {};
+        // Render Sidebar List
+        function renderSavedTablesList() {
+            const listContainer = document.getElementById('savedTablesList');
+            const countBadge = document.getElementById('savedCount');
+            listContainer.innerHTML = '';
 
-            let totalHomeGoals = 0;
-            let totalAwayGoals = 0;
-            let totalMatches = matches.length;
+            countBadge.textContent = savedTables.length;
 
-            matches.forEach(m => {
-                totalHomeGoals += m.hg;
-                totalAwayGoals += m.ag;
+            if (savedTables.length === 0) {
+                listContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay tablas guardadas</p>`;
+                return;
+            }
 
-                if (!homeStats[m.home]) homeStats[m.home] = { name: m.home, gp:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
-                homeStats[m.home].gp++;
-                homeStats[m.home].gf += m.hg;
-                homeStats[m.home].ga += m.ag;
-                if (m.hg > m.ag) { homeStats[m.home].w++; homeStats[m.home].pts += 3; }
-                else if (m.hg === m.ag) { homeStats[m.home].d++; homeStats[m.home].pts += 1; }
-                else { homeStats[m.home].l++; }
+            savedTables.forEach(table => {
+                const isActive = table.id === activeTableId;
+                const item = document.createElement('div');
+                item.className = `p-3 rounded-lg cursor-pointer border text-xs transition flex flex-col gap-1 ${
+                    isActive 
+                    ? 'bg-blue-600/10 border-blue-500/40 text-blue-300' 
+                    : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }`;
 
-                if (!awayStats[m.away]) awayStats[m.away] = { name: m.away, gp:0, w:0, d:0, l:0, gf:0, ga:0, pts:0 };
-                awayStats[m.away].gp++;
-                awayStats[m.away].gf += m.ag;
-                awayStats[m.away].ga += m.hg;
-                if (m.ag > m.hg) { awayStats[m.away].w++; awayStats[m.away].pts += 3; }
-                else if (m.ag === m.hg) { awayStats[m.away].d++; awayStats[m.away].pts += 1; }
-                else { awayStats[m.away].l++; }
-            });
-
-            let avgHomeGoals = totalMatches > 0 ? (totalHomeGoals / totalMatches) : 1.5;
-            let avgAwayGoals = totalMatches > 0 ? (totalAwayGoals / totalMatches) : 1.2;
-
-            let arrHome = Object.values(homeStats).sort((a,b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
-            let arrAway = Object.values(awayStats).sort((a,b) => b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf);
-
-            let tbHomeHTML = '';
-            arrHome.forEach((t, i) => {
-                let ppg = (t.pts / t.gp).toFixed(2);
-                let gd = t.gf - t.ga;
-                let gdStr = gd > 0 ? `+${gd}` : gd;
-
-                let fa_l = ((t.gf / t.gp) / avgHomeGoals).toFixed(2);
-                let fd_l = ((t.ga / t.gp) / avgAwayGoals).toFixed(2);
-
-                tbHomeHTML += `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="py-2 px-2 text-slate-500 font-bold">${i+1}</td>
-                        <td class="py-2 px-2 font-bold text-slate-200">${t.name}</td>
-                        <td class="py-2 px-1 text-center text-slate-400">${t.gp}</td>
-                        <td class="py-2 px-1 text-center text-emerald-400">${t.w}</td>
-                        <td class="py-2 px-1 text-center text-amber-400">${t.d}</td>
-                        <td class="py-2 px-1 text-center text-rose-400">${t.l}</td>
-                        <td class="py-2 px-1 text-center text-slate-300">${t.gf}</td>
-                        <td class="py-2 px-1 text-center text-slate-400">${t.ga}</td>
-                        <td class="py-2 px-1 text-center font-semibold ${gd >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${gdStr}</td>
-                        <td class="py-2 px-1 text-center font-black text-emerald-400">${t.pts}</td>
-                        <td class="py-2 px-1 text-center font-bold text-cyan-400">${ppg}</td>
-                        <td class="py-2 px-1 text-center text-amber-300 font-medium">${fa_l}</td>
-                        <td class="py-2 px-1 text-center text-rose-300 font-medium">${fd_l}</td>
-                    </tr>
+                item.innerHTML = `
+                    <div class="flex justify-between items-center font-medium text-slate-200">
+                        <span class="truncate pr-2">${escapeHtml(table.name)}</span>
+                        <span class="bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded text-[10px] font-mono">${table.rows.length}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[10px] text-slate-500">
+                        <span>${table.date}</span>
+                        <span>${table.headers.length} cols</span>
+                    </div>
                 `;
+
+                item.addEventListener('click', () => setActiveTable(table.id));
+                listContainer.appendChild(item);
             });
-            document.getElementById('tbHome').innerHTML = tbHomeHTML;
-
-            let tbAwayHTML = '';
-            arrAway.forEach((t, i) => {
-                let ppg = (t.pts / t.gp).toFixed(2);
-                let gd = t.gf - t.ga;
-                let gdStr = gd > 0 ? `+${gd}` : gd;
-
-                let fa_v = ((t.gf / t.gp) / avgAwayGoals).toFixed(2);
-                let fd_v = ((t.ga / t.gp) / avgHomeGoals).toFixed(2);
-
-                tbAwayHTML += `
-                    <tr class="hover:bg-slate-800/40 transition">
-                        <td class="py-2 px-2 text-slate-500 font-bold">${i+1}</td>
-                        <td class="py-2 px-2 font-bold text-slate-200">${t.name}</td>
-                        <td class="py-2 px-1 text-center text-slate-400">${t.gp}</td>
-                        <td class="py-2 px-1 text-center text-emerald-400">${t.w}</td>
-                        <td class="py-2 px-1 text-center text-amber-400">${t.d}</td>
-                        <td class="py-2 px-1 text-center text-rose-400">${t.l}</td>
-                        <td class="py-2 px-1 text-center text-slate-300">${t.gf}</td>
-                        <td class="py-2 px-1 text-center text-slate-400">${t.ga}</td>
-                        <td class="py-2 px-1 text-center font-semibold ${gd >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${gdStr}</td>
-                        <td class="py-2 px-1 text-center font-black text-emerald-400">${t.pts}</td>
-                        <td class="py-2 px-1 text-center font-bold text-cyan-400">${ppg}</td>
-                        <td class="py-2 px-1 text-center text-amber-300 font-medium">${fa_v}</td>
-                        <td class="py-2 px-1 text-center text-rose-300 font-medium">${fd_v}</td>
-                    </tr>
-                `;
-            });
-            document.getElementById('tbAway').innerHTML = tbAwayHTML;
         }
 
-        // SIMULADOR POISSON
-        document.getElementById('btnCalculateMatch').addEventListener('click', () => {
-            const hTeam = document.getElementById('selHomeTeam').value;
-            const aTeam = document.getElementById('selAwayTeam').value;
+        // Set Active Table State
+        function setActiveTable(id) {
+            activeTableId = id;
+            renderSavedTablesList();
 
-            if (hTeam === aTeam) {
-                alert('Selecciona dos equipos distintos.');
+            const table = savedTables.find(t => t.id === id);
+            if (!table) {
+                showEmptyState();
                 return;
             }
 
-            let jInicio = parseInt(document.getElementById('rangeInicio').value);
-            let jFin = parseInt(document.getElementById('rangeFin').value);
-            let filteredMatches = matchesWithRounds.filter(m => m.round >= jInicio && m.round <= jFin);
+            document.getElementById('noDataState').classList.add('hidden');
+            const activeContainer = document.getElementById('activeDataContainer');
+            activeContainer.classList.remove('hidden');
+            activeContainer.classList.add('flex');
 
-            if (filteredMatches.length === 0) return;
+            // Render Header Info
+            document.getElementById('activeTableTitle').textContent = table.name;
+            document.getElementById('activeTableBadge').textContent = `${table.rows.length} Filas / ${table.headers.length} Columnas`;
+            document.getElementById('activeTableDate').textContent = `Guardado el: ${table.date}`;
 
-            let totalHomeGoals = filteredMatches.reduce((acc, m) => acc + m.hg, 0);
-            let totalAwayGoals = filteredMatches.reduce((acc, m) => acc + m.ag, 0);
-            let avgHomeGoals = totalHomeGoals / filteredMatches.length;
-            let avgAwayGoals = totalAwayGoals / filteredMatches.length;
+            // Reset search input
+            document.getElementById('tableSearch').value = '';
 
-            let hMatches = filteredMatches.filter(m => m.home === hTeam);
-            let aMatches = filteredMatches.filter(m => m.away === aTeam);
+            // Render Metrics & Charts
+            calculateAndRenderStats(table);
 
-            if (hMatches.length === 0 || aMatches.length === 0) {
-                alert('Uno de los equipos no posee registros en la ventana de jornadas especificada.');
-                return;
-            }
-
-            let fa_l = (hMatches.reduce((acc, m) => acc + m.hg, 0) / hMatches.length) / avgHomeGoals;
-            let fd_v = (aMatches.reduce((acc, m) => acc + m.ag, 0) / aMatches.length) / avgHomeGoals;
-
-            let fa_v = (aMatches.reduce((acc, m) => acc + m.ag, 0) / aMatches.length) / avgAwayGoals;
-            let fd_l = (hMatches.reduce((acc, m) => acc + m.ag, 0) / hMatches.length) / avgAwayGoals;
-
-            let lambda_l = fa_l * fd_v * avgHomeGoals;
-            let mu_v = fa_v * fd_l * avgAwayGoals;
-
-            let matrix = [];
-            for (let i = 0; i < 8; i++) {
-                matrix[i] = [];
-                for (let j = 0; j < 8; j++) {
-                    matrix[i][j] = poissonPMF(i, lambda_l) * poissonPMF(j, mu_v);
-                }
-            }
-
-            let p1 = 0, pX = 0, p2 = 0;
-            let pUnder25 = 0;
-            let pBTTS_Yes = 0;
-
-            for (let i = 0; i < 8; i++) {
-                for (let j = 0; j < 8; j++) {
-                    let prob = matrix[i][j];
-                    if (i > j) p1 += prob;
-                    else if (i === j) pX += prob;
-                    else p2 += prob;
-
-                    if (i + j < 2.5) pUnder25 += prob;
-                    if (i > 0 && j > 0) pBTTS_Yes += prob;
-                }
-            }
-
-            let pOver25 = 1 - pUnder25;
-
-            document.getElementById('txtHomeTeamName').innerText = hTeam;
-            document.getElementById('txtAwayTeamName').innerText = aTeam;
-            document.getElementById('xGHome').innerText = lambda_l.toFixed(2);
-            document.getElementById('xGAway').innerText = mu_v.toFixed(2);
-
-            document.getElementById('prob1').innerText = (p1 * 100).toFixed(1) + "%";
-            document.getElementById('probX').innerText = (pX * 100).toFixed(1) + "%";
-            document.getElementById('prob2').innerText = (p2 * 100).toFixed(1) + "%";
-
-            document.getElementById('cuota1').innerText = "@" + (p1 > 0 ? (1 / p1).toFixed(2) : "0.00");
-            document.getElementById('cuotaX').innerText = "@" + (pX > 0 ? (1 / pX).toFixed(2) : "0.00");
-            document.getElementById('cuota2').innerText = "@" + (p2 > 0 ? (1 / p2).toFixed(2) : "0.00");
-
-            document.getElementById('probOver25').innerText = (pOver25 * 100).toFixed(1) + "%";
-            document.getElementById('probBTTS').innerText = (pBTTS_Yes * 100).toFixed(1) + "%";
-
-            document.getElementById('poissonResults').classList.remove('hidden');
-        });
-
-        function poissonPMF(k, lambda) {
-            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+            // Render Table
+            renderTableData(table.headers, table.rows);
         }
 
-        function factorial(n) {
-            if (n === 0 || n === 1) return 1;
-            let res = 1;
-            for (let i = 2; i <= n; i++) res *= i;
-            return res;
+        function showEmptyState() {
+            activeTableId = null;
+            document.getElementById('activeDataContainer').classList.add('hidden');
+            document.getElementById('activeDataContainer').classList.remove('flex');
+            document.getElementById('noDataState').classList.remove('hidden');
+            renderSavedTablesList();
         }
+
+        // Calculate Analytics Stats & Render Charts
+        function calculateAndRenderStats(table) {
+            const rows = table.rows;
+            const total = rows.length;
+
+            if (total === 0) return;
+
+            let totalGoals = 0;
+            let over25Count = 0;
+            let bttsCount = 0;
+
+            const resultsCount = { H: 0, D: 0, A: 0 };
+            const scoreFreq = {};
+
+            rows.forEach(r => {
+                const fthg = parseInt(r.FTHG) || 0;
+                const ftag = parseInt(r.FTAG) || 0;
+                const ftr = r.FTR || (fthg > ftag ? 'H' : fthg < ftag ? 'A' : 'D');
+
+                const matchGoals = fthg + ftag;
+                totalGoals += matchGoals;
+
+                if (matchGoals > 2.5) over25Count++;
+                if (fthg > 0 && ftag > 0) bttsCount++;
+
+                if (resultsCount[ftr] !== undefined) resultsCount[ftr]++;
+
+                const score = `${fthg}-${ftag}`;
+                scoreFreq[score] = (scoreFreq[score] || 0) + 1;
+            });
+
+            // Set Dashboard Cards
+            document.getElementById('statTotalMatches').textContent = total;
+            document.getElementById('statAvgGoals').textContent = (totalGoals / total).toFixed(2);
+            document.getElementById('statOver25').textContent = Math.round((over25Count / total) * 100) + '%';
+            document.getElementById('statBTTS').textContent = Math.round((bttsCount / total) * 100) + '%';
+
+            // Chart 1: Results Distribution (Pie)
+            if (chartResultsInstance) chartResultsInstance.destroy();
+            const ctx1 = document.getElementById('chartResults').getContext('2d');
+            chartResultsInstance = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Victoria Local (H)', 'Empate (D)', 'Victoria Visitante (A)'],
+                    datasets: [{
+                        data: [resultsCount.H, resultsCount.D, resultsCount.A],
+                        backgroundColor: ['#3b82f6', '#64748b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // Chart 2: Top Scores (Bar)
+            const sortedScores = Object.entries(scoreFreq).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            if (chartScoresInstance) chartScoresInstance.destroy();
+            const ctx2 = document.getElementById('chartScores').getContext('2d');
+            chartScoresInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: sortedScores.map(s => s[0]),
+                    datasets: [{
+                        label: 'Frecuencia',
+                        data: sortedScores.map(s => s[1]),
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#1e293b' } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Render Data Table View
+        function renderTableData(headers, rows) {
+            const thead = document.getElementById('tableHeader');
+            const tbody = document.getElementById('tableBody');
+
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            // Header Row
+            const trHead = document.createElement('tr');
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.className = 'px-3 py-2.5 font-semibold text-slate-300 border-r border-slate-700/50 last:border-0';
+                th.textContent = h;
+                trHead.appendChild(th);
+            });
+            thead.appendChild(trHead);
+
+            // Body Rows
+            rows.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = idx % 2 === 0 ? 'bg-slate-900/40 hover:bg-slate-800/50' : 'bg-slate-950/40 hover:bg-slate-800/50';
+
+                headers.forEach(h => {
+                    const td = document.createElement('td');
+                    td.className = 'px-3 py-1.5 border-r border-slate-800/50 last:border-0 text-slate-300';
+                    td.textContent = row[h] !== undefined ? row[h] : '';
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('filteredRowsCount').textContent = `Mostrando ${rows.length} de ${rows.length} registros`;
+        }
+
+        // Table Search Filter
+        function handleTableSearch(e) {
+            const query = e.target.value.toLowerCase();
+            const table = savedTables.find(t => t.id === activeTableId);
+            if (!table) return;
+
+            const filteredRows = table.rows.filter(row => {
+                return Object.values(row).some(val => String(val).toLowerCase().includes(query));
+            });
+
+            renderTableData(table.headers, filteredRows);
+            document.getElementById('filteredRowsCount').textContent = `Mostrando ${filteredRows.length} de ${table.rows.length} registros`;
+        }
+
+        // Delete Active Table
+        function handleDeleteActiveTable() {
+            if (!activeTableId) return;
+            if (confirm('¿Estás seguro de que deseas eliminar esta tabla?')) {
+                savedTables = savedTables.filter(t => t.id !== activeTableId);
+                saveToLocalStorage();
+
+                if (savedTables.length > 0) {
+                    setActiveTable(savedTables[0].id);
+                } else {
+                    showEmptyState();
+                }
+            }
+        }
+
+        // Clear All
+        function handleClearAll() {
+            if (confirm('¿Deseas eliminar TODAS las tablas guardadas? Esta acción no se puede deshacer.')) {
+                savedTables = [];
+                saveToLocalStorage();
+                showEmptyState();
+            }
+        }
+
+        // Export to CSV
+        function handleExportCsv() {
+            const table = savedTables.find(t => t.id === activeTableId);
+            if (!table) return;
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += table.headers.join(",") + "\n";
+
+            table.rows.forEach(row => {
+                const rowValues = table.headers.map(h => {
+                    let val = row[h] !== undefined ? String(row[h]) : '';
+                    if (val.includes(',') || val.includes('"')) {
+                        val = `"${val.replace(/"/g, '""')}"`;
+                    }
+                    return val;
+                });
+                csvContent += rowValues.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `${table.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Helper string escape
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Run on DOM loaded
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
