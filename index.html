@@ -1,667 +1,3637 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BetAGS - Gestor y Analizador de Datos</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f172a">
+<title>Control Financiero</title>
+
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --text:#172033;
+  --muted:#6b7280;
+  --primary:#2563eb;
+  --primary-dark:#1d4ed8;
+  --success:#16a34a;
+  --danger:#dc2626;
+  --warning:#d97706;
+  --border:#e5e7eb;
+  --sidebar:#0f172a;
+  --sidebar-text:#cbd5e1;
+  --radius:18px;
+  --shadow:0 8px 25px rgba(15,23,42,.07);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+button,input,select,textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.app{
+  min-height:100vh;
+  display:flex;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:245px;
+  background:var(--sidebar);
+  color:white;
+  padding:22px 15px;
+  position:fixed;
+  top:0;
+  bottom:0;
+  left:0;
+  z-index:20;
+}
+
+.logo{
+  font-size:22px;
+  font-weight:800;
+  padding:5px 12px 25px;
+}
+
+.logo span{
+  color:#60a5fa;
+}
+
+.nav button{
+  width:100%;
+  border:0;
+  background:transparent;
+  color:var(--sidebar-text);
+  text-align:left;
+  padding:13px 14px;
+  margin:3px 0;
+  border-radius:12px;
+}
+
+.nav button:hover,
+.nav button.active{
+  background:#1e293b;
+  color:white;
+}
+
+.main{
+  margin-left:245px;
+  width:calc(100% - 245px);
+  min-height:100vh;
+}
+
+.topbar{
+  background:white;
+  border-bottom:1px solid var(--border);
+  height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 30px;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+
+.topbar h1{
+  font-size:22px;
+  margin:0;
+}
+
+.content{
+  padding:28px;
+  max-width:1500px;
+  margin:auto;
+}
+
+/* CARDS */
+
+.grid{
+  display:grid;
+  gap:18px;
+}
+
+.grid-4{
+  grid-template-columns:repeat(4,1fr);
+}
+
+.grid-3{
+  grid-template-columns:repeat(3,1fr);
+}
+
+.grid-2{
+  grid-template-columns:repeat(2,1fr);
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:var(--shadow);
+}
+
+.stat-label{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:8px;
+}
+
+.stat-value{
+  font-size:27px;
+  font-weight:800;
+}
+
+.stat-small{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:7px;
+}
+
+.positive{
+  color:var(--success);
+}
+
+.negative{
+  color:var(--danger);
+}
+
+.warning{
+  color:var(--warning);
+}
+
+/* SECTIONS */
+
+.section{
+  margin-top:22px;
+}
+
+.section-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:13px;
+}
+
+.section-header h2{
+  margin:0;
+  font-size:18px;
+}
+
+/* BUTTONS */
+
+.btn{
+  border:0;
+  border-radius:11px;
+  padding:10px 15px;
+  font-weight:700;
+  transition:.15s;
+}
+
+.btn-primary{
+  background:var(--primary);
+  color:white;
+}
+
+.btn-primary:hover{
+  background:var(--primary-dark);
+}
+
+.btn-secondary{
+  background:#eef2ff;
+  color:#1e40af;
+}
+
+.btn-danger{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.btn-success{
+  background:#dcfce7;
+  color:#166534;
+}
+
+.btn-ghost{
+  background:#f8fafc;
+  color:#334155;
+  border:1px solid var(--border);
+}
+
+.btn-sm{
+  padding:7px 10px;
+  font-size:12px;
+}
+
+/* TABLE */
+
+.table-wrap{
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th{
+  text-align:left;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:700;
+  padding:11px 10px;
+  border-bottom:1px solid var(--border);
+}
+
+td{
+  padding:13px 10px;
+  border-bottom:1px solid #eef2f7;
+  font-size:14px;
+}
+
+tr:last-child td{
+  border-bottom:0;
+}
+
+/* BADGES */
+
+.badge{
+  display:inline-flex;
+  align-items:center;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.badge-income{
+  background:#dcfce7;
+  color:#166534;
+}
+
+.badge-expense{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.badge-transfer{
+  background:#e0e7ff;
+  color:#3730a3;
+}
+
+.badge-pending{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.badge-paid{
+  background:#dcfce7;
+  color:#166534;
+}
+
+/* PROGRESS */
+
+.progress{
+  width:100%;
+  height:9px;
+  background:#e5e7eb;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  background:var(--primary);
+  border-radius:999px;
+  transition:.3s;
+}
+
+/* FORMS */
+
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.form-group.full{
+  grid-column:1/-1;
+}
+
+label{
+  font-size:12px;
+  font-weight:700;
+  color:#475569;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  padding:11px 12px;
+  border:1px solid #dbe1e8;
+  border-radius:10px;
+  background:white;
+  color:var(--text);
+  outline:none;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(37,99,235,.10);
+}
+
+.form-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:17px;
+}
+
+/* MODAL */
+
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.55);
+  z-index:100;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal.show{
+  display:flex;
+}
+
+.modal-box{
+  background:white;
+  width:100%;
+  max-width:620px;
+  max-height:92vh;
+  overflow:auto;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 25px 70px rgba(0,0,0,.25);
+}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.modal-header h2{
+  margin:0;
+}
+
+.close{
+  border:0;
+  background:#f1f5f9;
+  width:35px;
+  height:35px;
+  border-radius:50%;
+  font-size:18px;
+}
+
+/* MOBILE */
+
+.mobile-menu{
+  display:none;
+  border:0;
+  background:#f1f5f9;
+  border-radius:9px;
+  padding:8px 11px;
+}
+
+@media(max-width:1050px){
+  .grid-4{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+@media(max-width:800px){
+
+  .sidebar{
+    transform:translateX(-100%);
+    transition:.2s;
+  }
+
+  .sidebar.open{
+    transform:translateX(0);
+  }
+
+  .main{
+    margin-left:0;
+    width:100%;
+  }
+
+  .mobile-menu{
+    display:block;
+  }
+
+  .topbar{
+    padding:0 15px;
+  }
+
+  .content{
+    padding:17px;
+  }
+
+  .grid-4,
+  .grid-3,
+  .grid-2,
+  .form-grid{
+    grid-template-columns:1fr;
+  }
+
+  .form-group.full{
+    grid-column:auto;
+  }
+
+  .topbar h1{
+    font-size:18px;
+  }
+}
+
+/* EMPTY */
+
+.empty{
+  text-align:center;
+  padding:35px 15px;
+  color:var(--muted);
+}
+
+.empty strong{
+  display:block;
+  color:var(--text);
+  margin-bottom:5px;
+}
+
+/* CREDIT CARD */
+
+.credit-card{
+  position:relative;
+  min-height:190px;
+  border-radius:20px;
+  padding:22px;
+  color:white;
+  overflow:hidden;
+  background:linear-gradient(135deg,#111827,#334155);
+}
+
+.credit-card:after{
+  content:"";
+  position:absolute;
+  width:170px;
+  height:170px;
+  border-radius:50%;
+  right:-60px;
+  top:-70px;
+  background:rgba(255,255,255,.08);
+}
+
+.credit-card .bank{
+  font-size:12px;
+  opacity:.8;
+}
+
+.credit-card .name{
+  font-size:19px;
+  font-weight:800;
+  margin-top:7px;
+}
+
+.credit-card .number{
+  letter-spacing:2px;
+  margin-top:28px;
+}
+
+.credit-card-bottom{
+  display:flex;
+  justify-content:space-between;
+  margin-top:17px;
+  font-size:11px;
+}
+
+/* TOAST */
+
+.toast{
+  position:fixed;
+  right:20px;
+  bottom:20px;
+  background:#0f172a;
+  color:white;
+  padding:13px 17px;
+  border-radius:12px;
+  opacity:0;
+  transform:translateY(15px);
+  pointer-events:none;
+  transition:.25s;
+  z-index:200;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* FILTERS */
+
+.filters{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+}
+
+.filters input,
+.filters select{
+  width:auto;
+  min-width:150px;
+}
+
+/* ALERT */
+
+.alert{
+  padding:13px 15px;
+  border-radius:12px;
+  background:#fffbeb;
+  border:1px solid #fde68a;
+  color:#92400e;
+  margin-bottom:15px;
+}
+
+.kpi-line{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin:10px 0;
+  font-size:13px;
+}
+
+.mini{
+  color:var(--muted);
+  font-size:12px;
+}
+
+/* SWITCH */
+
+.switch-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.switch-row input{
+  width:auto;
+}
+
+/* HIDDEN */
+
+.hidden{
+  display:none !important;
+}
+</style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
 
-    <!-- Header -->
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-blue-600 text-white p-2 rounded-lg font-bold flex items-center justify-center">
-                    <i data-lucide="database" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                        BetAGS <span class="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded">Data Vault</span>
-                    </h1>
-                    <p class="text-xs text-slate-400">Analizador y Almacén Multitabla</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="btnOpenPasteModal" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Pegar Tabla
-                </button>
-            </div>
-        </div>
-    </header>
+<body>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+<div class="app">
 
-        <!-- Sidebar: Saved Tables List -->
-        <aside class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col gap-4 h-[calc(100vh-120px)] sticky top-20">
-            <div class="flex justify-between items-center pb-2 border-b border-slate-800">
-                <h2 class="font-semibold text-slate-200 flex items-center gap-2">
-                    <i data-lucide="folder-open" class="w-4 h-4 text-blue-400"></i> Tablas Guardadas
-                </h2>
-                <span id="savedCount" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">0</span>
-            </div>
+<aside class="sidebar" id="sidebar">
 
-            <!-- List Container -->
-            <div id="savedTablesList" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-2">
-                <!-- Dynamic Content -->
-            </div>
+  <div class="logo">
+    Mi<span>Finanzas</span>
+  </div>
 
-            <!-- Global Action -->
-            <div class="pt-2 border-t border-slate-800">
-                <button id="btnClearAll" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Borrar Todo el Historial
-                </button>
-            </div>
-        </aside>
+  <nav class="nav">
 
-        <!-- Main Workspace -->
-        <section class="lg:col-span-3 flex flex-col gap-6">
+    <button class="active" onclick="showPage('dashboard',this)">
+      📊 Dashboard
+    </button>
 
-            <!-- Active Table Info / Controls -->
-            <div id="noDataState" class="bg-slate-900 border border-slate-800 rounded-xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
-                <div class="bg-slate-800/50 p-4 rounded-full text-slate-500 mb-4">
-                    <i data-lucide="clipboard-x" class="w-12 h-12"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-slate-300 mb-1">No hay datos seleccionados</h3>
-                <p class="text-slate-500 text-sm max-w-md mb-6">Pega un bloque de texto separado por tabuladores (copiado directamente de Excel o sitios de datos) para guardarlo y analizarlo.</p>
-                <button id="btnOpenPasteModalEmpty" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-                    <i data-lucide="plus" class="w-4 h-4"></i> Pegar Primera Tabla
-                </button>
-            </div>
+    <button onclick="showPage('movimientos',this)">
+      💸 Movimientos
+    </button>
 
-            <div id="activeDataContainer" class="hidden flex-col gap-6">
+    <button onclick="showPage('tarjetas',this)">
+      💳 Tarjetas
+    </button>
 
-                <!-- Header Info -->
-                <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap justify-between items-center gap-4">
-                    <div>
-                        <div class="flex items-center gap-3">
-                            <h2 id="activeTableTitle" class="text-lg font-bold text-white">Nombre de Tabla</h2>
-                            <span id="activeTableBadge" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded font-mono">0 Filas</span>
-                        </div>
-                        <p id="activeTableDate" class="text-xs text-slate-400 mt-0.5">Guardado el: --</p>
-                    </div>
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <button id="btnExportCsv" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
-                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Exportar CSV
-                        </button>
-                        <button id="btnDeleteActive" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
-                            <i data-lucide="trash" class="w-3.5 h-3.5"></i> Eliminar Tabla
-                        </button>
-                    </div>
-                </div>
+    <button onclick="showPage('prestamos',this)">
+      🏦 Préstamos
+    </button>
 
-                <!-- Stats Overview Cards -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <span class="text-xs text-slate-400">Total Partidos</span>
-                        <p id="statTotalMatches" class="text-2xl font-bold text-white mt-1">0</p>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <span class="text-xs text-slate-400">Promedio Goles/Partido</span>
-                        <p id="statAvgGoals" class="text-2xl font-bold text-blue-400 mt-1">0.00</p>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <span class="text-xs text-slate-400">% Over 2.5 Goles</span>
-                        <p id="statOver25" class="text-2xl font-bold text-amber-400 mt-1">0%</p>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <span class="text-xs text-slate-400">% BTTS (Ambos Anotan)</span>
-                        <p id="statBTTS" class="text-2xl font-bold text-emerald-400 mt-1">0%</p>
-                    </div>
-                </div>
+    <button onclick="showPage('ahorro',this)">
+      🎯 Ahorro
+    </button>
 
-                <!-- Charts Section -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                            <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i> Distribución de Resultados (FTR)
-                        </h3>
-                        <div class="h-48">
-                            <canvas id="chartResults"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                        <h3 class="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
-                            <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-400"></i> Marcadores Más Frecuentes
-                        </h3>
-                        <div class="h-48">
-                            <canvas id="chartScores"></canvas>
-                        </div>
-                    </div>
-                </div>
+    <button onclick="showPage('presupuesto',this)">
+      📋 Presupuesto
+    </button>
 
-                <!-- Data Table View -->
-                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
-                    <!-- Table Search & Filters -->
-                    <div class="p-3 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center gap-4">
-                        <div class="relative flex-1 max-w-xs">
-                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-500"></i>
-                            <input type="text" id="tableSearch" placeholder="Buscar equipo, fecha..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500">
-                        </div>
-                        <span id="filteredRowsCount" class="text-xs text-slate-400 font-mono">Mostrando 0 registros</span>
-                    </div>
+    <button onclick="showPage('ajustes',this)">
+      ⚙️ Ajustes
+    </button>
 
-                    <!-- Scrollable Table -->
-                    <div class="overflow-x-auto overflow-y-auto max-h-[500px] custom-scrollbar">
-                        <table class="w-full text-xs text-left text-slate-300 whitespace-nowrap">
-                            <thead id="tableHeader" class="bg-slate-800 text-slate-400 sticky top-0 z-10 border-b border-slate-700">
-                                <!-- Dynamic Headers -->
-                            </thead>
-                            <tbody id="tableBody" class="divide-y divide-slate-800/60 font-mono">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+  </nav>
 
-            </div>
+</aside>
 
-        </section>
+<main class="main">
 
-    </main>
+<header class="topbar">
 
-    <!-- Modal Paste Data -->
-    <div id="pasteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-6 flex flex-col gap-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="text-lg font-bold text-white flex items-center gap-2">
-                    <i data-lucide="clipboard-paste" class="w-5 h-5 text-blue-400"></i> Pegar Nueva Tabla de Datos
-                </h3>
-                <button id="btnClosePasteModal" class="text-slate-400 hover:text-white transition">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
+  <div style="display:flex;align-items:center;gap:12px">
 
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Nombre o Etiqueta de la Tabla</label>
-                <input type="text" id="tableNameInput" placeholder="Ej: La Liga 2025/26 - Jornada 1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500">
-            </div>
+    <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
 
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Pega los datos aquí (Tab Separated / Excel copy)</label>
-                <textarea id="rawPasteData" rows="10" placeholder="Pega el bloque de texto desde Excel, TSV o TXT aquí..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs font-mono text-slate-300 focus:outline-none focus:border-blue-500 custom-scrollbar"></textarea>
-            </div>
+    <h1 id="pageTitle">Dashboard</h1>
 
-            <div class="flex justify-end gap-3 pt-2">
-                <button id="btnCancelPaste" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition">Cancelar</button>
-                <button id="btnSavePastedData" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium flex items-center gap-2 transition">
-                    <i data-lucide="save" class="w-4 h-4"></i> Guardar Tabla
-                </button>
-            </div>
-        </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="openTransactionModal()">
+    + Movimiento
+  </button>
+
+</header>
+
+
+<div class="content">
+
+<!-- =====================================================
+DASHBOARD
+===================================================== -->
+
+<section id="page-dashboard">
+
+  <div class="grid grid-4">
+
+    <div class="card">
+      <div class="stat-label">Dinero disponible</div>
+      <div class="stat-value" id="dashAvailable">$0.00</div>
+      <div class="stat-small">Cuentas y efectivo registrados</div>
     </div>
 
-    <!-- Application Script -->
-    <script>
-        // Data Store
-        let savedTables = JSON.parse(localStorage.getItem('betags_saved_tables')) || [];
-        let activeTableId = null;
-        let chartResultsInstance = null;
-        let chartScoresInstance = null;
+    <div class="card">
+      <div class="stat-label">Ingresos del mes</div>
+      <div class="stat-value positive" id="dashIncome">$0.00</div>
+      <div class="stat-small" id="dashIncomeCount">0 movimientos</div>
+    </div>
 
-        // Default Data provided by user
-        const initialUserData = `Div\tDate\tTime\tHomeTeam\tAwayTeam\tFTHG\tFTAG\tFTR\tHTHG\tHTAG\tHTR\tHS\tAS\tHST\tAST\tHF\tAF\tHC\tAC\tHY\tAY\tHR\tAR\tB365H\tB365D\tB365A\tBFDH\tBFDD\tBFDA\tBMGMH\tBMGMD\tBMGMA\tBVH\tBVD\tBVA\tBWH\tBWD\tBWA\tCLH\tCLD\tCLA\tLBH\tLBD\tLBA\tPSH\tPSD\tPSA\tMaxH\tMaxD\tMaxA\tAvgH\tAvgD\tAvgA\tBFEH\tBFED\tBFEA\tB365>2.5\tB365<2.5\tP>2.5\tP<2.5\tMax>2.5\tMax<2.5\tAvg>2.5\tAvg<2.5\tBFE>2.5\tBFE<2.5\tAHh\tB365AHH\tB365AHA\tPAHH\tPAHA\tMaxAHH\tMaxAHA\tAvgAHH\tAvgAHA\tBFEAHH\tBFEAHA\tB365CH\tB365CD\tB365CA\tBFDCH\tBFDCD\tBFDCA\tBMGMCH\tBMGMCD\tBMGMCA\tBVCH\tBVCD\tBVCA\tBWCH\tBWCD\tBWCA\tCLCH\tCLCD\tCLCA\tLBCH\tLBCD\tLBCA\tPSCH\tPSCD\tPSCA\tMaxCH\tMaxCD\tMaxCA\tAvgCH\tAvgCD\tAvgCA\tBFECH\tBFECD\tBFECA\tB365C>2.5\tB365C<2.5\tPC>2.5\tPC<2.5\tMaxC>2.5\tMaxC<2.5\tAvgC>2.5\tAvgC<2.5\tBFEC>2.5\tBFEC<2.5\tAHCh\tB365CAHH\tB365CAHA\tPCAHH\tPCAHA\tMaxCAHH\tMaxCAHA\tAvgCAHH\tAvgCAHA\tBFECAHH\tBFECAHA
-SP1\t15/08/2025\t18:00\tGirona\tVallecano\t1\t3\tA\t0\t3\tA\t7\t16\t2\t5\t8\t17\t2\t4\t0\t1\t1\t0\t2.25\t3.25\t3.3\t2.3\t3.2\t3.25\t2.17\t3.25\t3.25\t2.25\t3.3\t3.25\t2.25\t3.25\t3.25\t2.25\t3.3\t3.25\t2.25\t3.25\t3.2\t2.3\t3.3\t3.45\t2.3\t3.33\t3.35\t2.24\t3.26\t3.26\t2.34\t3.4\t3.5\t2.2\t1.67\t2.24\t1.71\t2.2\t1.73\t2.14\t1.68\t2.26\t1.78\t-0.25\t1.98\t1.88\t1.97\t1.95\t1.98\t1.91\t1.84\t1.85\t1.99\t1.98\t2.45\t3.2\t3.1\t2.4\t3.2\t3.1\t2.33\t3\t3.1\t2.4\t3.25\t3\t2.35\t3.2\t3.1\t2.37\t3.2\t3.1\t2.37\t3.2\t3.1\t2.29\t3.32\t3.45\t2.45\t3.25\t3.15\t2.39\t3.15\t3.09\t2.5\t3.25\t3.35\t2.2\t1.67\t2.24\t1.72\t2.22\t1.68\t2.17\t1.66\t2.36\t1.72\t-0.25\t2.1\t1.78\t1.97\t1.95\t2.1\t1.8\t1.95\t1.75\t2.11\t1.89
-SP1\t15/08/2025\t20:30\tVillarreal\tOviedo\t2\t0\tH\t2\t0\tH\t25\t5\t10\t4\t10\t8\t10\t1\t1\t2\t0\t1\t1.4\t4.75\t8\t1.4\t4.5\t8.5\t1.34\t5\t7.5\t1.36\t4.75\t8.5\t1.4\t4.6\t8\t1.4\t4.6\t8\t1.4\t4.6\t8\t1.41\t4.76\t8.8\t1.4\t5.1\t8.5\t1.38\t4.74\t8.11\t1.41\t5.1\t9.6\t1.85\t2\t1.89\t2.02\t1.91\t2\t1.84\t1.92\t1.95\t2.02\t-1.25\t1.88\t1.98\t1.96\t1.96\t1.9\t1.98\t1.81\t1.88\t1.96\t2\t1.4\t4.75\t8\t1.36\t4.6\t9\t1.37\t4.8\t7.5\t1.36\t4.75\t9\t1.41\t4.6\t7.75\t1.4\t4.6\t8\t1.4\t4.5\t7.5\t1.4\t4.87\t8.96\t1.42\t4.9\t9\t1.39\t4.7\t8.02\t1.41\t5.2\t9.6\t1.83\t2.03\t1.85\t2.06\t1.89\t2.03\t1.82\t1.94\t1.9\t2.06\t-1.25\t1.9\t1.95\t1.93\t2\t1.94\t1.96\t1.82\t1.87\t1.96\t2.02
-SP1\t16/08/2025\t18:30\tMallorca\tBarcelona\t0\t3\tA\t0\t2\tA\t4\t24\t1\t8\t8\t17\t3\t6\t4\t1\t2\t0\t7\t5\t1.4\t7\t4.6\t1.44\t7\t4.9\t1.38\t7\t4.6\t1.44\t6.5\t4.75\t1.46\t6.5\t4.6\t1.44\t6.5\t4.6\t1.44\t6.68\t5.03\t1.45\t7\t5\t1.48\t6.75\t4.74\t1.43\t7.8\t5.2\t1.47\t1.62\t2.3\t1.64\t2.35\t1.62\t2.35\t1.6\t2.25\t1.66\t2.46\t1.25\t1.88\t1.98\t1.9\t2.01\t1.88\t1.98\t1.83\t1.85\t1.95\t1.99\t9.5\t5.5\t1.3\t9.5\t6\t1.29\t8.5\t5.5\t1.29\t9\t6\t1.29\t8.75\t5.75\t1.31\t8.5\t5.75\t1.3\t8.5\t5.5\t1.3\t8.06\t5.31\t1.39\t9.5\t7.8\t5.4\t8.7\t5.79\t1.56\t10\t5.8\t1.37\t1.44\t2.75\t1.5\t2.71\t1.47\t2.9\t1.43\t2.72\t1.49\t2.98\t1.5\t2\t1.85\t1.88\t2.05\t2\t1.93\t1.9\t1.86\t2.04\t1.94
-SP1\t16/08/2025\t20:30\tAlaves\tLevante\t2\t1\tH\t1\t0\tH\t15\t7\t4\t3\t15\t13\t10\t1\t0\t1\t0\t0\t2.15\t3\t3.8\t2.2\t3\t3.75\t2.16\t3.05\t3.55\t2.15\t3.1\t3.7\t2.25\t3\t3.5\t2.25\t3\t3.5\t2.25\t3\t3.5\t2.18\t3.18\t3.84\t2.25\t3.1\t3.8\t2.19\t3.04\t3.64\t2.28\t3.2\t3.95\t2.63\t1.5\t2.77\t1.48\t2.7\t1.5\t2.58\t1.47\t2.78\t1.52\t-0.25\t1.83\t2.03\t1.85\t2.06\t1.86\t2.03\t1.78\t1.91\t1.92\t2.07\t2.1\t3.1\t3.9\t2.1\t3.1\t4\t2.08\t2.95\t3.85\t2.05\t3.13\t4\t2.05\t3.1\t3.9\t2.1\t3.1\t3.8\t2.05\t3.1\t3.9\t2.19\t3.14\t3.93\t2.12\t3.15\t4\t2.08\t3.08\t3.92\t2.14\t3.25\t4.3\t2.63\t1.5\t2.54\t1.57\t2.63\t1.54\t2.51\t1.5\t2.66\t1.59\t-0.25\t1.8\t2.05\t1.86\t2.07\t1.8\t2.07\t1.7\t2\t1.81\t2.2
-SP1\t16/08/2025\t20:30\tValencia\tSociedad\t1\t1\tD\t0\t0\tD\t18\t13\t2\t3\t5\t11\t8\t7\t1\t2\t0\t0\t2.6\t2.9\t3.1\t2.5\t2.88\t3.2\t2.5\t2.85\t3\t2.55\t2.9\t3.1\t2.55\t2.95\t3\t2.6\t3\t3\t2.5\t2.9\t3\t2.65\t2.89\t3.23\t2.6\t3\t3.2\t2.55\t2.89\t3.07\t2.74\t2.98\t3.3\t2.75\t1.44\t2.85\t1.44\t3.05\t1.45\t2.76\t1.41\t2.94\t1.48\t0\t1.75\t2.13\t1.78\t2.17\t1.8\t2.13\t1.74\t2.01\t1.82\t2.19\t2.45\t3\t3.2\t2.4\t3\t3.2\t2.38\t2.95\t3.15\t2.45\t3.1\t3.1\t2.45\t2.95\t3.2\t2.45\t3\t3.2\t2.45\t2.9\t3.1\t2.53\t3.04\t3.3\t2.49\t3.1\t3.25\t2.43\t3\t3.18\t2.58\t3.1\t3.35\t2.63\t1.5\t2.55\t1.56\t2.63\t1.55\t2.49\t1.51\t2.68\t1.57\t-0.25\t2.1\t1.78\t2.13\t1.81\t2.1\t1.78\t1.96\t1.74\t2.18\t1.84
-SP1\t17/08/2025\t16:00\tCelta\tGetafe\t0\t2\tA\t0\t0\tD\t11\t10\t3\t3\t15\t17\t9\t3\t3\t2\t0\t0\t1.73\t3.5\t5.25\t1.73\t3.4\t5.5\t1.65\t3.6\t5.2\t1.7\t3.3\t5\t1.72\t3.5\t5.25\t1.73\t3.5\t5.25\t1.7\t3.5\t5.25\t1.76\t3.43\t5.71\t1.75\t3.65\t5.66\t1.71\t3.48\t5.25\t1.77\t3.65\t5.8\t2.38\t1.57\t2.5\t1.57\t2.4\t1.58\t2.36\t1.54\t2.52\t1.62\t-0.75\t1.98\t1.88\t2.01\t1.9\t1.98\t1.9\t1.89\t1.8\t2.01\t1.93\t1.67\t3.5\t5.75\t1.67\t3.4\t6\t1.63\t3.5\t5.6\t1.67\t3.5\t6\t1.7\t3.4\t5.75\t1.7\t3.4\t5.75\t1.7\t3.4\t5.75\t1.61\t3.73\t7.04\t1.7\t3.55\t6\t1.67\t3.48\t5.81\t1.75\t3.6\t6.4\t2.63\t1.5\t2.49\t1.58\t2.63\t1.55\t2.49\t1.51\t2.68\t1.57\t-0.75\t1.93\t1.93\t1.81\t2.15\t1.93\t1.95\t1.85\t1.84\t2\t1.99
-SP1\t17/08/2025\t18:30\tAth Bilbao\tSevilla\t3\t2\tH\t2\t0\tH\t14\t12\t3\t6\t8\t12\t10\t1\t0\t2\t0\t0\t1.57\t3.9\t6\t1.57\t3.75\t6.5\t1.47\t4.1\t6.75\t1.53\t3.7\t5.75\t1.6\t3.8\t6\t1.6\t3.8\t6\t1.6\t3.8\t5.75\t1.6\t4.05\t6.12\t1.6\t4.2\t6.75\t1.55\t3.91\t6.17\t1.61\t4\t6.8\t2.1\t1.73\t2.11\t1.78\t2.1\t1.74\t2.07\t1.71\t2.18\t1.81\t-1\t2.05\t1.8\t2.08\t1.84\t2.05\t1.85\t1.91\t1.8\t2.07\t1.86\t1.53\t3.8\t6.5\t1.57\t3.75\t6.5\t1.53\t3.8\t6.25\t1.55\t3.9\t6.5\t1.58\t3.7\t6.5\t1.57\t3.75\t6.5\t1.57\t3.7\t6.5\t1.67\t3.69\t6.24\t1.59\t3.9\t6.6\t1.56\t3.8\t6.43\t1.62\t4\t7.2\t2.2\t1.67\t2.31\t1.67\t2.25\t1.67\t2.2\t1.64\t2.28\t1.75\t-1\t2\t1.85\t2.25\t1.72\t2.04\t1.85\t1.96\t1.76\t2.11\t1.88
-SP1\t17/08/2025\t20:30\tEspanol\tAth Madrid\t2\t1\tH\t0\t1\tA\t10\t15\t5\t4\t14\t11\t1\t3\t3\t3\t0\t0\t6\t3.9\t1.57\t6.5\t3.75\t1.57\t6.1\t4\t1.52\t6\t3.6\t1.53\t6.5\t4\t1.53\t6.5\t4\t1.53\t6.5\t4\t1.53\t6.57\t3.86\t1.6\t6.66\t4\t1.6\t6.25\t3.86\t1.55\t7.2\t4\t1.62\t2.2\t1.67\t2.28\t1.68\t2.2\t1.72\t2.14\t1.66\t2.32\t1.72\t1\t1.8\t2.05\t1.83\t2.1\t1.8\t2.05\t1.77\t1.94\t1.86\t2.09\t5.5\t3.9\t1.62\t6\t3.75\t1.6\t5.6\t3.9\t1.56\t5.75\t3.9\t1.6\t5.75\t3.8\t1.62\t5.75\t3.8\t1.61\t5.5\t3.8\t1.61\t5.8\t3.89\t1.66\t6.2\t4\t1.65\t5.7\t3.86\t1.6\t6.2\t4.1\t1.66\t2\t1.85\t1.97\t1.93\t2\t1.89\t1.94\t1.82\t2.02\t1.96\t1\t1.73\t2.08\t1.76\t2.17\t1.83\t2.09\t1.73\t2\t1.81\t2.18
-SP1\t18/08/2025\t20:00\tElche\tBetis\t1\t1\tD\t0\t1\tA\t6\t12\t2\t4\t14\t13\t1\t3\t0\t1\t0\t0\t3.4\t3.3\t2.2\t3.4\t3.25\t2.2\t3.2\t3.3\t2.17\t3.25\t3.2\t2.1\t3.4\t3.25\t2.2\t3.4\t3.25\t2.2\t3.4\t3.25\t2.15\t3.45\t3.43\t2.21\t3.4\t3.4\t2.2\t3.33\t3.27\t2.17\t3.55\t3.4\t2.28\t2.2\t1.67\t2.21\t1.72\t2.2\t1.76\t2.08\t1.7\t2.24\t1.77\t0.25\t1.98\t1.88\t2\t1.91\t1.98\t1.88\t1.88\t1.76\t2\t1.94\t3.2\t3.25\t2.3\t3.2\t3.2\t2.3\t3.2\t3.15\t2.25\t3.2\t3.25\t2.3\t3.2\t3.2\t2.35\t3.2\t3.2\t2.3\t3.2\t3.1\t2.3\t3.34\t3.22\t2.4\t3.25\t3.25\t2.36\t3.2\t3.19\t2.3\t3.45\t3.3\t2.4\t2.2\t1.67\t2.3\t1.68\t2.25\t1.73\t2.16\t1.66\t2.32\t1.73\t0.25\t1.88\t1.98\t1.88\t2.04\t1.88\t2\t1.81\t1.84\t1.94\t2.04
-SP1\t19/08/2025\t20:00\tReal Madrid\tOsasuna\t1\t0\tH\t0\t0\tD\t18\t2\t5\t0\t10\t12\t7\t0\t1\t0\t0\t1\t1.22\t6.25\t13\t1.2\t6.5\t15\t1.17\t7\t13\t1.2\t6.5\t13\t1.22\t6.5\t13\t1.22\t6.5\t13\t1.22\t6.5\t13\t1.23\t6.99\t12.34\t1.23\t7\t15\t1.2\t6.66\t13.16\t1.23\t7.8\t16.5\t1.5\t2.63\t1.52\t2.6\t1.52\t2.63\t1.49\t2.56\t1.56\t2.72\t-2\t2.03\t1.78\t2.14\t1.76\t2.05\t1.81\t1.97\t1.75\t2.15\t1.83\t1.22\t7\t11\t1.22\t6.5\t13\t1.18\t6.5\t13\t1.2\t7\t13\t1.22\t6.75\t12\t1.22\t7\t11\t1.22\t6.5\t12\t1.22\t7.32\t12.82\t1.24\t7\t13\t1.21\t6.67\t12.34\t1.24\t7.4\t15\t1.44\t2.75\t1.47\t2.73\t1.46\t2.8\t1.44\t2.68\t1.48\t3.05\t-2\t2.03\t1.78\t2.07\t1.85\t2.07\t1.83\t1.97\t1.75\t2.14\t1.86
-SP1\t22/08/2025\t20:30\tBetis\tAlaves\t1\t0\tH\t1\t0\tH\t16\t11\t5\t5\t10\t17\t5\t2\t2\t3\t0\t0\t1.91\t3.4\t4.2\t1.9\t3.3\t4.5\t1.82\t3.35\t4.4\t1.9\t3.4\t4.33\t1.87\t3.4\t4.33\t1.85\t3.4\t4.33\t1.85\t3.4\t4.33\t1.92\t3.45\t4.6\t1.91\t3.5\t4.5\t1.88\t3.38\t4.37\t1.95\t3.5\t4.8\t2.2\t1.67\t2.33\t1.67\t2.3\t1.67\t2.23\t1.62\t2.36\t1.71\t-0.5\t1.9\t1.95\t1.93\t2\t1.9\t1.96\t1.84\t1.91\t1.96\t2.02\t1.83\t3.4\t4.5\t1.83\t3.4\t4.6\t1.84\t3.35\t4.3\t1.83\t3.4\t4.6\t1.85\t3.4\t4.5\t1.85\t3.4\t4.5\t1.85\t3.4\t4.4\t1.97\t3.38\t4.43\t1.86\t3.5\t4.6\t1.84\t3.4\t4.47\t1.91\t3.6\t5\t2.2\t1.67\t2.36\t1.65\t2.25\t1.67\t2.21\t1.63\t2.36\t1.72\t-0.5\t1.83\t2.03\t1.98\t1.94\t1.87\t2.03\t1.82\t1.93\t1.91\t2.09
-SP1\t23/08/2025\t16:00\tMallorca\tCelta\t1\t1\tD\t0\t1\tA\t12\t8\t4\t2\t12\t12\t3\t4\t3\t3\t0\t0\t3\t3.1\t2.55\t3\t3.1\t2.5\t2.9\t3.1\t2.45\t2.9\t3.13\t2.55\t2.95\t3.1\t2.5\t2.9\t3.1\t2.5\t2.9\t3.1\t2.5\t3.06\t3.1\t2.6\t3\t3.15\t2.6\t2.94\t3.09\t2.52\t3.1\t3.2\t2.7\t2.38\t1.57\t2.49\t1.58\t2.43\t1.6\t2.34\t1.55\t2.48\t1.63\t0\t2.1\t1.78\t2.13\t1.8\t2.1\t1.78\t2.02\t1.73\t2.13\t1.85\t3.3\t3.2\t2.3\t3.25\t3.2\t2.3\t3\t3.2\t2.33\t3.13\t3.25\t2.38\t3.1\t3.2\t2.4\t3.1\t3.2\t2.4\t3\t3.2\t2.37\t3.26\t3.16\t2.48\t3.3\t3.3\t2.5\t3.13\t3.21\t2.35\t3.3\t3.4\t2.44\t2.1\t1.73\t2.41\t1.63\t2.28\t1.73\t2.15\t1.67\t2.28\t1.77\t0.25\t1.88\t1.98\t1.83\t2.11\t1.88\t2.05\t1.82\t1.88\t1.9\t2.09
-SP1\t23/08/2025\t18:30\tAth Madrid\tElche\t1\t1\tD\t1\t1\tD\t13\t6\t6\t2\t14\t7\t10\t2\t0\t3\t0\t0\t1.25\t5.25\t15\t1.25\t5.5\t13\t1.22\t5.75\t12.5\t1.22\t6\t15\t1.25\t5.75\t12.5\t1.25\t5.75\t12\t1.25\t5.75\t12\t1.24\t6.28\t12.89\t1.25\t6\t15\t1.24\t5.74\t12.91\t1.26\t6.6\t16\t1.8\t2\t1.76\t2.12\t1.8\t2.05\t1.76\t2\t1.82\t2.14\t-1.75\t2\t1.85\t2.01\t1.88\t2\t1.85\t1.96\t1.74\t2.06\t1.91\t1.29\t5.75\t10\t1.25\t5.5\t12\t1.21\t5.8\t12.5\t1.25\t5.75\t12\t1.27\t5.75\t11.5\t1.28\t5.5\t11\t1.28\t5.5\t11\t1.27\t5.97\t13.1\t1.29\t6\t13\t1.26\t5.67\t11.58\t1.27\t6.6\t14.5\t1.67\t2.2\t1.81\t2.08\t1.8\t2.25\t1.71\t2.09\t1.79\t2.24\t-1.5\t1.83\t2.03\t1.85\t2.08\t1.85\t2.03\t1.79\t1.97\t1.89\t2.08
-SP1\t23/08/2025\t20:30\tLevante\tBarcelona\t2\t3\tA\t2\t0\tH\t8\t26\t5\t10\t10\t8\t0\t11\t3\t1\t0\t0\t11\t6\t1.25\t11\t6\t1.25\t11\t6.75\t1.19\t10.5\t6.5\t1.25\t10.5\t6.5\t1.25\t10\t6.5\t1.25\t10\t6.5\t1.25\t9.49\t6.51\t1.27\t11.5\t7\t1.26\t10.44\t6.51\t1.24\t12\t7.2\t1.27\t1.36\t3.2\t1.37\t3.08\t1.38\t3.2\t1.35\t3.02\t1.39\t3.35\t1.75\t1.98\t1.88\t1.97\t1.92\t1.98\t1.88\t1.9\t1.79\t2.03\t1.9\t12\t6.5\t1.22\t12\t7\t1.2\t11\t7\t1.19\t12\t7\t1.2\t12.5\t7\t1.22\t12\t7\t1.22\t12\t7\t1.22\t11.01\t7.39\t1.23\t13\t7.5\t1.24\t11.5\t6.95\t1.21\t14.5\t7.6\t1.24\t1.33\t3.4\t1.33\t3.37\t1.36\t3.51\t1.31\t3.33\t1.35\t3.7\t2\t1.93\t1.93\t1.89\t2.02\t1.93\t1.96\t1.86\t1.9\t1.94\t2.04
-SP1\t24/08/2025\t16:00\tOsasuna\tValencia\t1\t0\tH\t1\t0\tH\t16\t4\t4\t1\t14\t13\t3\t4\t2\t1\t0\t1\t2.4\t3.2\t3.1\t2.4\t3.1\t3.1\t2.33\t3.1\t3.1\t2.3\t3.1\t3\t2.35\t3.1\t3.2\t2.37\t3.1\t3.2\t2.3\t3.1\t3.2\t2.43\t3.16\t3.27\t2.41\t3.2\t3.25\t2.36\t3.11\t3.13\t2.5\t3.2\t3.3\t2.38\t1.57\t2.47\t1.58\t2.48\t1.6\t2.34\t1.55\t2.5\t1.64\t-0.25\t2.05\t1.8\t2.07\t1.85\t2.05\t1.8\t1.93\t1.76\t2.12\t1.84\t2.2\t3.3\t3.4\t2.25\t3.2\t3.4\t2.2\t3.1\t3.35\t2.25\t3.25\t3.3\t2.25\t3.2\t3.4\t2.25\t3.2\t3.4\t2.2\t3.1\t3.4\t2.48\t3.18\t3.22\t2.26\t3.3\t3.5\t2.23\t3.16\t3.38\t2.32\t3.3\t3.7\t2.3\t1.62\t2.38\t1.64\t2.4\t1.65\t2.28\t1.59\t2.4\t1.69\t-0.25\t1.88\t1.98\t2.12\t1.83\t1.91\t1.98\t1.84\t1.89\t1.97\t2.01
-SP1\t24/08/2025\t18:30\tSociedad\tEspanol\t2\t2\tD\t0\t2\tA\t15\t14\t7\t3\t16\t18\t5\t2\t2\t2\t0\t0\t1.8\t3.4\t5\t1.83\t3.4\t4.6\t1.8\t3.4\t4.4\t1.75\t3.3\t4.5\t1.83\t3.4\t4.6\t1.83\t3.4\t4.6\t1.83\t3.4\t4.6\t1.83\t3.49\t4.91\t1.83\t3.45\t5\t1.81\t3.39\t4.6\t1.91\t3.45\t5.2\t2.2\t1.67\t2.33\t1.65\t2.43\t1.67\t2.26\t1.59\t2.42\t1.69\t-0.5\t1.74\t1.99\t1.84\t2.08\t1.84\t2\t1.78\t1.96\t1.91\t2.07\t1.82\t3.5\t4.33\t1.9\t3.4\t4.2\t1.82\t3.35\t4.5\t1.85\t3.5\t4.33\t1.87\t3.5\t4.2\t1.85\t3.5\t4.2\t1.85\t3.5\t4.2\t1.78\t3.59\t5.24\t1.9\t3.55\t4.5\t1.85\t3.45\t4.32\t1.9\t3.65\t4.9\t1.98\t1.88\t2.19\t1.75\t2.05\t1.88\t1.98\t1.79\t2.06\t1.93\t-0.5\t1.85\t2\t1.78\t2.16\t1.88\t2\t1.83\t1.92\t1.9\t2.09
-SP1\t24/08/2025\t18:30\tVillarreal\tGirona\t5\t0\tH\t4\t0\tH\t19\t5\t7\t2\t8\t9\t8\t1\t1\t2\t0\t0\t1.53\t4.33\t6\t1.53\t4.2\t6\t1.49\t4.3\t5.8\t1.5\t4.1\t5.5\t1.55\t4.2\t5.75\t1.55\t4.2\t5.75\t1.55\t4.2\t5.5\t1.53\t4.69\t5.77\t1.55\t4.5\t6\t1.52\t4.28\t5.69\t1.59\t4.6\t6.2\t1.67\t2.2\t1.68\t2.26\t1.68\t2.25\t1.64\t2.17\t1.73\t2.3\t-1\t1.82\t1.92\t1.93\t1.98\t1.9\t1.95\t1.81\t1.89\t1.94\t2\t1.47\t4.2\t6.5\t1.5\t4.5\t6.5\t1.4\t4.6\t7\t1.45\t4.5\t6.5\t1.5\t4.5\t6\t1.48\t4.5\t6.5\t1.48\t4.4\t6.5\t1.54\t4.55\t6.17\t1.5\t4.8\t7\t1.46\t4.51\t6.61\t1.51\t5\t7\t1.67\t2.2\t1.73\t2.2\t1.68\t2.27\t1.65\t2.17\t1.73\t2.34\t-1.25\t2.05\t1.75\t2.18\t1.76\t2.05\t1.87\t1.94\t1.79\t2.15\t1.85
-SP1\t24/08/2025\t20:30\tOviedo\tReal Madrid\t0\t3\tA\t0\t1\tA\t6\t26\t3\t10\t8\t7\t1\t9\t2\t1\t0\t0\t9.5\t5.5\t1.3\t11\t5\t1.3\t10\t5.5\t1.26\t9\t4.8\t1.29\t9.75\t5.25\t1.31\t9.5\t5.25\t1.3\t9.5\t5.25\t1.3\t10.02\t5.5\t1.32\t11\t5.6\t1.33\t9.67\t5.24\t1.3\t11\t5.7\t1.34\t1.73\t2.1\t1.75\t2.15\t1.73\t2.14\t1.7\t2.09\t1.75\t2.26\t1.5\t1.9\t1.95\t1.93\t1.98\t1.93\t1.95\t1.87\t1.88\t1.97\t1.94\t8.5\t5\t1.33\t11\t5\t1.3\t9.5\t5.6\t1.26\t10.5\t5.25\t1.3\t10\t5.25\t1.32\t10\t5.25\t1.33\t9.5\t5\t1.33\t9.98\t5.53\t1.33\t11\t5.6\t1.33\t9.91\t5.27\t1.3\t12\t5.6\t1.34\t1.85\t2\t1.75\t2.18\t1.85\t2.12\t1.76\t2.03\t1.9\t2.1\t1.5\t1.8\t2.05\t1.91\t2.02\t1.92\t2.05\t1.84\t1.92\t1.91\t2.06
-SP1\t25/08/2025\t18:30\tAth Bilbao\tVallecano\t1\t0\tH\t0\t0\tD\t11\t6\t4\t1\t13\t13\t3\t6\t0\t4\t0\t0\t1.7\t3.5\t5.5\t1.73\t3.5\t5.5\t1.62\t3.65\t5.4\t1.67\t3.4\t5\t1.75\t3.6\t5\t1.75\t3.6\t5\t1.73\t3.5\t4.8\t1.71\t3.68\t5.56\t1.75\t3.7\t5.5\t1.69\t3.55\t5.18\t1.76\t3.65\t5.8\t2.2\t1.67\t2.19\t1.72\t2.25\t1.67\t2.18\t1.64\t2.26\t1.75\t-0.75\t1.95\t1.9\t1.95\t1.95\t1.95\t1.95\t1.84\t1.83\t1.99\t1.96\t1.7\t3.5\t5.5\t1.73\t3.6\t5\t1.7\t3.5\t5\t1.73\t3.6\t5\t1.73\t3.5\t5\t1.75\t3.5\t5\t1.73\t3.5\t5\t1.71\t3.71\t5.7\t1.75\t3.65\t5.5\t1.73\t3.55\t5.06\t1.79\t3.7\t5.8\t2.1\t1.73\t2.19\t1.74\t2.28\t1.73\t2.14\t1.67\t2.24\t1.77\t-0.75\t1.95\t1.9\t1.93\t2\t1.97\t1.9\t1.93\t1.81\t2.02\t1.95
-SP1\t25/08/2025\t20:30\tSevilla\tGetafe\t1\t2\tA\t1\t1\tD\t12\t9\t3\t6\t10\t24\t5\t3\t2\t2\t0\t0\t2.25\t3\t3.6\t2.25\t3\t3.6\t2.25\t3\t3.35\t2.15\t2.9\t3.4\t2.3\t3\t3.4\t2.3\t3\t3.4\t2.3\t3\t3.4\t2.24\t3.12\t3.75\t2.3\t3.1\t3.6\t2.25\t2.99\t3.46\t2.32\t3.1\t3.8\t2.63\t1.5\t2.78\t1.48\t2.63\t1.5\t2.55\t1.48\t2.84\t1.53\t-0.25\t1.9\t1.95\t1.9\t2\t1.9\t1.95\t1.82\t1.84\t1.95\t2.01\t2\t3.1\t4.33\t2.1\t3\t4\t2.02\t3\t4\t2.05\2.9\t4.4\t2.05\t3\t4.1\t2.05\t3\t4.2\t2.05\t3\t4\t2.12\t3.14\t4.2\t2.1\t3.1\t4.4\t2.05\t3.02\t4.13\t2.14\t3.2\t4.4\t3\t1.4\t2.89\t1.43\t3\t1.45\t2.75\t1.42\t3\t1.48\t-0.5\t2.05\t1.8\t2.13\t1.82\t2.07\t1.8\t2.02\t1.75\t2.15\t1.86
-SP1\t27/08/2025\t20:00\tCelta\tBetis\t1\t1\tD\t0\t1\tA\t14\t7\t5\t2\t13\t11\t10\t4\t1\t2\t0\t0\t2.2\t3.4\t3.25\t2.25\t3.4\t3.2\t2.12\t3.55\t3.1\t2.2\t3.5\t3.2\t2.2\t3.5\t3.2\t2.2\t3.5\t3.2\t2.2\t3.4\t3.2\t2.21\t3.6\t3.3\t2.25\t3.6\t3.25\t2.19\t3.48\t3.17\t2.32\t3.6\t3.3\t1.9\t1.95\t1.93\t1.95\t1.91\t1.96\t1.85\t1.9\t1.96\t2.02\t-0.25\t1.93\t1.93\t1.93\t1.98\t1.93\t1.94\t1.84\t1.9\t2\t1.96\t2.35\t3.4\t3\t2.38\t3.5\t2.88\t2.35\t3.55\t2.9\t2.3\t3.6\t2.9\t2.3\t3.4\t3\t2.3\t3.5\t3\t2.25\t3.4\t3\t2.4\t3.4\t3.15\t2.38\t3.6\t3.1\t2.32\t3.47\t2.94\t2.4\t3.55\t3.25\t1.73\t2.1\t1.78\t2.12\t1.79\t2.11\t1.74\t2.04\t1.81\t2.2\t-0.25\t2.03\t1.83\t2.07\t1.86\t2.03\t1.85\t1.95\t1.79\t2.07\t1.92
-SP1\t29/08/2025\t18:30\tElche\tLevante\t2\t0\tH\t0\t0\tD\t16\t11\t5\t1\t14\t17\t4\t2\t1\t2\t0\t0\t2.15\t3.25\t3.5\t2.2\t3.2\t3.5\t2.14\t3.2\t3.6\t2.2\t3.1\t3.6\t2.2\t3.2\t3.5\t2.2\t3.2\t3.5\t2.15\t3.2\t3.5\t2.23\t3.26\t3.66\t2.2\t3.25\t3.6\t2.17\t3.19\t3.52\t2.28\t3.3\t3.75\t2.3\t1.62\t2.37\t1.65\t2.3\t1.64\t2.24\t1.61\t2.4\t1.69\t-0.25\t1.88\t1.98\t1.91\t2.02\t1.88\t1.98\t1.79\t1.95\t1.93\t2.04\t2.15\t3.25\t3.6\t2.15\t3.2\t3.6\t2.15\t3.2\t3.6\t2.15\t3.13\t3.7\t2.15\t3.25\t3.5\t2.15\t3.25\t3.5\t2.15\t3.25\t3.5\t2.24\t3.24\t3.66\t2.19\t3.3\t3.75\t2.15\t3.2\t3.57\t2.26\t3.4\t3.75\t2.3\t1.62\t2.42\t1.63\t2.3\t1.67\t2.21\t1.63\t2.42\t1.69\t-0.25\t1.83\t2.03\t1.92\t2.01\t1.86\t2.03\t1.78\t1.96\t1.92\t2.07
-SP1\t29/08/2025\t20:30\tValencia\tGetafe\t3\t0\tH\t1\t0\tH\t7\t11\t4\t1\t18\t7\t8\t6\t2\t0\t0\t0\t2.3\t2.9\t3.6\t2.25\t2.88\t3.75\t2.25\t2.95\t3.7\t2.25\t3\t3.6\t2.25\t2.95\t3.6\t2.25\t3\t3.6\t2.25\t2.9\t3.6\t2.29\t3.06\t3.78\t2.33\t3\t3.75\t2.25\t2.94\t3.63\t2.34\t3.05\t3.95\t3\t1.4\t2.89\t1.43\t3\t1.44\t2.83\t1.4\t3\t1.49\t-0.25\t1.93\t1.93\t1.93\t1.99\t1.93\t1.93\t1.85\t1.89\t1.95\t2.02\t2.35\t2.88\t3.6\t2.3\t2.88\t3.6\t2.33\t3\t3.45\t2.3\t2.9\t3.6\t2.3\t2.95\t3.5\t2.3\t2.9\t3.5\t2.3\t2.9\t3.5\t2.38\t3.01\t3.64\t2.42\t3\t3.75\t2.31\t2.92\t3.53\t2.42\t2.98\t3.9\t3\t1.4\t2.95\t1.42\t3\t1.4\t2.93\t1.38\t3.1\t1.46\t-0.25\t1.98\t1.88\t2\t1.92\t2\t1.89\t1.9\t1.85\t2.02\t1.96
-SP1\t30/08/2025\t16:00\tAlaves\tAth Madrid\t1\t1\tD\t1\t1\tD\t5\t15\t2\t6\t10\t17\t1\t6\t2\t3\t0\t0\t4.75\t3.5\t1.8\t4.6\t3.5\t1.8\t4.7\t3.7\t1.75\t4.75\t3.5\t1.8\t4.6\t3.6\t1.78\t4.6\t3.6\t1.8\t4.5\t3.5\t1.8\t4.77\t3.61\t1.82\t4.75\t3.7\t1.83\t4.64\t3.55\t1.78\t4.9\t3.7\t1.87\t2.2\t1.67\t2.22\t1.71\t2.2\t1.73\t2.12\t1.67\t2.24\t1.74\t0.75\t1.78\t2.03\t1.81\t2.1\t1.83\t2.03\t1.75\t1.99\t1.84\t2.14\t5.5\t3.5\t1.7\t5.5\t3.5\t1.7\t5.4\t3.5\t1.72\t5.5\t3.5\t1.7\t5.25\t3.5\t1.72\t5.25\t3.5\t1.73\t5.25\t3.5\t1.7\t5.72\t3.6\t1.73\t5.5\t3.6\t1.73\t5.39\t3.51\t1.7\t5.8\t3.65\t1.78\t2.38\t1.57\t2.44\t1.61\t2.4\t1.63\t2.28\t1.59\t2.46\t1.65\t0.75\t1.87\t1.87\t1.94\t1.98\t1.92\t1.95\t1.84\t1.91\t1.93\t2.04
-SP1\t30/08/2025\t18:00\tOviedo\tSociedad\t1\t0\tH\t1\t0\tH\t8\t18\t1\t6\t7\t18\t1\t10\t2\t1\t0\t0\t3.5\t3.1\t2.25\t3.5\t3.1\t2.25\t3.6\t3.1\t2.23\t3.4\t3.13\t2.25\t3.5\t3.2\t2.2\t3.5\t3.2\t2.2\t3.4\t3.1\t2.2\t3.56\t3.12\t2.32\t3.6\t3.2\t2.28\t3.47\t3.1\t2.23\t3.7\t3.2\t2.34\t2.5\t1.53\t2.52\t1.56\t2.6\t1.55\t2.44\t1.52\t2.6\t1.59\t0.25\t1.93\t1.93\t1.93\t1.97\t1.93\t1.93\t1.9\t1.8\t1.98\t1.97\t3.3\t3.1\t2.3\t3.4\t3.2\t2.25\t3.45\t3.15\t2.25\t3.25\t3.2\t2.3\t3.4\t3.1\t2.25\t3.4\t3.1\t2.25\t3.3\t3.1\t2.25\t3.46\t3.12\t2.39\t3.55\t3.2\t2.3\t3.38\t3.12\t2.26\t3.65\t3.1\t2.44\t2.3\t1.62\t2.46\t1.6\t2.45\t1.62\t2.33\t1.57\t2.48\t1.65\t0.25\t1.88\t1.98\t1.9\t2.03\t1.93\t1.98\t1.88\t1.82\t1.94\t2.05
-SP1\t30/08/2025\t18:30\tGirona\tSevilla\t0\t2\tA\t0\t1\tA\t20\t13\t5\t4\t5\t14\t11\t3\t0\t2\t0\t0\t2.4\t3.3\t3\t2.4\t3.25\t3\t2.43\t3.35\t2.95\t2.4\t3.4\t2.9\t2.45\t3.3\t2.87\t2.45\t3.3\t2.87\t2.45\t3.25\t2.87\t2.49\t3.27\t3.07\t2.45\t3.4\t3\t2.42\t3.29\t2.94\t2.56\t3.35\t3.1\t2.05\t1.8\t2.08\t1.83\t2.1\t1.8\t2.02\t1.74\t2.1\t1.87\t0\t1.73\t2.08\t1.76\t2.18\t1.73\t2.12\t1.68\t2.08\t1.81\t2.21\t2.45\t3.1\t3.1\t2.4\t3.2\t3.1\t2.43\t3.15\t3.1\t2.4\t3.25\t3\t2.4\t3.2\t3\t2.4\t3.2\t3\t2.4\t3.2\t3\t2.54\t3.19\t3.13\t2.5\t3.3\t3.1\t2.42\t3.16\t3.04\t2.54\t3.25\t3.25\t2.2\t1.67\t2.33\t1.65\t2.23\t1.7\t2.16\t1.66\t2.34\t1.73\t-0.25\t2.1\t1.78\t2.16\t1.79\t2.1\t1.78\t2\t1.75\t2.16\t1.85
-SP1\t30/08/2025\t20:30\tReal Madrid\tMallorca\t2\t1\tH\t2\t1\tH\t17\t9\t7\t5\t12\t7\t4\t5\t2\t0\t0\t0\t1.18\t7\t15\t1.17\t7\t17\t1.19\t7\t14\t1.17\t7\t17\t1.19\t7\t15.5\t1.2\t7\t15\t1.18\t7\t15\t1.21\t7.16\t12.71\t1.2\t7\t17\t1.18\t6.96\t14.97\t1.22\t8\t18\t1.57\t2.38\t1.56\t2.5\t1.57\t2.55\t1.53\t2.39\t1.6\t2.56\t-2\t1.98\t1.88\t2\t1.89\t1.98\t1.9\t1.94\t1.82\t2.03\t1.89\t1.17\t7.5\t13\t1.17\t7.5\t17\t1.16\t8\t16\t1.15\t7.5\t17\t1.18\t7.5\t16.5\t1.18\t7.5\t15\t1.17\t7.5\t15\t1.19\t7.51\t15.22\t1.18\t8\t17\t1.16\t7.43\t15.63\t1.19\t8.6\t22\t1.44\t2.75\t1.48\t2.71\t1.5\t2.8\t1.46\t2.64\t1.52\t2.88\t-2\t1.85\t2\t1.96\t1.94\t1.86\t2\t1.82\t1.93\t1.88\t2.08
-SP1\t31/08/2025\t16:00\tCelta\tVillarreal\t1\t1\tD\t0\t0\tD\t10\t8\t2\t3\t11\t8\t1\t5\t1\t1\t0\t0\t2.75\t3.5\t2.5\t2.75\t3.5\t2.5\t2.75\t3.55\t2.43\t2.63\t3.4\t2.38\t2.75\t3.6\t2.37\t2.75\t3.6\t2.4\t2.75\t3.6\t2.37\t2.76\t3.64\t2.52\t2.75\t3.6\t2.5\t2.71\t3.53\t2.43\t2.84\t3.65\t2.6\t1.73\t2.1\t1.74\t2.18\t1.73\t2.2\t1.67\t2.12\t1.78\t2.22\t0\t2.03\t1.83\t2.05\t1.87\t2.03\t1.83\t1.94\t1.8\t2.07\t1.89\t3.2\t3.5\t2.2\t3.2\t3.4\t2.25\t3.05\t3.5\t2.28\t3.2\t3.5\t2.2\t3.1\t3.5\t2.25\t3.1\t3.5\t2.25\t3\t3.5\t2.25\t2.95\t3.4\t2.53\t3.25\t3.55\t2.28\t3.14\t3.46\t2.22\t3.35\t3.6\t2.34\t1.82\t1.92\t1.97\t1.93\t1.91\t1.98\t1.83\t1.92\t2.02\t1.96\t0.25\t1.9\t1.95\t1.77\t2.17\t1.93\t1.96\t1.87\t1.83\t1.97\t2.02
-SP1\t31/08/2025\t18:00\tBetis\tAth Bilbao\t1\t2\tA\t0\t0\tD\t9\t15\t2\t6\t9\t16\t4\t10\t1\t4\t0\t1\t3\t3.1\t2.55\t3\t3.1\t2.5\t3.05\t3.25\t2.4\t2.8\t3.13\t2.4\t2.85\t3.2\t2.55\t2.87\t3.2\t2.5\t2.87\t3.2\t2.5\t3.07\t3.15\t2.56\t3.1\t3.25\t2.55\t2.95\t3.15\t2.46\t3.2\t3.15\t2.6\t2.2\t1.67\t2.21\t1.72\t2.23\t1.67\t2.17\t1.64\t2.32\t1.72\t0.25\t1.7\t2.1\t1.76\t2.17\t1.78\t2.1\t1.73\t1.96\t1.81\t2.19\t3.25\t3.2\t2.3\t3.1\t3.2\t2.38\t3.1\t3.1\t2.43\t3.2\t3.13\t2.38\t3.2\t3.1\t2.35\t3.1\t3.1\t2.4\t3.1\t3.1\t2.4\t3.16\t3.28\t2.46\t3.25\t3.2\t2.43\t3.15\t3.14\t2.37\t3.25\t3.3\t2.52\t2.1\t1.73\t2.13\t1.79\t2.17\t1.73\t2.11\t1.69\t2.2\t1.79\t0.25\t1.88\t1.98\t1.83\t2.11\t1.88\t2.05\t1.79\t1.91\t1.86\t2.13
-SP1\t31/08/2025\t18:30\tEspanol\tOsasuna\t1\t0\tH\t0\t0\tD\t10\t10\t4\t3\t13\t14\t2\t3\t2\t3\t0\t0\t2.38\t3.2\t3.1\t2.4\t3.2\t3.1\t2.32\t3.2\t3.25\t2.3\t3.1\t3\t2.4\t3.2\t3\t2.3\t3\t2.87\t2.3\t3\t2.87\t2.43\t3.21\t3.23\t2.4\t3.2\t3.25\t2.34\t3.15\t3.09\t2.44\t3.25\t3.4\t2.2\t1.67\t2.3\t1.67\t2.33\t1.67\t2.22\t1.61\t2.36\t1.7\t-0.25\t2.03\t1.83\t2.07\t1.85\t2.03\t1.84\t1.93\t1.8\t2.07\t1.89\t2.55\t3\t3\t2.5\t3\t3.1\t2.43\t3.15\t3.1\t2.45\t3.1\t3.1\t2.45\t3.1\t3\t2.37\t2.87\t2.87\t2.37\t2.87\t2.87\t2.39\t3.22\t3.35\t2.55\t3.15\t3.15\t2.44\t3.05\t3.04\t2.62\t3.1\t3.3\t2.5\t1.53\t2.33\t1.67\t2.5\t1.58\t2.41\t1.54\t2.64\t1.6\t0\t1.78\t2.1\t1.67\t2.35\t1.78\t2.15\t1.69\t2.09\t1.78\t2.25
-SP1\t31/08/2025\t20:30\tVallecano\tBarcelona\t1\t1\tD\t0\t1\tA\t12\t12\t6\t3\t16\t8\t9\t4\t4\t1\t0\t0\t6.25\t5.5\t1.4\t7.5\t5\t1.4\t7\t5.25\t1.4\t6.5\t4.8\t1.36\t6.75\t5.25\t1.4\t7\t5.25\t1.4\t6.5\t5\t1.4\t6.92\t5.34\t1.41\t7.5\t5.5\t1.43\t6.74\t5.11\t1.39\t7.2\t5.8\t1.44\t1.44\t2.75\t1.44\t2.82\t1.44\t2.8\t1.41\t2.74\t1.47\t2.98\t1.25\t2.03\t1.83\t2.05\t1.86\t2.03\t1.83\t1.97\t1.77\t2.07\t1.86\t6.75\t5.25\t1.4\t7\t5\t1.4\t7\t5.4\t1.38\t7\t5\t1.4\t6.5\t5\t1.42\t6.5\t5\t1.4\t6.5\t5\t1.4\t6.76\t5.37\t1.42\t7\t5.4\t1.44\t6.67\t5.13\t1.4\t7.4\t5.5\t1.45\t1.44\t2.75\t1.46\t2.79\t1.45\t2.9\t1.42\t2.77\t1.49\t3\t1.25\t1.9\t1.95\t2.03\t1.9\t2\t1.95\t1.95\t1.81\t2.03\t1.94
-SP1\t12/09/2025\t20:00\tSevilla\tElche\t2\t2\tD\t1\t0\tH\t7\t5\t3\t2\t23\t19\t2\t2\t4\t3\t0\t0\t1.85\t3.4\t4.5\t1.83\t3.4\t4.6\t1.85\t3.35\t4.6\t1.83\t3.5\t4.5\t1.87\t3.4\t4.33\t1.85\t3.4\t4.33\t1.85\t3.4\t4.2\t1.88\t3.48\t4.76\t1.88\t3.5\t4.6\t1.85\t3.4\t4.47\t1.91\t3.55\t5\t2.2\t1.67\t2.23\t1.7\t2.22\t1.69\t2.18\t1.66\t2.28\t1.76\t-0.5\t1.85\t2\t1.88\t2.04\t1.86\t2\t1.83\t1.94\t1.92\t2.07\t1.9\t3.3\t4.5\t1.9\t3.3\t4.5\t1.86\t3.35\t4.6\t1.93\t3.4\t4.2\t1.87\t3.4\t4.4\t1.85\t3.4\t4.4\t1.85\t3.4\t4.33\t1.93\t3.38\t4.63\t2\t3.4\t4.7\t1.89\t3.33\t4.41\t1.97\t3.45\t4.8\t2.3\t1.62\t2.34\t1.65\t2.3\t1.64\t2.24\t1.62\t2.46\t1.67\t-0.5\t1.93\t1.93\t1.94\t1.98\t2\t2\t1.86\t1.91\t1.97\t2.02
-SP1\t13/09/2025\t13:00\tGetafe\tOviedo\t2\t0\tH\t2\t0\tH\t10\t5\t3\t1\t12\t18\t4\t3\t2\t5\t0\t1\t1.95\t3.1\t4.5\t1.95\t3.1\t4.5\t1.94\t3.1\t4.6\t1.95\t3\t4.75\t2\t3.1\t4.2\t2\t3.1\t4.2\t2\t3\t4.2\t2\t3.05\t4.81\t2.05\t3.3\t4.75\t1.96\t3.06\t4.45\t2.06\t3.1\t5\t2.75\t1.44\t2.86\t1.43\t2.8\t1.45\t2.71\t1.42\t2.94\t1.48\t-0.5\t1.98\t1.88\t2.01\t1.89\t1.98\t1.9\t1.93\t1.83\t2.06\t1.91\t2\t2.88\t4.75\t2\t2.88\t5\t1.98\t3.05\t4.6\t2\t2.8\t5\t2\t2.87\t4.75\t2\t2.9\t4.6\t2\t2.87\t4.6\t1.95\t3.11\t4.95\t2.03\t3.05\t5\t1.99\t2.91\t4.71\t2.04\t3\t5.3\t3.4\t1.33\t2.85\t1.43\t3.4\t1.37\t3.11\t1.35\t3.35\t1.4\t-0.5\t2\t1.85\t1.96\t1.93\t2.01\t1.85\t1.96\t1.81\t2.05\t1.94
-SP1\t13/09/2025\t15:15\tSociedad\tReal Madrid\t1\t2\tA\t0\t2\tA\t23\t16\t4\t6\t17\t7\t12\t4\t2\t1\t0\t1\t5\t4.33\t1.6\t5.5\t4.2\t1.62\t5.4\t4.3\t1.57\t5.75\t4.1\t1.57\t5\t4\t1.63\t5\t4\t1.61\t5\t4\t1.61\t5.3\t4.43\t1.61\t5.75\t4.33\t1.63\t5.25\t4.17\t1.59\t6\t4.4\t1.63\t1.73\t2.1\t1.79\t2.1\t1.8\t2.12\t1.73\t2.04\t1.84\t2.14\t1\t1.83\t2.03\t1.85\t2.07\t1.83\t2.04\t1.8\t1.99\t1.87\t2.08\t5.5\t4.2\t1.57\t5.5\t4.2\t1.57\t5.4\t4.4\t1.56\t5.5\t4.2\t1.57\t5.25\t4.2\t1.58\t5.25\t4.2\t1.57\t5.25\t4.2\t1.57\t5.6\t4.2\t1.62\t5.5\t4.4\t1.62\t5.36\t4.2\t1.58\t6.2\t4.4\t1.63\t1.67\t2.2\t1.68\t2.29\t1.67\t2.3\t1.63\t2.22\t1.68\t2.42\t1\t1.88\t1.98\t1.88\t2.05\t1.88\t2\t1.84\t1.94\t1.9\t2.08
-SP1\t13/09/2025\t17:30\tAth Bilbao\tAlaves\t0\t1\tA\t0\t0\tD\t12\t4\t3\t2\t17\t21\t6\t6\t4\t3\t0\t0\t1.6\t3.9\t5.75\t1.6\t3.75\t6\t1.54\t4\t6.5\t1.57\t3.8\t6.5\t1.58\t3.75\t6.25\t1.57\t3.75\t6.5\t1.57\t3.75\t6.5\t1.61\t3.86\t6.3\t1.6\t4\t6.5\t1.57\t3.83\t6.25\t1.65\t3.9\t6.8\t2.2\t1.67\t2.31\t1.66\t2.33\t1.67\t2.21\t1.62\t2.34\t1.7\t-1\t2.1\t1.78\t2.12\t1.78\t2.1\t1.83\t2.01\t1.78\t2.2\t1.81\t1.6\t3.75\t6.5\t1.57\t3.6\t7\t1.57\t3.9\t6.25\t1.6\t3.6\t6.5\t1.6\t3.7\t6.25\t1.6\t3.7\t6.5\t1.6\t3.6\t6\t1.61\t3.83\t6.6\t1.62\t3.9\t7\t1.59\t3.71\t6.26\t1.64\t3.8\t7.8\t2.38\t1.57\t2.41\t1.61\t2.38\t1.6\t2.31\t1.58\t2.48\t1.65\t-0.75\t1.78\t2.1\t1.79\t2.13\t1.8\t2.1\t1.75\t2.04\t1.84\t2.17
-SP1\t13/09/2025\t20:00\tAth Madrid\tVillarreal\t2\t0\tH\t1\t0\tH\t8\t8\t3\t1\t12\t15\t8\t3\t2\t4\t0\t0\t1.8\t3.7\t4.33\t1.83\t3.75\t4.2\t1.85\t3.6\t4.3\t1.8\t3.7\t4.5\t1.82\t3.75\t4.2\t1.8\t3.75\t4.2\t1.8\t3.7\t4.2\t1.86\t3.62\t4.51\t1.85\t4.1\t4.75\t1.81\t3.7\t4.28\t1.86\t3.85\t4.7\t1.73\t2.1\t1.76\t2.14\t1.73\t2.18\t1.7\t2.09\t1.77\t2.22\t-0.75\t2.03\t1.83\t2.12\t1.79\t2.07\t1.83\t2.01\t1.77\t2.1\t1.87\t1.75\t3.75\t4.5\t1.8\t3.75\t4.5\t1.79\t3.65\t4.6\t1.75\t3.7\t4.75\t1.78\t3.7\t4.4\t1.8\t3.7\t4.4\t1.75\t3.7\t4.4\t1.79\t3.86\t4.7\t1.8\t3.8\t4.75\t1.77\t3.68\t4.51\t1.82\t3.85\t5.1\t1.88\t1.98\t1.76\t2.16\t1.88\t2.05\t1.79\t1.99\t1.89\t2.08\t-0.75\t2.03\t1.83\t2.02\t1.9\t2.03\t1.84\t1.98\t1.81\t2.07\t1.91
-SP1\t14/09/2025\t13:00\tCelta\tGirona\t1\t1\tD\t0\t1\tA\t21\t13\t7\t8\t7\t9\t10\t3\t0\t3\t0\t0\t1.73\t3.9\t4.75\t1.7\t4\t4.6\t1.67\t4.1\t4.75\t1.65\t3.75\t4.5\t1.7\t4\t4.75\t1.7\t4\t4.6\t1.7\t3.9\t4.6\t1.71\t4.22\t4.67\t1.73\t4.2\t4.75\t1.69\t3.97\t4.61\t1.73\t4.2\t5.2\t1.73\t2.1\t1.76\t2.15\t1.76\t2.1\t1.71\t2.07\t1.79\t2.2\t-0.75\t1.9\t1.95\t1.93\t1.98\t1.9\t1.96\t1.85\t1.93\t1.92\t2.02\t1.7\t3.8\t5\t1.73\t3.75\t4.6\t1.8\t3.65\t4.4\t1.7\t3.9\t4.8\t1.72\t3.75\t4.8\t1.73\t3.75\t4.8\t1.7\t3.75\t4.8\t1.77\t3.73\t5\t1.8\t3.9\t5\t1.73\t3.75\t4.71\t1.8\t3.85\t5.3\t1.83\t2.03\t1.88\t2.03\t1.86\t2.03\t1.81\t1.96\t1.9\t2.08\t-0.75\t1.9\t1.95\t2\t1.93\t2\t1.95\t1.92\t1.85\t2.03\t1.94
-SP1\t14/09/2025\t15:15\tLevante\tBetis\t2\t2\tD\t2\t1\tH\t5\t28\t2\t9\t16\t11\t4\t12\t3\t2\t0\t0\t3.25\t3.25\t2.3\t3.2\t3.3\t2.3\t3.3\t3.35\t2.18\t3\t3.25\t2.2\t3.1\t3.25\t2.3\t3.1\t3.3\t2.3\t3.1\t3.25\t2.3\t3.4\t3.48\t2.21\t3.33\t3.45\t2.33\t3.18\t3.26\t2.25\t3.4\t3.25\t2.4\t2\t1.8\t2\t1.89\t2.05\t1.8\t1.99\t1.77\t2.16\t1.82\t0.25\t1.85\t2\t1.99\t1.92\t1.93\t2\t1.86\t1.86\t1.92\t2.05\t3.7\t3.5\t1.95\t3.5\t3.6\t2.05\t3.55\t3.45\t2.08\t3.5\t3.7\t2\t3.5\t3.5\t2.05\t3.5\t3.5\t2.05\t3.4\t3.5\t2.05\t3.52\t3.62\t2.14\t3.7\t3.7\t2.08\t3.53\t3.53\t2.03\t3.8\t3.7\t2.14\t1.73\t2.1\t1.76\t2.15\t1.78\t2.15\t1.74\t2.05\t1.8\t2.22\t0.5\t1.83\t2.03\t1.79\t2.13\t1.83\t2.06\t1.77\t2.01\t1.87\t2.12
-SP1\t14/09/2025\t17:30\tOsasuna\tVallecano\t2\t0\tH\t1\t0\tH\t9\t19\t7\t6\t13\t7\t3\t6\t3\t2\t0\t0\t2.55\t3.2\t2.9\t2.5\t3.1\t3\t2.43\t3.2\t3.05\t2.45\t3.1\t2.75\t2.55\t3.2\t2.85\t2.5\t3.2\t2.87\t2.5\t3.1\t2.87\t2.54\t3.18\t3.08\t2.66\t3.25\t3.05\t2.48\t3.15\t2.91\t2.66\t3.25\t3.05\t2.2\t1.67\t2.35\t1.64\t2.25\t1.67\t2.22\t1.62\t2.4\t1.69\t0\t1.8\t2.05\t1.77\t2.16\t1.86\t2.05\t1.78\t2\t1.84\t2.13\t2.8\t2.9\t2.8\t2.63\t2.88\t3\t2.65\t3\t2.95\t2.75\t3\t2.8\t2.7\t2.95\t2.87\t2`;
+    <div class="card">
+      <div class="stat-label">Gastos del mes</div>
+      <div class="stat-value negative" id="dashExpenses">$0.00</div>
+      <div class="stat-small" id="dashExpenseCount">0 movimientos</div>
+    </div>
 
-        // Parse Tabular Text
-        function parseTSV(text) {
-            const lines = text.trim().split('\n');
-            if (lines.length === 0) return null;
+    <div class="card">
+      <div class="stat-label">Deuda total</div>
+      <div class="stat-value warning" id="dashDebt">$0.00</div>
+      <div class="stat-small">Tarjetas + préstamos</div>
+    </div>
 
-            const headers = lines[0].split('\t').map(h => h.trim());
-            const rows = [];
+  </div>
 
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const cells = lines[i].split('\t').map(c => c.trim());
-                if (cells.length === headers.length) {
-                    const rowObj = {};
-                    headers.forEach((h, index) => {
-                        rowObj[h] = cells[index];
-                    });
-                    rows.push(rowObj);
-                }
+
+  <div class="grid grid-2 section">
+
+    <div class="card">
+
+      <div class="section-header">
+        <h2>Situación mensual</h2>
+        <span class="mini" id="currentMonthLabel"></span>
+      </div>
+
+      <div class="kpi-line">
+        <span>Ingresos</span>
+        <strong id="monthIncome">$0</strong>
+      </div>
+
+      <div class="kpi-line">
+        <span>Gastos</span>
+        <strong id="monthExpense">$0</strong>
+      </div>
+
+      <div class="kpi-line">
+        <span>Ahorro neto</span>
+        <strong id="monthSavings">$0</strong>
+      </div>
+
+      <div class="kpi-line">
+        <span>Compromisos de deuda</span>
+        <strong id="monthDebtPayments">$0</strong>
+      </div>
+
+      <div style="margin-top:18px">
+
+        <div class="mini" style="margin-bottom:7px">
+          Capacidad de ahorro del mes
+        </div>
+
+        <div class="progress">
+          <div class="progress-bar" id="savingProgress"></div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-header">
+        <h2>Próximos pagos</h2>
+        <button class="btn btn-sm btn-ghost" onclick="showPage('tarjetas')">
+          Ver tarjetas
+        </button>
+      </div>
+
+      <div id="upcomingPayments"></div>
+
+    </div>
+
+  </div>
+
+
+  <div class="grid grid-2 section">
+
+    <div class="card">
+
+      <div class="section-header">
+        <h2>Últimos movimientos</h2>
+        <button class="btn btn-sm btn-ghost" onclick="showPage('movimientos')">
+          Ver todos
+        </button>
+      </div>
+
+      <div id="recentTransactions"></div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-header">
+        <h2>Metas de ahorro</h2>
+        <button class="btn btn-sm btn-ghost" onclick="showPage('ahorro')">
+          Ver metas
+        </button>
+      </div>
+
+      <div id="dashboardGoals"></div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+MOVIMIENTOS
+===================================================== -->
+
+<section id="page-movimientos" class="hidden">
+
+  <div class="section-header">
+
+    <div>
+      <h2>Movimientos</h2>
+      <div class="mini">
+        Registra ingresos, gastos y transferencias.
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="openTransactionModal()">
+      + Nuevo movimiento
+    </button>
+
+  </div>
+
+
+  <div class="card">
+
+    <div class="filters" style="margin-bottom:18px">
+
+      <input
+        id="transactionSearch"
+        placeholder="Buscar..."
+        oninput="renderTransactions()"
+      >
+
+      <select id="transactionTypeFilter" onchange="renderTransactions()">
+        <option value="">Todos</option>
+        <option value="income">Ingresos</option>
+        <option value="expense">Gastos</option>
+        <option value="transfer">Transferencias</option>
+      </select>
+
+      <select id="transactionStatusFilter" onchange="renderTransactions()">
+        <option value="">Todos los estados</option>
+        <option value="paid">Confirmados</option>
+        <option value="pending">Pendientes</option>
+      </select>
+
+      <button class="btn btn-secondary" onclick="exportCSV()">
+        Exportar CSV
+      </button>
+
+    </div>
+
+    <div id="transactionsTable"></div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+TARJETAS
+===================================================== -->
+
+<section id="page-tarjetas" class="hidden">
+
+  <div class="section-header">
+
+    <div>
+      <h2>Tarjetas de crédito</h2>
+      <div class="mini">
+        Control de límite, saldo, corte y pago.
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="openCardModal()">
+      + Nueva tarjeta
+    </button>
+
+  </div>
+
+  <div id="cardsGrid" class="grid grid-3"></div>
+
+</section>
+
+
+<!-- =====================================================
+PRESTAMOS
+===================================================== -->
+
+<section id="page-prestamos" class="hidden">
+
+  <div class="section-header">
+
+    <div>
+      <h2>Préstamos y créditos</h2>
+      <div class="mini">
+        Controla saldo pendiente, pago mensual y tasa.
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="openLoanModal()">
+      + Nuevo préstamo
+    </button>
+
+  </div>
+
+  <div class="grid grid-3" id="loansGrid"></div>
+
+</section>
+
+
+<!-- =====================================================
+AHORRO
+===================================================== -->
+
+<section id="page-ahorro" class="hidden">
+
+  <div class="section-header">
+
+    <div>
+      <h2>Metas de ahorro</h2>
+      <div class="mini">
+        Construye tus objetivos financieros.
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="openGoalModal()">
+      + Nueva meta
+    </button>
+
+  </div>
+
+  <div class="grid grid-3" id="goalsGrid"></div>
+
+</section>
+
+
+<!-- =====================================================
+PRESUPUESTO
+===================================================== -->
+
+<section id="page-presupuesto" class="hidden">
+
+  <div class="section-header">
+
+    <div>
+      <h2>Presupuesto mensual</h2>
+      <div class="mini">
+        Define cuánto quieres gastar por categoría.
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="openBudgetModal()">
+      + Categoría
+    </button>
+
+  </div>
+
+  <div class="card">
+
+    <div id="budgetList"></div>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
+AJUSTES
+===================================================== -->
+
+<section id="page-ajustes" class="hidden">
+
+  <div class="section-header">
+    <div>
+      <h2>Ajustes y respaldo</h2>
+      <div class="mini">
+        Tus datos se guardan localmente en este navegador.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+
+    <div class="card">
+
+      <h3>Respaldo</h3>
+
+      <p class="mini">
+        Descarga todos tus datos para conservar una copia.
+      </p>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+
+        <button class="btn btn-primary" onclick="backupData()">
+          Descargar respaldo
+        </button>
+
+        <label class="btn btn-secondary" style="cursor:pointer">
+          Restaurar respaldo
+          <input
+            type="file"
+            id="restoreFile"
+            accept=".json"
+            style="display:none"
+            onchange="restoreData(event)"
+          >
+        </label>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h3>Datos</h3>
+
+      <p class="mini">
+        Elimina todos los datos guardados en este dispositivo.
+      </p>
+
+      <button class="btn btn-danger" onclick="clearAllData()">
+        Borrar todos los datos
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div class="card section">
+
+    <h3>Acerca de esta versión</h3>
+
+    <p class="mini">
+      MiFinanzas es una aplicación financiera personal.
+      No conecta directamente con bancos ni mueve dinero.
+      Los datos se almacenan localmente en el navegador.
+    </p>
+
+  </div>
+
+</section>
+
+</div>
+</main>
+</div>
+
+
+<!-- =====================================================
+MODAL MOVIMIENTO
+===================================================== -->
+
+<div class="modal" id="transactionModal">
+
+<div class="modal-box">
+
+  <div class="modal-header">
+
+    <h2 id="transactionModalTitle">Nuevo movimiento</h2>
+
+    <button class="close" onclick="closeModal('transactionModal')">
+      ×
+    </button>
+
+  </div>
+
+  <form id="transactionForm" onsubmit="saveTransaction(event)">
+
+    <input type="hidden" id="transactionId">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+
+        <label>Tipo</label>
+
+        <select id="transactionType" required>
+          <option value="expense">Gasto</option>
+          <option value="income">Ingreso</option>
+          <option value="transfer">Transferencia</option>
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Fecha</label>
+
+        <input type="date" id="transactionDate" required>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Concepto</label>
+
+        <input
+          type="text"
+          id="transactionDescription"
+          placeholder="Ej. Supermercado"
+          required
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Monto</label>
+
+        <input
+          type="number"
+          id="transactionAmount"
+          min="0.01"
+          step="0.01"
+          required
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Categoría</label>
+
+        <select id="transactionCategory">
+
+          <option>Alimentación</option>
+          <option>Vivienda</option>
+          <option>Transporte</option>
+          <option>Servicios</option>
+          <option>Salud</option>
+          <option>Educación</option>
+          <option>Entretenimiento</option>
+          <option>Compras</option>
+          <option>Deudas</option>
+          <option>Ahorro</option>
+          <option>Otros</option>
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label>Cuenta / tarjeta</label>
+
+        <select id="transactionAccount"></select>
+
+      </div>
+
+
+      <div class="form-group full">
+
+        <label>Estado</label>
+
+        <select id="transactionStatus">
+
+          <option value="paid">Confirmado</option>
+          <option value="pending">Pendiente</option>
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group full">
+
+        <label>Notas</label>
+
+        <textarea
+          id="transactionNotes"
+          rows="3"
+          placeholder="Opcional"
+        ></textarea>
+
+      </div>
+
+    </div>
+
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="btn btn-ghost"
+        onclick="closeModal('transactionModal')"
+      >
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary">
+        Guardar movimiento
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+</div>
+
+
+<!-- =====================================================
+MODAL TARJETA
+===================================================== -->
+
+<div class="modal" id="cardModal">
+
+<div class="modal-box">
+
+  <div class="modal-header">
+
+    <h2>Tarjeta de crédito</h2>
+
+    <button class="close" onclick="closeModal('cardModal')">
+      ×
+    </button>
+
+  </div>
+
+  <form onsubmit="saveCard(event)">
+
+    <input type="hidden" id="cardId">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Banco</label>
+        <input id="cardBank" placeholder="Ej. BBVA" required>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre de tarjeta</label>
+        <input id="cardName" placeholder="Ej. Azul" required>
+      </div>
+
+      <div class="form-group">
+        <label>Límite de crédito</label>
+        <input type="number" id="cardLimit" min="0" step=".01" required>
+      </div>
+
+      <div class="form-group">
+        <label>Saldo utilizado actual</label>
+        <input type="number" id="cardBalance" min="0" step=".01" required>
+      </div>
+
+      <div class="form-group">
+        <label>Día de corte</label>
+        <input type="number" id="cardCutoff" min="1" max="31" required>
+      </div>
+
+      <div class="form-group">
+        <label>Día límite de pago</label>
+        <input type="number" id="cardDue" min="1" max="31" required>
+      </div>
+
+      <div class="form-group">
+        <label>Pago para no generar intereses</label>
+        <input type="number" id="cardPayment" min="0" step=".01">
+      </div>
+
+      <div class="form-group">
+        <label>MSI pendientes</label>
+        <input type="number" id="cardMsi" min="0" step=".01">
+      </div>
+
+      <div class="form-group full">
+        <label>Color</label>
+        <select id="cardColor">
+          <option value="dark">Oscuro</option>
+          <option value="blue">Azul</option>
+          <option value="purple">Morado</option>
+          <option value="green">Verde</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="btn btn-ghost"
+        onclick="closeModal('cardModal')"
+      >
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary">
+        Guardar tarjeta
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+</div>
+
+
+<!-- =====================================================
+MODAL PRESTAMO
+===================================================== -->
+
+<div class="modal" id="loanModal">
+
+<div class="modal-box">
+
+  <div class="modal-header">
+
+    <h2>Préstamo / crédito</h2>
+
+    <button class="close" onclick="closeModal('loanModal')">
+      ×
+    </button>
+
+  </div>
+
+  <form onsubmit="saveLoan(event)">
+
+    <input type="hidden" id="loanId">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Institución</label>
+        <input id="loanInstitution" placeholder="Ej. Banco" required>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre</label>
+        <input id="loanName" placeholder="Ej. Crédito personal" required>
+      </div>
+
+      <div class="form-group">
+        <label>Monto original</label>
+        <input type="number" id="loanOriginal" min="0" step=".01" required>
+      </div>
+
+      <div class="form-group">
+        <label>Saldo pendiente</label>
+        <input type="number" id="loanBalance" min="0" step=".01" required>
+      </div>
+
+      <div class="form-group">
+        <label>Pago mensual</label>
+        <input type="number" id="loanPayment" min="0" step=".01" required>
+      </div>
+
+      <div class="form-group">
+        <label>Tasa anual %</label>
+        <input type="number" id="loanRate" min="0" step=".01">
+      </div>
+
+      <div class="form-group">
+        <label>Próximo pago</label>
+        <input type="date" id="loanDue">
+      </div>
+
+      <div class="form-group">
+        <label>Plazo restante (meses)</label>
+        <input type="number" id="loanMonths" min="0">
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="btn btn-ghost"
+        onclick="closeModal('loanModal')"
+      >
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary">
+        Guardar préstamo
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+</div>
+
+
+<!-- =====================================================
+MODAL META
+===================================================== -->
+
+<div class="modal" id="goalModal">
+
+<div class="modal-box">
+
+  <div class="modal-header">
+
+    <h2>Meta de ahorro</h2>
+
+    <button class="close" onclick="closeModal('goalModal')">
+      ×
+    </button>
+
+  </div>
+
+  <form onsubmit="saveGoal(event)">
+
+    <input type="hidden" id="goalId">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Nombre</label>
+        <input id="goalName" placeholder="Ej. Fondo de emergencia" required>
+      </div>
+
+      <div class="form-group">
+        <label>Fecha objetivo</label>
+        <input type="date" id="goalDate">
+      </div>
+
+      <div class="form-group">
+        <label>Objetivo</label>
+        <input type="number" id="goalTarget" min="0" step=".01" required>
+      </div>
+
+      <div class="form-group">
+        <label>Ahorrado actualmente</label>
+        <input type="number" id="goalCurrent" min="0" step=".01" required>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="btn btn-ghost"
+        onclick="closeModal('goalModal')"
+      >
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary">
+        Guardar meta
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+</div>
+
+
+<!-- =====================================================
+MODAL PRESUPUESTO
+===================================================== -->
+
+<div class="modal" id="budgetModal">
+
+<div class="modal-box">
+
+  <div class="modal-header">
+
+    <h2>Categoría de presupuesto</h2>
+
+    <button class="close" onclick="closeModal('budgetModal')">
+      ×
+    </button>
+
+  </div>
+
+  <form onsubmit="saveBudget(event)">
+
+    <input type="hidden" id="budgetId">
+
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Categoría</label>
+
+        <select id="budgetCategory">
+
+          <option>Alimentación</option>
+          <option>Vivienda</option>
+          <option>Transporte</option>
+          <option>Servicios</option>
+          <option>Salud</option>
+          <option>Educación</option>
+          <option>Entretenimiento</option>
+          <option>Compras</option>
+          <option>Deudas</option>
+          <option>Ahorro</option>
+          <option>Otros</option>
+
+        </select>
+
+      </div>
+
+      <div class="form-group">
+
+        <label>Límite mensual</label>
+
+        <input
+          type="number"
+          id="budgetAmount"
+          min="0"
+          step=".01"
+          required
+        >
+
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+
+      <button
+        type="button"
+        class="btn btn-ghost"
+        onclick="closeModal('budgetModal')"
+      >
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn btn-primary">
+        Guardar presupuesto
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+
+<script>
+
+/* =========================================================
+   DATOS
+========================================================= */
+
+const STORAGE_KEY = "miFinanzas_v1";
+
+let data = loadData();
+
+function defaultData(){
+
+  return {
+
+    transactions:[],
+
+    cards:[],
+
+    loans:[],
+
+    goals:[],
+
+    budgets:[],
+
+    settings:{
+      currency:"MXN"
+    }
+
+  };
+
+}
+
+function loadData(){
+
+  try{
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+
+    if(saved){
+
+      const parsed = JSON.parse(saved);
+
+      return {
+        ...defaultData(),
+        ...parsed
+      };
+
+    }
+
+  }catch(error){
+
+    console.error(error);
+
+  }
+
+  return defaultData();
+
+}
+
+function saveData(){
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(data)
+  );
+
+}
+
+
+/* =========================================================
+   UTILIDADES
+========================================================= */
+
+function money(value){
+
+  const n = Number(value) || 0;
+
+  return new Intl.NumberFormat("es-MX",{
+    style:"currency",
+    currency:"MXN",
+    minimumFractionDigits:2
+  }).format(n);
+
+}
+
+function today(){
+
+  return new Date().toISOString().split("T")[0];
+
+}
+
+function uid(prefix="id"){
+
+  return prefix + "_" +
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2,8);
+
+}
+
+function escapeHTML(value){
+
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+
+}
+
+function showToast(message){
+
+  const toast = document.getElementById("toast");
+
+  toast.textContent = message;
+
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  },2200);
+
+}
+
+function closeModal(id){
+
+  document.getElementById(id).classList.remove("show");
+
+}
+
+function openModal(id){
+
+  document.getElementById(id).classList.add("show");
+
+}
+
+
+/* =========================================================
+   NAVEGACIÓN
+========================================================= */
+
+function showPage(page, button){
+
+  document
+    .querySelectorAll("[id^='page-']")
+    .forEach(section=>{
+      section.classList.add("hidden");
+    });
+
+  document
+    .getElementById("page-" + page)
+    .classList.remove("hidden");
+
+  document
+    .querySelectorAll(".nav button")
+    .forEach(btn=>{
+      btn.classList.remove("active");
+    });
+
+  if(button){
+
+    button.classList.add("active");
+
+  }else{
+
+    const buttons =
+      document.querySelectorAll(".nav button");
+
+    const names=[
+      "dashboard",
+      "movimientos",
+      "tarjetas",
+      "prestamos",
+      "ahorro",
+      "presupuesto",
+      "ajustes"
+    ];
+
+    const index=names.indexOf(page);
+
+    if(index>=0 && buttons[index]){
+      buttons[index].classList.add("active");
+    }
+
+  }
+
+  const titles={
+    dashboard:"Dashboard",
+    movimientos:"Movimientos",
+    tarjetas:"Tarjetas",
+    prestamos:"Préstamos",
+    ahorro:"Metas de ahorro",
+    presupuesto:"Presupuesto",
+    ajustes:"Ajustes"
+  };
+
+  document.getElementById("pageTitle").textContent =
+    titles[page] || "MiFinanzas";
+
+  if(window.innerWidth<=800){
+    document.getElementById("sidebar").classList.remove("open");
+  }
+
+  renderAll();
+
+}
+
+function toggleSidebar(){
+
+  document
+    .getElementById("sidebar")
+    .classList.toggle("open");
+
+}
+
+
+/* =========================================================
+   CUENTAS
+========================================================= */
+
+function getAccounts(){
+
+  const accounts=[];
+
+  /*
+    Las cuentas normales se crean indirectamente
+    usando movimientos.
+
+    También se generan cuentas virtuales para tarjetas.
+  */
+
+  data.cards.forEach(card=>{
+
+    accounts.push({
+      id:"card_" + card.id,
+      name:`💳 ${card.bank} - ${card.name}`,
+      type:"card"
+    });
+
+  });
+
+  accounts.push({
+    id:"cash",
+    name:"💵 Efectivo",
+    type:"cash"
+  });
+
+  accounts.push({
+    id:"bank",
+    name:"🏦 Cuenta bancaria",
+    type:"bank"
+  });
+
+  return accounts;
+
+}
+
+function populateAccountSelect(){
+
+  const select=
+    document.getElementById("transactionAccount");
+
+  if(!select)return;
+
+  const accounts=getAccounts();
+
+  select.innerHTML=accounts
+    .map(a=>`
+      <option value="${a.id}">
+        ${escapeHTML(a.name)}
+      </option>
+    `)
+    .join("");
+
+}
+
+
+/* =========================================================
+   MOVIMIENTOS
+========================================================= */
+
+function openTransactionModal(id=null){
+
+  populateAccountSelect();
+
+  document.getElementById("transactionForm").reset();
+
+  document.getElementById("transactionId").value="";
+
+  document.getElementById("transactionDate").value=today();
+
+  document.getElementById("transactionStatus").value="paid";
+
+  document.getElementById("transactionType").value="expense";
+
+  document.getElementById("transactionModalTitle").textContent=
+    id ? "Editar movimiento" : "Nuevo movimiento";
+
+  if(id){
+
+    const item=
+      data.transactions.find(x=>x.id===id);
+
+    if(!item)return;
+
+    document.getElementById("transactionId").value=item.id;
+
+    document.getElementById("transactionType").value=item.type;
+
+    document.getElementById("transactionDate").value=item.date;
+
+    document.getElementById("transactionDescription").value=item.description;
+
+    document.getElementById("transactionAmount").value=item.amount;
+
+    document.getElementById("transactionCategory").value=item.category;
+
+    document.getElementById("transactionAccount").value=item.account;
+
+    document.getElementById("transactionStatus").value=item.status;
+
+    document.getElementById("transactionNotes").value=item.notes || "";
+
+  }
+
+  openModal("transactionModal");
+
+}
+
+function saveTransaction(event){
+
+  event.preventDefault();
+
+  const id=
+    document.getElementById("transactionId").value;
+
+  const item={
+
+    id:id || uid("tx"),
+
+    type:document.getElementById("transactionType").value,
+
+    date:document.getElementById("transactionDate").value,
+
+    description:document
+      .getElementById("transactionDescription").value.trim(),
+
+    amount:Number(
+      document.getElementById("transactionAmount").value
+    ),
+
+    category:document.getElementById("transactionCategory").value,
+
+    account:document.getElementById("transactionAccount").value,
+
+    status:document.getElementById("transactionStatus").value,
+
+    notes:document.getElementById("transactionNotes").value.trim()
+
+  };
+
+  if(id){
+
+    const index=
+      data.transactions.findIndex(x=>x.id===id);
+
+    if(index>=0){
+      data.transactions[index]=item;
+    }
+
+  }else{
+
+    data.transactions.unshift(item);
+
+  }
+
+  saveData();
+
+  closeModal("transactionModal");
+
+  renderAll();
+
+  showToast(
+    id ? "Movimiento actualizado" : "Movimiento guardado"
+  );
+
+}
+
+function deleteTransaction(id){
+
+  if(!confirm("¿Eliminar este movimiento?"))return;
+
+  data.transactions=
+    data.transactions.filter(x=>x.id!==id);
+
+  saveData();
+
+  renderAll();
+
+  showToast("Movimiento eliminado");
+
+}
+
+function renderTransactions(){
+
+  const container=
+    document.getElementById("transactionsTable");
+
+  if(!container)return;
+
+  const search=
+    (document.getElementById("transactionSearch")?.value || "")
+      .toLowerCase();
+
+  const type=
+    document.getElementById("transactionTypeFilter")?.value || "";
+
+  const status=
+    document.getElementById("transactionStatusFilter")?.value || "";
+
+  let list=[...data.transactions];
+
+  if(search){
+
+    list=list.filter(x=>
+      `${x.description} ${x.category} ${x.notes || ""}`
+        .toLowerCase()
+        .includes(search)
+    );
+
+  }
+
+  if(type){
+
+    list=list.filter(x=>x.type===type);
+
+  }
+
+  if(status){
+
+    list=list.filter(x=>x.status===status);
+
+  }
+
+  list.sort((a,b)=>b.date.localeCompare(a.date));
+
+  if(!list.length){
+
+    container.innerHTML=`
+      <div class="empty">
+        <strong>No hay movimientos</strong>
+        Registra tu primer ingreso o gasto.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  const rows=list.map(x=>{
+
+    let badge="";
+
+    if(x.type==="income"){
+      badge=`<span class="badge badge-income">Ingreso</span>`;
+    }else if(x.type==="expense"){
+      badge=`<span class="badge badge-expense">Gasto</span>`;
+    }else{
+      badge=`<span class="badge badge-transfer">Transferencia</span>`;
+    }
+
+    const statusBadge=
+      x.status==="pending"
+      ? `<span class="badge badge-pending">Pendiente</span>`
+      : `<span class="badge badge-paid">Confirmado</span>`;
+
+    const sign=
+      x.type==="income" ? "+" :
+      x.type==="expense" ? "-" : "";
+
+    const amountClass=
+      x.type==="income"
+      ? "positive"
+      : x.type==="expense"
+      ? "negative"
+      : "";
+
+    return `
+      <tr>
+
+        <td>${escapeHTML(x.date)}</td>
+
+        <td>
+          <strong>${escapeHTML(x.description)}</strong>
+          <div class="mini">${escapeHTML(x.category)}</div>
+        </td>
+
+        <td>${badge}</td>
+
+        <td class="${amountClass}">
+          ${sign}${money(x.amount)}
+        </td>
+
+        <td>${statusBadge}</td>
+
+        <td>
+          <button
+            class="btn btn-sm btn-ghost"
+            onclick="openTransactionModal('${x.id}')"
+          >
+            Editar
+          </button>
+
+          <button
+            class="btn btn-sm btn-danger"
+            onclick="deleteTransaction('${x.id}')"
+          >
+            ×
+          </button>
+        </td>
+
+      </tr>
+    `;
+
+  }).join("");
+
+  container.innerHTML=`
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>Fecha</th>
+            <th>Concepto</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+          ${rows}
+        </tbody>
+
+      </table>
+
+    </div>
+  `;
+
+}
+
+
+/* =========================================================
+   TARJETAS
+========================================================= */
+
+function openCardModal(id=null){
+
+  document.querySelector("#cardModal form").reset();
+
+  document.getElementById("cardId").value="";
+
+  if(id){
+
+    const card=data.cards.find(x=>x.id===id);
+
+    if(!card)return;
+
+    document.getElementById("cardId").value=card.id;
+
+    document.getElementById("cardBank").value=card.bank;
+
+    document.getElementById("cardName").value=card.name;
+
+    document.getElementById("cardLimit").value=card.limit;
+
+    document.getElementById("cardBalance").value=card.balance;
+
+    document.getElementById("cardCutoff").value=card.cutoff;
+
+    document.getElementById("cardDue").value=card.due;
+
+    document.getElementById("cardPayment").value=card.payment || "";
+
+    document.getElementById("cardMsi").value=card.msi || "";
+
+    document.getElementById("cardColor").value=card.color || "dark";
+
+  }
+
+  openModal("cardModal");
+
+}
+
+function saveCard(event){
+
+  event.preventDefault();
+
+  const id=
+    document.getElementById("cardId").value;
+
+  const card={
+
+    id:id || uid("card"),
+
+    bank:document.getElementById("cardBank").value.trim(),
+
+    name:document.getElementById("cardName").value.trim(),
+
+    limit:Number(document.getElementById("cardLimit").value),
+
+    balance:Number(document.getElementById("cardBalance").value),
+
+    cutoff:Number(document.getElementById("cardCutoff").value),
+
+    due:Number(document.getElementById("cardDue").value),
+
+    payment:Number(document.getElementById("cardPayment").value || 0),
+
+    msi:Number(document.getElementById("cardMsi").value || 0),
+
+    color:document.getElementById("cardColor").value
+
+  };
+
+  if(id){
+
+    const index=data.cards.findIndex(x=>x.id===id);
+
+    if(index>=0)data.cards[index]=card;
+
+  }else{
+
+    data.cards.push(card);
+
+  }
+
+  saveData();
+
+  closeModal("cardModal");
+
+  renderAll();
+
+  showToast(
+    id ? "Tarjeta actualizada" : "Tarjeta agregada"
+  );
+
+}
+
+function deleteCard(id){
+
+  if(!confirm(
+    "¿Eliminar esta tarjeta? Los movimientos no se eliminarán."
+  ))return;
+
+  data.cards=data.cards.filter(x=>x.id!==id);
+
+  saveData();
+
+  renderAll();
+
+}
+
+function cardClass(color){
+
+  return {
+
+    dark:"linear-gradient(135deg,#111827,#334155)",
+
+    blue:"linear-gradient(135deg,#1d4ed8,#60a5fa)",
+
+    purple:"linear-gradient(135deg,#581c87,#a855f7)",
+
+    green:"linear-gradient(135deg,#166534,#4ade80)"
+
+  }[color] || "linear-gradient(135deg,#111827,#334155)";
+
+}
+
+function renderCards(){
+
+  const container=
+    document.getElementById("cardsGrid");
+
+  if(!container)return;
+
+  if(!data.cards.length){
+
+    container.innerHTML=`
+      <div class="card">
+        <div class="empty">
+          <strong>No tienes tarjetas registradas</strong>
+          Agrega tus tarjetas para controlar límites, saldos y fechas.
+        </div>
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML=data.cards.map(card=>{
+
+    const utilization=
+      card.limit > 0
+      ? Math.min(100,(card.balance/card.limit)*100)
+      : 0;
+
+    const available=
+      Math.max(0,card.limit-card.balance);
+
+    return `
+
+      <div class="card">
+
+        <div
+          class="credit-card"
+          style="background:${cardClass(card.color)}"
+        >
+
+          <div class="bank">
+            ${escapeHTML(card.bank)}
+          </div>
+
+          <div class="name">
+            ${escapeHTML(card.name)}
+          </div>
+
+          <div class="number">
+            •••• •••• ••••
+          </div>
+
+          <div class="credit-card-bottom">
+
+            <span>
+              CORTE<br>
+              ${card.cutoff}
+            </span>
+
+            <span>
+              PAGO<br>
+              ${card.due}
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div style="margin-top:17px">
+
+          <div class="kpi-line">
+            <span>Saldo</span>
+            <strong>${money(card.balance)}</strong>
+          </div>
+
+          <div class="kpi-line">
+            <span>Disponible</span>
+            <strong class="positive">
+              ${money(available)}
+            </strong>
+          </div>
+
+          <div class="kpi-line">
+            <span>Límite</span>
+            <strong>${money(card.limit)}</strong>
+          </div>
+
+          <div class="mini">
+            Utilización ${utilization.toFixed(1)}%
+          </div>
+
+          <div class="progress" style="margin-top:7px">
+            <div
+              class="progress-bar"
+              style="width:${utilization}%"
+            ></div>
+          </div>
+
+        </div>
+
+
+        <div style="margin-top:16px">
+
+          <div class="kpi-line">
+            <span>Pago para no generar intereses</span>
+            <strong>${money(card.payment)}</strong>
+          </div>
+
+          <div class="kpi-line">
+            <span>MSI pendientes</span>
+            <strong>${money(card.msi)}</strong>
+          </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+          <button
+            class="btn btn-sm btn-ghost"
+            onclick="openCardModal('${card.id}')"
+          >
+            Editar
+          </button>
+
+          <button
+            class="btn btn-sm btn-danger"
+            onclick="deleteCard('${card.id}')"
+          >
+            Eliminar
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }).join("");
+
+}
+
+
+/* =========================================================
+   PRÉSTAMOS
+========================================================= */
+
+function openLoanModal(id=null){
+
+  document.querySelector("#loanModal form").reset();
+
+  document.getElementById("loanId").value="";
+
+  if(id){
+
+    const loan=data.loans.find(x=>x.id===id);
+
+    if(!loan)return;
+
+    document.getElementById("loanId").value=loan.id;
+
+    document.getElementById("loanInstitution").value=loan.institution;
+
+    document.getElementById("loanName").value=loan.name;
+
+    document.getElementById("loanOriginal").value=loan.original;
+
+    document.getElementById("loanBalance").value=loan.balance;
+
+    document.getElementById("loanPayment").value=loan.payment;
+
+    document.getElementById("loanRate").value=loan.rate || "";
+
+    document.getElementById("loanDue").value=loan.due || "";
+
+    document.getElementById("loanMonths").value=loan.months || "";
+
+  }
+
+  openModal("loanModal");
+
+}
+
+function saveLoan(event){
+
+  event.preventDefault();
+
+  const id=document.getElementById("loanId").value;
+
+  const loan={
+
+    id:id || uid("loan"),
+
+    institution:
+      document.getElementById("loanInstitution").value.trim(),
+
+    name:
+      document.getElementById("loanName").value.trim(),
+
+    original:
+      Number(document.getElementById("loanOriginal").value),
+
+    balance:
+      Number(document.getElementById("loanBalance").value),
+
+    payment:
+      Number(document.getElementById("loanPayment").value),
+
+    rate:
+      Number(document.getElementById("loanRate").value || 0),
+
+    due:
+      document.getElementById("loanDue").value,
+
+    months:
+      Number(document.getElementById("loanMonths").value || 0)
+
+  };
+
+  if(id){
+
+    const index=data.loans.findIndex(x=>x.id===id);
+
+    if(index>=0)data.loans[index]=loan;
+
+  }else{
+
+    data.loans.push(loan);
+
+  }
+
+  saveData();
+
+  closeModal("loanModal");
+
+  renderAll();
+
+  showToast(
+    id ? "Préstamo actualizado" : "Préstamo agregado"
+  );
+
+}
+
+function deleteLoan(id){
+
+  if(!confirm("¿Eliminar este préstamo?"))return;
+
+  data.loans=data.loans.filter(x=>x.id!==id);
+
+  saveData();
+
+  renderAll();
+
+}
+
+function renderLoans(){
+
+  const container=
+    document.getElementById("loansGrid");
+
+  if(!container)return;
+
+  if(!data.loans.length){
+
+    container.innerHTML=`
+      <div class="card">
+        <div class="empty">
+          <strong>No tienes préstamos registrados</strong>
+          Agrega créditos o préstamos para ver tu deuda.
+        </div>
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML=data.loans.map(loan=>{
+
+    const progress=
+      loan.original>0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            ((loan.original-loan.balance)/loan.original)*100
+          )
+        )
+      : 0;
+
+    return `
+
+      <div class="card">
+
+        <div class="stat-label">
+          ${escapeHTML(loan.institution)}
+        </div>
+
+        <h3 style="margin:3px 0 18px">
+          ${escapeHTML(loan.name)}
+        </h3>
+
+        <div class="kpi-line">
+          <span>Saldo pendiente</span>
+          <strong class="negative">
+            ${money(loan.balance)}
+          </strong>
+        </div>
+
+        <div class="kpi-line">
+          <span>Pago mensual</span>
+          <strong>${money(loan.payment)}</strong>
+        </div>
+
+        <div class="kpi-line">
+          <span>Tasa anual</span>
+          <strong>${loan.rate || 0}%</strong>
+        </div>
+
+        <div class="kpi-line">
+          <span>Meses restantes</span>
+          <strong>${loan.months || "—"}</strong>
+        </div>
+
+        <div class="mini" style="margin:12px 0 7px">
+          Capital liquidado: ${progress.toFixed(1)}%
+        </div>
+
+        <div class="progress">
+          <div
+            class="progress-bar"
+            style="width:${progress}%"
+          ></div>
+        </div>
+
+        <div class="form-actions">
+
+          <button
+            class="btn btn-sm btn-ghost"
+            onclick="openLoanModal('${loan.id}')"
+          >
+            Editar
+          </button>
+
+          <button
+            class="btn btn-sm btn-danger"
+            onclick="deleteLoan('${loan.id}')"
+          >
+            Eliminar
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }).join("");
+
+}
+
+
+/* =========================================================
+   METAS
+========================================================= */
+
+function openGoalModal(id=null){
+
+  document.querySelector("#goalModal form").reset();
+
+  document.getElementById("goalId").value="";
+
+  if(id){
+
+    const goal=data.goals.find(x=>x.id===id);
+
+    if(!goal)return;
+
+    document.getElementById("goalId").value=goal.id;
+
+    document.getElementById("goalName").value=goal.name;
+
+    document.getElementById("goalDate").value=goal.date || "";
+
+    document.getElementById("goalTarget").value=goal.target;
+
+    document.getElementById("goalCurrent").value=goal.current;
+
+  }
+
+  openModal("goalModal");
+
+}
+
+function saveGoal(event){
+
+  event.preventDefault();
+
+  const id=document.getElementById("goalId").value;
+
+  const goal={
+
+    id:id || uid("goal"),
+
+    name:
+      document.getElementById("goalName").value.trim(),
+
+    date:
+      document.getElementById("goalDate").value,
+
+    target:
+      Number(document.getElementById("goalTarget").value),
+
+    current:
+      Number(document.getElementById("goalCurrent").value)
+
+  };
+
+  if(id){
+
+    const index=data.goals.findIndex(x=>x.id===id);
+
+    if(index>=0)data.goals[index]=goal;
+
+  }else{
+
+    data.goals.push(goal);
+
+  }
+
+  saveData();
+
+  closeModal("goalModal");
+
+  renderAll();
+
+  showToast(
+    id ? "Meta actualizada" : "Meta creada"
+  );
+
+}
+
+function deleteGoal(id){
+
+  if(!confirm("¿Eliminar esta meta?"))return;
+
+  data.goals=data.goals.filter(x=>x.id!==id);
+
+  saveData();
+
+  renderAll();
+
+}
+
+function renderGoals(){
+
+  const container=
+    document.getElementById("goalsGrid");
+
+  if(!container)return;
+
+  if(!data.goals.length){
+
+    container.innerHTML=`
+      <div class="card">
+        <div class="empty">
+          <strong>No tienes metas</strong>
+          Crea una meta como fondo de emergencia, vacaciones o automóvil.
+        </div>
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML=data.goals.map(goal=>{
+
+    const progress=
+      goal.target>0
+      ? Math.min(100,(goal.current/goal.target)*100)
+      : 0;
+
+    const remaining=
+      Math.max(0,goal.target-goal.current);
+
+    return `
+
+      <div class="card">
+
+        <div class="stat-label">Meta de ahorro</div>
+
+        <h3 style="margin:4px 0 17px">
+          ${escapeHTML(goal.name)}
+        </h3>
+
+        <div class="stat-value">
+          ${money(goal.current)}
+        </div>
+
+        <div class="mini">
+          de ${money(goal.target)}
+        </div>
+
+        <div style="margin-top:15px">
+
+          <div class="progress">
+            <div
+              class="progress-bar"
+              style="width:${progress}%"
+            ></div>
+          </div>
+
+          <div class="kpi-line">
+
+            <span>${progress.toFixed(1)}%</span>
+
+            <strong>
+              Faltan ${money(remaining)}
+            </strong>
+
+          </div>
+
+        </div>
+
+        ${
+          goal.date
+          ? `<div class="mini">
+              Fecha objetivo: ${escapeHTML(goal.date)}
+            </div>`
+          : ""
+        }
+
+        <div class="form-actions">
+
+          <button
+            class="btn btn-sm btn-ghost"
+            onclick="openGoalModal('${goal.id}')"
+          >
+            Editar
+          </button>
+
+          <button
+            class="btn btn-sm btn-danger"
+            onclick="deleteGoal('${goal.id}')"
+          >
+            Eliminar
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }).join("");
+
+}
+
+
+/* =========================================================
+   PRESUPUESTOS
+========================================================= */
+
+function openBudgetModal(id=null){
+
+  document.querySelector("#budgetModal form").reset();
+
+  document.getElementById("budgetId").value="";
+
+  if(id){
+
+    const budget=
+      data.budgets.find(x=>x.id===id);
+
+    if(!budget)return;
+
+    document.getElementById("budgetId").value=budget.id;
+
+    document.getElementById("budgetCategory").value=
+      budget.category;
+
+    document.getElementById("budgetAmount").value=
+      budget.amount;
+
+  }
+
+  openModal("budgetModal");
+
+}
+
+function saveBudget(event){
+
+  event.preventDefault();
+
+  const id=
+    document.getElementById("budgetId").value;
+
+  const budget={
+
+    id:id || uid("budget"),
+
+    category:
+      document.getElementById("budgetCategory").value,
+
+    amount:
+      Number(document.getElementById("budgetAmount").value)
+
+  };
+
+  if(id){
+
+    const index=
+      data.budgets.findIndex(x=>x.id===id);
+
+    if(index>=0)data.budgets[index]=budget;
+
+  }else{
+
+    data.budgets.push(budget);
+
+  }
+
+  saveData();
+
+  closeModal("budgetModal");
+
+  renderAll();
+
+  showToast("Presupuesto guardado");
+
+}
+
+function deleteBudget(id){
+
+  if(!confirm("¿Eliminar esta categoría de presupuesto?"))return;
+
+  data.budgets=
+    data.budgets.filter(x=>x.id!==id);
+
+  saveData();
+
+  renderAll();
+
+}
+
+function currentMonth(){
+
+  return new Date().toISOString().slice(0,7);
+
+}
+
+function monthExpensesByCategory(category){
+
+  const month=currentMonth();
+
+  return data.transactions
+    .filter(x=>
+      x.type==="expense" &&
+      x.status!=="pending" &&
+      x.date.startsWith(month) &&
+      x.category===category
+    )
+    .reduce((sum,x)=>sum+Number(x.amount),0);
+
+}
+
+function renderBudget(){
+
+  const container=
+    document.getElementById("budgetList");
+
+  if(!container)return;
+
+  if(!data.budgets.length){
+
+    container.innerHTML=`
+      <div class="empty">
+        <strong>No tienes presupuesto configurado</strong>
+        Agrega categorías para controlar tus gastos.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML=data.budgets.map(budget=>{
+
+    const spent=
+      monthExpensesByCategory(budget.category);
+
+    const percentage=
+      budget.amount>0
+      ? Math.min(100,(spent/budget.amount)*100)
+      : 0;
+
+    const over=spent>budget.amount;
+
+    return `
+
+      <div style="margin-bottom:25px">
+
+        <div class="kpi-line">
+
+          <strong>
+            ${escapeHTML(budget.category)}
+          </strong>
+
+          <span>
+            ${money(spent)}
+            /
+            ${money(budget.amount)}
+          </span>
+
+        </div>
+
+        <div class="progress">
+
+          <div
+            class="progress-bar"
+            style="
+              width:${percentage}%;
+              background:${over ? "#dc2626" : "#2563eb"}
+            "
+          ></div>
+
+        </div>
+
+        <div class="kpi-line">
+
+          <span class="mini">
+            ${
+              over
+              ? "Presupuesto excedido"
+              : `Disponible ${money(budget.amount-spent)}`
             }
+          </span>
 
-            return { headers, rows };
-        }
-
-        // Initialize App
-        function initApp() {
-            lucide.createIcons();
-
-            // Load default dataset if storage is empty
-            if (savedTables.length === 0) {
-                const parsed = parseTSV(initialUserData);
-                if (parsed) {
-                    const defaultItem = {
-                        id: 'table_' + Date.now(),
-                        name: 'La Liga 2025/26 - Muestras',
-                        date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                        headers: parsed.headers,
-                        rows: parsed.rows
-                    };
-                    savedTables.push(defaultItem);
-                    saveToLocalStorage();
-                }
-            }
-
-            renderSavedTablesList();
-
-            if (savedTables.length > 0) {
-                setActiveTable(savedTables[0].id);
-            } else {
-                showEmptyState();
-            }
-
-            setupEventListeners();
-        }
-
-        // Event Listeners Setup
-        function setupEventListeners() {
-            // Modal controls
-            const modal = document.getElementById('pasteModal');
-            const openBtns = [document.getElementById('btnOpenPasteModal'), document.getElementById('btnOpenPasteModalEmpty')];
-            const closeBtn = document.getElementById('btnClosePasteModal');
-            const cancelBtn = document.getElementById('btnCancelPaste');
-            const saveBtn = document.getElementById('btnSavePastedData');
-
-            openBtns.forEach(btn => {
-                if (btn) btn.addEventListener('click', () => {
-                    document.getElementById('rawPasteData').value = '';
-                    document.getElementById('tableNameInput').value = '';
-                    modal.classList.remove('hidden');
-                });
-            });
-
-            [closeBtn, cancelBtn].forEach(btn => {
-                if (btn) btn.addEventListener('click', () => modal.classList.add('hidden'));
-            });
-
-            saveBtn.addEventListener('click', handleSavePastedData);
-
-            // Table Actions
-            document.getElementById('btnDeleteActive').addEventListener('click', handleDeleteActiveTable);
-            document.getElementById('btnClearAll').addEventListener('click', handleClearAll);
-            document.getElementById('btnExportCsv').addEventListener('click', handleExportCsv);
-            document.getElementById('tableSearch').addEventListener('input', handleTableSearch);
-        }
-
-        // Handle Paste & Save
-        function handleSavePastedData() {
-            const rawText = document.getElementById('rawPasteData').value;
-            let name = document.getElementById('tableNameInput').value.trim();
-
-            if (!rawText.trim()) {
-                alert('Por favor pega un texto con formato tabular.');
-                return;
-            }
-
-            const parsed = parseTSV(rawText);
-            if (!parsed || parsed.rows.length === 0) {
-                alert('No se pudieron extraer filas válidas. Asegúrate de incluir el encabezado y las filas divididas por tabuladores.');
-                return;
-            }
-
-            if (!name) {
-                name = `Tabla de Datos #${savedTables.length + 1}`;
-            }
-
-            const newTable = {
-                id: 'table_' + Date.now(),
-                name: name,
-                date: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                headers: parsed.headers,
-                rows: parsed.rows
-            };
-
-            savedTables.unshift(newTable);
-            saveToLocalStorage();
-            renderSavedTablesList();
-            setActiveTable(newTable.id);
-
-            document.getElementById('pasteModal').classList.add('hidden');
-        }
-
-        // Local Storage Helper
-        function saveToLocalStorage() {
-            localStorage.setItem('betags_saved_tables', JSON.stringify(savedTables));
-        }
-
-        // Render Sidebar List
-        function renderSavedTablesList() {
-            const listContainer = document.getElementById('savedTablesList');
-            const countBadge = document.getElementById('savedCount');
-            listContainer.innerHTML = '';
-
-            countBadge.textContent = savedTables.length;
-
-            if (savedTables.length === 0) {
-                listContainer.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay tablas guardadas</p>`;
-                return;
-            }
-
-            savedTables.forEach(table => {
-                const isActive = table.id === activeTableId;
-                const item = document.createElement('div');
-                item.className = `p-3 rounded-lg cursor-pointer border text-xs transition flex flex-col gap-1 ${
-                    isActive 
-                    ? 'bg-blue-600/10 border-blue-500/40 text-blue-300' 
-                    : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                }`;
-
-                item.innerHTML = `
-                    <div class="flex justify-between items-center font-medium text-slate-200">
-                        <span class="truncate pr-2">${escapeHtml(table.name)}</span>
-                        <span class="bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded text-[10px] font-mono">${table.rows.length}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[10px] text-slate-500">
-                        <span>${table.date}</span>
-                        <span>${table.headers.length} cols</span>
-                    </div>
-                `;
-
-                item.addEventListener('click', () => setActiveTable(table.id));
-                listContainer.appendChild(item);
-            });
-        }
-
-        // Set Active Table State
-        function setActiveTable(id) {
-            activeTableId = id;
-            renderSavedTablesList();
-
-            const table = savedTables.find(t => t.id === id);
-            if (!table) {
-                showEmptyState();
-                return;
-            }
-
-            document.getElementById('noDataState').classList.add('hidden');
-            const activeContainer = document.getElementById('activeDataContainer');
-            activeContainer.classList.remove('hidden');
-            activeContainer.classList.add('flex');
-
-            // Render Header Info
-            document.getElementById('activeTableTitle').textContent = table.name;
-            document.getElementById('activeTableBadge').textContent = `${table.rows.length} Filas / ${table.headers.length} Columnas`;
-            document.getElementById('activeTableDate').textContent = `Guardado el: ${table.date}`;
-
-            // Reset search input
-            document.getElementById('tableSearch').value = '';
-
-            // Render Metrics & Charts
-            calculateAndRenderStats(table);
-
-            // Render Table
-            renderTableData(table.headers, table.rows);
-        }
-
-        function showEmptyState() {
-            activeTableId = null;
-            document.getElementById('activeDataContainer').classList.add('hidden');
-            document.getElementById('activeDataContainer').classList.remove('flex');
-            document.getElementById('noDataState').classList.remove('hidden');
-            renderSavedTablesList();
-        }
-
-        // Calculate Analytics Stats & Render Charts
-        function calculateAndRenderStats(table) {
-            const rows = table.rows;
-            const total = rows.length;
-
-            if (total === 0) return;
-
-            let totalGoals = 0;
-            let over25Count = 0;
-            let bttsCount = 0;
-
-            const resultsCount = { H: 0, D: 0, A: 0 };
-            const scoreFreq = {};
-
-            rows.forEach(r => {
-                const fthg = parseInt(r.FTHG) || 0;
-                const ftag = parseInt(r.FTAG) || 0;
-                const ftr = r.FTR || (fthg > ftag ? 'H' : fthg < ftag ? 'A' : 'D');
-
-                const matchGoals = fthg + ftag;
-                totalGoals += matchGoals;
-
-                if (matchGoals > 2.5) over25Count++;
-                if (fthg > 0 && ftag > 0) bttsCount++;
-
-                if (resultsCount[ftr] !== undefined) resultsCount[ftr]++;
-
-                const score = `${fthg}-${ftag}`;
-                scoreFreq[score] = (scoreFreq[score] || 0) + 1;
-            });
-
-            // Set Dashboard Cards
-            document.getElementById('statTotalMatches').textContent = total;
-            document.getElementById('statAvgGoals').textContent = (totalGoals / total).toFixed(2);
-            document.getElementById('statOver25').textContent = Math.round((over25Count / total) * 100) + '%';
-            document.getElementById('statBTTS').textContent = Math.round((bttsCount / total) * 100) + '%';
-
-            // Chart 1: Results Distribution (Pie)
-            if (chartResultsInstance) chartResultsInstance.destroy();
-            const ctx1 = document.getElementById('chartResults').getContext('2d');
-            chartResultsInstance = new Chart(ctx1, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Victoria Local (H)', 'Empate (D)', 'Victoria Visitante (A)'],
-                    datasets: [{
-                        data: [resultsCount.H, resultsCount.D, resultsCount.A],
-                        backgroundColor: ['#3b82f6', '#64748b', '#ef4444'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 } } }
-                    }
-                }
-            });
-
-            // Chart 2: Top Scores (Bar)
-            const sortedScores = Object.entries(scoreFreq).sort((a,b) => b[1] - a[1]).slice(0, 5);
-            if (chartScoresInstance) chartScoresInstance.destroy();
-            const ctx2 = document.getElementById('chartScores').getContext('2d');
-            chartScoresInstance = new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels: sortedScores.map(s => s[0]),
-                    datasets: [{
-                        label: 'Frecuencia',
-                        data: sortedScores.map(s => s[1]),
-                        backgroundColor: '#10b981',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-                        y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#1e293b' } }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-        }
-
-        // Render Data Table View
-        function renderTableData(headers, rows) {
-            const thead = document.getElementById('tableHeader');
-            const tbody = document.getElementById('tableBody');
-
-            thead.innerHTML = '';
-            tbody.innerHTML = '';
-
-            // Header Row
-            const trHead = document.createElement('tr');
-            headers.forEach(h => {
-                const th = document.createElement('th');
-                th.className = 'px-3 py-2.5 font-semibold text-slate-300 border-r border-slate-700/50 last:border-0';
-                th.textContent = h;
-                trHead.appendChild(th);
-            });
-            thead.appendChild(trHead);
-
-            // Body Rows
-            rows.forEach((row, idx) => {
-                const tr = document.createElement('tr');
-                tr.className = idx % 2 === 0 ? 'bg-slate-900/40 hover:bg-slate-800/50' : 'bg-slate-950/40 hover:bg-slate-800/50';
-
-                headers.forEach(h => {
-                    const td = document.createElement('td');
-                    td.className = 'px-3 py-1.5 border-r border-slate-800/50 last:border-0 text-slate-300';
-                    td.textContent = row[h] !== undefined ? row[h] : '';
-                    tr.appendChild(td);
-                });
-
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById('filteredRowsCount').textContent = `Mostrando ${rows.length} de ${rows.length} registros`;
-        }
-
-        // Table Search Filter
-        function handleTableSearch(e) {
-            const query = e.target.value.toLowerCase();
-            const table = savedTables.find(t => t.id === activeTableId);
-            if (!table) return;
-
-            const filteredRows = table.rows.filter(row => {
-                return Object.values(row).some(val => String(val).toLowerCase().includes(query));
-            });
-
-            renderTableData(table.headers, filteredRows);
-            document.getElementById('filteredRowsCount').textContent = `Mostrando ${filteredRows.length} de ${table.rows.length} registros`;
-        }
-
-        // Delete Active Table
-        function handleDeleteActiveTable() {
-            if (!activeTableId) return;
-            if (confirm('¿Estás seguro de que deseas eliminar esta tabla?')) {
-                savedTables = savedTables.filter(t => t.id !== activeTableId);
-                saveToLocalStorage();
-
-                if (savedTables.length > 0) {
-                    setActiveTable(savedTables[0].id);
-                } else {
-                    showEmptyState();
-                }
-            }
-        }
-
-        // Clear All
-        function handleClearAll() {
-            if (confirm('¿Deseas eliminar TODAS las tablas guardadas? Esta acción no se puede deshacer.')) {
-                savedTables = [];
-                saveToLocalStorage();
-                showEmptyState();
-            }
-        }
-
-        // Export to CSV
-        function handleExportCsv() {
-            const table = savedTables.find(t => t.id === activeTableId);
-            if (!table) return;
-
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += table.headers.join(",") + "\n";
-
-            table.rows.forEach(row => {
-                const rowValues = table.headers.map(h => {
-                    let val = row[h] !== undefined ? String(row[h]) : '';
-                    if (val.includes(',') || val.includes('"')) {
-                        val = `"${val.replace(/"/g, '""')}"`;
-                    }
-                    return val;
-                });
-                csvContent += rowValues.join(",") + "\n";
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `${table.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // Helper string escape
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        // Run on DOM loaded
-        document.addEventListener('DOMContentLoaded', initApp);
-    </script>
+          <span>
+
+            <button
+              class="btn btn-sm btn-ghost"
+              onclick="openBudgetModal('${budget.id}')"
+            >
+              Editar
+            </button>
+
+            <button
+              class="btn btn-sm btn-danger"
+              onclick="deleteBudget('${budget.id}')"
+            >
+              ×
+            </button>
+
+          </span>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }).join("");
+
+}
+
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+function monthTransactions(){
+
+  const month=currentMonth();
+
+  return data.transactions.filter(x=>
+    x.date.startsWith(month) &&
+    x.status!=="pending"
+  );
+
+}
+
+function calculateMonthly(){
+
+  const list=monthTransactions();
+
+  const income=list
+    .filter(x=>x.type==="income")
+    .reduce((s,x)=>s+Number(x.amount),0);
+
+  const expense=list
+    .filter(x=>x.type==="expense")
+    .reduce((s,x)=>s+Number(x.amount),0);
+
+  const debtPayments=list
+    .filter(x=>
+      x.type==="expense" &&
+      x.category==="Deudas"
+    )
+    .reduce((s,x)=>s+Number(x.amount),0);
+
+  return {
+    income,
+    expense,
+    debtPayments,
+    savings:income-expense
+  };
+
+}
+
+function calculateAvailable(){
+
+  /*
+    Esto representa:
+
+    ingresos confirmados
+    - gastos confirmados
+
+    desde el inicio del registro.
+
+    Es una aproximación de flujo de efectivo,
+    no un saldo bancario conectado.
+  */
+
+  let total=0;
+
+  data.transactions.forEach(x=>{
+
+    if(x.status==="pending")return;
+
+    if(x.type==="income"){
+      total+=Number(x.amount);
+    }
+
+    if(x.type==="expense"){
+      total-=Number(x.amount);
+    }
+
+  });
+
+  return total;
+
+}
+
+function totalCardDebt(){
+
+  return data.cards.reduce(
+    (sum,x)=>sum+Number(x.balance || 0),
+    0
+  );
+
+}
+
+function totalLoanDebt(){
+
+  return data.loans.reduce(
+    (sum,x)=>sum+Number(x.balance || 0),
+    0
+  );
+
+}
+
+function renderDashboard(){
+
+  const monthly=calculateMonthly();
+
+  const available=calculateAvailable();
+
+  const debt=
+    totalCardDebt()+totalLoanDebt();
+
+  document.getElementById("dashAvailable").textContent=
+    money(available);
+
+  document.getElementById("dashIncome").textContent=
+    money(monthly.income);
+
+  document.getElementById("dashExpenses").textContent=
+    money(monthly.expense);
+
+  document.getElementById("dashDebt").textContent=
+    money(debt);
+
+  document.getElementById("dashIncomeCount").textContent=
+    `${data.transactions.filter(x=>
+      x.type==="income" &&
+      x.date.startsWith(currentMonth())
+    ).length} movimientos`;
+
+  document.getElementById("dashExpenseCount").textContent=
+    `${data.transactions.filter(x=>
+      x.type==="expense" &&
+      x.date.startsWith(currentMonth())
+    ).length} movimientos`;
+
+  document.getElementById("currentMonthLabel").textContent=
+    new Intl.DateTimeFormat("es-MX",{
+      month:"long",
+      year:"numeric"
+    }).format(new Date());
+
+  document.getElementById("monthIncome").textContent=
+    money(monthly.income);
+
+  document.getElementById("monthExpense").textContent=
+    money(monthly.expense);
+
+  document.getElementById("monthSavings").textContent=
+    money(monthly.savings);
+
+  document.getElementById("monthDebtPayments").textContent=
+    money(monthly.debtPayments);
+
+  const savingPercentage=
+    monthly.income>0
+    ? Math.max(
+        0,
+        Math.min(
+          100,
+          (monthly.savings/monthly.income)*100
+        )
+      )
+    : 0;
+
+  document.getElementById("savingProgress").style.width=
+    savingPercentage+"%";
+
+
+  renderRecentTransactions();
+
+  renderDashboardGoals();
+
+  renderUpcomingPayments();
+
+}
+
+function renderRecentTransactions(){
+
+  const container=
+    document.getElementById("recentTransactions");
+
+  if(!container)return;
+
+  const list=
+    [...data.transactions]
+      .sort((a,b)=>b.date.localeCompare(a.date))
+      .slice(0,6);
+
+  if(!list.length){
+
+    container.innerHTML=`
+      <div class="empty">
+        <strong>Aún no tienes movimientos</strong>
+        Registra tu primer movimiento.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML=list.map(x=>{
+
+    const sign=
+      x.type==="income" ? "+" :
+      x.type==="expense" ? "-" : "";
+
+    const cls=
+      x.type==="income"
+      ? "positive"
+      : x.type==="expense"
+      ? "negative"
+      : "";
+
+    return `
+
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          gap:10px;
+          padding:11px 0;
+          border-bottom:1px solid #eef2f7
+        "
+      >
+
+        <div>
+
+          <strong>
+            ${escapeHTML(x.description)}
+          </strong>
+
+          <div class="mini">
+            ${escapeHTML(x.category)} · ${escapeHTML(x.date)}
+          </div>
+
+        </div>
+
+        <strong class="${cls}">
+          ${sign}${money(x.amount)}
+        </strong>
+
+      </div>
+
+    `;
+
+  }).join("");
+
+}
+
+function renderDashboardGoals(){
+
+  const container=
+    document.getElementById("dashboardGoals");
+
+  if(!container)return;
+
+  if(!data.goals.length){
+
+    container.innerHTML=`
+      <div class="empty">
+        <strong>Sin metas todavía</strong>
+        Crea una meta de ahorro.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML=
+    data.goals.slice(0,4).map(goal=>{
+
+      const p=
+        goal.target>0
+        ? Math.min(100,(goal.current/goal.target)*100)
+        : 0;
+
+      return `
+
+        <div style="margin-bottom:17px">
+
+          <div class="kpi-line">
+
+            <strong>
+              ${escapeHTML(goal.name)}
+            </strong>
+
+            <span>
+              ${p.toFixed(0)}%
+            </span>
+
+          </div>
+
+          <div class="progress">
+
+            <div
+              class="progress-bar"
+              style="width:${p}%"
+            ></div>
+
+          </div>
+
+          <div class="mini" style="margin-top:5px">
+            ${money(goal.current)}
+            de
+            ${money(goal.target)}
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
+
+function renderUpcomingPayments(){
+
+  const container=
+    document.getElementById("upcomingPayments");
+
+  if(!container)return;
+
+  const items=[];
+
+  data.cards.forEach(card=>{
+
+    items.push({
+      name:`${card.bank} - ${card.name}`,
+      date:`Día ${card.due}`,
+      amount:card.payment,
+      type:"Tarjeta"
+    });
+
+  });
+
+  data.loans.forEach(loan=>{
+
+    items.push({
+      name:`${loan.institution} - ${loan.name}`,
+      date:loan.due || "Sin fecha",
+      amount:loan.payment,
+      type:"Préstamo"
+    });
+
+  });
+
+  if(!items.length){
+
+    container.innerHTML=`
+      <div class="empty">
+        <strong>No hay pagos registrados</strong>
+        Agrega una tarjeta o préstamo.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  container.innerHTML=items.slice(0,6).map(item=>`
+
+    <div
+      style="
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        padding:12px 0;
+        border-bottom:1px solid #eef2f7
+      "
+    >
+
+      <div>
+
+        <strong>
+          ${escapeHTML(item.name)}
+        </strong>
+
+        <div class="mini">
+          ${escapeHTML(item.type)} · ${escapeHTML(item.date)}
+        </div>
+
+      </div>
+
+      <strong>
+        ${money(item.amount)}
+      </strong>
+
+    </div>
+
+  `).join("");
+
+}
+
+
+/* =========================================================
+   RESPALDO
+========================================================= */
+
+function backupData(){
+
+  const content=
+    JSON.stringify(data,null,2);
+
+  const blob=
+    new Blob([content],{
+      type:"application/json"
+    });
+
+  const url=
+    URL.createObjectURL(blob);
+
+  const a=document.createElement("a");
+
+  a.href=url;
+
+  a.download=
+    "mi-finanzas-respaldo-" +
+    new Date().toISOString().slice(0,10) +
+    ".json";
+
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+  showToast("Respaldo descargado");
+
+}
+
+function restoreData(event){
+
+  const file=event.target.files[0];
+
+  if(!file)return;
+
+  const reader=new FileReader();
+
+  reader.onload=function(e){
+
+    try{
+
+      const restored=
+        JSON.parse(e.target.result);
+
+      if(
+        !restored ||
+        !Array.isArray(restored.transactions) ||
+        !Array.isArray(restored.cards)
+      ){
+
+        throw new Error("Archivo inválido");
+
+      }
+
+      data={
+        ...defaultData(),
+        ...restored
+      };
+
+      saveData();
+
+      renderAll();
+
+      showToast("Respaldo restaurado");
+
+    }catch(error){
+
+      alert(
+        "No se pudo restaurar el archivo. " +
+        "Verifica que sea un respaldo válido."
+      );
+
+    }
+
+  };
+
+  reader.readAsText(file);
+
+}
+
+function clearAllData(){
+
+  const confirmation=
+    prompt(
+      "Escribe BORRAR para eliminar todos los datos:"
+    );
+
+  if(confirmation!=="BORRAR"){
+
+    showToast("Operación cancelada");
+
+    return;
+
+  }
+
+  localStorage.removeItem(STORAGE_KEY);
+
+  data=defaultData();
+
+  renderAll();
+
+  showToast("Todos los datos fueron eliminados");
+
+}
+
+
+/* =========================================================
+   CSV
+========================================================= */
+
+function exportCSV(){
+
+  const headers=[
+    "Fecha",
+    "Tipo",
+    "Concepto",
+    "Categoría",
+    "Monto",
+    "Cuenta",
+    "Estado",
+    "Notas"
+  ];
+
+  const rows=data.transactions.map(x=>[
+    x.date,
+    x.type,
+    x.description,
+    x.category,
+    x.amount,
+    x.account,
+    x.status,
+    x.notes || ""
+  ]);
+
+  const csv=[
+    headers,
+    ...rows
+  ]
+  .map(row=>
+    row.map(value=>
+      `"${String(value).replaceAll('"','""')}"`
+    ).join(",")
+  )
+  .join("\n");
+
+  const blob=
+    new Blob(
+      ["\ufeff"+csv],
+      {type:"text/csv;charset=utf-8"}
+    );
+
+  const url=
+    URL.createObjectURL(blob);
+
+  const a=document.createElement("a");
+
+  a.href=url;
+
+  a.download=
+    "movimientos-financieros.csv";
+
+  a.click();
+
+  URL.revokeObjectURL(url);
+
+}
+
+
+/* =========================================================
+   RENDER GENERAL
+========================================================= */
+
+function renderAll(){
+
+  populateAccountSelect();
+
+  renderDashboard();
+
+  renderTransactions();
+
+  renderCards();
+
+  renderLoans();
+
+  renderGoals();
+
+  renderBudget();
+
+}
+
+
+/* =========================================================
+   CERRAR MODALES AL HACER CLICK FUERA
+========================================================= */
+
+document
+  .querySelectorAll(".modal")
+  .forEach(modal=>{
+
+    modal.addEventListener("click",function(e){
+
+      if(e.target===modal){
+
+        modal.classList.remove("show");
+
+      }
+
+    });
+
+  });
+
+
+/* =========================================================
+   INICIO
+========================================================= */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+  renderAll();
+
+});
+
+
+renderAll();
+
+</script>
+
 </body>
 </html>
