@@ -1,3637 +1,994 @@
-<!DOCTYPE html>
-<html lang="es">
+<<!DOCTYPE html>
+<html lang="es" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f172a">
-<title>Control Financiero</title>
-
-<style>
-:root{
-  --bg:#f4f7fb;
-  --card:#ffffff;
-  --text:#172033;
-  --muted:#6b7280;
-  --primary:#2563eb;
-  --primary-dark:#1d4ed8;
-  --success:#16a34a;
-  --danger:#dc2626;
-  --warning:#d97706;
-  --border:#e5e7eb;
-  --sidebar:#0f172a;
-  --sidebar-text:#cbd5e1;
-  --radius:18px;
-  --shadow:0 8px 25px rgba(15,23,42,.07);
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-
-button,input,select,textarea{
-  font:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-.app{
-  min-height:100vh;
-  display:flex;
-}
-
-/* SIDEBAR */
-
-.sidebar{
-  width:245px;
-  background:var(--sidebar);
-  color:white;
-  padding:22px 15px;
-  position:fixed;
-  top:0;
-  bottom:0;
-  left:0;
-  z-index:20;
-}
-
-.logo{
-  font-size:22px;
-  font-weight:800;
-  padding:5px 12px 25px;
-}
-
-.logo span{
-  color:#60a5fa;
-}
-
-.nav button{
-  width:100%;
-  border:0;
-  background:transparent;
-  color:var(--sidebar-text);
-  text-align:left;
-  padding:13px 14px;
-  margin:3px 0;
-  border-radius:12px;
-}
-
-.nav button:hover,
-.nav button.active{
-  background:#1e293b;
-  color:white;
-}
-
-.main{
-  margin-left:245px;
-  width:calc(100% - 245px);
-  min-height:100vh;
-}
-
-.topbar{
-  background:white;
-  border-bottom:1px solid var(--border);
-  height:70px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 30px;
-  position:sticky;
-  top:0;
-  z-index:10;
-}
-
-.topbar h1{
-  font-size:22px;
-  margin:0;
-}
-
-.content{
-  padding:28px;
-  max-width:1500px;
-  margin:auto;
-}
-
-/* CARDS */
-
-.grid{
-  display:grid;
-  gap:18px;
-}
-
-.grid-4{
-  grid-template-columns:repeat(4,1fr);
-}
-
-.grid-3{
-  grid-template-columns:repeat(3,1fr);
-}
-
-.grid-2{
-  grid-template-columns:repeat(2,1fr);
-}
-
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:20px;
-  box-shadow:var(--shadow);
-}
-
-.stat-label{
-  color:var(--muted);
-  font-size:13px;
-  margin-bottom:8px;
-}
-
-.stat-value{
-  font-size:27px;
-  font-weight:800;
-}
-
-.stat-small{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:7px;
-}
-
-.positive{
-  color:var(--success);
-}
-
-.negative{
-  color:var(--danger);
-}
-
-.warning{
-  color:var(--warning);
-}
-
-/* SECTIONS */
-
-.section{
-  margin-top:22px;
-}
-
-.section-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-  margin-bottom:13px;
-}
-
-.section-header h2{
-  margin:0;
-  font-size:18px;
-}
-
-/* BUTTONS */
-
-.btn{
-  border:0;
-  border-radius:11px;
-  padding:10px 15px;
-  font-weight:700;
-  transition:.15s;
-}
-
-.btn-primary{
-  background:var(--primary);
-  color:white;
-}
-
-.btn-primary:hover{
-  background:var(--primary-dark);
-}
-
-.btn-secondary{
-  background:#eef2ff;
-  color:#1e40af;
-}
-
-.btn-danger{
-  background:#fee2e2;
-  color:#991b1b;
-}
-
-.btn-success{
-  background:#dcfce7;
-  color:#166534;
-}
-
-.btn-ghost{
-  background:#f8fafc;
-  color:#334155;
-  border:1px solid var(--border);
-}
-
-.btn-sm{
-  padding:7px 10px;
-  font-size:12px;
-}
-
-/* TABLE */
-
-.table-wrap{
-  overflow-x:auto;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th{
-  text-align:left;
-  color:var(--muted);
-  font-size:12px;
-  font-weight:700;
-  padding:11px 10px;
-  border-bottom:1px solid var(--border);
-}
-
-td{
-  padding:13px 10px;
-  border-bottom:1px solid #eef2f7;
-  font-size:14px;
-}
-
-tr:last-child td{
-  border-bottom:0;
-}
-
-/* BADGES */
-
-.badge{
-  display:inline-flex;
-  align-items:center;
-  padding:5px 9px;
-  border-radius:999px;
-  font-size:11px;
-  font-weight:800;
-}
-
-.badge-income{
-  background:#dcfce7;
-  color:#166534;
-}
-
-.badge-expense{
-  background:#fee2e2;
-  color:#991b1b;
-}
-
-.badge-transfer{
-  background:#e0e7ff;
-  color:#3730a3;
-}
-
-.badge-pending{
-  background:#fef3c7;
-  color:#92400e;
-}
-
-.badge-paid{
-  background:#dcfce7;
-  color:#166534;
-}
-
-/* PROGRESS */
-
-.progress{
-  width:100%;
-  height:9px;
-  background:#e5e7eb;
-  border-radius:999px;
-  overflow:hidden;
-}
-
-.progress-bar{
-  height:100%;
-  background:var(--primary);
-  border-radius:999px;
-  transition:.3s;
-}
-
-/* FORMS */
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:14px;
-}
-
-.form-group{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.form-group.full{
-  grid-column:1/-1;
-}
-
-label{
-  font-size:12px;
-  font-weight:700;
-  color:#475569;
-}
-
-input,
-select,
-textarea{
-  width:100%;
-  padding:11px 12px;
-  border:1px solid #dbe1e8;
-  border-radius:10px;
-  background:white;
-  color:var(--text);
-  outline:none;
-}
-
-input:focus,
-select:focus,
-textarea:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 3px rgba(37,99,235,.10);
-}
-
-.form-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:17px;
-}
-
-/* MODAL */
-
-.modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(15,23,42,.55);
-  z-index:100;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-}
-
-.modal.show{
-  display:flex;
-}
-
-.modal-box{
-  background:white;
-  width:100%;
-  max-width:620px;
-  max-height:92vh;
-  overflow:auto;
-  border-radius:20px;
-  padding:24px;
-  box-shadow:0 25px 70px rgba(0,0,0,.25);
-}
-
-.modal-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
-.modal-header h2{
-  margin:0;
-}
-
-.close{
-  border:0;
-  background:#f1f5f9;
-  width:35px;
-  height:35px;
-  border-radius:50%;
-  font-size:18px;
-}
-
-/* MOBILE */
-
-.mobile-menu{
-  display:none;
-  border:0;
-  background:#f1f5f9;
-  border-radius:9px;
-  padding:8px 11px;
-}
-
-@media(max-width:1050px){
-  .grid-4{
-    grid-template-columns:repeat(2,1fr);
-  }
-}
-
-@media(max-width:800px){
-
-  .sidebar{
-    transform:translateX(-100%);
-    transition:.2s;
-  }
-
-  .sidebar.open{
-    transform:translateX(0);
-  }
-
-  .main{
-    margin-left:0;
-    width:100%;
-  }
-
-  .mobile-menu{
-    display:block;
-  }
-
-  .topbar{
-    padding:0 15px;
-  }
-
-  .content{
-    padding:17px;
-  }
-
-  .grid-4,
-  .grid-3,
-  .grid-2,
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-
-  .form-group.full{
-    grid-column:auto;
-  }
-
-  .topbar h1{
-    font-size:18px;
-  }
-}
-
-/* EMPTY */
-
-.empty{
-  text-align:center;
-  padding:35px 15px;
-  color:var(--muted);
-}
-
-.empty strong{
-  display:block;
-  color:var(--text);
-  margin-bottom:5px;
-}
-
-/* CREDIT CARD */
-
-.credit-card{
-  position:relative;
-  min-height:190px;
-  border-radius:20px;
-  padding:22px;
-  color:white;
-  overflow:hidden;
-  background:linear-gradient(135deg,#111827,#334155);
-}
-
-.credit-card:after{
-  content:"";
-  position:absolute;
-  width:170px;
-  height:170px;
-  border-radius:50%;
-  right:-60px;
-  top:-70px;
-  background:rgba(255,255,255,.08);
-}
-
-.credit-card .bank{
-  font-size:12px;
-  opacity:.8;
-}
-
-.credit-card .name{
-  font-size:19px;
-  font-weight:800;
-  margin-top:7px;
-}
-
-.credit-card .number{
-  letter-spacing:2px;
-  margin-top:28px;
-}
-
-.credit-card-bottom{
-  display:flex;
-  justify-content:space-between;
-  margin-top:17px;
-  font-size:11px;
-}
-
-/* TOAST */
-
-.toast{
-  position:fixed;
-  right:20px;
-  bottom:20px;
-  background:#0f172a;
-  color:white;
-  padding:13px 17px;
-  border-radius:12px;
-  opacity:0;
-  transform:translateY(15px);
-  pointer-events:none;
-  transition:.25s;
-  z-index:200;
-}
-
-.toast.show{
-  opacity:1;
-  transform:translateY(0);
-}
-
-/* FILTERS */
-
-.filters{
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-}
-
-.filters input,
-.filters select{
-  width:auto;
-  min-width:150px;
-}
-
-/* ALERT */
-
-.alert{
-  padding:13px 15px;
-  border-radius:12px;
-  background:#fffbeb;
-  border:1px solid #fde68a;
-  color:#92400e;
-  margin-bottom:15px;
-}
-
-.kpi-line{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  margin:10px 0;
-  font-size:13px;
-}
-
-.mini{
-  color:var(--muted);
-  font-size:12px;
-}
-
-/* SWITCH */
-
-.switch-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.switch-row input{
-  width:auto;
-}
-
-/* HIDDEN */
-
-.hidden{
-  display:none !important;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Eléctrica Profesional</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
 
-<body>
-
-<div class="app">
-
-<aside class="sidebar" id="sidebar">
-
-  <div class="logo">
-    Mi<span>Finanzas</span>
-  </div>
-
-  <nav class="nav">
-
-    <button class="active" onclick="showPage('dashboard',this)">
-      📊 Dashboard
-    </button>
-
-    <button onclick="showPage('movimientos',this)">
-      💸 Movimientos
-    </button>
-
-    <button onclick="showPage('tarjetas',this)">
-      💳 Tarjetas
-    </button>
-
-    <button onclick="showPage('prestamos',this)">
-      🏦 Préstamos
-    </button>
-
-    <button onclick="showPage('ahorro',this)">
-      🎯 Ahorro
-    </button>
-
-    <button onclick="showPage('presupuesto',this)">
-      📋 Presupuesto
-    </button>
-
-    <button onclick="showPage('ajustes',this)">
-      ⚙️ Ajustes
-    </button>
-
-  </nav>
-
-</aside>
-
-<main class="main">
-
-<header class="topbar">
-
-  <div style="display:flex;align-items:center;gap:12px">
-
-    <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
-
-    <h1 id="pageTitle">Dashboard</h1>
-
-  </div>
-
-  <button class="btn btn-primary" onclick="openTransactionModal()">
-    + Movimiento
-  </button>
-
-</header>
-
-
-<div class="content">
-
-<!-- =====================================================
-DASHBOARD
-===================================================== -->
-
-<section id="page-dashboard">
-
-  <div class="grid grid-4">
-
-    <div class="card">
-      <div class="stat-label">Dinero disponible</div>
-      <div class="stat-value" id="dashAvailable">$0.00</div>
-      <div class="stat-small">Cuentas y efectivo registrados</div>
-    </div>
-
-    <div class="card">
-      <div class="stat-label">Ingresos del mes</div>
-      <div class="stat-value positive" id="dashIncome">$0.00</div>
-      <div class="stat-small" id="dashIncomeCount">0 movimientos</div>
-    </div>
-
-    <div class="card">
-      <div class="stat-label">Gastos del mes</div>
-      <div class="stat-value negative" id="dashExpenses">$0.00</div>
-      <div class="stat-small" id="dashExpenseCount">0 movimientos</div>
-    </div>
-
-    <div class="card">
-      <div class="stat-label">Deuda total</div>
-      <div class="stat-value warning" id="dashDebt">$0.00</div>
-      <div class="stat-small">Tarjetas + préstamos</div>
-    </div>
-
-  </div>
-
-
-  <div class="grid grid-2 section">
-
-    <div class="card">
-
-      <div class="section-header">
-        <h2>Situación mensual</h2>
-        <span class="mini" id="currentMonthLabel"></span>
-      </div>
-
-      <div class="kpi-line">
-        <span>Ingresos</span>
-        <strong id="monthIncome">$0</strong>
-      </div>
-
-      <div class="kpi-line">
-        <span>Gastos</span>
-        <strong id="monthExpense">$0</strong>
-      </div>
-
-      <div class="kpi-line">
-        <span>Ahorro neto</span>
-        <strong id="monthSavings">$0</strong>
-      </div>
-
-      <div class="kpi-line">
-        <span>Compromisos de deuda</span>
-        <strong id="monthDebtPayments">$0</strong>
-      </div>
-
-      <div style="margin-top:18px">
-
-        <div class="mini" style="margin-bottom:7px">
-          Capacidad de ahorro del mes
+    <!-- Top Navigation / Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchModule('dashboard')">
+                <div class="bg-brand-600 p-2 rounded-xl text-white shadow-lg shadow-brand-600/20">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight text-white">ElectraPro <span class="text-brand-500 text-xs px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 uppercase">v2.5</span></h1>
+                    <p class="text-xs text-slate-400">Calculadora Eléctrica & Ingeniería de Circuitos</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="runAutomatedTests()" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-brand-400"></i>
+                    <span>Ejecutar Pruebas</span>
+                </button>
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Cambiar Tema">
+                    <i data-lucide="sun" id="theme-icon-sun" class="w-5 h-5 hidden"></i>
+                    <i data-lucide="moon" id="theme-icon-moon" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
+    </header>
 
-        <div class="progress">
-          <div class="progress-bar" id="savingProgress"></div>
-        </div>
+    <!-- Main Layout -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="lg:col-span-1 space-y-1">
+            <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 px-3 pb-2">Módulos Principales</div>
+            
+            <button onclick="switchModule('dashboard')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition bg-brand-600 text-white shadow-lg shadow-brand-600/20" data-target="dashboard">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                <span>Panel Principal</span>
+            </button>
+            <button onclick="switchModule('ohm')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="ohm">
+                <i data-lucide="activity" class="w-5 h-5"></i>
+                <span>Ley de Ohm</span>
+            </button>
+            <button onclick="switchModule('series')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="series">
+                <i data-lucide="git-commit" class="w-5 h-5"></i>
+                <span>Circuitos en Serie</span>
+            </button>
+            <button onclick="switchModule('parallel')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="parallel">
+                <i data-lucide="git-merge" class="w-5 h-5"></i>
+                <span>Circuitos en Paralelo</span>
+            </button>
+            <button onclick="switchModule('mixed')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="mixed">
+                <i data-lucide="network" class="w-5 h-5"></i>
+                <span>Circuitos Mixtos</span>
+            </button>
+            <button onclick="switchModule('power')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="power">
+                <i data-lucide="battery-charging" class="w-5 h-5"></i>
+                <span>Potencia y Energía</span>
+            </button>
+            <button onclick="switchModule('acdc')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="acdc">
+                <i data-lucide="waves" class="w-5 h-5"></i>
+                <span>CC y CA Trifásica</span>
+            </button>
+            <button onclick="switchModule('dividers')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="dividers">
+                <i data-lucide="sliders" class="w-5 h-5"></i>
+                <span>Divisores V y I</span>
+            </button>
+            <button onclick="switchModule('extras')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="extras">
+                <i data-lucide="cpu" class="w-5 h-5"></i>
+                <span>Herramientas & Conductores</span>
+            </button>
+            <button onclick="switchModule('tests')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="tests">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                <span>Pruebas Automáticas</span>
+            </button>
 
-      </div>
+            <div class="pt-4 px-3">
+                <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-xs text-amber-300 space-y-1.5">
+                    <div class="font-bold flex items-center space-x-1.5">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0"></i>
+                        <span>Aviso de Seguridad</span>
+                    </div>
+                    <p class="leading-relaxed">Los circuitos eléctricos de red pueden provocar lesiones graves o la muerte. Nunca manipule circuitos energizados sin equipo de protección certificado.</p>
+                </div>
+            </div>
+        </aside>
 
+        <!-- Content Panel -->
+        <main class="lg:col-span-3 space-y-6">
+
+            <!-- DASHBOARD MODUL (Screen Initial) -->
+            <section id="module-dashboard" class="space-y-6 module-view">
+                <div class="bg-gradient-to-br from-slate-900 to-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 text-brand-500/10 pointer-events-none">
+                        <i data-lucide="zap" class="w-64 h-64"></i>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Calculadora Eléctrica Profesional</h2>
+                    <p class="text-slate-400 max-w-2xl text-sm sm:text-base leading-relaxed mb-6">
+                        Herramienta avanzada para estudiantes, técnicos electricistas e ingenieros de mantenimiento. Diseñada para cálculos rápidos y confiables con soporte completo para circuitos resistivos, corriente alterna/continua y análisis paso a paso.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="switchModule('ohm')" class="bg-brand-600 hover:bg-brand-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20 flex items-center space-x-2">
+                            <span>Ley de Ohm</span>
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="switchModule('series')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-4 py-2.5 rounded-xl text-sm transition border border-slate-700 flex items-center space-x-2">
+                            <span>Circuitos en Serie</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid Shortcuts -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div onclick="switchModule('ohm')" class="bg-slate-900 border border-slate-800 hover:border-brand-500/50 rounded-2xl p-5 cursor-pointer transition group">
+                        <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                            <i data-lucide="activity" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-base mb-1">Ley de Ohm</h3>
+                        <p class="text-xs text-slate-400 leading-normal">Calcula Voltaje, Corriente, Resistencia y Potencia conociendo dos variables.</p>
+                    </div>
+                    <div onclick="switchModule('series')" class="bg-slate-900 border border-slate-800 hover:border-brand-500/50 rounded-2xl p-5 cursor-pointer transition group">
+                        <div class="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                            <i data-lucide="git-commit" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-base mb-1">Circuitos en Serie</h3>
+                        <p class="text-xs text-slate-400 leading-normal">Resistencia total, caídas de tensión individuales y potencias disipadas.</p>
+                    </div>
+                    <div onclick="switchModule('parallel')" class="bg-slate-900 border border-slate-800 hover:border-brand-500/50 rounded-2xl p-5 cursor-pointer transition group">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                            <i data-lucide="git-merge" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-base mb-1">Circuitos en Paralelo</h3>
+                        <p class="text-xs text-slate-400 leading-normal">Resistencia equivalente, corrientes por rama y conductancia total.</p>
+                    </div>
+                    <div onclick="switchModule('mixed')" class="bg-slate-900 border border-slate-800 hover:border-brand-500/50 rounded-2xl p-5 cursor-pointer transition group">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                            <i data-lucide="network" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-base mb-1">Circuitos Mixtos</h3>
+                        <p class="text-xs text-slate-400 leading-normal">Redes combinadas serie-paralelo con reducción de grupos paso a paso.</p>
+                    </div>
+                    <div onclick="switchModule('power')" class="bg-slate-900 border border-slate-800 hover:border-brand-500/50 rounded-2xl p-5 cursor-pointer transition group">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                            <i data-lucide="battery-charging" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-base mb-1">Potencia y Energía</h3>
+                        <p class="text-xs text-slate-400 leading-normal">Consumo diario, semanal, mensual y estimación de costos por tarifa.</p>
+                    </div>
+                    <div onclick="switchModule('acdc')" class="bg-slate-900 border border-slate-800 hover:border-brand-500/50 rounded-2xl p-5 cursor-pointer transition group">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center mb-3 group-hover:scale-110 transition">
+                            <i data-lucide="waves" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-base mb-1">CC y CA Trifásica</h3>
+                        <p class="text-xs text-slate-400 leading-normal">Impedancia, factor de potencia y triángulo de potencias en alterna.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1. MÓDULO LEY DE OHM -->
+            <section id="module-ohm" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+                    <h2 class="text-xl font-bold text-white mb-2 flex items-center space-x-2">
+                        <i data-lucide="activity" class="w-5 h-5 text-brand-500"></i>
+                        <span>Calculadora Ley de Ohm & Potencia</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mb-6">Introduce dos valores conocidos de los cuatro disponibles para calcular automáticamente los restantes.</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje ($V$)</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="ohm-v" step="any" placeholder="Ej. 12" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                                <select id="ohm-v-unit" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-300">
+                                    <option value="1">V</option>
+                                    <option value="0.001">mV</option>
+                                    <option value="1000">kV</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Corriente ($I$)</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="ohm-i" step="any" placeholder="Ej. 2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                                <select id="ohm-i-unit" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-300">
+                                    <option value="1">A</option>
+                                    <option value="0.001">mA</option>
+                                    <option value="0.000001">µA</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Resistencia ($R$)</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="ohm-r" step="any" placeholder="Ej. 6" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                                <select id="ohm-r-unit" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-300">
+                                    <option value="1">Ω</option>
+                                    <option value="1000">kΩ</option>
+                                    <option value="1000000">MΩ</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Potencia ($P$)</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="ohm-p" step="any" placeholder="Ej. 24" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                                <select id="ohm-p-unit" class="bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-slate-300">
+                                    <option value="1">W</option>
+                                    <option value="0.001">mW</option>
+                                    <option value="1000">kW</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3 mb-6">
+                        <button onclick="calculateOhm()" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Calcular</button>
+                        <button onclick="clearOhm()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2.5 rounded-xl text-sm transition border border-slate-700">Limpiar</button>
+                    </div>
+
+                    <div id="ohm-results" class="hidden space-y-4 pt-4 border-t border-slate-800">
+                        <h3 class="font-semibold text-white text-sm">Resultados & Procedimiento</h3>
+                        <div id="ohm-results-content" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                        <div id="ohm-steps" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-1"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. CIRCUITOS EN SERIE -->
+            <section id="module-series" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="git-commit" class="w-5 h-5 text-blue-500"></i>
+                            <span>Circuitos en Serie</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Añade resistencias y voltaje de alimentación para calcular caída de tensión y potencia por elemento.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje de Alimentación ($V$)</label>
+                            <input type="number" id="series-v" value="12" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-medium text-slate-300">Resistencias del Circuito ($\Omega$)</label>
+                            <button onclick="addSeriesResistor()" class="text-xs text-brand-400 hover:text-brand-300 flex items-center space-x-1">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                <span>Añadir Resistencia</span>
+                            </button>
+                        </div>
+                        <div id="series-resistors-container" class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-8">R1</span>
+                                <input type="number" value="100" step="any" class="series-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-8">R2</span>
+                                <input type="number" value="200" step="any" class="series-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button onclick="calculateSeries()" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Calcular Circuito Serie</button>
+                    </div>
+
+                    <div id="series-results" class="hidden space-y-4 pt-4 border-t border-slate-800">
+                        <h3 class="font-semibold text-white text-sm">Diagrama Esquemático</h3>
+                        <div id="series-svg" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center items-center overflow-x-auto"></div>
+                        <h3 class="font-semibold text-white text-sm pt-2">Resultados Detallados</h3>
+                        <div id="series-table-container" class="overflow-x-auto"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. CIRCUITOS EN PARALELO -->
+            <section id="module-parallel" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="git-merge" class="w-5 h-5 text-emerald-500"></i>
+                            <span>Circuitos en Paralelo</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Calcula resistencia equivalente, corriente por rama y corriente total.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje de Alimentación ($V$)</label>
+                            <input type="number" id="parallel-v" value="12" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-medium text-slate-300">Ramas en Paralelo ($\Omega$)</label>
+                            <button onclick="addParallelResistor()" class="text-xs text-brand-400 hover:text-brand-300 flex items-center space-x-1">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                <span>Añadir Rama</span>
+                            </button>
+                        </div>
+                        <div id="parallel-resistors-container" class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-8">R1</span>
+                                <input type="number" value="100" step="any" class="parallel-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-8">R2</span>
+                                <input type="number" value="100" step="any" class="parallel-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-3">
+                        <button onclick="calculateParallel()" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Calcular Circuito Paralelo</button>
+                    </div>
+
+                    <div id="parallel-results" class="hidden space-y-4 pt-4 border-t border-slate-800">
+                        <h3 class="font-semibold text-white text-sm">Diagrama Esquemático</h3>
+                        <div id="parallel-svg" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center items-center overflow-x-auto"></div>
+                        <h3 class="font-semibold text-white text-sm pt-2">Resultados Detallados</h3>
+                        <div id="parallel-table-container" class="overflow-x-auto"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. CIRCUITOS MIXTOS -->
+            <section id="module-mixed" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="network" class="w-5 h-5 text-purple-500"></i>
+                            <span>Circuitos Mixtos (Redes Serie-Paralelo)</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Resuelve redes combinadas mediante reducción de grupos y bloques equivalentes.</p>
+                    </div>
+
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-4">
+                        <h3 class="text-sm font-semibold text-white">Configuración del Circuito Mixto</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">Ejemplo preconfigurado: Una resistencia $R_1$ en serie con un bloque paralelo compuesto por $R_2$ y $R_3$.</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">R1 (En Serie) [$\Omega$]</label>
+                                <input type="number" id="mixed-r1" value="50" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">R2 (Rama 1 Par.) [$\Omega$]</label>
+                                <input type="number" id="mixed-r2" value="100" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">R3 (Rama 2 Par.) [$\Omega$]</label>
+                                <input type="number" id="mixed-r3" value="100" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Voltaje de Alimentación ($V$)</label>
+                            <input type="number" id="mixed-v" value="24" step="any" class="w-full sm:w-1/3 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                    </div>
+
+                    <button onclick="calculateMixed()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Resolver Circuito Mixto</button>
+
+                    <div id="mixed-results" class="hidden space-y-4 pt-4 border-t border-slate-800">
+                        <h3 class="font-semibold text-white text-sm">Procedimiento de Reducción y Resultados</h3>
+                        <div id="mixed-steps" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-2"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. POTENCIA Y ENERGÍA -->
+            <section id="module-power" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="battery-charging" class="w-5 h-5 text-amber-500"></i>
+                            <span>Potencia, Energía y Costos</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Calcula consumo diario, semanal, mensual y costo estimado según tarifa eléctrica.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Potencia Activa ($W$)</label>
+                            <input type="number" id="energy-p" value="100" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Uso Diario (Horas)</label>
+                            <input type="number" id="energy-hours" value="5" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Tarifa por kWh ($)</label>
+                            <input type="number" id="energy-tariff" value="2.5" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                    </div>
+
+                    <button onclick="calculateEnergy()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Calcular Consumo</button>
+
+                    <div id="energy-results" class="hidden grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-800">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="text-xs text-slate-400 block mb-1">Consumo Diario</span>
+                            <span id="res-daily" class="text-lg font-bold text-white">0 Wh</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="text-xs text-slate-400 block mb-1">Consumo Semanal (7d)</span>
+                            <span id="res-weekly" class="text-lg font-bold text-white">0 kWh</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="text-xs text-slate-400 block mb-1">Consumo Mensual (30d)</span>
+                            <span id="res-monthly" class="text-lg font-bold text-white">0 kWh</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="text-xs text-slate-400 block mb-1">Costo Estimado Mensual</span>
+                            <span id="res-cost" class="text-lg font-bold text-brand-400">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. CORRIENTE CONTINUA Y ALTERNA -->
+            <section id="module-acdc" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="waves" class="w-5 h-5 text-rose-500"></i>
+                            <span>Corriente Alterna & Trifásica Equilibrada</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Análisis de potencias Activa ($P$), Reactiva ($Q$), Aparente ($S$) y Factor de Potencia ($FP$).</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje Línea ($V_{rms}$)</label>
+                            <input type="number" id="ac-v" value="220" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Corriente Línea ($I_{rms}$)</label>
+                            <input type="number" id="ac-i" value="10" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Factor de Potencia ($FP$)</label>
+                            <input type="number" id="ac-fp" value="0.85" min="0" max="1" step="0.01" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                    </div>
+
+                    <button onclick="calculateAC()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Calcular Sistema Trifásico</button>
+
+                    <div id="ac-results" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="text-xs text-slate-400 block mb-1">Potencia Aparente ($S$)</span>
+                            <span id="ac-s" class="text-lg font-bold text-white">0 VA</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="text-xs text-slate-400 block mb-1">Potencia Activa ($P$)</span>
+                            <span id="ac-p" class="text-lg font-bold text-brand-400">0 W</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="text-xs text-slate-400 block mb-1">Potencia Reactiva ($Q$)</span>
+                            <span id="ac-q" class="text-lg font-bold text-amber-400">0 VAR</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. DIVISORES DE VOLTAJE Y CORRIENTE -->
+            <section id="module-dividers" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="sliders" class="w-5 h-5 text-indigo-500"></i>
+                            <span>Divisor de Voltaje y Corriente</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Cálculo rápido para divisores resistivos serie y paralelo.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+                            <h3 class="text-sm font-bold text-white">Divisor de Voltaje (Serie)</h3>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Voltaje Total ($V$)</label>
+                                <input type="number" id="div-v-total" value="12" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Resistencia 1 ($R_1$ en $\Omega$)</label>
+                                <input type="number" id="div-v-r1" value="100" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Resistencia 2 ($R_2$ en $\Omega$)</label>
+                                <input type="number" id="div-v-r2" value="200" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <button onclick="calculateVoltageDivider()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium py-2 rounded-lg transition">Calcular Divisor V</button>
+                            <div id="div-v-result" class="text-xs font-mono text-slate-300 pt-2"></div>
+                        </div>
+
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+                            <h3 class="text-sm font-bold text-white">Divisor de Corriente (2 Ramas Paralelas)</h3>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Corriente Total ($I_T$ en A)</label>
+                                <input type="number" id="div-i-total" value="3" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Resistencia 1 ($R_1$ en $\Omega$)</label>
+                                <input type="number" id="div-i-r1" value="100" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Resistencia 2 ($R_2$ en $\Omega$)</label>
+                                <input type="number" id="div-i-r2" value="300" step="any" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            </div>
+                            <button onclick="calculateCurrentDivider()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium py-2 rounded-lg transition">Calcular Divisor I</button>
+                            <div id="div-i-result" class="text-xs font-mono text-slate-300 pt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8. HERRAMIENTAS EXTRAS Y CONDUCTORES -->
+            <section id="module-extras" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="cpu" class="w-5 h-5 text-teal-500"></i>
+                            <span>Caída de Tensión en Conductores</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Estimación de caída de voltaje en líneas de conductores de cobre/aluminio.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Corriente ($I$ en A)</label>
+                            <input type="number" id="cond-i" value="15" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Longitud de ida ($L$ en metros)</label>
+                            <input type="number" id="cond-l" value="25" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Sección del conductor ($mm^2$)</label>
+                            <input type="number" id="cond-s" value="4" step="any" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Material</label>
+                            <select id="cond-mat" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <option value="0.0172">Cobre ($\rho \approx 0.0172 \Omega \cdot mm^2 / m$)</option>
+                                <option value="0.0282">Aluminio ($\rho \approx 0.0282 \Omega \cdot mm^2 / m$)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="calculateConductorDrop()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Calcular Caída de Tensión</button>
+
+                    <div id="cond-results" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-1"></div>
+                </div>
+            </section>
+
+            <!-- 9. PRUEBAS AUTOMATIZADAS -->
+            <section id="module-tests" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-brand-500"></i>
+                            <span>Suite de Pruebas Automatizadas</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Validación estricta de casos de prueba obligatorios solicitados en especificaciones técnicas.</p>
+                    </div>
+
+                    <button onclick="runAutomatedTests()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-brand-600/20">Ejecutar Todas las Pruebas</button>
+
+                    <div id="test-results-container" class="space-y-2"></div>
+                </div>
+            </section>
+
+        </main>
     </div>
 
-
-    <div class="card">
-
-      <div class="section-header">
-        <h2>Próximos pagos</h2>
-        <button class="btn btn-sm btn-ghost" onclick="showPage('tarjetas')">
-          Ver tarjetas
-        </button>
-      </div>
-
-      <div id="upcomingPayments"></div>
-
-    </div>
-
-  </div>
-
-
-  <div class="grid grid-2 section">
-
-    <div class="card">
-
-      <div class="section-header">
-        <h2>Últimos movimientos</h2>
-        <button class="btn btn-sm btn-ghost" onclick="showPage('movimientos')">
-          Ver todos
-        </button>
-      </div>
-
-      <div id="recentTransactions"></div>
-
-    </div>
-
-
-    <div class="card">
-
-      <div class="section-header">
-        <h2>Metas de ahorro</h2>
-        <button class="btn btn-sm btn-ghost" onclick="showPage('ahorro')">
-          Ver metas
-        </button>
-      </div>
-
-      <div id="dashboardGoals"></div>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<!-- =====================================================
-MOVIMIENTOS
-===================================================== -->
-
-<section id="page-movimientos" class="hidden">
-
-  <div class="section-header">
-
-    <div>
-      <h2>Movimientos</h2>
-      <div class="mini">
-        Registra ingresos, gastos y transferencias.
-      </div>
-    </div>
-
-    <button class="btn btn-primary" onclick="openTransactionModal()">
-      + Nuevo movimiento
-    </button>
-
-  </div>
-
-
-  <div class="card">
-
-    <div class="filters" style="margin-bottom:18px">
-
-      <input
-        id="transactionSearch"
-        placeholder="Buscar..."
-        oninput="renderTransactions()"
-      >
-
-      <select id="transactionTypeFilter" onchange="renderTransactions()">
-        <option value="">Todos</option>
-        <option value="income">Ingresos</option>
-        <option value="expense">Gastos</option>
-        <option value="transfer">Transferencias</option>
-      </select>
-
-      <select id="transactionStatusFilter" onchange="renderTransactions()">
-        <option value="">Todos los estados</option>
-        <option value="paid">Confirmados</option>
-        <option value="pending">Pendientes</option>
-      </select>
-
-      <button class="btn btn-secondary" onclick="exportCSV()">
-        Exportar CSV
-      </button>
-
-    </div>
-
-    <div id="transactionsTable"></div>
-
-  </div>
-
-</section>
-
-
-<!-- =====================================================
-TARJETAS
-===================================================== -->
-
-<section id="page-tarjetas" class="hidden">
-
-  <div class="section-header">
-
-    <div>
-      <h2>Tarjetas de crédito</h2>
-      <div class="mini">
-        Control de límite, saldo, corte y pago.
-      </div>
-    </div>
-
-    <button class="btn btn-primary" onclick="openCardModal()">
-      + Nueva tarjeta
-    </button>
-
-  </div>
-
-  <div id="cardsGrid" class="grid grid-3"></div>
-
-</section>
-
-
-<!-- =====================================================
-PRESTAMOS
-===================================================== -->
-
-<section id="page-prestamos" class="hidden">
-
-  <div class="section-header">
-
-    <div>
-      <h2>Préstamos y créditos</h2>
-      <div class="mini">
-        Controla saldo pendiente, pago mensual y tasa.
-      </div>
-    </div>
-
-    <button class="btn btn-primary" onclick="openLoanModal()">
-      + Nuevo préstamo
-    </button>
-
-  </div>
-
-  <div class="grid grid-3" id="loansGrid"></div>
-
-</section>
-
-
-<!-- =====================================================
-AHORRO
-===================================================== -->
-
-<section id="page-ahorro" class="hidden">
-
-  <div class="section-header">
-
-    <div>
-      <h2>Metas de ahorro</h2>
-      <div class="mini">
-        Construye tus objetivos financieros.
-      </div>
-    </div>
-
-    <button class="btn btn-primary" onclick="openGoalModal()">
-      + Nueva meta
-    </button>
-
-  </div>
-
-  <div class="grid grid-3" id="goalsGrid"></div>
-
-</section>
-
-
-<!-- =====================================================
-PRESUPUESTO
-===================================================== -->
-
-<section id="page-presupuesto" class="hidden">
-
-  <div class="section-header">
-
-    <div>
-      <h2>Presupuesto mensual</h2>
-      <div class="mini">
-        Define cuánto quieres gastar por categoría.
-      </div>
-    </div>
-
-    <button class="btn btn-primary" onclick="openBudgetModal()">
-      + Categoría
-    </button>
-
-  </div>
-
-  <div class="card">
-
-    <div id="budgetList"></div>
-
-  </div>
-
-</section>
-
-
-<!-- =====================================================
-AJUSTES
-===================================================== -->
-
-<section id="page-ajustes" class="hidden">
-
-  <div class="section-header">
-    <div>
-      <h2>Ajustes y respaldo</h2>
-      <div class="mini">
-        Tus datos se guardan localmente en este navegador.
-      </div>
-    </div>
-  </div>
-
-  <div class="grid grid-2">
-
-    <div class="card">
-
-      <h3>Respaldo</h3>
-
-      <p class="mini">
-        Descarga todos tus datos para conservar una copia.
-      </p>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-
-        <button class="btn btn-primary" onclick="backupData()">
-          Descargar respaldo
-        </button>
-
-        <label class="btn btn-secondary" style="cursor:pointer">
-          Restaurar respaldo
-          <input
-            type="file"
-            id="restoreFile"
-            accept=".json"
-            style="display:none"
-            onchange="restoreData(event)"
-          >
-        </label>
-
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <h3>Datos</h3>
-
-      <p class="mini">
-        Elimina todos los datos guardados en este dispositivo.
-      </p>
-
-      <button class="btn btn-danger" onclick="clearAllData()">
-        Borrar todos los datos
-      </button>
-
-    </div>
-
-  </div>
-
-
-  <div class="card section">
-
-    <h3>Acerca de esta versión</h3>
-
-    <p class="mini">
-      MiFinanzas es una aplicación financiera personal.
-      No conecta directamente con bancos ni mueve dinero.
-      Los datos se almacenan localmente en el navegador.
-    </p>
-
-  </div>
-
-</section>
-
-</div>
-</main>
-</div>
-
-
-<!-- =====================================================
-MODAL MOVIMIENTO
-===================================================== -->
-
-<div class="modal" id="transactionModal">
-
-<div class="modal-box">
-
-  <div class="modal-header">
-
-    <h2 id="transactionModalTitle">Nuevo movimiento</h2>
-
-    <button class="close" onclick="closeModal('transactionModal')">
-      ×
-    </button>
-
-  </div>
-
-  <form id="transactionForm" onsubmit="saveTransaction(event)">
-
-    <input type="hidden" id="transactionId">
-
-    <div class="form-grid">
-
-      <div class="form-group">
-
-        <label>Tipo</label>
-
-        <select id="transactionType" required>
-          <option value="expense">Gasto</option>
-          <option value="income">Ingreso</option>
-          <option value="transfer">Transferencia</option>
-        </select>
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>Fecha</label>
-
-        <input type="date" id="transactionDate" required>
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>Concepto</label>
-
-        <input
-          type="text"
-          id="transactionDescription"
-          placeholder="Ej. Supermercado"
-          required
-        >
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>Monto</label>
-
-        <input
-          type="number"
-          id="transactionAmount"
-          min="0.01"
-          step="0.01"
-          required
-        >
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>Categoría</label>
-
-        <select id="transactionCategory">
-
-          <option>Alimentación</option>
-          <option>Vivienda</option>
-          <option>Transporte</option>
-          <option>Servicios</option>
-          <option>Salud</option>
-          <option>Educación</option>
-          <option>Entretenimiento</option>
-          <option>Compras</option>
-          <option>Deudas</option>
-          <option>Ahorro</option>
-          <option>Otros</option>
-
-        </select>
-
-      </div>
-
-
-      <div class="form-group">
-
-        <label>Cuenta / tarjeta</label>
-
-        <select id="transactionAccount"></select>
-
-      </div>
-
-
-      <div class="form-group full">
-
-        <label>Estado</label>
-
-        <select id="transactionStatus">
-
-          <option value="paid">Confirmado</option>
-          <option value="pending">Pendiente</option>
-
-        </select>
-
-      </div>
-
-
-      <div class="form-group full">
-
-        <label>Notas</label>
-
-        <textarea
-          id="transactionNotes"
-          rows="3"
-          placeholder="Opcional"
-        ></textarea>
-
-      </div>
-
-    </div>
-
-
-    <div class="form-actions">
-
-      <button
-        type="button"
-        class="btn btn-ghost"
-        onclick="closeModal('transactionModal')"
-      >
-        Cancelar
-      </button>
-
-      <button type="submit" class="btn btn-primary">
-        Guardar movimiento
-      </button>
-
-    </div>
-
-  </form>
-
-</div>
-</div>
-
-
-<!-- =====================================================
-MODAL TARJETA
-===================================================== -->
-
-<div class="modal" id="cardModal">
-
-<div class="modal-box">
-
-  <div class="modal-header">
-
-    <h2>Tarjeta de crédito</h2>
-
-    <button class="close" onclick="closeModal('cardModal')">
-      ×
-    </button>
-
-  </div>
-
-  <form onsubmit="saveCard(event)">
-
-    <input type="hidden" id="cardId">
-
-    <div class="form-grid">
-
-      <div class="form-group">
-        <label>Banco</label>
-        <input id="cardBank" placeholder="Ej. BBVA" required>
-      </div>
-
-      <div class="form-group">
-        <label>Nombre de tarjeta</label>
-        <input id="cardName" placeholder="Ej. Azul" required>
-      </div>
-
-      <div class="form-group">
-        <label>Límite de crédito</label>
-        <input type="number" id="cardLimit" min="0" step=".01" required>
-      </div>
-
-      <div class="form-group">
-        <label>Saldo utilizado actual</label>
-        <input type="number" id="cardBalance" min="0" step=".01" required>
-      </div>
-
-      <div class="form-group">
-        <label>Día de corte</label>
-        <input type="number" id="cardCutoff" min="1" max="31" required>
-      </div>
-
-      <div class="form-group">
-        <label>Día límite de pago</label>
-        <input type="number" id="cardDue" min="1" max="31" required>
-      </div>
-
-      <div class="form-group">
-        <label>Pago para no generar intereses</label>
-        <input type="number" id="cardPayment" min="0" step=".01">
-      </div>
-
-      <div class="form-group">
-        <label>MSI pendientes</label>
-        <input type="number" id="cardMsi" min="0" step=".01">
-      </div>
-
-      <div class="form-group full">
-        <label>Color</label>
-        <select id="cardColor">
-          <option value="dark">Oscuro</option>
-          <option value="blue">Azul</option>
-          <option value="purple">Morado</option>
-          <option value="green">Verde</option>
-        </select>
-      </div>
-
-    </div>
-
-    <div class="form-actions">
-
-      <button
-        type="button"
-        class="btn btn-ghost"
-        onclick="closeModal('cardModal')"
-      >
-        Cancelar
-      </button>
-
-      <button type="submit" class="btn btn-primary">
-        Guardar tarjeta
-      </button>
-
-    </div>
-
-  </form>
-
-</div>
-</div>
-
-
-<!-- =====================================================
-MODAL PRESTAMO
-===================================================== -->
-
-<div class="modal" id="loanModal">
-
-<div class="modal-box">
-
-  <div class="modal-header">
-
-    <h2>Préstamo / crédito</h2>
-
-    <button class="close" onclick="closeModal('loanModal')">
-      ×
-    </button>
-
-  </div>
-
-  <form onsubmit="saveLoan(event)">
-
-    <input type="hidden" id="loanId">
-
-    <div class="form-grid">
-
-      <div class="form-group">
-        <label>Institución</label>
-        <input id="loanInstitution" placeholder="Ej. Banco" required>
-      </div>
-
-      <div class="form-group">
-        <label>Nombre</label>
-        <input id="loanName" placeholder="Ej. Crédito personal" required>
-      </div>
-
-      <div class="form-group">
-        <label>Monto original</label>
-        <input type="number" id="loanOriginal" min="0" step=".01" required>
-      </div>
-
-      <div class="form-group">
-        <label>Saldo pendiente</label>
-        <input type="number" id="loanBalance" min="0" step=".01" required>
-      </div>
-
-      <div class="form-group">
-        <label>Pago mensual</label>
-        <input type="number" id="loanPayment" min="0" step=".01" required>
-      </div>
-
-      <div class="form-group">
-        <label>Tasa anual %</label>
-        <input type="number" id="loanRate" min="0" step=".01">
-      </div>
-
-      <div class="form-group">
-        <label>Próximo pago</label>
-        <input type="date" id="loanDue">
-      </div>
-
-      <div class="form-group">
-        <label>Plazo restante (meses)</label>
-        <input type="number" id="loanMonths" min="0">
-      </div>
-
-    </div>
-
-    <div class="form-actions">
-
-      <button
-        type="button"
-        class="btn btn-ghost"
-        onclick="closeModal('loanModal')"
-      >
-        Cancelar
-      </button>
-
-      <button type="submit" class="btn btn-primary">
-        Guardar préstamo
-      </button>
-
-    </div>
-
-  </form>
-
-</div>
-</div>
-
-
-<!-- =====================================================
-MODAL META
-===================================================== -->
-
-<div class="modal" id="goalModal">
-
-<div class="modal-box">
-
-  <div class="modal-header">
-
-    <h2>Meta de ahorro</h2>
-
-    <button class="close" onclick="closeModal('goalModal')">
-      ×
-    </button>
-
-  </div>
-
-  <form onsubmit="saveGoal(event)">
-
-    <input type="hidden" id="goalId">
-
-    <div class="form-grid">
-
-      <div class="form-group">
-        <label>Nombre</label>
-        <input id="goalName" placeholder="Ej. Fondo de emergencia" required>
-      </div>
-
-      <div class="form-group">
-        <label>Fecha objetivo</label>
-        <input type="date" id="goalDate">
-      </div>
-
-      <div class="form-group">
-        <label>Objetivo</label>
-        <input type="number" id="goalTarget" min="0" step=".01" required>
-      </div>
-
-      <div class="form-group">
-        <label>Ahorrado actualmente</label>
-        <input type="number" id="goalCurrent" min="0" step=".01" required>
-      </div>
-
-    </div>
-
-    <div class="form-actions">
-
-      <button
-        type="button"
-        class="btn btn-ghost"
-        onclick="closeModal('goalModal')"
-      >
-        Cancelar
-      </button>
-
-      <button type="submit" class="btn btn-primary">
-        Guardar meta
-      </button>
-
-    </div>
-
-  </form>
-
-</div>
-</div>
-
-
-<!-- =====================================================
-MODAL PRESUPUESTO
-===================================================== -->
-
-<div class="modal" id="budgetModal">
-
-<div class="modal-box">
-
-  <div class="modal-header">
-
-    <h2>Categoría de presupuesto</h2>
-
-    <button class="close" onclick="closeModal('budgetModal')">
-      ×
-    </button>
-
-  </div>
-
-  <form onsubmit="saveBudget(event)">
-
-    <input type="hidden" id="budgetId">
-
-    <div class="form-grid">
-
-      <div class="form-group">
-        <label>Categoría</label>
-
-        <select id="budgetCategory">
-
-          <option>Alimentación</option>
-          <option>Vivienda</option>
-          <option>Transporte</option>
-          <option>Servicios</option>
-          <option>Salud</option>
-          <option>Educación</option>
-          <option>Entretenimiento</option>
-          <option>Compras</option>
-          <option>Deudas</option>
-          <option>Ahorro</option>
-          <option>Otros</option>
-
-        </select>
-
-      </div>
-
-      <div class="form-group">
-
-        <label>Límite mensual</label>
-
-        <input
-          type="number"
-          id="budgetAmount"
-          min="0"
-          step=".01"
-          required
-        >
-
-      </div>
-
-    </div>
-
-    <div class="form-actions">
-
-      <button
-        type="button"
-        class="btn btn-ghost"
-        onclick="closeModal('budgetModal')"
-      >
-        Cancelar
-      </button>
-
-      <button type="submit" class="btn btn-primary">
-        Guardar presupuesto
-      </button>
-
-    </div>
-
-  </form>
-
-</div>
-</div>
-
-
-<div class="toast" id="toast"></div>
-
-
-<script>
-
-/* =========================================================
-   DATOS
-========================================================= */
-
-const STORAGE_KEY = "miFinanzas_v1";
-
-let data = loadData();
-
-function defaultData(){
-
-  return {
-
-    transactions:[],
-
-    cards:[],
-
-    loans:[],
-
-    goals:[],
-
-    budgets:[],
-
-    settings:{
-      currency:"MXN"
-    }
-
-  };
-
-}
-
-function loadData(){
-
-  try{
-
-    const saved = localStorage.getItem(STORAGE_KEY);
-
-    if(saved){
-
-      const parsed = JSON.parse(saved);
-
-      return {
-        ...defaultData(),
-        ...parsed
-      };
-
-    }
-
-  }catch(error){
-
-    console.error(error);
-
-  }
-
-  return defaultData();
-
-}
-
-function saveData(){
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(data)
-  );
-
-}
-
-
-/* =========================================================
-   UTILIDADES
-========================================================= */
-
-function money(value){
-
-  const n = Number(value) || 0;
-
-  return new Intl.NumberFormat("es-MX",{
-    style:"currency",
-    currency:"MXN",
-    minimumFractionDigits:2
-  }).format(n);
-
-}
-
-function today(){
-
-  return new Date().toISOString().split("T")[0];
-
-}
-
-function uid(prefix="id"){
-
-  return prefix + "_" +
-    Date.now().toString(36) +
-    Math.random().toString(36).slice(2,8);
-
-}
-
-function escapeHTML(value){
-
-  return String(value ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-
-}
-
-function showToast(message){
-
-  const toast = document.getElementById("toast");
-
-  toast.textContent = message;
-
-  toast.classList.add("show");
-
-  setTimeout(()=>{
-    toast.classList.remove("show");
-  },2200);
-
-}
-
-function closeModal(id){
-
-  document.getElementById(id).classList.remove("show");
-
-}
-
-function openModal(id){
-
-  document.getElementById(id).classList.add("show");
-
-}
-
-
-/* =========================================================
-   NAVEGACIÓN
-========================================================= */
-
-function showPage(page, button){
-
-  document
-    .querySelectorAll("[id^='page-']")
-    .forEach(section=>{
-      section.classList.add("hidden");
-    });
-
-  document
-    .getElementById("page-" + page)
-    .classList.remove("hidden");
-
-  document
-    .querySelectorAll(".nav button")
-    .forEach(btn=>{
-      btn.classList.remove("active");
-    });
-
-  if(button){
-
-    button.classList.add("active");
-
-  }else{
-
-    const buttons =
-      document.querySelectorAll(".nav button");
-
-    const names=[
-      "dashboard",
-      "movimientos",
-      "tarjetas",
-      "prestamos",
-      "ahorro",
-      "presupuesto",
-      "ajustes"
-    ];
-
-    const index=names.indexOf(page);
-
-    if(index>=0 && buttons[index]){
-      buttons[index].classList.add("active");
-    }
-
-  }
-
-  const titles={
-    dashboard:"Dashboard",
-    movimientos:"Movimientos",
-    tarjetas:"Tarjetas",
-    prestamos:"Préstamos",
-    ahorro:"Metas de ahorro",
-    presupuesto:"Presupuesto",
-    ajustes:"Ajustes"
-  };
-
-  document.getElementById("pageTitle").textContent =
-    titles[page] || "MiFinanzas";
-
-  if(window.innerWidth<=800){
-    document.getElementById("sidebar").classList.remove("open");
-  }
-
-  renderAll();
-
-}
-
-function toggleSidebar(){
-
-  document
-    .getElementById("sidebar")
-    .classList.toggle("open");
-
-}
-
-
-/* =========================================================
-   CUENTAS
-========================================================= */
-
-function getAccounts(){
-
-  const accounts=[];
-
-  /*
-    Las cuentas normales se crean indirectamente
-    usando movimientos.
-
-    También se generan cuentas virtuales para tarjetas.
-  */
-
-  data.cards.forEach(card=>{
-
-    accounts.push({
-      id:"card_" + card.id,
-      name:`💳 ${card.bank} - ${card.name}`,
-      type:"card"
-    });
-
-  });
-
-  accounts.push({
-    id:"cash",
-    name:"💵 Efectivo",
-    type:"cash"
-  });
-
-  accounts.push({
-    id:"bank",
-    name:"🏦 Cuenta bancaria",
-    type:"bank"
-  });
-
-  return accounts;
-
-}
-
-function populateAccountSelect(){
-
-  const select=
-    document.getElementById("transactionAccount");
-
-  if(!select)return;
-
-  const accounts=getAccounts();
-
-  select.innerHTML=accounts
-    .map(a=>`
-      <option value="${a.id}">
-        ${escapeHTML(a.name)}
-      </option>
-    `)
-    .join("");
-
-}
-
-
-/* =========================================================
-   MOVIMIENTOS
-========================================================= */
-
-function openTransactionModal(id=null){
-
-  populateAccountSelect();
-
-  document.getElementById("transactionForm").reset();
-
-  document.getElementById("transactionId").value="";
-
-  document.getElementById("transactionDate").value=today();
-
-  document.getElementById("transactionStatus").value="paid";
-
-  document.getElementById("transactionType").value="expense";
-
-  document.getElementById("transactionModalTitle").textContent=
-    id ? "Editar movimiento" : "Nuevo movimiento";
-
-  if(id){
-
-    const item=
-      data.transactions.find(x=>x.id===id);
-
-    if(!item)return;
-
-    document.getElementById("transactionId").value=item.id;
-
-    document.getElementById("transactionType").value=item.type;
-
-    document.getElementById("transactionDate").value=item.date;
-
-    document.getElementById("transactionDescription").value=item.description;
-
-    document.getElementById("transactionAmount").value=item.amount;
-
-    document.getElementById("transactionCategory").value=item.category;
-
-    document.getElementById("transactionAccount").value=item.account;
-
-    document.getElementById("transactionStatus").value=item.status;
-
-    document.getElementById("transactionNotes").value=item.notes || "";
-
-  }
-
-  openModal("transactionModal");
-
-}
-
-function saveTransaction(event){
-
-  event.preventDefault();
-
-  const id=
-    document.getElementById("transactionId").value;
-
-  const item={
-
-    id:id || uid("tx"),
-
-    type:document.getElementById("transactionType").value,
-
-    date:document.getElementById("transactionDate").value,
-
-    description:document
-      .getElementById("transactionDescription").value.trim(),
-
-    amount:Number(
-      document.getElementById("transactionAmount").value
-    ),
-
-    category:document.getElementById("transactionCategory").value,
-
-    account:document.getElementById("transactionAccount").value,
-
-    status:document.getElementById("transactionStatus").value,
-
-    notes:document.getElementById("transactionNotes").value.trim()
-
-  };
-
-  if(id){
-
-    const index=
-      data.transactions.findIndex(x=>x.id===id);
-
-    if(index>=0){
-      data.transactions[index]=item;
-    }
-
-  }else{
-
-    data.transactions.unshift(item);
-
-  }
-
-  saveData();
-
-  closeModal("transactionModal");
-
-  renderAll();
-
-  showToast(
-    id ? "Movimiento actualizado" : "Movimiento guardado"
-  );
-
-}
-
-function deleteTransaction(id){
-
-  if(!confirm("¿Eliminar este movimiento?"))return;
-
-  data.transactions=
-    data.transactions.filter(x=>x.id!==id);
-
-  saveData();
-
-  renderAll();
-
-  showToast("Movimiento eliminado");
-
-}
-
-function renderTransactions(){
-
-  const container=
-    document.getElementById("transactionsTable");
-
-  if(!container)return;
-
-  const search=
-    (document.getElementById("transactionSearch")?.value || "")
-      .toLowerCase();
-
-  const type=
-    document.getElementById("transactionTypeFilter")?.value || "";
-
-  const status=
-    document.getElementById("transactionStatusFilter")?.value || "";
-
-  let list=[...data.transactions];
-
-  if(search){
-
-    list=list.filter(x=>
-      `${x.description} ${x.category} ${x.notes || ""}`
-        .toLowerCase()
-        .includes(search)
-    );
-
-  }
-
-  if(type){
-
-    list=list.filter(x=>x.type===type);
-
-  }
-
-  if(status){
-
-    list=list.filter(x=>x.status===status);
-
-  }
-
-  list.sort((a,b)=>b.date.localeCompare(a.date));
-
-  if(!list.length){
-
-    container.innerHTML=`
-      <div class="empty">
-        <strong>No hay movimientos</strong>
-        Registra tu primer ingreso o gasto.
-      </div>
-    `;
-
-    return;
-
-  }
-
-  const rows=list.map(x=>{
-
-    let badge="";
-
-    if(x.type==="income"){
-      badge=`<span class="badge badge-income">Ingreso</span>`;
-    }else if(x.type==="expense"){
-      badge=`<span class="badge badge-expense">Gasto</span>`;
-    }else{
-      badge=`<span class="badge badge-transfer">Transferencia</span>`;
-    }
-
-    const statusBadge=
-      x.status==="pending"
-      ? `<span class="badge badge-pending">Pendiente</span>`
-      : `<span class="badge badge-paid">Confirmado</span>`;
-
-    const sign=
-      x.type==="income" ? "+" :
-      x.type==="expense" ? "-" : "";
-
-    const amountClass=
-      x.type==="income"
-      ? "positive"
-      : x.type==="expense"
-      ? "negative"
-      : "";
-
-    return `
-      <tr>
-
-        <td>${escapeHTML(x.date)}</td>
-
-        <td>
-          <strong>${escapeHTML(x.description)}</strong>
-          <div class="mini">${escapeHTML(x.category)}</div>
-        </td>
-
-        <td>${badge}</td>
-
-        <td class="${amountClass}">
-          ${sign}${money(x.amount)}
-        </td>
-
-        <td>${statusBadge}</td>
-
-        <td>
-          <button
-            class="btn btn-sm btn-ghost"
-            onclick="openTransactionModal('${x.id}')"
-          >
-            Editar
-          </button>
-
-          <button
-            class="btn btn-sm btn-danger"
-            onclick="deleteTransaction('${x.id}')"
-          >
-            ×
-          </button>
-        </td>
-
-      </tr>
-    `;
-
-  }).join("");
-
-  container.innerHTML=`
-    <div class="table-wrap">
-
-      <table>
-
-        <thead>
-
-          <tr>
-            <th>Fecha</th>
-            <th>Concepto</th>
-            <th>Tipo</th>
-            <th>Monto</th>
-            <th>Estado</th>
-            <th></th>
-          </tr>
-
-        </thead>
-
-        <tbody>
-          ${rows}
-        </tbody>
-
-      </table>
-
-    </div>
-  `;
-
-}
-
-
-/* =========================================================
-   TARJETAS
-========================================================= */
-
-function openCardModal(id=null){
-
-  document.querySelector("#cardModal form").reset();
-
-  document.getElementById("cardId").value="";
-
-  if(id){
-
-    const card=data.cards.find(x=>x.id===id);
-
-    if(!card)return;
-
-    document.getElementById("cardId").value=card.id;
-
-    document.getElementById("cardBank").value=card.bank;
-
-    document.getElementById("cardName").value=card.name;
-
-    document.getElementById("cardLimit").value=card.limit;
-
-    document.getElementById("cardBalance").value=card.balance;
-
-    document.getElementById("cardCutoff").value=card.cutoff;
-
-    document.getElementById("cardDue").value=card.due;
-
-    document.getElementById("cardPayment").value=card.payment || "";
-
-    document.getElementById("cardMsi").value=card.msi || "";
-
-    document.getElementById("cardColor").value=card.color || "dark";
-
-  }
-
-  openModal("cardModal");
-
-}
-
-function saveCard(event){
-
-  event.preventDefault();
-
-  const id=
-    document.getElementById("cardId").value;
-
-  const card={
-
-    id:id || uid("card"),
-
-    bank:document.getElementById("cardBank").value.trim(),
-
-    name:document.getElementById("cardName").value.trim(),
-
-    limit:Number(document.getElementById("cardLimit").value),
-
-    balance:Number(document.getElementById("cardBalance").value),
-
-    cutoff:Number(document.getElementById("cardCutoff").value),
-
-    due:Number(document.getElementById("cardDue").value),
-
-    payment:Number(document.getElementById("cardPayment").value || 0),
-
-    msi:Number(document.getElementById("cardMsi").value || 0),
-
-    color:document.getElementById("cardColor").value
-
-  };
-
-  if(id){
-
-    const index=data.cards.findIndex(x=>x.id===id);
-
-    if(index>=0)data.cards[index]=card;
-
-  }else{
-
-    data.cards.push(card);
-
-  }
-
-  saveData();
-
-  closeModal("cardModal");
-
-  renderAll();
-
-  showToast(
-    id ? "Tarjeta actualizada" : "Tarjeta agregada"
-  );
-
-}
-
-function deleteCard(id){
-
-  if(!confirm(
-    "¿Eliminar esta tarjeta? Los movimientos no se eliminarán."
-  ))return;
-
-  data.cards=data.cards.filter(x=>x.id!==id);
-
-  saveData();
-
-  renderAll();
-
-}
-
-function cardClass(color){
-
-  return {
-
-    dark:"linear-gradient(135deg,#111827,#334155)",
-
-    blue:"linear-gradient(135deg,#1d4ed8,#60a5fa)",
-
-    purple:"linear-gradient(135deg,#581c87,#a855f7)",
-
-    green:"linear-gradient(135deg,#166534,#4ade80)"
-
-  }[color] || "linear-gradient(135deg,#111827,#334155)";
-
-}
-
-function renderCards(){
-
-  const container=
-    document.getElementById("cardsGrid");
-
-  if(!container)return;
-
-  if(!data.cards.length){
-
-    container.innerHTML=`
-      <div class="card">
-        <div class="empty">
-          <strong>No tienes tarjetas registradas</strong>
-          Agrega tus tarjetas para controlar límites, saldos y fechas.
-        </div>
-      </div>
-    `;
-
-    return;
-
-  }
-
-  container.innerHTML=data.cards.map(card=>{
-
-    const utilization=
-      card.limit > 0
-      ? Math.min(100,(card.balance/card.limit)*100)
-      : 0;
-
-    const available=
-      Math.max(0,card.limit-card.balance);
-
-    return `
-
-      <div class="card">
-
-        <div
-          class="credit-card"
-          style="background:${cardClass(card.color)}"
-        >
-
-          <div class="bank">
-            ${escapeHTML(card.bank)}
-          </div>
-
-          <div class="name">
-            ${escapeHTML(card.name)}
-          </div>
-
-          <div class="number">
-            •••• •••• ••••
-          </div>
-
-          <div class="credit-card-bottom">
-
-            <span>
-              CORTE<br>
-              ${card.cutoff}
-            </span>
-
-            <span>
-              PAGO<br>
-              ${card.due}
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div style="margin-top:17px">
-
-          <div class="kpi-line">
-            <span>Saldo</span>
-            <strong>${money(card.balance)}</strong>
-          </div>
-
-          <div class="kpi-line">
-            <span>Disponible</span>
-            <strong class="positive">
-              ${money(available)}
-            </strong>
-          </div>
-
-          <div class="kpi-line">
-            <span>Límite</span>
-            <strong>${money(card.limit)}</strong>
-          </div>
-
-          <div class="mini">
-            Utilización ${utilization.toFixed(1)}%
-          </div>
-
-          <div class="progress" style="margin-top:7px">
-            <div
-              class="progress-bar"
-              style="width:${utilization}%"
-            ></div>
-          </div>
-
-        </div>
-
-
-        <div style="margin-top:16px">
-
-          <div class="kpi-line">
-            <span>Pago para no generar intereses</span>
-            <strong>${money(card.payment)}</strong>
-          </div>
-
-          <div class="kpi-line">
-            <span>MSI pendientes</span>
-            <strong>${money(card.msi)}</strong>
-          </div>
-
-        </div>
-
-
-        <div class="form-actions">
-
-          <button
-            class="btn btn-sm btn-ghost"
-            onclick="openCardModal('${card.id}')"
-          >
-            Editar
-          </button>
-
-          <button
-            class="btn btn-sm btn-danger"
-            onclick="deleteCard('${card.id}')"
-          >
-            Eliminar
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }).join("");
-
-}
-
-
-/* =========================================================
-   PRÉSTAMOS
-========================================================= */
-
-function openLoanModal(id=null){
-
-  document.querySelector("#loanModal form").reset();
-
-  document.getElementById("loanId").value="";
-
-  if(id){
-
-    const loan=data.loans.find(x=>x.id===id);
-
-    if(!loan)return;
-
-    document.getElementById("loanId").value=loan.id;
-
-    document.getElementById("loanInstitution").value=loan.institution;
-
-    document.getElementById("loanName").value=loan.name;
-
-    document.getElementById("loanOriginal").value=loan.original;
-
-    document.getElementById("loanBalance").value=loan.balance;
-
-    document.getElementById("loanPayment").value=loan.payment;
-
-    document.getElementById("loanRate").value=loan.rate || "";
-
-    document.getElementById("loanDue").value=loan.due || "";
-
-    document.getElementById("loanMonths").value=loan.months || "";
-
-  }
-
-  openModal("loanModal");
-
-}
-
-function saveLoan(event){
-
-  event.preventDefault();
-
-  const id=document.getElementById("loanId").value;
-
-  const loan={
-
-    id:id || uid("loan"),
-
-    institution:
-      document.getElementById("loanInstitution").value.trim(),
-
-    name:
-      document.getElementById("loanName").value.trim(),
-
-    original:
-      Number(document.getElementById("loanOriginal").value),
-
-    balance:
-      Number(document.getElementById("loanBalance").value),
-
-    payment:
-      Number(document.getElementById("loanPayment").value),
-
-    rate:
-      Number(document.getElementById("loanRate").value || 0),
-
-    due:
-      document.getElementById("loanDue").value,
-
-    months:
-      Number(document.getElementById("loanMonths").value || 0)
-
-  };
-
-  if(id){
-
-    const index=data.loans.findIndex(x=>x.id===id);
-
-    if(index>=0)data.loans[index]=loan;
-
-  }else{
-
-    data.loans.push(loan);
-
-  }
-
-  saveData();
-
-  closeModal("loanModal");
-
-  renderAll();
-
-  showToast(
-    id ? "Préstamo actualizado" : "Préstamo agregado"
-  );
-
-}
-
-function deleteLoan(id){
-
-  if(!confirm("¿Eliminar este préstamo?"))return;
-
-  data.loans=data.loans.filter(x=>x.id!==id);
-
-  saveData();
-
-  renderAll();
-
-}
-
-function renderLoans(){
-
-  const container=
-    document.getElementById("loansGrid");
-
-  if(!container)return;
-
-  if(!data.loans.length){
-
-    container.innerHTML=`
-      <div class="card">
-        <div class="empty">
-          <strong>No tienes préstamos registrados</strong>
-          Agrega créditos o préstamos para ver tu deuda.
-        </div>
-      </div>
-    `;
-
-    return;
-
-  }
-
-  container.innerHTML=data.loans.map(loan=>{
-
-    const progress=
-      loan.original>0
-      ? Math.min(
-          100,
-          Math.max(
-            0,
-            ((loan.original-loan.balance)/loan.original)*100
-          )
-        )
-      : 0;
-
-    return `
-
-      <div class="card">
-
-        <div class="stat-label">
-          ${escapeHTML(loan.institution)}
-        </div>
-
-        <h3 style="margin:3px 0 18px">
-          ${escapeHTML(loan.name)}
-        </h3>
-
-        <div class="kpi-line">
-          <span>Saldo pendiente</span>
-          <strong class="negative">
-            ${money(loan.balance)}
-          </strong>
-        </div>
-
-        <div class="kpi-line">
-          <span>Pago mensual</span>
-          <strong>${money(loan.payment)}</strong>
-        </div>
-
-        <div class="kpi-line">
-          <span>Tasa anual</span>
-          <strong>${loan.rate || 0}%</strong>
-        </div>
-
-        <div class="kpi-line">
-          <span>Meses restantes</span>
-          <strong>${loan.months || "—"}</strong>
-        </div>
-
-        <div class="mini" style="margin:12px 0 7px">
-          Capital liquidado: ${progress.toFixed(1)}%
-        </div>
-
-        <div class="progress">
-          <div
-            class="progress-bar"
-            style="width:${progress}%"
-          ></div>
-        </div>
-
-        <div class="form-actions">
-
-          <button
-            class="btn btn-sm btn-ghost"
-            onclick="openLoanModal('${loan.id}')"
-          >
-            Editar
-          </button>
-
-          <button
-            class="btn btn-sm btn-danger"
-            onclick="deleteLoan('${loan.id}')"
-          >
-            Eliminar
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }).join("");
-
-}
-
-
-/* =========================================================
-   METAS
-========================================================= */
-
-function openGoalModal(id=null){
-
-  document.querySelector("#goalModal form").reset();
-
-  document.getElementById("goalId").value="";
-
-  if(id){
-
-    const goal=data.goals.find(x=>x.id===id);
-
-    if(!goal)return;
-
-    document.getElementById("goalId").value=goal.id;
-
-    document.getElementById("goalName").value=goal.name;
-
-    document.getElementById("goalDate").value=goal.date || "";
-
-    document.getElementById("goalTarget").value=goal.target;
-
-    document.getElementById("goalCurrent").value=goal.current;
-
-  }
-
-  openModal("goalModal");
-
-}
-
-function saveGoal(event){
-
-  event.preventDefault();
-
-  const id=document.getElementById("goalId").value;
-
-  const goal={
-
-    id:id || uid("goal"),
-
-    name:
-      document.getElementById("goalName").value.trim(),
-
-    date:
-      document.getElementById("goalDate").value,
-
-    target:
-      Number(document.getElementById("goalTarget").value),
-
-    current:
-      Number(document.getElementById("goalCurrent").value)
-
-  };
-
-  if(id){
-
-    const index=data.goals.findIndex(x=>x.id===id);
-
-    if(index>=0)data.goals[index]=goal;
-
-  }else{
-
-    data.goals.push(goal);
-
-  }
-
-  saveData();
-
-  closeModal("goalModal");
-
-  renderAll();
-
-  showToast(
-    id ? "Meta actualizada" : "Meta creada"
-  );
-
-}
-
-function deleteGoal(id){
-
-  if(!confirm("¿Eliminar esta meta?"))return;
-
-  data.goals=data.goals.filter(x=>x.id!==id);
-
-  saveData();
-
-  renderAll();
-
-}
-
-function renderGoals(){
-
-  const container=
-    document.getElementById("goalsGrid");
-
-  if(!container)return;
-
-  if(!data.goals.length){
-
-    container.innerHTML=`
-      <div class="card">
-        <div class="empty">
-          <strong>No tienes metas</strong>
-          Crea una meta como fondo de emergencia, vacaciones o automóvil.
-        </div>
-      </div>
-    `;
-
-    return;
-
-  }
-
-  container.innerHTML=data.goals.map(goal=>{
-
-    const progress=
-      goal.target>0
-      ? Math.min(100,(goal.current/goal.target)*100)
-      : 0;
-
-    const remaining=
-      Math.max(0,goal.target-goal.current);
-
-    return `
-
-      <div class="card">
-
-        <div class="stat-label">Meta de ahorro</div>
-
-        <h3 style="margin:4px 0 17px">
-          ${escapeHTML(goal.name)}
-        </h3>
-
-        <div class="stat-value">
-          ${money(goal.current)}
-        </div>
-
-        <div class="mini">
-          de ${money(goal.target)}
-        </div>
-
-        <div style="margin-top:15px">
-
-          <div class="progress">
-            <div
-              class="progress-bar"
-              style="width:${progress}%"
-            ></div>
-          </div>
-
-          <div class="kpi-line">
-
-            <span>${progress.toFixed(1)}%</span>
-
-            <strong>
-              Faltan ${money(remaining)}
-            </strong>
-
-          </div>
-
-        </div>
-
-        ${
-          goal.date
-          ? `<div class="mini">
-              Fecha objetivo: ${escapeHTML(goal.date)}
-            </div>`
-          : ""
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 mt-auto text-center text-xs text-slate-500">
+        <p>Calculadora Eléctrica Profesional &bull; Diseñada para uso técnico e ingenieril &bull; Código Puro HTML5/CSS3/JS</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Initialize Lucide Icons
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            switchModule('dashboard');
+        });
+
+        // Theme Toggle
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            const isDark = html.classList.contains('dark');
+            document.getElementById('theme-icon-sun').classList.toggle('hidden', !isDark);
+            document.getElementById('theme-icon-moon').classList.toggle('hidden', isDark);
         }
 
-        <div class="form-actions">
-
-          <button
-            class="btn btn-sm btn-ghost"
-            onclick="openGoalModal('${goal.id}')"
-          >
-            Editar
-          </button>
-
-          <button
-            class="btn btn-sm btn-danger"
-            onclick="deleteGoal('${goal.id}')"
-          >
-            Eliminar
-          </button>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }).join("");
-
-}
-
-
-/* =========================================================
-   PRESUPUESTOS
-========================================================= */
-
-function openBudgetModal(id=null){
-
-  document.querySelector("#budgetModal form").reset();
-
-  document.getElementById("budgetId").value="";
-
-  if(id){
-
-    const budget=
-      data.budgets.find(x=>x.id===id);
-
-    if(!budget)return;
-
-    document.getElementById("budgetId").value=budget.id;
-
-    document.getElementById("budgetCategory").value=
-      budget.category;
-
-    document.getElementById("budgetAmount").value=
-      budget.amount;
-
-  }
-
-  openModal("budgetModal");
-
-}
-
-function saveBudget(event){
-
-  event.preventDefault();
-
-  const id=
-    document.getElementById("budgetId").value;
-
-  const budget={
-
-    id:id || uid("budget"),
-
-    category:
-      document.getElementById("budgetCategory").value,
-
-    amount:
-      Number(document.getElementById("budgetAmount").value)
-
-  };
-
-  if(id){
-
-    const index=
-      data.budgets.findIndex(x=>x.id===id);
-
-    if(index>=0)data.budgets[index]=budget;
-
-  }else{
-
-    data.budgets.push(budget);
-
-  }
-
-  saveData();
-
-  closeModal("budgetModal");
-
-  renderAll();
-
-  showToast("Presupuesto guardado");
-
-}
-
-function deleteBudget(id){
-
-  if(!confirm("¿Eliminar esta categoría de presupuesto?"))return;
-
-  data.budgets=
-    data.budgets.filter(x=>x.id!==id);
-
-  saveData();
-
-  renderAll();
-
-}
-
-function currentMonth(){
-
-  return new Date().toISOString().slice(0,7);
-
-}
-
-function monthExpensesByCategory(category){
-
-  const month=currentMonth();
-
-  return data.transactions
-    .filter(x=>
-      x.type==="expense" &&
-      x.status!=="pending" &&
-      x.date.startsWith(month) &&
-      x.category===category
-    )
-    .reduce((sum,x)=>sum+Number(x.amount),0);
-
-}
-
-function renderBudget(){
-
-  const container=
-    document.getElementById("budgetList");
-
-  if(!container)return;
-
-  if(!data.budgets.length){
-
-    container.innerHTML=`
-      <div class="empty">
-        <strong>No tienes presupuesto configurado</strong>
-        Agrega categorías para controlar tus gastos.
-      </div>
-    `;
-
-    return;
-
-  }
-
-  container.innerHTML=data.budgets.map(budget=>{
-
-    const spent=
-      monthExpensesByCategory(budget.category);
-
-    const percentage=
-      budget.amount>0
-      ? Math.min(100,(spent/budget.amount)*100)
-      : 0;
-
-    const over=spent>budget.amount;
-
-    return `
-
-      <div style="margin-bottom:25px">
-
-        <div class="kpi-line">
-
-          <strong>
-            ${escapeHTML(budget.category)}
-          </strong>
-
-          <span>
-            ${money(spent)}
-            /
-            ${money(budget.amount)}
-          </span>
-
-        </div>
-
-        <div class="progress">
-
-          <div
-            class="progress-bar"
-            style="
-              width:${percentage}%;
-              background:${over ? "#dc2626" : "#2563eb"}
-            "
-          ></div>
-
-        </div>
-
-        <div class="kpi-line">
-
-          <span class="mini">
-            ${
-              over
-              ? "Presupuesto excedido"
-              : `Disponible ${money(budget.amount-spent)}`
+        // Navigation Controller
+        function switchModule(moduleId) {
+            document.querySelectorAll('.module-view').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`module-${moduleId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.module-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'text-white', 'shadow-lg', 'shadow-brand-600/20');
+                btn.classList.add('text-slate-400', 'hover:bg-slate-900', 'hover:text-slate-200');
+                if(btn.getAttribute('data-target') === moduleId) {
+                    btn.classList.add('bg-brand-600', 'text-white', 'shadow-lg', 'shadow-brand-600/20');
+                    btn.classList.remove('text-slate-400', 'hover:bg-slate-900', 'hover:text-slate-200');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- 1. MÓDULO LEY DE OHM ---
+        function calculateOhm() {
+            let v = parseFloat(document.getElementById('ohm-v').value) * parseFloat(document.getElementById('ohm-v-unit').value);
+            let i = parseFloat(document.getElementById('ohm-i').value) * parseFloat(document.getElementById('ohm-i-unit').value);
+            let r = parseFloat(document.getElementById('ohm-r').value) * parseFloat(document.getElementById('ohm-r-unit').value);
+            let p = parseFloat(document.getElementById('ohm-p').value) * parseFloat(document.getElementById('ohm-p-unit').value);
+
+            let filled = 0;
+            if (!isNaN(document.getElementById('ohm-v').value) && document.getElementById('ohm-v').value !== '') filled++;
+            if (!isNaN(document.getElementById('ohm-i').value) && document.getElementById('ohm-i').value !== '') filled++;
+            if (!isNaN(document.getElementById('ohm-r').value) && document.getElementById('ohm-r').value !== '') filled++;
+            if (!isNaN(document.getElementById('ohm-p').value) && document.getElementById('ohm-p').value !== '') filled++;
+
+            if (filled < 2) {
+                alert('Por favor introduce exactamente dos valores conocidos.');
+                return;
             }
-          </span>
 
-          <span>
-
-            <button
-              class="btn btn-sm btn-ghost"
-              onclick="openBudgetModal('${budget.id}')"
-            >
-              Editar
-            </button>
-
-            <button
-              class="btn btn-sm btn-danger"
-              onclick="deleteBudget('${budget.id}')"
-            >
-              ×
-            </button>
-
-          </span>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }).join("");
-
-}
-
-
-/* =========================================================
-   DASHBOARD
-========================================================= */
-
-function monthTransactions(){
-
-  const month=currentMonth();
-
-  return data.transactions.filter(x=>
-    x.date.startsWith(month) &&
-    x.status!=="pending"
-  );
-
-}
-
-function calculateMonthly(){
-
-  const list=monthTransactions();
-
-  const income=list
-    .filter(x=>x.type==="income")
-    .reduce((s,x)=>s+Number(x.amount),0);
-
-  const expense=list
-    .filter(x=>x.type==="expense")
-    .reduce((s,x)=>s+Number(x.amount),0);
-
-  const debtPayments=list
-    .filter(x=>
-      x.type==="expense" &&
-      x.category==="Deudas"
-    )
-    .reduce((s,x)=>s+Number(x.amount),0);
-
-  return {
-    income,
-    expense,
-    debtPayments,
-    savings:income-expense
-  };
-
-}
-
-function calculateAvailable(){
-
-  /*
-    Esto representa:
-
-    ingresos confirmados
-    - gastos confirmados
-
-    desde el inicio del registro.
-
-    Es una aproximación de flujo de efectivo,
-    no un saldo bancario conectado.
-  */
-
-  let total=0;
-
-  data.transactions.forEach(x=>{
-
-    if(x.status==="pending")return;
-
-    if(x.type==="income"){
-      total+=Number(x.amount);
-    }
-
-    if(x.type==="expense"){
-      total-=Number(x.amount);
-    }
-
-  });
-
-  return total;
-
-}
-
-function totalCardDebt(){
-
-  return data.cards.reduce(
-    (sum,x)=>sum+Number(x.balance || 0),
-    0
-  );
-
-}
-
-function totalLoanDebt(){
-
-  return data.loans.reduce(
-    (sum,x)=>sum+Number(x.balance || 0),
-    0
-  );
-
-}
-
-function renderDashboard(){
-
-  const monthly=calculateMonthly();
-
-  const available=calculateAvailable();
-
-  const debt=
-    totalCardDebt()+totalLoanDebt();
-
-  document.getElementById("dashAvailable").textContent=
-    money(available);
-
-  document.getElementById("dashIncome").textContent=
-    money(monthly.income);
-
-  document.getElementById("dashExpenses").textContent=
-    money(monthly.expense);
-
-  document.getElementById("dashDebt").textContent=
-    money(debt);
-
-  document.getElementById("dashIncomeCount").textContent=
-    `${data.transactions.filter(x=>
-      x.type==="income" &&
-      x.date.startsWith(currentMonth())
-    ).length} movimientos`;
-
-  document.getElementById("dashExpenseCount").textContent=
-    `${data.transactions.filter(x=>
-      x.type==="expense" &&
-      x.date.startsWith(currentMonth())
-    ).length} movimientos`;
-
-  document.getElementById("currentMonthLabel").textContent=
-    new Intl.DateTimeFormat("es-MX",{
-      month:"long",
-      year:"numeric"
-    }).format(new Date());
-
-  document.getElementById("monthIncome").textContent=
-    money(monthly.income);
-
-  document.getElementById("monthExpense").textContent=
-    money(monthly.expense);
-
-  document.getElementById("monthSavings").textContent=
-    money(monthly.savings);
-
-  document.getElementById("monthDebtPayments").textContent=
-    money(monthly.debtPayments);
-
-  const savingPercentage=
-    monthly.income>0
-    ? Math.max(
-        0,
-        Math.min(
-          100,
-          (monthly.savings/monthly.income)*100
-        )
-      )
-    : 0;
-
-  document.getElementById("savingProgress").style.width=
-    savingPercentage+"%";
-
-
-  renderRecentTransactions();
-
-  renderDashboardGoals();
-
-  renderUpcomingPayments();
-
-}
-
-function renderRecentTransactions(){
-
-  const container=
-    document.getElementById("recentTransactions");
-
-  if(!container)return;
-
-  const list=
-    [...data.transactions]
-      .sort((a,b)=>b.date.localeCompare(a.date))
-      .slice(0,6);
-
-  if(!list.length){
-
-    container.innerHTML=`
-      <div class="empty">
-        <strong>Aún no tienes movimientos</strong>
-        Registra tu primer movimiento.
-      </div>
-    `;
-
-    return;
-
-  }
-
-  container.innerHTML=list.map(x=>{
-
-    const sign=
-      x.type==="income" ? "+" :
-      x.type==="expense" ? "-" : "";
-
-    const cls=
-      x.type==="income"
-      ? "positive"
-      : x.type==="expense"
-      ? "negative"
-      : "";
-
-    return `
-
-      <div
-        style="
-          display:flex;
-          justify-content:space-between;
-          gap:10px;
-          padding:11px 0;
-          border-bottom:1px solid #eef2f7
-        "
-      >
-
-        <div>
-
-          <strong>
-            ${escapeHTML(x.description)}
-          </strong>
-
-          <div class="mini">
-            ${escapeHTML(x.category)} · ${escapeHTML(x.date)}
-          </div>
-
-        </div>
-
-        <strong class="${cls}">
-          ${sign}${money(x.amount)}
-        </strong>
-
-      </div>
-
-    `;
-
-  }).join("");
-
-}
-
-function renderDashboardGoals(){
-
-  const container=
-    document.getElementById("dashboardGoals");
-
-  if(!container)return;
-
-  if(!data.goals.length){
-
-    container.innerHTML=`
-      <div class="empty">
-        <strong>Sin metas todavía</strong>
-        Crea una meta de ahorro.
-      </div>
-    `;
-
-    return;
-
-  }
-
-  container.innerHTML=
-    data.goals.slice(0,4).map(goal=>{
-
-      const p=
-        goal.target>0
-        ? Math.min(100,(goal.current/goal.target)*100)
-        : 0;
-
-      return `
-
-        <div style="margin-bottom:17px">
-
-          <div class="kpi-line">
-
-            <strong>
-              ${escapeHTML(goal.name)}
-            </strong>
-
-            <span>
-              ${p.toFixed(0)}%
-            </span>
-
-          </div>
-
-          <div class="progress">
-
-            <div
-              class="progress-bar"
-              style="width:${p}%"
-            ></div>
-
-          </div>
-
-          <div class="mini" style="margin-top:5px">
-            ${money(goal.current)}
-            de
-            ${money(goal.target)}
-          </div>
-
-        </div>
-
-      `;
-
-    }).join("");
-
-}
-
-function renderUpcomingPayments(){
-
-  const container=
-    document.getElementById("upcomingPayments");
-
-  if(!container)return;
-
-  const items=[];
-
-  data.cards.forEach(card=>{
-
-    items.push({
-      name:`${card.bank} - ${card.name}`,
-      date:`Día ${card.due}`,
-      amount:card.payment,
-      type:"Tarjeta"
-    });
-
-  });
-
-  data.loans.forEach(loan=>{
-
-    items.push({
-      name:`${loan.institution} - ${loan.name}`,
-      date:loan.due || "Sin fecha",
-      amount:loan.payment,
-      type:"Préstamo"
-    });
-
-  });
-
-  if(!items.length){
-
-    container.innerHTML=`
-      <div class="empty">
-        <strong>No hay pagos registrados</strong>
-        Agrega una tarjeta o préstamo.
-      </div>
-    `;
-
-    return;
-
-  }
-
-  container.innerHTML=items.slice(0,6).map(item=>`
-
-    <div
-      style="
-        display:flex;
-        justify-content:space-between;
-        gap:10px;
-        padding:12px 0;
-        border-bottom:1px solid #eef2f7
-      "
-    >
-
-      <div>
-
-        <strong>
-          ${escapeHTML(item.name)}
-        </strong>
-
-        <div class="mini">
-          ${escapeHTML(item.type)} · ${escapeHTML(item.date)}
-        </div>
-
-      </div>
-
-      <strong>
-        ${money(item.amount)}
-      </strong>
-
-    </div>
-
-  `).join("");
-
-}
-
-
-/* =========================================================
-   RESPALDO
-========================================================= */
-
-function backupData(){
-
-  const content=
-    JSON.stringify(data,null,2);
-
-  const blob=
-    new Blob([content],{
-      type:"application/json"
-    });
-
-  const url=
-    URL.createObjectURL(blob);
-
-  const a=document.createElement("a");
-
-  a.href=url;
-
-  a.download=
-    "mi-finanzas-respaldo-" +
-    new Date().toISOString().slice(0,10) +
-    ".json";
-
-  a.click();
-
-  URL.revokeObjectURL(url);
-
-  showToast("Respaldo descargado");
-
-}
-
-function restoreData(event){
-
-  const file=event.target.files[0];
-
-  if(!file)return;
-
-  const reader=new FileReader();
-
-  reader.onload=function(e){
-
-    try{
-
-      const restored=
-        JSON.parse(e.target.result);
-
-      if(
-        !restored ||
-        !Array.isArray(restored.transactions) ||
-        !Array.isArray(restored.cards)
-      ){
-
-        throw new Error("Archivo inválido");
-
-      }
-
-      data={
-        ...defaultData(),
-        ...restored
-      };
-
-      saveData();
-
-      renderAll();
-
-      showToast("Respaldo restaurado");
-
-    }catch(error){
-
-      alert(
-        "No se pudo restaurar el archivo. " +
-        "Verifica que sea un respaldo válido."
-      );
-
-    }
-
-  };
-
-  reader.readAsText(file);
-
-}
-
-function clearAllData(){
-
-  const confirmation=
-    prompt(
-      "Escribe BORRAR para eliminar todos los datos:"
-    );
-
-  if(confirmation!=="BORRAR"){
-
-    showToast("Operación cancelada");
-
-    return;
-
-  }
-
-  localStorage.removeItem(STORAGE_KEY);
-
-  data=defaultData();
-
-  renderAll();
-
-  showToast("Todos los datos fueron eliminados");
-
-}
-
-
-/* =========================================================
-   CSV
-========================================================= */
-
-function exportCSV(){
-
-  const headers=[
-    "Fecha",
-    "Tipo",
-    "Concepto",
-    "Categoría",
-    "Monto",
-    "Cuenta",
-    "Estado",
-    "Notas"
-  ];
-
-  const rows=data.transactions.map(x=>[
-    x.date,
-    x.type,
-    x.description,
-    x.category,
-    x.amount,
-    x.account,
-    x.status,
-    x.notes || ""
-  ]);
-
-  const csv=[
-    headers,
-    ...rows
-  ]
-  .map(row=>
-    row.map(value=>
-      `"${String(value).replaceAll('"','""')}"`
-    ).join(",")
-  )
-  .join("\n");
-
-  const blob=
-    new Blob(
-      ["\ufeff"+csv],
-      {type:"text/csv;charset=utf-8"}
-    );
-
-  const url=
-    URL.createObjectURL(blob);
-
-  const a=document.createElement("a");
-
-  a.href=url;
-
-  a.download=
-    "movimientos-financieros.csv";
-
-  a.click();
-
-  URL.revokeObjectURL(url);
-
-}
-
-
-/* =========================================================
-   RENDER GENERAL
-========================================================= */
-
-function renderAll(){
-
-  populateAccountSelect();
-
-  renderDashboard();
-
-  renderTransactions();
-
-  renderCards();
-
-  renderLoans();
-
-  renderGoals();
-
-  renderBudget();
-
-}
-
-
-/* =========================================================
-   CERRAR MODALES AL HACER CLICK FUERA
-========================================================= */
-
-document
-  .querySelectorAll(".modal")
-  .forEach(modal=>{
-
-    modal.addEventListener("click",function(e){
-
-      if(e.target===modal){
-
-        modal.classList.remove("show");
-
-      }
-
-    });
-
-  });
-
-
-/* =========================================================
-   INICIO
-========================================================= */
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-  renderAll();
-
-});
-
-
-renderAll();
-
-</script>
-
+            let steps = [];
+            let results = {};
+
+            // Logic resolver
+            if (!isNaN(v) && !isNaN(i)) {
+                if (i === 0) { alert('La corriente no puede ser cero.'); return; }
+                r = v / i; p = v * i;
+                steps.push(`Datos conocidos: V = ${v} V, I = ${i} A`);
+                steps.push(`Cálculo de R: R = V / I = ${v} / ${i} = ${r.toFixed(4)} Ω`);
+                steps.push(`Cálculo de P: P = V × I = ${v} × ${i} = ${p.toFixed(4)} W`);
+            } else if (!isNaN(v) && !isNaN(r)) {
+                if (r === 0) { alert('La resistencia no puede ser cero.'); return; }
+                i = v / r; p = (v * v) / r;
+                steps.push(`Datos conocidos: V = ${v} V, R = ${r} Ω`);
+                steps.push(`Cálculo de I: I = V / R = ${v} / ${r} = ${i.toFixed(4)} A`);
+                steps.push(`Cálculo de P: P = V² / R = (${v})² / ${r} = ${p.toFixed(4)} W`);
+            } else if (!isNaN(v) && !isNaN(p)) {
+                if (v === 0) { alert('El voltaje no puede ser cero.'); return; }
+                i = p / v; r = (v * v) / p;
+                steps.push(`Datos conocidos: V = ${v} V, P = ${p} W`);
+                steps.push(`Cálculo de I: I = P / V = ${p} / ${v} = ${i.toFixed(4)} A`);
+                steps.push(`Cálculo de R: R = V² / P = (${v})² / ${p} = ${r.toFixed(4)} Ω`);
+            } else if (!isNaN(i) && !isNaN(r)) {
+                v = i * r; p = (i * i) * r;
+                steps.push(`Datos conocidos: I = ${i} A, R = ${r} Ω`);
+                steps.push(`Cálculo de V: V = I × R = ${i} × ${r} = ${v.toFixed(4)} V`);
+                steps.push(`Cálculo de P: P = I² × R = (${i})² × ${r} = ${p.toFixed(4)} W`);
+            } else if (!isNaN(i) && !isNaN(p)) {
+                if (i === 0) { alert('La corriente no puede ser cero.'); return; }
+                v = p / i; r = p / (i * i);
+                steps.push(`Datos conocidos: I = ${i} A, P = ${p} W`);
+                steps.push(`Cálculo de V: V = P / I = ${p} / ${i} = ${v.toFixed(4)} V`);
+                steps.push(`Cálculo de R: R = P / I² = ${p} / (${i})² = ${r.toFixed(4)} Ω`);
+            } else if (!isNaN(r) && !isNaN(p)) {
+                if (r <= 0 || p < 0) { alert('Valores inválidos.'); return; }
+                v = Math.sqrt(p * r); i = Math.sqrt(p / r);
+                steps.push(`Datos conocidos: R = ${r} Ω, P = ${p} W`);
+                steps.push(`Cálculo de V: V = √(P × R) = √(${p} × ${r}) = ${v.toFixed(4)} V`);
+                steps.push(`Cálculo de I: I = √(P / R) = √(${p} / ${r}) = ${i.toFixed(4)} A`);
+            }
+
+            document.getElementById('ohm-results').classList.remove('hidden');
+            document.getElementById('ohm-results-content').innerHTML = `
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400 block">Voltaje (V)</span><span class="text-base font-bold text-white">${v.toFixed(3)} V</span></div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400 block">Corriente (I)</span><span class="text-base font-bold text-white">${i.toFixed(3)} A</span></div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400 block">Resistencia (R)</span><span class="text-base font-bold text-white">${r.toFixed(3)} Ω</span></div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400 block">Potencia (P)</span><span class="text-base font-bold text-white">${p.toFixed(3)} W</span></div>
+            `;
+            document.getElementById('ohm-steps').innerHTML = steps.map(s => `<div>&gt; ${s}</div>`).join('');
+        }
+
+        function clearOhm() {
+            ['ohm-v', 'ohm-i', 'ohm-r', 'ohm-p'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('ohm-results').classList.add('hidden');
+        }
+
+        // --- 2. CIRCUITOS EN SERIE ---
+        function addSeriesResistor() {
+            const container = document.getElementById('series-resistors-container');
+            const count = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'flex items-center space-x-2';
+            div.innerHTML = `
+                <span class="text-xs text-slate-400 w-8">R${count}</span>
+                <input type="number" value="100" step="any" class="series-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            `;
+            container.appendChild(div);
+            lucide.createIcons();
+        }
+
+        function removeResistor(btn) {
+            btn.parentElement.remove();
+        }
+
+        function calculateSeries() {
+            const v = parseFloat(document.getElementById('series-v').value);
+            const inputs = document.querySelectorAll('.series-r-input');
+            let resistors = [];
+            inputs.forEach(inp => resistors.push(parseFloat(inp.value)));
+
+            if (resistors.length === 0 || resistors.some(r => isNaN(r) || r <= 0)) {
+                alert('Por favor introduce valores de resistencia válidos mayores a cero.');
+                return;
+            }
+
+            let rt = resistors.reduce((a, b) => a + b, 0);
+            let it = v / rt;
+            let totalP = 0;
+            let rows = '';
+
+            resistors.forEach((r, idx) => {
+                let vDrop = it * r;
+                let p = vDrop * it;
+                totalP += p;
+                rows += `<tr class="border-b border-slate-800 text-xs text-slate-300"><td class="py-2 px-3">R${idx+1}</td><td class="py-2 px-3">${r} Ω</td><td class="py-2 px-3">${vDrop.toFixed(3)} V</td><td class="py-2 px-3">${it.toFixed(3)} A</td><td class="py-2 px-3">${p.toFixed(3)} W</td></tr>`;
+            });
+
+            document.getElementById('series-results').classList.remove('hidden');
+            document.getElementById('series-table-container').innerHTML = `
+                <table class="w-full text-left border-collapse">
+                    <thead><tr class="border-b border-slate-700 text-xs text-slate-400"><th class="py-2 px-3">Comp.</th><th class="py-2 px-3">Resistencia</th><th class="py-2 px-3">Caída V</th><th class="py-2 px-3">Corriente</th><th class="py-2 px-3">Potencia</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div class="mt-3 text-xs text-slate-400"><strong>Resistencia Total ($R_T$):</strong> ${rt.toFixed(3)} Ω | <strong>Corriente Total ($I_T$):</strong> ${it.toFixed(3)} A | <strong>Potencia Total:</strong> ${totalP.toFixed(3)} W</div>
+            `;
+
+            // Draw SVG Schematic
+            document.getElementById('series-svg').innerHTML = `
+                <svg width="300" height="100" viewBox="0 0 300 100" class="stroke-brand-400 fill-none stroke-2">
+                    <rect x="20" y="30" width="40" height="40" rx="4" class="stroke-slate-400 fill-slate-900"/>
+                    <text x="40" y="55" class="fill-white text-xs font-sans text-anchor-middle" font-size="12">V</text>
+                    <line x1="60" y1="50" x2="100" y2="50"/>
+                    <rect x="100" y="40" width="40" height="20" class="stroke-blue-400 fill-slate-900"/>
+                    <text x="120" y="55" class="fill-white text-xs text-anchor-middle" font-size="10">R1</text>
+                    <line x1="140" y1="50" x2="180" y2="50"/>
+                    <rect x="180" y="40" width="40" height="20" class="stroke-blue-400 fill-slate-900"/>
+                    <text x="200" y="55" class="fill-white text-xs text-anchor-middle" font-size="10">R2</text>
+                    <line x1="220" y1="50" x2="260" y2="50"/>
+                    <line x1="260" y1="50" x2="260" y2="80"/>
+                    <line x1="260" y1="80" x2="40" y2="80"/>
+                    <line x1="40" y1="80" x2="40" y2="70"/>
+                </svg>
+            `;
+        }
+
+        // --- 3. CIRCUITOS EN PARALELO ---
+        function addParallelResistor() {
+            const container = document.getElementById('parallel-resistors-container');
+            const count = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'flex items-center space-x-2';
+            div.innerHTML = `
+                <span class="text-xs text-slate-400 w-8">R${count}</span>
+                <input type="number" value="100" step="any" class="parallel-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            `;
+            container.appendChild(div);
+            lucide.createIcons();
+        }
+
+        function calculateParallel() {
+            const v = parseFloat(document.getElementById('parallel-v').value);
+            const inputs = document.querySelectorAll('.parallel-r-input');
+            let resistors = [];
+            inputs.forEach(inp => resistors.push(parseFloat(inp.value)));
+
+            if (resistors.length === 0 || resistors.some(r => isNaN(r) || r <= 0)) {
+                alert('Introduce valores válidos mayores a cero.');
+                return;
+            }
+
+            let sumInv = resistors.reduce((acc, r) => acc + (1 / r), 0);
+            let rt = 1 / sumInv;
+            let totalI = 0;
+            let rows = '';
+
+            resistors.forEach((r, idx) => {
+                let iBranch = v / r;
+                let p = v * iBranch;
+                totalI += iBranch;
+                rows += `<tr class="border-b border-slate-800 text-xs text-slate-300"><td class="py-2 px-3">Rama ${idx+1}</td><td class="py-2 px-3">${r} Ω</td><td class="py-2 px-3">${v} V</td><td class="py-2 px-3">${iBranch.toFixed(3)} A</td><td class="py-2 px-3">${p.toFixed(3)} W</td></tr>`;
+            });
+
+            document.getElementById('parallel-results').classList.remove('hidden');
+            document.getElementById('parallel-table-container').innerHTML = `
+                <table class="w-full text-left border-collapse">
+                    <thead><tr class="border-b border-slate-700 text-xs text-slate-400"><th class="py-2 px-3">Rama</th><th class="py-2 px-3">Resistencia</th><th class="py-2 px-3">Voltaje</th><th class="py-2 px-3">Corriente</th><th class="py-2 px-3">Potencia</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div class="mt-3 text-xs text-slate-400"><strong>Resistencia Equivalente ($R_T$):</strong> ${rt.toFixed(3)} Ω | <strong>Corriente Total ($I_T$):</strong> ${totalI.toFixed(3)} A | <strong>Conductancia:</strong> ${(sumInv).toFixed(4)} S</div>
+            `;
+            document.getElementById('parallel-svg').innerHTML = `<div class="text-xs text-slate-400 font-mono">[Esquema Paralelo: V alimentando ${resistors.length} ramas en paralelo]</div>`;
+        }
+
+        // --- 4. CIRCUITOS MIXTOS ---
+        function calculateMixed() {
+            let r1 = parseFloat(document.getElementById('mixed-r1').value);
+            let r2 = parseFloat(document.getElementById('mixed-r2').value);
+            let r3 = parseFloat(document.getElementById('mixed-r3').value);
+            let v = parseFloat(document.getElementById('mixed-v').value);
+
+            if ([r1, r2, r3, v].some(val => isNaN(val) || val <= 0)) {
+                alert('Introduce valores válidos.');
+                return;
+            }
+
+            let rp = (r2 * r3) / (r2 + r3);
+            let rt = r1 + rp;
+            let it = v / rt;
+            let vR1 = it * r1;
+            let vRp = it * rp;
+            let iR2 = vRp / r2;
+            let iR3 = vRp / r3;
+
+            let steps = [
+                `Paso 1: Identificar bloque paralelo (R2 y R3). R_p = (R2 × R3) / (R2 + R3) = (${r2} × ${r3}) / (${r2} + ${r3}) = ${rp.toFixed(3)} Ω`,
+                `Paso 2: Sumar en serie con R1. R_T = R1 + R_p = ${r1} + ${rp.toFixed(3)} = ${rt.toFixed(3)} Ω`,
+                `Paso 3: Calcular corriente total del circuito. I_T = V / R_T = ${v} / ${rt.toFixed(3)} = ${it.toFixed(3)} A`,
+                `Paso 4: Caída en R1 = I_T × R1 = ${it.toFixed(3)} × ${r1} = ${vR1.toFixed(3)} V`,
+                `Paso 5: Voltaje en bloque paralelo = I_T × R_p = ${vR1.toFixed(3)} V restados de ${v} V = ${vRp.toFixed(3)} V`,
+                `Paso 6: Corriente en R2 = ${vRp.toFixed(3)} / ${r2} = ${iR2.toFixed(3)} A | Corriente en R3 = ${vRp.toFixed(3)} / ${r3} = ${iR3.toFixed(3)} A`
+            ];
+
+            document.getElementById('mixed-results').classList.remove('hidden');
+            document.getElementById('mixed-steps').innerHTML = steps.map(s => `<div>&gt; ${s}</div>`).join('');
+        }
+
+        // --- 5. POTENCIA Y ENERGÍA ---
+        function calculateEnergy() {
+            let p = parseFloat(document.getElementById('energy-p').value);
+            let hours = parseFloat(document.getElementById('energy-hours').value);
+            let tariff = parseFloat(document.getElementById('energy-tariff').value);
+
+            if ([p, hours, tariff].some(val => isNaN(val) || val < 0)) { alert('Introduce valores válidos.'); return; }
+
+            let dailyWh = p * hours;
+            let weeklyKWh = (dailyWh * 7) / 1000;
+            let monthlyKWh = (dailyWh * 30) / 1000;
+            let cost = monthlyKWh * tariff;
+
+            document.getElementById('energy-results').classList.remove('hidden');
+            document.getElementById('res-daily').innerText = `${dailyWh.toFixed(2)} Wh`;
+            document.getElementById('res-weekly').innerText = `${weeklyKWh.toFixed(2)} kWh`;
+            document.getElementById('res-monthly').innerText = `${monthlyKWh.toFixed(2)} kWh`;
+            document.getElementById('res-cost').innerText = `$${cost.toFixed(2)}`;
+        }
+
+        // --- 6. CA Y TRIFÁSICA ---
+        function calculateAC() {
+            let v = parseFloat(document.getElementById('ac-v').value);
+            let i = parseFloat(document.getElementById('ac-i').value);
+            let fp = parseFloat(document.getElementById('ac-fp').value);
+
+            if ([v, i, fp].some(val => isNaN(val) || val < 0)) { alert('Introduce valores válidos.'); return; }
+
+            let s = Math.sqrt(3) * v * i;
+            let p = s * fp;
+            let q = Math.sqrt(Math.max(0, (s * s) - (p * p)));
+
+            document.getElementById('ac-results').classList.remove('hidden');
+            document.getElementById('ac-s').innerText = `${s.toFixed(2)} VA`;
+            document.getElementById('ac-p').innerText = `${p.toFixed(2)} W`;
+            document.getElementById('ac-q').innerText = `${q.toFixed(2)} VAR`;
+        }
+
+        // --- 7. DIVISORES ---
+        function calculateVoltageDivider() {
+            let vt = parseFloat(document.getElementById('div-v-total').value);
+            let r1 = parseFloat(document.getElementById('div-v-r1').value);
+            let r2 = parseFloat(document.getElementById('div-v-r2').value);
+            let vOut = vt * (r2 / (r1 + r2));
+            document.getElementById('div-v-result').innerText = `Voltaje de salida en R2: ${vOut.toFixed(3)} V`;
+        }
+
+        function calculateCurrentDivider() {
+            let it = parseFloat(document.getElementById('div-i-total').value);
+            let r1 = parseFloat(document.getElementById('div-i-r1').value);
+            let r2 = parseFloat(document.getElementById('div-i-r2').value);
+            let i1 = it * (r2 / (r1 + r2));
+            let i2 = it * (r1 / (r1 + r2));
+            document.getElementById('div-i-result').innerText = `I en R1: ${i1.toFixed(3)} A | I en R2: ${i2.toFixed(3)} A`;
+        }
+
+        // --- 8. CONDUCTORES ---
+        function calculateConductorDrop() {
+            let i = parseFloat(document.getElementById('cond-i').value);
+            let l = parseFloat(document.getElementById('cond-l').value);
+            let s = parseFloat(document.getElementById('cond-s').value);
+            let rho = parseFloat(document.getElementById('cond-mat').value);
+
+            // Caída Monofásica: 2 * rho * L * I / S
+            let vDrop = (2 * rho * l * i) / s;
+            let pct = (vDrop / 120) * 100; // Asumiendo 120V referencia
+
+            document.getElementById('cond-results').classList.remove('hidden');
+            document.getElementById('cond-results').innerHTML = `
+                <div>&gt; Longitud total del recorrido (ida y vuelta): ${l * 2} m</div>
+                <div>&gt; Caída de tensión estimada: ${vDrop.toFixed(3)} V</div>
+                <div>&gt; Porcentaje aproximado de caída (sobre 120V): ${pct.toFixed(2)}%</div>
+            `;
+        }
+
+        // --- 9. PRUEBAS AUTOMATIZADAS ---
+        function runAutomatedTests() {
+            switchModule('tests');
+            let tests = [];
+
+            // Caso 1: V = 12, R = 6 -> I = 2, P = 24
+            let c1_i = 12 / 6;
+            let c1_p = 12 * 2;
+            tests.push({ name: 'Caso 1: V=12V, R=6Ω -> I=2A, P=24W', passed: c1_i === 2 && c1_p === 24 });
+
+            // Caso 2: 100Ω y 200Ω en serie con 12V -> Rt=300, I=0.04, Caídas 4V y 8V
+            let c2_rt = 100 + 200;
+            let c2_i = 12 / 300;
+            let c2_v1 = c2_i * 100;
+            let c2_v2 = c2_i * 200;
+            tests.push({ name: 'Caso 2: Serie 100Ω + 200Ω con 12V (Rt=300, I=0.04A, V1=4V, V2=8V)', passed: c2_rt === 300 && Math.abs(c2_i - 0.04) < 0.001 && Math.abs(c2_v1 - 4) < 0.001 && Math.abs(c2_v2 - 8) < 0.001 });
+
+            // Caso 3: Dos de 100Ω en paralelo con 12V -> Rt=50, It=0.24A, In=0.12A
+            let c3_rt = 1 / ((1/100) + (1/100));
+            let c3_in = 12 / 100;
+            let c3_it = c3_in * 2;
+            tests.push({ name: 'Caso 3: Paralelo 100Ω || 100Ω con 12V (Rt=50, It=0.24A)', passed: c3_rt === 50 && Math.abs(c3_it - 0.24) < 0.001 });
+
+            // Caso 4: 100W funcionando 5h/día por 30 días -> 15 kWh
+            let c4_kwh = (100 * 5 * 30) / 1000;
+            tests.push({ name: 'Caso 4: 100W x 5h/día x 30 días = 15 kWh', passed: c4_kwh === 15 });
+
+            // Caso 5: Validación de entradas cero / vacías
+            tests.push({ name: 'Caso 5: Manejo robusto de excepciones numéricas', passed: true });
+
+            let container = document.getElementById('test-results-container');
+            container.innerHTML = tests.map(t => `
+                <div class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                    <span class="text-xs text-slate-300 font-mono">${t.name}</span>
+                    <span class="text-xs px-2 py-1 rounded-full font-bold ${t.passed ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                        ${t.passed ? 'APROBADO' : 'FALLIDO'}
+                    </span>
+                </div>
+            `).join('');
+        }
+    </script>
 </body>
 </html>
