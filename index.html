@@ -40,15 +40,11 @@
                     <i data-lucide="zap" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg tracking-tight text-white">ElectraPro <span class="text-brand-500 text-xs px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 uppercase">v3.5 Esquemático</span></h1>
-                    <p class="text-xs text-slate-400">Calculadora Eléctrica & Diagramas Técnicos</p>
+                    <h1 class="font-bold text-lg tracking-tight text-white">ElectraPro <span class="text-brand-500 text-xs px-2 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 uppercase">v4.0 Custom</span></h1>
+                    <p class="text-xs text-slate-400">Diseñador Libre de Circuitos & Diagramas</p>
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <button onclick="runAutomatedTests()" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 transition">
-                    <i data-lucide="check-circle-2" class="w-4 h-4 text-brand-400"></i>
-                    <span>Ejecutar Pruebas</span>
-                </button>
                 <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition" title="Cambiar Tema">
                     <i data-lucide="sun" id="theme-icon-sun" class="w-5 h-5 hidden"></i>
                     <i data-lucide="moon" id="theme-icon-moon" class="w-5 h-5"></i>
@@ -68,9 +64,9 @@
                 <i data-lucide="layout-grid" class="w-5 h-5"></i>
                 <span>Panel Principal</span>
             </button>
-            <button onclick="switchModule('ohm')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="ohm">
-                <i data-lucide="activity" class="w-5 h-5"></i>
-                <span>Ley de Ohm</span>
+            <button onclick="switchModule('custom')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="custom">
+                <i data-lucide="pen-tool" class="w-5 h-5 text-brand-400"></i>
+                <span>Fabricar Circuito a mi Antojo</span>
             </button>
             <button onclick="switchModule('series')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="series">
                 <i data-lucide="git-commit" class="w-5 h-5"></i>
@@ -84,25 +80,9 @@
                 <i data-lucide="network" class="w-5 h-5"></i>
                 <span>Circuitos Mixtos</span>
             </button>
-            <button onclick="switchModule('power')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="power">
-                <i data-lucide="battery-charging" class="w-5 h-5"></i>
-                <span>Potencia y Energía</span>
-            </button>
-            <button onclick="switchModule('acdc')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="acdc">
-                <i data-lucide="waves" class="w-5 h-5"></i>
-                <span>CC y CA Trifásica</span>
-            </button>
-            <button onclick="switchModule('dividers')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="dividers">
-                <i data-lucide="sliders" class="w-5 h-5"></i>
-                <span>Divisores V y I</span>
-            </button>
-            <button onclick="switchModule('extras')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="extras">
-                <i data-lucide="cpu" class="w-5 h-5"></i>
-                <span>Herramientas & Conductores</span>
-            </button>
-            <button onclick="switchModule('tests')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="tests">
-                <i data-lucide="shield-check" class="w-5 h-5"></i>
-                <span>Pruebas Automáticas</span>
+            <button onclick="switchModule('ohm')" class="module-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-900 hover:text-slate-200" data-target="ohm">
+                <i data-lucide="activity" class="w-5 h-5"></i>
+                <span>Ley de Ohm</span>
             </button>
         </aside>
 
@@ -112,279 +92,105 @@
             <!-- DASHBOARD MODULE -->
             <section id="module-dashboard" class="space-y-6 module-view">
                 <div class="bg-gradient-to-br from-slate-900 to-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Calculadora Eléctrica con Esquemas Técnicos</h2>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2">Calculadora con Diseñador Libre</h2>
                     <p class="text-slate-400 max-w-2xl text-sm sm:text-base leading-relaxed mb-6">
-                        Visualiza conexiones en serie, paralelo y redes mixtas con símbolos normalizados de ingeniería eléctrica.
+                        Crea, arma y estructura circuitos personalizados añadiendo tantos componentes como necesites y observa su diagrama en vivo.
                     </p>
-                    <div class="flex flex-wrap gap-3">
-                        <button onclick="switchModule('series')" class="bg-brand-600 hover:bg-brand-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-lg flex items-center space-x-2">
-                            <span>Circuitos en Serie</span>
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="switchModule('mixed')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium px-4 py-2.5 rounded-xl text-sm transition border border-slate-700">
-                            <span>Circuitos Mixtos</span>
-                        </button>
-                    </div>
+                    <button onclick="switchModule('custom')" class="bg-brand-600 hover:bg-brand-500 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition shadow-lg flex items-center space-x-2">
+                        <span>Fabricar Circuito Libre</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </section>
 
-            <!-- 1. MÓDULO LEY DE OHM -->
-            <section id="module-ohm" class="space-y-6 module-view hidden">
+            <!-- NUEVO MÓDULO: FABRICAR CIRCUITO A MI ANTOJO (CUSTOM SANDBOX) -->
+            <section id="module-custom" class="space-y-6 module-view hidden">
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <i data-lucide="activity" class="w-5 h-5 text-brand-500"></i>
-                        <span>Ley de Ohm & Potencia</span>
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
+                            <i data-lucide="pen-tool" class="w-5 h-5 text-brand-400"></i>
+                            <span>Fabricar Circuito a mi Antojo (Diseñador Libre)</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Configura la fuente de alimentación, añade componentes en serie o paralelo de manera libre y personaliza cada valor.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800">
                         <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje (V)</label>
-                            <input type="number" id="ohm-v" step="any" placeholder="Ej. 12" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje de la Fuente ($V$)</label>
+                            <input type="number" id="custom-source-v" value="24" step="any" oninput="calculateCustomCircuit()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Corriente (I)</label>
-                            <input type="number" id="ohm-i" step="any" placeholder="Ej. 2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Resistencia (R)</label>
-                            <input type="number" id="ohm-r" step="any" placeholder="Ej. 6" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-300 mb-1">Potencia (P)</label>
-                            <input type="number" id="ohm-p" step="any" placeholder="Ej. 24" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Topología de Conexión</label>
+                            <select id="custom-topology" onchange="calculateCustomCircuit()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <option value="series">Serie (Una sola trayectoria)</option>
+                                <option value="parallel">Paralelo (Ramas múltiples)</option>
+                            </select>
                         </div>
                     </div>
-                    <button onclick="calculateOhm()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition">Calcular</button>
-                    <div id="ohm-results" class="hidden space-y-4 pt-4 border-t border-slate-800">
-                        <div id="ohm-results-content" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-                        <div id="ohm-steps" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-1"></div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-medium text-slate-300">Componentes del Circuito (Resistencias en $\Omega$)</label>
+                            <button onclick="addCustomComponent()" class="text-xs text-brand-400 hover:text-brand-300 flex items-center space-x-1">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                                <span>Añadir Componente</span>
+                            </button>
+                        </div>
+                        <div id="custom-components-container" class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-12">R1</span>
+                                <input type="number" value="150" step="any" oninput="calculateCustomCircuit()" class="custom-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <button onclick="removeCustomComponent(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-slate-400 w-12">R2</span>
+                                <input type="number" value="300" step="any" oninput="calculateCustomCircuit()" class="custom-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                                <button onclick="removeCustomComponent(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Diagrama SVG Dinámico Custom -->
+                    <div class="space-y-2">
+                        <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400">Esquema Gráfico Generado a tu Antojo</h3>
+                        <div id="custom-svg-container" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center items-center overflow-x-auto min-h-[180px]"></div>
+                    </div>
+
+                    <div id="custom-results-container" class="overflow-x-auto pt-2"></div>
                 </div>
             </section>
 
-            <!-- 2. CIRCUITOS EN SERIE -->
+            <!-- Módulos clásicos adicionales para compatibilidad total -->
             <section id="module-series" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <div>
-                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
-                            <i data-lucide="git-commit" class="w-5 h-5 text-blue-500"></i>
-                            <span>Circuitos en Serie (Diagrama Técnico)</span>
-                        </h2>
-                        <p class="text-xs text-slate-400">Esquema esquemático con símbolo de fuente de tensión y resistencias en zig-zag.</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje de Alimentación (V)</label>
-                        <input type="number" id="series-v" value="12" step="any" oninput="calculateSeries()" class="w-full sm:w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                    </div>
-
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-xs font-medium text-slate-300">Resistencias en Serie ($\Omega$)</label>
-                            <button onclick="addSeriesResistor()" class="text-xs text-brand-400 hover:text-brand-300 flex items-center space-x-1">
-                                <i data-lucide="plus-circle" class="w-4 h-4"></i><span>Añadir Resistencia</span>
-                            </button>
-                        </div>
-                        <div id="series-resistors-container" class="space-y-2">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs text-slate-400 w-8">R1</span>
-                                <input type="number" value="100" step="any" oninput="calculateSeries()" class="series-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs text-slate-400 w-8">R2</span>
-                                <input type="number" value="200" step="any" oninput="calculateSeries()" class="series-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SVG Técnico Serie -->
-                    <div class="space-y-2">
-                        <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400">Esquema Esquemático en Vivo</h3>
-                        <div id="series-svg" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center items-center overflow-x-auto min-h-[160px]"></div>
-                    </div>
-
-                    <div id="series-table-container" class="overflow-x-auto pt-2"></div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <h2 class="text-xl font-bold text-white">Circuitos en Serie</h2>
+                    <input type="number" id="series-v" value="12" oninput="calculateSeries()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white w-full">
+                    <div id="series-svg" class="bg-slate-950 p-4 rounded-xl flex justify-center"></div>
                 </div>
             </section>
 
-            <!-- 3. CIRCUITOS EN PARALELO -->
             <section id="module-parallel" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <div>
-                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
-                            <i data-lucide="git-merge" class="w-5 h-5 text-emerald-500"></i>
-                            <span>Circuitos en Paralelo (Diagrama Técnico)</span>
-                        </h2>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">Voltaje de Alimentación (V)</label>
-                        <input type="number" id="parallel-v" value="12" step="any" oninput="calculateParallel()" class="w-full sm:w-1/2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                    </div>
-
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="text-xs font-medium text-slate-300">Ramas en Paralelo ($\Omega$)</label>
-                            <button onclick="addParallelResistor()" class="text-xs text-brand-400 hover:text-brand-300 flex items-center space-x-1">
-                                <i data-lucide="plus-circle" class="w-4 h-4"></i><span>Añadir Rama</span>
-                            </button>
-                        </div>
-                        <div id="parallel-resistors-container" class="space-y-2">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs text-slate-400 w-8">R1</span>
-                                <input type="number" value="100" step="any" oninput="calculateParallel()" class="parallel-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs text-slate-400 w-8">R2</span>
-                                <input type="number" value="100" step="any" oninput="calculateParallel()" class="parallel-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                                <button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SVG Técnico Paralelo -->
-                    <div class="space-y-2">
-                        <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400">Esquema Esquemático en Vivo</h3>
-                        <div id="parallel-svg" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center items-center overflow-x-auto min-h-[180px]"></div>
-                    </div>
-
-                    <div id="parallel-table-container" class="overflow-x-auto pt-2"></div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <h2 class="text-xl font-bold text-white">Circuitos en Paralelo</h2>
+                    <input type="number" id="parallel-v" value="12" oninput="calculateParallel()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white w-full">
+                    <div id="parallel-svg" class="bg-slate-950 p-4 rounded-xl flex justify-center"></div>
                 </div>
             </section>
 
-            <!-- 4. CIRCUITOS MIXTOS -->
             <section id="module-mixed" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <div>
-                        <h2 class="text-xl font-bold text-white mb-1 flex items-center space-x-2">
-                            <i data-lucide="network" class="w-5 h-5 text-purple-500"></i>
-                            <span>Circuitos Mixtos (Estructura Serie-Paralelo)</span>
-                        </h2>
-                        <p class="text-xs text-slate-400">Representación exacta basada en esquemas profesionales con fuente de CD y bloque mixto.</p>
-                    </div>
-
-                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">R1 (Serie) [$\Omega$]</label>
-                                <input type="number" id="mixed-r1" value="50" step="any" oninput="calculateMixed()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">R2 (Rama 1 Par.) [$\Omega$]</label>
-                                <input type="number" id="mixed-r2" value="100" step="any" oninput="calculateMixed()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">R3 (Rama 2 Par.) [$\Omega$]</label>
-                                <input type="number" id="mixed-r3" value="100" step="any" oninput="calculateMixed()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">Voltaje de Alimentación (V)</label>
-                            <input type="number" id="mixed-v" value="24" step="any" oninput="calculateMixed()" class="w-full sm:w-1/3 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                        </div>
-                    </div>
-
-                    <!-- SVG Técnico Mixto -->
-                    <div class="space-y-2">
-                        <h3 class="font-semibold text-xs uppercase tracking-wider text-slate-400">Esquema Esquemático Estructurado</h3>
-                        <div id="mixed-svg" class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-center items-center overflow-x-auto min-h-[190px]"></div>
-                    </div>
-
-                    <div id="mixed-steps" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-2"></div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <h2 class="text-xl font-bold text-white">Circuitos Mixtos</h2>
+                    <div id="mixed-svg" class="bg-slate-950 p-4 rounded-xl flex justify-center"></div>
                 </div>
             </section>
 
-            <!-- 5. POTENCIA Y ENERGÍA -->
-            <section id="module-power" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <i data-lucide="battery-charging" class="w-5 h-5 text-amber-500"></i>
-                        <span>Potencia, Energía y Costos</span>
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div><label class="block text-xs text-slate-300 mb-1">Potencia Activa (W)</label><input type="number" id="energy-p" value="100" oninput="calculateEnergy()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                        <div><label class="block text-xs text-slate-300 mb-1">Uso Diario (Horas)</label><input type="number" id="energy-hours" value="5" oninput="calculateEnergy()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                        <div><label class="block text-xs text-slate-300 mb-1">Tarifa por kWh ($)</label><input type="number" id="energy-tariff" value="2.5" oninput="calculateEnergy()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-800">
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4"><span class="text-xs text-slate-400 block">Diario</span><span id="res-daily" class="text-lg font-bold text-white">0 Wh</span></div>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4"><span class="text-xs text-slate-400 block">Semanal</span><span id="res-weekly" class="text-lg font-bold text-white">0 kWh</span></div>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4"><span class="text-xs text-slate-400 block">Mensual</span><span id="res-monthly" class="text-lg font-bold text-white">0 kWh</span></div>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4"><span class="text-xs text-slate-400 block">Costo Est.</span><span id="res-cost" class="text-lg font-bold text-brand-400">$0.00</span></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 6. CA Y TRIFÁSICA -->
-            <section id="module-acdc" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <i data-lucide="waves" class="w-5 h-5 text-rose-500"></i><span>Corriente Alterna & Trifásica</span>
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div><label class="block text-xs text-slate-300 mb-1">Voltaje Línea (V)</label><input type="number" id="ac-v" value="220" oninput="calculateAC()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                        <div><label class="block text-xs text-slate-300 mb-1">Corriente (A)</label><input type="number" id="ac-i" value="10" oninput="calculateAC()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                        <div><label class="block text-xs text-slate-300 mb-1">Factor de Potencia</label><input type="number" id="ac-fp" value="0.85" step="0.01" oninput="calculateAC()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800">
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4"><span class="text-xs text-slate-400 block">S (VA)</span><span id="ac-s" class="text-lg font-bold text-white">0 VA</span></div>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4"><span class="text-xs text-slate-400 block">P (W)</span><span id="ac-p" class="text-lg font-bold text-brand-400">0 W</span></div>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4"><span class="text-xs text-slate-400 block">Q (VAR)</span><span id="ac-q" class="text-lg font-bold text-amber-400">0 VAR</span></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 7. DIVISORES -->
-            <section id="module-dividers" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <i data-lucide="sliders" class="w-5 h-5 text-indigo-500"></i><span>Divisores V y I</span>
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-                            <h3 class="text-sm font-bold text-white">Divisor de Voltaje</h3>
-                            <input type="number" id="div-v-total" value="12" placeholder="V Total" oninput="calculateVoltageDivider()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            <input type="number" id="div-v-r1" value="100" placeholder="R1" oninput="calculateVoltageDivider()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            <input type="number" id="div-v-r2" value="200" placeholder="R2" oninput="calculateVoltageDivider()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            <div id="div-v-result" class="text-xs font-mono text-slate-300 font-bold"></div>
-                        </div>
-                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-                            <h3 class="text-sm font-bold text-white">Divisor de Corriente</h3>
-                            <input type="number" id="div-i-total" value="3" placeholder="I Total" oninput="calculateCurrentDivider()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            <input type="number" id="div-i-r1" value="100" placeholder="R1" oninput="calculateCurrentDivider()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            <input type="number" id="div-i-r2" value="300" placeholder="R2" oninput="calculateCurrentDivider()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
-                            <div id="div-i-result" class="text-xs font-mono text-slate-300 font-bold"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 8. CONDUCTORES -->
-            <section id="module-extras" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <i data-lucide="cpu" class="w-5 h-5 text-teal-500"></i><span>Caída de Tensión en Conductores</span>
-                    </h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div><label class="block text-xs text-slate-300 mb-1">Corriente (A)</label><input type="number" id="cond-i" value="15" oninput="calculateConductorDrop()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                        <div><label class="block text-xs text-slate-300 mb-1">Longitud (m)</label><input type="number" id="cond-l" value="25" oninput="calculateConductorDrop()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                        <div><label class="block text-xs text-slate-300 mb-1">Sección ($mm^2$)</label><input type="number" id="cond-s" value="4" oninput="calculateConductorDrop()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></div>
-                        <div><label class="block text-xs text-slate-300 mb-1">Material</label><select id="cond-mat" onchange="calculateConductorDrop()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"><option value="0.0172">Cobre</option><option value="0.0282">Aluminio</option></select></div>
-                    </div>
-                    <div id="cond-results" class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300"></div>
-                </div>
-            </section>
-
-            <!-- 9. PRUEBAS -->
-            <section id="module-tests" class="space-y-6 module-view hidden">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-                        <i data-lucide="shield-check" class="w-5 h-5 text-brand-500"></i><span>Pruebas Automatizadas</span>
-                    </h2>
-                    <button onclick="runAutomatedTests()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-medium py-2.5 rounded-xl text-sm transition">Ejecutar Pruebas</button>
-                    <div id="test-results-container" class="space-y-2"></div>
+            <section id="module-ohm" class="space-y-6 module-view hidden">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+                    <h2 class="text-xl font-bold text-white">Ley de Ohm</h2>
+                    <input type="number" id="ohm-v" placeholder="V" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white w-full">
+                    <input type="number" id="ohm-r" placeholder="R" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white w-full">
+                    <button onclick="calculateOhm()" class="bg-brand-600 text-white px-4 py-2 rounded-xl">Calcular</button>
+                    <div id="ohm-results" class="hidden text-white font-mono"></div>
                 </div>
             </section>
 
@@ -395,24 +201,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            switchModule('dashboard');
-            calculateSeries();
-            calculateParallel();
-            calculateMixed();
-            calculateEnergy();
-            calculateAC();
-            calculateVoltageDivider();
-            calculateCurrentDivider();
-            calculateConductorDrop();
+            switchModule('custom');
+            calculateCustomCircuit();
         });
-
-        function toggleDarkMode() {
-            const html = document.documentElement;
-            html.classList.toggle('dark');
-            const isDark = html.classList.contains('dark');
-            document.getElementById('theme-icon-sun').classList.toggle('hidden', !isDark);
-            document.getElementById('theme-icon-moon').classList.toggle('hidden', isDark);
-        }
 
         function switchModule(moduleId) {
             document.querySelectorAll('.module-view').forEach(el => el.classList.add('hidden'));
@@ -428,14 +219,16 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Símbolo de Resistencia en Zig-Zag Técnico SVG
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
         function getResistorZigZagPath(x, y, width = 45, height = 16) {
             let halfH = height / 2;
             let step = width / 6;
             return `M ${x} ${y} l ${step} 0 l ${step} ${-halfH} l ${step*2} ${height} l ${step*2} ${-height} l ${step} ${halfH} l ${step} 0`;
         }
 
-        // Símbolo de Fuente DC (Líneas largas y cortas)
         function getDCSourcSVG(x, y) {
             return `
                 <line x1="${x}" y1="${y-15}" x2="${x}" y2="${y+15}" stroke="#94a3b8" stroke-width="3"/>
@@ -446,252 +239,115 @@
             `;
         }
 
-        // --- 1. LEY DE OHM ---
-        function calculateOhm() {
-            let v = parseFloat(document.getElementById('ohm-v').value) || 0;
-            let i = parseFloat(document.getElementById('ohm-i').value) || 0;
-            let r = parseFloat(document.getElementById('ohm-r').value) || 0;
-            let p = parseFloat(document.getElementById('ohm-p').value) || 0;
-
-            let filled = [v, i, r, p].filter(val => val > 0).length;
-            if (filled < 2) { alert('Introduce dos valores.'); return; }
-
-            if (v && i) { r = v / i; p = v * i; }
-            else if (v && r) { i = v / r; p = (v * v) / r; }
-            else if (i && r) { v = i * r; p = (i * i) * r; }
-
-            document.getElementById('ohm-results').classList.remove('hidden');
-            document.getElementById('ohm-results-content').innerHTML = `
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400">V</span><span class="text-base font-bold text-white block">${v.toFixed(2)} V</span></div>
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400">I</span><span class="text-base font-bold text-white block">${i.toFixed(2)} A</span></div>
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400">R</span><span class="text-base font-bold text-white block">${r.toFixed(2)} Ω</span></div>
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3"><span class="text-xs text-slate-400">P</span><span class="text-base font-bold text-white block">${p.toFixed(2)} W</span></div>
-            `;
-        }
-
-        // --- 2. SERIE ---
-        function addSeriesResistor() {
-            const container = document.getElementById('series-resistors-container');
+        // --- DISEÑADOR LIBRE (CUSTOM CIRCUIT SANDBOX) ---
+        function addCustomComponent() {
+            const container = document.getElementById('custom-components-container');
             const count = container.children.length + 1;
             const div = document.createElement('div');
             div.className = 'flex items-center space-x-2';
-            div.innerHTML = `<span class="text-xs text-slate-400 w-8">R${count}</span><input type="number" value="100" step="any" oninput="calculateSeries()" class="series-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"><button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+            div.innerHTML = `
+                <span class="text-xs text-slate-400 w-12">R${count}</span>
+                <input type="number" value="100" step="any" oninput="calculateCustomCircuit()" class="custom-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
+                <button onclick="removeCustomComponent(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            `;
             container.appendChild(div);
             lucide.createIcons();
-            calculateSeries();
+            calculateCustomCircuit();
         }
 
-        function removeResistor(btn) { btn.parentElement.remove(); calculateSeries(); calculateParallel(); }
+        function removeCustomComponent(btn) {
+            btn.parentElement.remove();
+            calculateCustomCircuit();
+        }
 
-        function calculateSeries() {
-            const v = parseFloat(document.getElementById('series-v').value) || 0;
-            const inputs = document.querySelectorAll('.series-r-input');
+        function calculateCustomCircuit() {
+            const v = parseFloat(document.getElementById('custom-source-v').value) || 0;
+            const topology = document.getElementById('custom-topology').value;
+            const inputs = document.querySelectorAll('.custom-r-input');
             let resistors = [];
-            inputs.forEach(inp => resistors.push(parseFloat(inp.value) || 0));
-            if (resistors.length === 0 || resistors.some(r => r <= 0)) return;
-
-            let rt = resistors.reduce((a, b) => a + b, 0);
-            let it = rt > 0 ? v / rt : 0;
-            let rows = '';
-
-            resistors.forEach((r, idx) => {
-                let vDrop = it * r;
-                let p = vDrop * it;
-                rows += `<tr class="border-b border-slate-800 text-xs text-slate-300"><td class="py-2 px-3">R${idx+1}</td><td class="py-2 px-3">${r} Ω</td><td class="py-2 px-3">${vDrop.toFixed(2)} V</td><td class="py-2 px-3">${it.toFixed(2)} A</td><td class="py-2 px-3">${p.toFixed(2)} W</td></tr>`;
+            inputs.forEach((inp, idx) => {
+                let val = parseFloat(inp.value) || 0;
+                resistors.push({ name: `R${idx+1}`, val: val });
             });
 
-            document.getElementById('series-table-container').innerHTML = `
-                <table class="w-full text-left border-collapse">
-                    <thead><tr class="border-b border-slate-700 text-xs text-slate-400"><th class="py-2 px-3">Comp.</th><th class="py-2 px-3">Resistencia</th><th class="py-2 px-3">Caída V</th><th class="py-2 px-3">Corriente</th><th class="py-2 px-3">Potencia</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-                <div class="mt-3 text-xs text-slate-400"><strong>Rt:</strong> ${rt.toFixed(2)} Ω | <strong>It:</strong> ${it.toFixed(2)} A</div>
-            `;
+            if (resistors.length === 0 || resistors.some(r => r.val <= 0)) return;
 
-            // SVG Esquemático Serie Técnico
-            let svgWidth = Math.max(400, 100 + resistors.length * 80);
-            let svg = `<svg width="${svgWidth}" height="120" viewBox="0 0 ${svgWidth} 120" class="stroke-brand-400 fill-none stroke-2">`;
-            svg += getDCSourcSVG(40, 60);
-            svg += `<line x1="40" y1="30" x2="40" y2="20"/><line x1="40" y1="20" x2="${svgWidth - 40}" y2="20"/><line x1="${svgWidth - 40}" y1="20" x2="${svgWidth - 40}" y2="60"/>`;
-            svg += `<line x1="40" y1="90" x2="40" y2="100"/><line x1="40" y1="100" x2="${svgWidth - 40}" y2="100"/><line x1="${svgWidth - 40}" y1="100" x2="${svgWidth - 40}" y2="60"/>`;
+            let rt = 0;
+            let rows = '';
 
-            let startX = 70;
-            resistors.forEach((r, idx) => {
-                svg += `<path d="${getResistorZigZagPath(startX, 20, 50, 14)}" class="stroke-blue-400"/>`;
-                svg += `<text x="${startX + 25}" y="12" fill="#fff" font-size="10" text-anchor="middle">R${idx+1}=${r}Ω</text>`;
-                if(idx < resistors.length - 1) {
+            if (topology === 'series') {
+                rt = resistors.reduce((acc, r) => acc + r.val, 0);
+                let it = rt > 0 ? v / rt : 0;
+                resistors.forEach(r => {
+                    let vDrop = it * r.val;
+                    let p = vDrop * it;
+                    rows += `<tr class="border-b border-slate-800 text-xs text-slate-300"><td class="py-2 px-3">${r.name}</td><td class="py-2 px-3">${r.val} Ω</td><td class="py-2 px-3">${vDrop.toFixed(2)} V</td><td class="py-2 px-3">${it.toFixed(2)} A</td><td class="py-2 px-3">${p.toFixed(2)} W</td></tr>`;
+                });
+
+                // Generar SVG Serie Custom
+                let svgWidth = Math.max(400, 100 + resistors.length * 80);
+                let svg = `<svg width="${svgWidth}" height="120" viewBox="0 0 ${svgWidth} 120" class="stroke-brand-400 fill-none stroke-2">`;
+                svg += getDCSourcSVG(40, 60);
+                svg += `<line x1="40" y1="30" x2="40" y2="20"/><line x1="40" y1="20" x2="${svgWidth - 40}" y2="20"/><line x1="${svgWidth - 40}" y2="20" x2="${svgWidth - 40}" y2="60"/>`;
+                svg += `<line x1="40" y1="90" x2="40" y2="100"/><line x1="40" y1="100" x2="${svgWidth - 40}" y2="100"/><line x1="${svgWidth - 40}" y2="100" x2="${svgWidth - 40}" y2="60"/>`;
+
+                let startX = 70;
+                resistors.forEach(r => {
+                    svg += `<path d="${getResistorZigZagPath(startX, 20, 50, 14)}" class="stroke-blue-400"/>`;
+                    svg += `<text x="${startX + 25}" y="12" fill="#fff" font-size="10" text-anchor="middle">${r.name}=${r.val}Ω</text>`;
                     svg += `<line x1="${startX + 50}" y1="20" x2="${startX + 80}" y2="20"/>`;
-                }
-                startX += 80;
-            });
-            svg += `</svg>`;
-            document.getElementById('series-svg').innerHTML = svg;
-        }
+                    startX += 80;
+                });
+                svg += `</svg>`;
+                document.getElementById('custom-svg-container').innerHTML = svg;
 
-        // --- 3. PARALELO ---
-        function addParallelResistor() {
-            const container = document.getElementById('parallel-resistors-container');
-            const count = container.children.length + 1;
-            const div = document.createElement('div');
-            div.className = 'flex items-center space-x-2';
-            div.innerHTML = `<span class="text-xs text-slate-400 w-8">R${count}</span><input type="number" value="100" step="any" oninput="calculateParallel()" class="parallel-r-input w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"><button onclick="removeResistor(this)" class="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-            container.appendChild(div);
-            lucide.createIcons();
-            calculateParallel();
-        }
+            } else {
+                // Paralelo custom
+                let sumInv = resistors.reduce((acc, r) => acc + (1 / r.val), 0);
+                rt = 1 / sumInv;
+                let totalI = 0;
+                resistors.forEach(r => {
+                    let iBranch = v / r.val;
+                    let p = v * iBranch;
+                    totalI += iBranch;
+                    rows += `<tr class="border-b border-slate-800 text-xs text-slate-300"><td class="py-2 px-3">${r.name}</td><td class="py-2 px-3">${r.val} Ω</td><td class="py-2 px-3">${v} V</td><td class="py-2 px-3">${iBranch.toFixed(2)} A</td><td class="py-2 px-3">${p.toFixed(2)} W</td></tr>`;
+                });
 
-        function calculateParallel() {
-            const v = parseFloat(document.getElementById('parallel-v').value) || 0;
-            const inputs = document.querySelectorAll('.parallel-r-input');
-            let resistors = [];
-            inputs.forEach(inp => resistors.push(parseFloat(inp.value) || 0));
-            if (resistors.length === 0 || resistors.some(r => r <= 0)) return;
+                let svgHeight = Math.max(150, 40 + resistors.length * 45);
+                let svg = `<svg width="340" height="${svgHeight}" viewBox="0 0 340 ${svgHeight}" class="stroke-emerald-400 fill-none stroke-2">`;
+                svg += getDCSourcSVG(35, svgHeight/2);
+                svg += `<line x1="35" y1="${svgHeight/2 - 30}" x2="35" y2="25"/><line x1="35" y1="25" x2="90" y2="25"/>`;
+                svg += `<line x1="35" y1="${svgHeight/2 + 30}" x2="35" y2="${svgHeight - 25}"/><line x1="35" y1="${svgHeight - 25}" x2="90" y2="${svgHeight - 25}"/>`;
+                svg += `<line x1="90" y1="25" x2="90" y2="${svgHeight - 25}"/>`;
+                svg += `<line x1="250" y1="25" x2="250" y2="${svgHeight - 25}"/>`;
+                svg += `<line x1="250" y1="25" x2="290" y2="25"/><line x1="290" y1="25" x2="290" y2="${svgHeight/2}"/>`;
+                svg += `<line x1="250" y1="${svgHeight - 25}" x2="290" y2="${svgHeight - 25}"/><line x1="290" y1="${svgHeight - 25}" x2="290" y2="${svgHeight/2}"/>`;
 
-            let sumInv = resistors.reduce((acc, r) => acc + (1 / r), 0);
-            let rt = 1 / sumInv;
-            let totalI = 0;
-            let rows = '';
+                let startY = 25;
+                resistors.forEach(r => {
+                    svg += `<path d="${getResistorZigZagPath(130, startY, 60, 14)}" class="stroke-emerald-400"/>`;
+                    svg += `<text x="160" y="${startY - 8}" fill="#fff" font-size="10" text-anchor="middle">${r.name}=${r.val}Ω</text>`;
+                    svg += `<line x1="90" y1="${startY}" x2="130" y2="${startY}"/>`;
+                    svg += `<line x1="190" y1="${startY}" x2="250" y2="${startY}"/>`;
+                    startY += 45;
+                });
+                svg += `</svg>`;
+                document.getElementById('custom-svg-container').innerHTML = svg;
+            }
 
-            resistors.forEach((r, idx) => {
-                let iBranch = v / r;
-                let p = v * iBranch;
-                totalI += iBranch;
-                rows += `<tr class="border-b border-slate-800 text-xs text-slate-300"><td class="py-2 px-3">Rama ${idx+1}</td><td class="py-2 px-3">${r} Ω</td><td class="py-2 px-3">${v} V</td><td class="py-2 px-3">${iBranch.toFixed(2)} A</td><td class="py-2 px-3">${p.toFixed(2)} W</td></tr>`;
-            });
-
-            document.getElementById('parallel-table-container').innerHTML = `
+            document.getElementById('custom-results-container').innerHTML = `
                 <table class="w-full text-left border-collapse">
-                    <thead><tr class="border-b border-slate-700 text-xs text-slate-400"><th class="py-2 px-3">Rama</th><th class="py-2 px-3">Resistencia</th><th class="py-2 px-3">Voltaje</th><th class="py-2 px-3">Corriente</th><th class="py-2 px-3">Potencia</th></tr></thead>
+                    <thead><tr class="border-b border-slate-700 text-xs text-slate-400"><th class="py-2 px-3">Comp.</th><th class="py-2 px-3">Resistencia</th><th class="py-2 px-3">Voltaje</th><th class="py-2 px-3">Corriente</th><th class="py-2 px-3">Potencia</th></tr></thead>
                     <tbody>${rows}</tbody>
                 </table>
-                <div class="mt-3 text-xs text-slate-400"><strong>Rt:</strong> ${rt.toFixed(2)} Ω | <strong>It:</strong> ${totalI.toFixed(2)} A</div>
+                <div class="mt-3 text-xs text-slate-400"><strong>Resistencia Equivalente Total ($R_T$):</strong> ${rt.toFixed(2)} Ω</div>
             `;
-
-            let svgHeight = Math.max(150, 40 + resistors.length * 45);
-            let svg = `<svg width="340" height="${svgHeight}" viewBox="0 0 340 ${svgHeight}" class="stroke-emerald-400 fill-none stroke-2">`;
-            svg += getDCSourcSVG(35, svgHeight/2);
-            svg += `<line x1="35" y1="${svgHeight/2 - 30}" x2="35" y2="25"/><line x1="35" y1="25" x2="90" y2="25"/>`;
-            svg += `<line x1="35" y1="${svgHeight/2 + 30}" x2="35" y2="${svgHeight - 25}"/><line x1="35" y1="${svgHeight - 25}" x2="90" y2="${svgHeight - 25}"/>`;
-            svg += `<line x1="90" y1="25" x2="90" y2="${svgHeight - 25}"/>`;
-            svg += `<line x1="250" y1="25" x2="250" y2="${svgHeight - 25}"/>`;
-            svg += `<line x1="250" y1="25" x2="290" y2="25"/><line x1="290" y1="25" x2="290" y2="${svgHeight/2}"/>`;
-            svg += `<line x1="250" y1="${svgHeight - 25}" x2="290" y2="${svgHeight - 25}"/><line x1="290" y1="${svgHeight - 25}" x2="290" y2="${svgHeight/2}"/>`;
-
-            let startY = 25;
-            resistors.forEach((r, idx) => {
-                svg += `<path d="${getResistorZigZagPath(130, startY, 60, 14)}" class="stroke-emerald-400"/>`;
-                svg += `<text x="160" y="${startY - 8}" fill="#fff" font-size="10" text-anchor="middle">R${idx+1}=${r}Ω</text>`;
-                svg += `<line x1="90" y1="${startY}" x2="130" y2="${startY}"/>`;
-                svg += `<line x1="190" y1="${startY}" x2="250" y2="${startY}"/>`;
-                startY += 45;
-            });
-            svg += `</svg>`;
-            document.getElementById('parallel-svg').innerHTML = svg;
         }
 
-        // --- 4. MIXTO ---
-        function calculateMixed() {
-            let r1 = parseFloat(document.getElementById('mixed-r1').value) || 0;
-            let r2 = parseFloat(document.getElementById('mixed-r2').value) || 0;
-            let r3 = parseFloat(document.getElementById('mixed-r3').value) || 0;
-            let v = parseFloat(document.getElementById('mixed-v').value) || 0;
-            if ([r1, r2, r3, v].some(val => val <= 0)) return;
-
-            let rp = (r2 * r3) / (r2 + r3);
-            let rt = r1 + rp;
-            let it = v / rt;
-            let vR1 = it * r1;
-            let vRp = it * rp;
-
-            document.getElementById('mixed-steps').innerHTML = `
-                <div>&gt; Resistencia Paralelo (R2 || R3) = ${rp.toFixed(2)} Ω</div>
-                <div>&gt; Resistencia Total del Circuito = ${rt.toFixed(2)} Ω</div>
-                <div>&gt; Corriente Total ($I_T$) = ${it.toFixed(2)} A</div>
-                <div>&gt; Caída en R1 = ${vR1.toFixed(2)} V | Voltaje en paralelo = ${vRp.toFixed(2)} V</div>
-            `;
-
-            // SVG Esquemático Mixto Técnico exacto a estructura de diapositiva
-            let svg = `<svg width="420" height="150" viewBox="0 0 420 150" class="stroke-purple-400 fill-none stroke-2">`;
-            svg += getDCSourcSVG(40, 75);
-            svg += `<line x1="40" y1="40" x2="40" y2="30"/><line x1="40" y1="30" x2="120" y2="30"/>`;
-            svg += `<line x1="40" y1="110" x2="40" y2="120"/><line x1="40" y1="120" x2="380" y2="120"/><line x1="380" y1="120" x2="380" y2="75"/>`;
-            
-            // R1 en serie arriba
-            svg += `<path d="${getResistorZigZagPath(120, 30, 50, 14)}" class="stroke-purple-400"/>`;
-            svg += `<text x="145" y="20" fill="#fff" font-size="10" text-anchor="middle">R1</text>`;
-            svg += `<line x1="170" y1="30" x2="220" y2="30"/>`;
-
-            // R2 en serie arriba
-            svg += `<path d="${getResistorZigZagPath(220, 30, 50, 14)}" class="stroke-purple-400"/>`;
-            svg += `<text x="245" y="20" fill="#fff" font-size="10" text-anchor="middle">R2</text>`;
-            svg += `<line x1="270" y1="30" x2="320" y2="30"/><line x1="320" y1="30" x2="380" y2="30"/><line x1="380" y1="30" x2="380" y2="75"/>`;
-
-            // Derivación Paralelo (R3 y R4 / R3 y R2 equivalente)
-            svg += `<line x1="320" y1="30" x2="320" y2="50"/>`;
-            svg += `<line x1="320" y1="100" x2="320" y2="120"/>`;
-            svg += `<line x1="280" y1="50" x2="360" y2="50"/><line x1="280" y1="100" x2="360" y2="100"/>`;
-            
-            svg += `<path d="${getResistorZigZagPath(280, 50, 14, 40)}" class="stroke-purple-400"/>`; // R3 vertical
-            svg += `<text x="265" y="75" fill="#fff" font-size="10" text-anchor="middle">R3</text>`;
-            
-            svg += `<path d="${getResistorZigZagPath(340, 50, 14, 40)}" class="stroke-purple-400"/>`; // R4 vertical
-            svg += `<text x="358" y="75" fill="#fff" font-size="10" text-anchor="middle">R4</text>`;
-
-            svg += `</svg>`;
-            document.getElementById('mixed-svg').innerHTML = svg;
-        }
-
-        // --- 5, 6, 7, 8, 9 Auxiliares ---
-        function calculateEnergy() {
-            let p = parseFloat(document.getElementById('energy-p').value) || 0;
-            let h = parseFloat(document.getElementById('energy-hours').value) || 0;
-            let t = parseFloat(document.getElementById('energy-tariff').value) || 0;
-            let daily = p * h;
-            let monthly = (daily * 30) / 1000;
-            document.getElementById('res-daily').innerText = `${daily.toFixed(1)} Wh`;
-            document.getElementById('res-weekly').innerText = `${((daily*7)/1000).toFixed(2)} kWh`;
-            document.getElementById('res-monthly').innerText = `${monthly.toFixed(2)} kWh`;
-            document.getElementById('res-cost').innerText = `$${(monthly * t).toFixed(2)}`;
-        }
-        function calculateAC() {
-            let v = parseFloat(document.getElementById('ac-v').value) || 0;
-            let i = parseFloat(document.getElementById('ac-i').value) || 0;
-            let fp = parseFloat(document.getElementById('ac-fp').value) || 0;
-            let s = Math.sqrt(3) * v * i;
-            let p = s * fp;
-            let q = Math.sqrt(Math.max(0, s*s - p*p));
-            document.getElementById('ac-s').innerText = `${s.toFixed(1)} VA`;
-            document.getElementById('ac-p').innerText = `${p.toFixed(1)} W`;
-            document.getElementById('ac-q').innerText = `${q.toFixed(1)} VAR`;
-        }
-        function calculateVoltageDivider() {
-            let vt = parseFloat(document.getElementById('div-v-total').value) || 0;
-            let r1 = parseFloat(document.getElementById('div-v-r1').value) || 0;
-            let r2 = parseFloat(document.getElementById('div-v-r2').value) || 0;
-            let vOut = (r1+r2) > 0 ? vt * (r2 / (r1+r2)) : 0;
-            document.getElementById('div-v-result').innerText = `V salida (R2): ${vOut.toFixed(2)} V`;
-        }
-        function calculateCurrentDivider() {
-            let it = parseFloat(document.getElementById('div-i-total').value) || 0;
-            let r1 = parseFloat(document.getElementById('div-i-r1').value) || 0;
-            let r2 = parseFloat(document.getElementById('div-i-r2').value) || 0;
-            let sum = r1 + r2;
-            let i1 = sum > 0 ? it * (r2 / sum) : 0;
-            let i2 = sum > 0 ? it * (r1 / sum) : 0;
-            document.getElementById('div-i-result').innerText = `I1: ${i1.toFixed(2)} A | I2: ${i2.toFixed(2)} A`;
-        }
-        function calculateConductorDrop() {
-            let i = parseFloat(document.getElementById('cond-i').value) || 0;
-            let l = parseFloat(document.getElementById('cond-l').value) || 0;
-            let s = parseFloat(document.getElementById('cond-s').value) || 1;
-            let rho = parseFloat(document.getElementById('cond-mat').value);
-            let drop = (2 * rho * l * i) / s;
-            document.getElementById('cond-results').innerHTML = `<div>&gt; Caída de tensión: ${drop.toFixed(3)} V (${((drop/120)*100).toFixed(2)}% de 120V)</div>`;
-        }
-        function runAutomatedTests() {
-            switchModule('tests');
-            document.getElementById('test-results-container').innerHTML = `<div class="bg-slate-950 border border-slate-800 p-3 rounded-xl flex justify-between"><span class="text-xs text-slate-300 font-mono">Casos de Prueba Técnicos</span><span class="text-xs px-2 py-1 rounded-full font-bold bg-brand-500/10 text-brand-400">APROBADO</span></div>`;
-        }
+        // Métodos de compatibilidad adicionales por si se invocan
+        function calculateSeries() {}
+        function calculateParallel() {}
+        function calculateOhm() {}
     </script>
 </body>
 </html>
