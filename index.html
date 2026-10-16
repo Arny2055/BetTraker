@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Cuantitativo Poisson - Liga MX</title>
+    <title>Analizador Cuantitativo Poisson - Multi-Liga</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -25,18 +25,35 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                    ⚽ Analizador Poisson <span class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
+                    ⚽ Analizador Poisson <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">Modelo cuantitativo de 6 mercados, cuotas justas y valor esperado (EV+).</p>
+                <p class="text-sm text-slate-400 mt-1">Modelo cuantitativo multi-liga de 6 mercados, cuotas justas y valor esperado (EV+).</p>
             </div>
-            <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700">
-                Estado del Modelo: <span class="text-brand-500 font-semibold">Activo / Base Poisson</span>
+            <div class="flex items-center gap-3">
+                <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700">
+                    Estado: <span class="text-brand-500 font-semibold">Activo</span>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+
+        <!-- Selector de Liga y Gestión -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="w-full md:w-1/2">
+                <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Seleccionar Liga Activa</label>
+                <select id="selectLiga" onchange="cambiarLiga()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-semibold">
+                    <!-- Dinámico por JS -->
+                </select>
+            </div>
+            <div class="w-full md:w-auto flex items-end gap-2">
+                <button onclick="abrirModalLiga()" class="w-full md:w-auto bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
+                    ➕ Añadir / Gestionar Liga
+                </button>
+            </div>
+        </section>
 
         <!-- Panel de Configuración del Partido -->
         <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
@@ -77,11 +94,11 @@
             <!-- Parámetros Lambda -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Local ($\lambda_L$)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ Local (λ_L)</p>
                     <p id="resLambdaLocal" class="text-xl font-bold text-white mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Visitante ($\lambda_V$)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ Visitante (λ_V)</p>
                     <p id="resLambdaVisitante" class="text-xl font-bold text-white mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
@@ -130,7 +147,9 @@
 
         <!-- Tabla de Datos Oficiales -->
         <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
-            <h2 class="text-lg font-semibold text-white mb-4">📋 Tabla de Referencia Liga MX (xGF Vigente)</h2>
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia Liga MX (xGF Vigente)</h2>
+            </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
@@ -152,42 +171,113 @@
 
     </main>
 
+    <!-- Modal para Añadir / Gestionar Ligas -->
+    <div id="modalLiga" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-white">➕ Añadir Nueva Liga</h3>
+                <button onclick="cerrarModalLiga()" class="text-slate-400 hover:text-white font-bold">✕</button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre de la Liga</label>
+                    <input type="text" id="inputNombreLiga" placeholder="Ej. Premier League, La Liga..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Formato TSV / Pegar tabla con columnas: Team, xGF, 1.5+, 2.5+, AVG)</label>
+                    <textarea id="inputDatosLiga" rows="6" placeholder="América	2.14	90%	60%	3.30&#10;Toluca	1.88	82%	73%	3.64" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">Puedes copiar y pegar directamente la estructura de tus tablas tabuladas.</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
+                <button onclick="cerrarModalLiga()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm text-white">Cancelar</button>
+                <button onclick="guardarNuevaLiga()" class="bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-lg text-sm text-white font-semibold">Guardar Liga</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
-        Analizador Cuantitativo Poisson — Diseñado para despliegue en GitHub Pages.
+        Analizador Cuantitativo Poisson Multi-Liga — Diseñado para despliegue en GitHub Pages.
     </footer>
 
-    <!-- Script de Cálculo y Datos -->
+    <!-- Script de Cálculo y Gestión de Ligas -->
     <script>
-        // Base de datos de equipos provista
-        const equiposData = [
-            { id: 1, name: "América", xGF: 2.14, p15: "90%", p25: "60%", avg: 3.30 },
-            { id: 2, name: "Toluca", xGF: 1.88, p15: "82%", p25: "73%", avg: 3.64 },
-            { id: 3, name: "Querétaro", xGF: 1.39, p15: "70%", p25: "40%", avg: 2.30 },
-            { id: 4, name: "Guadalajara", xGF: 1.71, p15: "82%", p25: "36%", avg: 2.64 },
-            { id: 5, name: "León", xGF: 1.51, p15: "82%", p25: "36%", avg: 2.45 },
-            { id: 6, name: "Atlas", xGF: 1.38, p15: "91%", p25: "45%", avg: 3.18 },
-            { id: 7, name: "Cruz Azul", xGF: 2.16, p15: "82%", p25: "73%", avg: 3.91 },
-            { id: 8, name: "Tijuana", xGF: 1.31, p15: "70%", p25: "50%", avg: 2.90 },
-            { id: 9, name: "Puebla", xGF: 1.43, p15: "64%", p25: "27%", avg: 2.27 },
-            { id: 10, name: "Monterrey", xGF: 1.87, p15: "80%", p25: "50%", avg: 3.20 },
-            { id: 11, name: "Pachuca", xGF: 1.69, p15: "82%", p25: "55%", avg: 2.91 },
-            { id: 12, name: "Tigres UANL", xGF: 1.75, p15: "73%", p25: "45%", avg: 2.55 },
-            { id: 13, name: "Pumas UNAM", xGF: 1.39, p15: "91%", p25: "64%", avg: 3.27 },
-            { id: 14, name: "Santos Laguna", xGF: 1.57, p15: "55%", p25: "55%", avg: 2.55 },
-            { id: 15, name: "Atlético San Luis", xGF: 1.34, p15: "91%", p25: "73%", avg: 3.18 },
-            { id: 16, name: "Atlante", xGF: 1.58, p15: "91%", p25: "36%", avg: 2.64 },
-            { id: 17, name: "Necaxa", xGF: 1.56, p15: "91%", p25: "73%", avg: 3.45 },
-            { id: 18, name: "Juárez", xGF: 1.03, p15: "82%", p25: "55%", avg: 3.09 }
-        ];
+        // Ligas por defecto almacenadas (puedes agregar tantas como quieras)
+        let ligasDB = {
+            "liga_mx": {
+                nombre: "Liga MX",
+                equipos: [
+                    { id: 1, name: "América", xGF: 2.14, p15: "90%", p25: "60%", avg: 3.30 },
+                    { id: 2, name: "Toluca", xGF: 1.88, p15: "82%", p25: "73%", avg: 3.64 },
+                    { id: 3, name: "Querétaro", xGF: 1.39, p15: "70%", p25: "40%", avg: 2.30 },
+                    { id: 4, name: "Guadalajara", xGF: 1.71, p15: "82%", p25: "36%", avg: 2.64 },
+                    { id: 5, name: "León", xGF: 1.51, p15: "82%", p25: "36%", avg: 2.45 },
+                    { id: 6, name: "Atlas", xGF: 1.38, p15: "91%", p25: "45%", avg: 3.18 },
+                    { id: 7, name: "Cruz Azul", xGF: 2.16, p15: "82%", p25: "73%", avg: 3.91 },
+                    { id: 8, name: "Tijuana", xGF: 1.31, p15: "70%", p25: "50%", avg: 2.90 },
+                    { id: 9, name: "Puebla", xGF: 1.43, p15: "64%", p25: "27%", avg: 2.27 },
+                    { id: 10, name: "Monterrey", xGF: 1.87, p15: "80%", p25: "50%", avg: 3.20 },
+                    { id: 11, name: "Pachuca", xGF: 1.69, p15: "82%", p25: "55%", avg: 2.91 },
+                    { id: 12, name: "Tigres UANL", xGF: 1.75, p15: "73%", p25: "45%", avg: 2.55 },
+                    { id: 13, name: "Pumas UNAM", xGF: 1.39, p15: "91%", p25: "64%", avg: 3.27 },
+                    { id: 14, name: "Santos Laguna", xGF: 1.57, p15: "55%", p25: "55%", avg: 2.55 },
+                    { id: 15, name: "Atlético San Luis", xGF: 1.34, p15: "91%", p25: "73%", avg: 3.18 },
+                    { id: 16, name: "Atlante", xGF: 1.58, p15: "91%", p25: "36%", avg: 2.64 },
+                    { id: 17, name: "Necaxa", xGF: 1.56, p15: "91%", p25: "73%", avg: 3.45 },
+                    { id: 18, name: "Juárez", xGF: 1.03, p15: "82%", p25: "55%", avg: 3.09 }
+                ]
+            }
+        };
 
-        function inicializarUI() {
+        let ligaActualKey = "liga_mx";
+
+        function inicializarApp() {
+            // Cargar ligas guardadas en localStorage si existen
+            const saved = localStorage.getItem('poisson_ligas_db');
+            if (saved) {
+                try {
+                    ligasDB = JSON.parse(saved);
+                } catch(e) { console.error("Error al cargar localStorage", e); }
+            }
+            poblarSelectorLigas();
+            cargarLigaSeleccionada();
+        }
+
+        function poblarSelectorLigas() {
+            const select = document.getElementById('selectLiga');
+            select.innerHTML = "";
+            for (let key in ligasDB) {
+                let opt = document.createElement('option');
+                opt.value = key;
+                opt.text = ligasDB[key].nombre;
+                if (key === ligaActualKey) opt.selected = true;
+                select.appendChild(opt);
+            }
+        }
+
+        function cambiarLiga() {
+            const select = document.getElementById('selectLiga');
+            ligaActualKey = select.value;
+            cargarLigaSeleccionada();
+            document.getElementById('seccionResultados').classList.add('hidden');
+        }
+
+        function cargarLigaSeleccionada() {
+            const liga = ligasDB[ligaActualKey];
+            document.getElementById('badgeLigaActiva.innerText') // badge
+            document.getElementById('badgeLigaActiva').innerText = liga.nombre;
+            document.getElementById('tituloTablaEquipos').innerText = `📋 Tabla de Referencia ${liga.nombre} (xGF Vigente)`;
+
             const selectLocal = document.getElementById('selectLocal');
             const selectVisitante = document.getElementById('selectVisitante');
             const tablaEquiposBody = document.getElementById('tablaEquiposBody');
 
-            // Poblar selects y tabla inferior
-            equiposData.forEach((eq, index) => {
+            selectLocal.innerHTML = "";
+            selectVisitante.innerHTML = "";
+            tablaEquiposBody.innerHTML = "";
+
+            liga.equipos.forEach((eq, index) => {
                 let optL = document.createElement('option');
                 optL.value = index;
                 optL.text = eq.name;
@@ -198,11 +288,10 @@
                 optV.text = eq.name;
                 selectVisitante.appendChild(optV);
 
-                // Fila tabla referencia
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/50 transition";
                 tr.innerHTML = `
-                    <td class="py-2.5 px-4 text-slate-400">${eq.id}</td>
+                    <td class="py-2.5 px-4 text-slate-400">${eq.id || (index+1)}</td>
                     <td class="py-2.5 px-4 font-medium text-white">${eq.name}</td>
                     <td class="py-2.5 px-4 text-brand-500 font-semibold">${eq.xGF}</td>
                     <td class="py-2.5 px-4 text-slate-300">${eq.p15}</td>
@@ -212,47 +301,45 @@
                 tablaEquiposBody.appendChild(tr);
             });
 
-            selectVisitante.selectedIndex = 1; // Seleccionar visitante distinto por defecto
+            if(liga.equipos.length > 1) selectVisitante.selectedIndex = 1;
             actualizarInfoSelects();
 
-            selectLocal.addEventListener('change', actualizarInfoSelects);
-            selectVisitante.addEventListener('change', actualizarInfoSelects);
+            selectLocal.onchange = actualizarInfoSelects;
+            selectVisitante.onchange = actualizarInfoSelects;
         }
 
         function actualizarInfoSelects() {
+            const liga = ligasDB[ligaActualKey];
             const idxL = document.getElementById('selectLocal').value;
             const idxV = document.getElementById('selectVisitante').value;
-            document.getElementById('infoLocal').querySelector('span').innerText = equiposData[idxL].xGF;
-            document.getElementById('infoVisitante').querySelector('span').innerText = equiposData[idxV].xGF;
+            if(liga.equipos[idxL]) document.getElementById('infoLocal').querySelector('span').innerText = liga.equipos[idxL].xGF;
+            if(liga.equipos[idxV]) document.getElementById('infoVisitante').querySelector('span').innerText = liga.equipos[idxV].xGF;
         }
 
         function ejecutarAnalisis() {
+            const liga = ligasDB[ligaActualKey];
             const idxL = document.getElementById('selectLocal').value;
             const idxV = document.getElementById('selectVisitante').value;
             
-            const eqL = equiposData[idxL];
-            const eqV = equiposData[idxV];
+            const eqL = liga.equipos[idxL];
+            const eqV = liga.equipos[idxV];
 
             const lambdaL = eqL.xGF;
             const lambdaV = eqV.xGF;
             const lambdaTotal = lambdaL + lambdaV;
             const lambdaHT = lambdaTotal * 0.50;
 
-            // Mostrar parámetros
             document.getElementById('resLambdaLocal').innerText = lambdaL.toFixed(2);
             document.getElementById('resLambdaVisitante').innerText = lambdaV.toFixed(2);
             document.getElementById('resLambdaTotal').innerText = lambdaTotal.toFixed(2);
             document.getElementById('resLambdaHT').innerText = lambdaHT.toFixed(2);
 
-            // Cálculos Poisson Under 2.5: P(U2.5) = exp(-lambda) * (1 + lambda + (lambda^2)/2)
             const pU25 = Math.exp(-lambdaTotal) * (1 + lambdaTotal + (Math.pow(lambdaTotal, 2) / 2));
             const pO25 = 1 - pU25;
 
-            // BTTS: P(Yes) = (1 - exp(-lambdaL)) * (1 - exp(-lambdaV))
             const pBttsYes = (1 - Math.exp(-lambdaL)) * (1 - Math.exp(-lambdaV));
             const pBttsNo = 1 - pBttsYes;
 
-            // HT 0.5: Under 0.5 HT = exp(-lambdaHT)
             const pU05HT = Math.exp(-lambdaHT);
             const pO05HT = 1 - pU05HT;
 
@@ -271,7 +358,6 @@
             mercados.forEach(m => {
                 const probPorc = m.prob * 100;
                 const cuotaJusta = 1 / m.prob;
-                // Cuota mínima para EV +5%: 1.05 / prob (redondeada hacia arriba al centésimo)
                 const cuotaMin = Math.ceil((1.05 / m.prob) * 100) / 100;
 
                 let tr = document.createElement('tr');
@@ -286,17 +372,78 @@
                 tbody.appendChild(tr);
             });
 
-            // Generar interpretación
             document.getElementById('textoInterpretacion').innerHTML = `
-                <p>• Análisis generado entre <strong>${eqL.name}</strong> (Local) y <strong>${eqV.name}</strong> (Visitante).</p>
-                <p>• El parámetro de goles esperados totales ($\lambda_{total}$) se sitúa en <strong>${lambdaTotal.toFixed(2)}</strong> goles, reflejando el potencial ofensivo combinado basado en el xGF vigente de la tabla.</p>
-                <p>• Revise las cuotas ofrecidas por su casa de apuestas y compárelas con las <strong>cuotas mínimas (EV +5%)</strong> calculadas en la tabla para identificar oportunidades con valor matemático positivo.</p>
+                <p>• Análisis en <strong>${liga.nombre}</strong> entre <strong>${eqL.name}</strong> (Local) y <strong>${eqV.name}</strong> (Visitante).</p>
+                <p>• El parámetro de goles esperados totales ($\lambda_{total}$) se sitúa en <strong>${lambdaTotal.toFixed(2)}</strong> goles, basado en el xGF vigente.</p>
+                <p>• Valide las cuotas del mercado contra las <strong>cuotas mínimas (EV +5%)</strong> de la tabla para determinar si existe valor matemático positivo.</p>
             `;
 
             document.getElementById('seccionResultados').classList.remove('hidden');
         }
 
-        window.onload = inicializarUI;
+        function abrirModalLiga() {
+            document.getElementById('modalLiga').classList.remove('hidden');
+        }
+
+        function cerrarModalLiga() {
+            document.getElementById('modalLiga').classList.add('hidden');
+        }
+
+        function guardarNuevaLiga() {
+            const nombre = document.getElementById('inputNombreLiga').value.trim();
+            const rawData = document.getElementById('inputDatosLiga').value.trim();
+
+            if (!nombre || !rawData) {
+                alert("Por favor ingresa un nombre y los datos de la liga.");
+                return;
+            }
+
+            const lineas = rawData.split('\n');
+            let equipos = [];
+
+            lineas.forEach((linea, index) => {
+                let partes = linea.split('\t');
+                if (partes.length < 2) {
+                    partes = linea.split(/,\s*/); // Intento con comas por si acaso
+                }
+                if (partes.length >= 2) {
+                    // Buscar xGF, 1.5+, 2.5+, AVG heurísticamente o por orden
+                    // Asumimos orden común: [Index/Opcional], Team, xGF, 1.5+, 2.5+, AVG
+                    let teamName = partes[1] && isNaN(partes[1]) ? partes[1] : partes[0];
+                    let xgfVal = parseFloat(partes.find(p => !isNaN(p) && parseFloat(p) < 6 && parseFloat(p) > 0) || 1.5);
+                    
+                    equipos.push({
+                        id: index + 1,
+                        name: teamName.replace(/^\d+\s*/, '').trim(),
+                        xGF: isNaN(xgfVal) ? 1.50 : xgfVal,
+                        p15: partes[partes.length - 3] || "75%",
+                        p25: partes[partes.length - 2] || "50%",
+                        avg: partes[partes.length - 1] || "2.80"
+                    });
+                }
+            });
+
+            if (equipos.length === 0) {
+                alert("No se pudieron parsear los equipos correctamente. Revisa el formato.");
+                return;
+            }
+
+            const key = nombre.toLowerCase().replace(/\s+/g, '_');
+            ligasDB[key] = { nombre: nombre, equipos: equipos };
+            
+            // Guardar en navegador
+            localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
+
+            ligaActualKey = key;
+            poblarSelectorLigas();
+            cargarLigaSeleccionada();
+            cerrarModalLiga();
+
+            document.getElementById('inputNombreLiga').value = "";
+            document.getElementById('inputDatosLiga').value = "";
+        }
+
+        window.onload = inicializarApp;
     </script>
 </body>
 </html>
