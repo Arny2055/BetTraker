@@ -184,9 +184,9 @@
                     <input type="text" id="inputNombreLiga" placeholder="Ej. Premier League, La Liga..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Formato TSV / Pegar tabla con columnas: Team, xGF, 1.5+, 2.5+, AVG)</label>
-                    <textarea id="inputDatosLiga" rows="6" placeholder="América	2.14	90%	60%	3.30&#10;Toluca	1.88	82%	73%	3.64" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
-                    <p class="text-xs text-slate-400 mt-1">Puedes copiar y pegar directamente la estructura de tus tablas tabuladas.</p>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Pegar tabla con columnas: Pos, Team, xGF, 1.5+, 2.5+, AVG)</label>
+                    <textarea id="inputDatosLiga" rows="6" placeholder="1	Manchester City	1.62	67%	67%	3.50&#10;2	Arsenal	1.56	83%	67%	2.50" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">Copia y pega directamente tus filas tabuladas (admite encabezados o filas directas).</p>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
@@ -203,7 +203,7 @@
 
     <!-- Script de Cálculo y Gestión de Ligas -->
     <script>
-        // Ligas por defecto almacenadas (puedes agregar tantas como quieras)
+        // Ligas por defecto almacenadas
         let ligasDB = {
             "liga_mx": {
                 nombre: "Liga MX",
@@ -233,12 +233,17 @@
         let ligaActualKey = "liga_mx";
 
         function inicializarApp() {
-            // Cargar ligas guardadas en localStorage si existen
+            // Cargar ligas guardadas en localStorage con respaldo seguro
             const saved = localStorage.getItem('poisson_ligas_db');
             if (saved) {
                 try {
-                    ligasDB = JSON.parse(saved);
-                } catch(e) { console.error("Error al cargar localStorage", e); }
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                        ligasDB = parsed;
+                    }
+                } catch(e) { 
+                    console.error("Error al cargar localStorage", e); 
+                }
             }
             poblarSelectorLigas();
             cargarLigaSeleccionada();
@@ -264,8 +269,9 @@
         }
 
         function cargarLigaSeleccionada() {
-            const liga = ligasDB[ligaActualKey];
-            document.getElementById('badgeLigaActiva.innerText') // badge
+            const liga = ligasDB[ligaActualKey] || ligasDB["liga_mx"];
+            ligaActualKey = liga ? ligaActualKey : "liga_mx";
+            
             document.getElementById('badgeLigaActiva').innerText = liga.nombre;
             document.getElementById('tituloTablaEquipos').innerText = `📋 Tabla de Referencia ${liga.nombre} (xGF Vigente)`;
 
@@ -293,7 +299,7 @@
                 tr.innerHTML = `
                     <td class="py-2.5 px-4 text-slate-400">${eq.id || (index+1)}</td>
                     <td class="py-2.5 px-4 font-medium text-white">${eq.name}</td>
-                    <td class="py-2.5 px-4 text-brand-500 font-semibold">${eq.xGF}</td>
+                    <td class="py-2.5 px-4 text-brand-500 font-semibold">${Number(eq.xGF).toFixed(2)}</td>
                     <td class="py-2.5 px-4 text-slate-300">${eq.p15}</td>
                     <td class="py-2.5 px-4 text-slate-300">${eq.p25}</td>
                     <td class="py-2.5 px-4 text-slate-300">${eq.avg}</td>
@@ -312,8 +318,8 @@
             const liga = ligasDB[ligaActualKey];
             const idxL = document.getElementById('selectLocal').value;
             const idxV = document.getElementById('selectVisitante').value;
-            if(liga.equipos[idxL]) document.getElementById('infoLocal').querySelector('span').innerText = liga.equipos[idxL].xGF;
-            if(liga.equipos[idxV]) document.getElementById('infoVisitante').querySelector('span').innerText = liga.equipos[idxV].xGF;
+            if(liga && liga.equipos[idxL]) document.getElementById('infoLocal').querySelector('span').innerText = Number(liga.equipos[idxL].xGF).toFixed(2);
+            if(liga && liga.equipos[idxV]) document.getElementById('infoVisitante').querySelector('span').innerText = Number(liga.equipos[idxV].xGF).toFixed(2);
         }
 
         function ejecutarAnalisis() {
@@ -324,8 +330,8 @@
             const eqL = liga.equipos[idxL];
             const eqV = liga.equipos[idxV];
 
-            const lambdaL = eqL.xGF;
-            const lambdaV = eqV.xGF;
+            const lambdaL = Number(eqL.xGF);
+            const lambdaV = Number(eqV.xGF);
             const lambdaTotal = lambdaL + lambdaV;
             const lambdaHT = lambdaTotal * 0.50;
 
@@ -402,37 +408,81 @@
             let equipos = [];
 
             lineas.forEach((linea, index) => {
-                let partes = linea.split('\t');
+                let partes = linea.split('\t').map(p => p.trim()).filter(p => p !== "");
                 if (partes.length < 2) {
-                    partes = linea.split(/,\s*/); // Intento con comas por si acaso
+                    partes = linea.split(/,\s*/).map(p => p.trim()).filter(p => p !== "");
                 }
+
                 if (partes.length >= 2) {
-                    // Buscar xGF, 1.5+, 2.5+, AVG heurísticamente o por orden
-                    // Asumimos orden común: [Index/Opcional], Team, xGF, 1.5+, 2.5+, AVG
-                    let teamName = partes[1] && isNaN(partes[1]) ? partes[1] : partes[0];
-                    let xgfVal = parseFloat(partes.find(p => !isNaN(p) && parseFloat(p) < 6 && parseFloat(p) > 0) || 1.5);
+                    // Ignorar fila de encabezados si se incluye por error
+                    if (partes[0].toLowerCase() === "team" || partes.includes("xGF") || partes.includes("AVG")) {
+                        return;
+                    }
+
+                    // Filtrar y extraer valores numéricos o texto
+                    let nameCandidate = "";
+                    let xgfCandidate = 1.50;
+                    let p15Candidate = "75%";
+                    let p25Candidate = "50%";
+                    let avgCandidate = "2.80";
+
+                    // Analizar las columnas detectadas
+                    let tokensValidos = partes.filter(p => p !== "");
                     
+                    // Si el primer token es número de posición (ej. "1", "2")
+                    let offset = 0;
+                    if (!isNaN(tokensValidos[0]) && tokensValidos.length > 4) {
+                        offset = 1;
+                    }
+
+                    nameCandidate = tokensValidos[offset] || "Equipo Desconocido";
+                    
+                    // Buscar xGF (suele ser el primer decimal flotante realista entre 0.5 y 4.0)
+                    for (let i = offset + 1; i < tokensValidos.length; i++) {
+                        let val = parseFloat(tokensValidos[i]);
+                        if (!isNaN(val) && val > 0.3 && val < 5.0) {
+                            xgfCandidate = val;
+                            break;
+                        }
+                    }
+
+                    // Asignar porcentajes o promedios finales si están presentes
+                    let porcentajes = tokensValidos.filter(p => p.includes('%'));
+                    if (porcentajes.length >= 2) {
+                        p15Candidate = porcentajes[0];
+                        p25Candidate = porcentajes[1];
+                    }
+
+                    let decimales = tokensValidos.filter(p => !isNaN(parseFloat(p)) && parseFloat(p) >= 1.5 && parseFloat(p) <= 6.0 && parseFloat(p) !== xgfCandidate);
+                    if (decimales.length > 0) {
+                        avgCandidate = decimales[decimales.length - 1];
+                    }
+
                     equipos.push({
-                        id: index + 1,
-                        name: teamName.replace(/^\d+\s*/, '').trim(),
-                        xGF: isNaN(xgfVal) ? 1.50 : xgfVal,
-                        p15: partes[partes.length - 3] || "75%",
-                        p25: partes[partes.length - 2] || "50%",
-                        avg: partes[partes.length - 1] || "2.80"
+                        id: equipos.length + 1,
+                        name: nameCandidate.replace(/^\d+\s*/, '').trim(),
+                        xGF: xgfCandidate,
+                        p15: p15Candidate,
+                        p25: p25Candidate,
+                        avg: avgCandidate
                     });
                 }
             });
 
             if (equipos.length === 0) {
-                alert("No se pudieron parsear los equipos correctamente. Revisa el formato.");
+                alert("No se pudieron parsear los equipos correctamente. Revisa que el formato tenga celdas tabuladas.");
                 return;
             }
 
-            const key = nombre.toLowerCase().replace(/\s+/g, '_');
+            const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
             ligasDB[key] = { nombre: nombre, equipos: equipos };
             
-            // Guardar en navegador
-            localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
+            // Guardar permanentemente en localStorage del navegador
+            try {
+                localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
+            } catch (e) {
+                console.error("Error al guardar en localStorage", e);
+            }
 
             ligaActualKey = key;
             poblarSelectorLigas();
