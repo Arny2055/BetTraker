@@ -1,899 +1,302 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ElectroCalc Pro | Calculadora y Analizador Eléctrico Avanzado</title>
-    <!-- Tailwind CSS v3 -->
+    <title>Analizador Cuantitativo Poisson - Liga MX</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js para gráficos y visualización -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            850: '#1e293b',
-                            900: '#0f172a'
-                        }
+                        brand: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 900: '#14532d' }
                     }
                 }
             }
         }
     </script>
-    <style>
-        /* Estilos personalizados para transiciones y scroll */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-    </style>
 </head>
-<body class="h-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200 flex flex-col font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
 
-    <!-- Header de la Aplicación -->
-    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center">
-                    <i data-lucide="zap" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">ElectroCalc Pro</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Análisis y Simulación Eléctrica Avanzada</p>
-                </div>
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 py-6 px-4 sm:px-8 shadow-md">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                    ⚽ Analizador Poisson <span class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
+                </h1>
+                <p class="text-sm text-slate-400 mt-1">Modelo cuantitativo de 6 mercados, cuotas justas y valor esperado (EV+).</p>
             </div>
-
-            <!-- Controles Superiores -->
-            <div class="flex items-center space-x-2">
-                <button onclick="app.runAutomatedTests()" class="hidden sm:flex items-center space-x-1 px-3 py-1.5 text-xs font-medium bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 transition">
-                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                    <span>Pruebas (16)</span>
-                </button>
-                <button onclick="app.toggleDarkMode()" class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Cambiar Tema">
-                    <i data-lucide="moon" id="theme-icon" class="w-5 h-5"></i>
-                </button>
+            <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700">
+                Estado del Modelo: <span class="text-brand-500 font-semibold">Activo / Base Poisson</span>
             </div>
         </div>
     </header>
 
-    <!-- Barra de Navegación por Pestañas -->
-    <nav class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xs overflow-x-auto">
-        <div class="max-w-7xl mx-auto px-4 flex space-x-1 sm:space-x-4 min-w-max py-2">
-            <button onclick="app.switchTab('ohm')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition bg-blue-600 text-white shadow-sm" data-tab="ohm">
-                <i data-lucide="activity" class="w-4 h-4"></i><span>Ley de Ohm</span>
-            </button>
-            <button onclick="app.switchTab('units')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="units">
-                <i data-lucide="sliders" class="w-4 h-4"></i><span>Conversor</span>
-            </button>
-            <button onclick="app.switchTab('series')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="series">
-                <i data-lucide="git-commit" class="w-4 h-4"></i><span>Serie</span>
-            </button>
-            <button onclick="app.switchTab('parallel')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="parallel">
-                <i data-lucide="git-merge" class="w-4 h-4"></i><span>Paralelo</span>
-            </button>
-            <button onclick="app.switchTab('mixed')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="mixed">
-                <i data-lucide="cpu" class="w-4 h-4"></i><span>Mixtos / Nodal</span>
-            </button>
-            <button onclick="app.switchTab('ac')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="ac">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i><span>CA / Trifásica</span>
-            </button>
-            <button onclick="app.switchTab('components')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="components">
-                <i data-lucide="layers" class="w-4 h-4"></i><span>Componentes</span>
-            </button>
-            <button onclick="app.switchTab('power')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="power">
-                <i data-lucide="dollar-sign" class="w-4 h-4"></i><span>Consumo & Costo</span>
-            </button>
-            <button onclick="app.switchTab('voltage-drop')" class="tab-btn px-3 py-2 text-sm font-medium rounded-lg flex items-center space-x-2 transition text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" data-tab="voltage-drop">
-                <i data-lucide="trending-down" class="w-4 h-4"></i><span>Caída de Tensión</span>
-            </button>
-        </div>
-    </nav>
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
 
-    <!-- Contenedor Principal de Pestañas -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 overflow-y-auto">
-
-        <!-- 1. PESTAÑA: LEY DE OHM -->
-        <section id="tab-ohm" class="tab-content active space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Panel de Entradas -->
-                <div class="lg:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-                    <h2 class="text-base font-bold flex items-center space-x-2">
-                        <i data-lucide="sliders" class="w-5 h-5 text-blue-600"></i>
-                        <span>Parámetros Fundamentales</span>
-                    </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Introduce exactamente 2 valores conocidos para calcular los restantes automáticamente.</p>
-
-                    <!-- Voltaje -->
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Voltaje (V)</label>
-                        <div class="flex space-x-2">
-                            <input type="number" id="ohm-v" placeholder="Ej. 12" oninput="ohmCalc.handleInput('v')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <select id="ohm-v-unit" onchange="ohmCalc.calculate()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 text-xs">
-                                <option value="1e-6">µV</option><option value="1e-3">mV</option><option value="1" selected>V</option><option value="1e3">kV</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Corriente -->
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Corriente (I)</label>
-                        <div class="flex space-x-2">
-                            <input type="number" id="ohm-i" placeholder="Ej. 2" oninput="ohmCalc.handleInput('i')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <select id="ohm-i-unit" onchange="ohmCalc.calculate()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 text-xs">
-                                <option value="1e-6">µA</option><option value="1e-3">mA</option><option value="1" selected>A</option><option value="1e3">kA</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Resistencia -->
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Resistencia (R)</label>
-                        <div class="flex space-x-2">
-                            <input type="number" id="ohm-r" placeholder="Ej. 6" oninput="ohmCalc.handleInput('r')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <select id="ohm-r-unit" onchange="ohmCalc.calculate()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 text-xs">
-                                <option value="1e-3">mΩ</option><option value="1" selected>Ω</option><option value="1e3">kΩ</option><option value="1e6">MΩ</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Potencia -->
-                    <div class="space-y-1">
-                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Potencia (P)</label>
-                        <div class="flex space-x-2">
-                            <input type="number" id="ohm-p" placeholder="Ej. 24" oninput="ohmCalc.handleInput('p')" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            <select id="ohm-p-unit" onchange="ohmCalc.calculate()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2 text-xs">
-                                <option value="1e-6">µW</option><option value="1e-3">mW</option><option value="1" selected>W</option><option value="1e3">kW</option><option value="1e6">MW</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="pt-2 flex space-x-2">
-                        <button onclick="ohmCalc.clear()" class="w-1/2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded-lg text-sm font-medium transition">Limpiar</button>
-                        <button onclick="ohmCalc.loadPreset()" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium transition">Ejemplo 1</button>
-                    </div>
-                </div>
-
-                <!-- Panel de Resultados y Desarrollo -->
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-                        <h2 class="text-base font-bold flex items-center space-x-2">
-                            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-500"></i>
-                            <span>Resultados y Validación Matemática</span>
-                        </h2>
-                        <div id="ohm-status" class="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-300 rounded-xl text-xs">
-                            Introduce dos valores para iniciar el análisis eléctrico.
-                        </div>
-                        <div id="ohm-steps" class="font-mono text-xs bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-slate-700 dark:text-slate-300 max-h-60 overflow-y-auto">
-                            <!-- Desarrollo paso a paso -->
-                        </div>
-                    </div>
-
-                    <!-- Rueda de la Ley de Ohm / Ayuda Visual -->
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
-                        <h3 class="text-sm font-bold mb-3 flex items-center space-x-2">
-                            <i data-lucide="help-circle" class="w-4 h-4 text-indigo-500"></i>
-                            <span>Fórmulas de la Ley de Ohm y Potencia</span>
-                        </h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                            <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                                <span class="font-bold text-blue-600">Voltaje (V)</span>
-                                <p class="mt-1 font-mono">V = I × R</p>
-                                <p class="mt-1 font-mono">V = P / I</p>
-                                <p class="mt-1 font-mono">V = √(P × R)</p>
-                            </div>
-                            <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                                <span class="font-bold text-emerald-600">Corriente (I)</span>
-                                <p class="mt-1 font-mono">I = V / R</p>
-                                <p class="mt-1 font-mono">I = P / V</p>
-                                <p class="mt-1 font-mono">I = √(P / R)</p>
-                            </div>
-                            <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                                <span class="font-bold text-amber-600">Resistencia (R)</span>
-                                <p class="mt-1 font-mono">R = V / I</p>
-                                <p class="mt-1 font-mono">R = V² / P</p>
-                                <p class="mt-1 font-mono">R = P / I²</p>
-                            </div>
-                            <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                                <span class="font-bold text-purple-600">Potencia (P)</span>
-                                <p class="mt-1 font-mono">P = V × I</p>
-                                <p class="mt-1 font-mono">P = I² × R</p>
-                                <p class="mt-1 font-mono">P = V² / R</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 2. PESTAÑA: CONVERSOR DE UNIDADES -->
-        <section id="tab-units" class="tab-content space-y-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-2xl mx-auto space-y-4">
-                <h2 class="text-base font-bold flex items-center space-x-2">
-                    <i data-lucide="sliders" class="w-5 h-5 text-blue-600"></i>
-                    <span>Conversor Bidireccional de Magnitudes Eléctricas y Físicas</span>
-                </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Magnitud</label>
-                        <select id="conv-type" onchange="unitConv.updateUnits()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
-                            <option value="voltage">Voltaje (V)</option>
-                            <option value="current">Corriente (I)</option>
-                            <option value="resistance">Resistencia (R)</option>
-                            <option value="power">Potencia (P)</option>
-                            <option value="energy">Energía (E)</option>
-                            <option value="capacitance">Capacitancia (C)</option>
-                            <option value="inductance">Inductancia (L)</option>
-                            <option value="time">Tiempo (t)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Valor de Entrada</label>
-                        <input type="number" id="conv-val" value="1" oninput="unitConv.convert()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-600 dark:text-slate-400">Unidad Base</label>
-                        <select id="conv-unit-from" onchange="unitConv.convert()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm">
-                            <!-- Opciones dinámicas -->
-                        </select>
-                    </div>
-                </div>
-                <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Resultados Convertidos</h3>
-                    <div id="conv-results" class="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
-                        <!-- Resultados -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 3. PESTAÑA: CIRCUITOS EN SERIE -->
-        <section id="tab-series" class="tab-content space-y-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-4xl mx-auto space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 class="text-base font-bold flex items-center space-x-2">
-                            <i data-lucide="git-commit" class="w-5 h-5 text-blue-600"></i>
-                            <span>Analizador de Circuitos en Serie</span>
-                        </h2>
-                        <p class="text-xs text-slate-500">Corriente común, suma de resistencias y caídas de tensión (LVK).</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <label class="text-xs font-semibold">Voltaje Fuente (V):</label>
-                        <input type="number" id="series-v" value="12" oninput="seriesCalc.calculate()" class="w-24 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm">
-                    </div>
-                </div>
-
-                <div class="flex space-x-2">
-                    <button onclick="seriesCalc.addResistor()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition">Añadir Resistencia</button>
-                    <button onclick="seriesCalc.loadPreset()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg text-xs font-medium transition">Cargar Caso de Prueba</button>
-                </div>
-
-                <div id="series-resistors-container" class="space-y-3">
-                    <!-- Dinámico -->
-                </div>
-
-                <div class="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-                    <h3 class="text-sm font-bold">Resultados Globales y Procedimiento</h3>
-                    <div id="series-results" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
-                        <!-- Resultados -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. PESTAÑA: CIRCUITOS EN PARALELO -->
-        <section id="tab-parallel" class="tab-content space-y-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-4xl mx-auto space-y-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h2 class="text-base font-bold flex items-center space-x-2">
-                            <i data-lucide="git-merge" class="w-5 h-5 text-emerald-600"></i>
-                            <span>Analizador de Circuitos en Paralelo</span>
-                        </h2>
-                        <p class="text-xs text-slate-500">Voltaje común, conductancias y Ley de Corrientes de Kirchhoff (LCK).</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <label class="text-xs font-semibold">Voltaje Fuente (V):</label>
-                        <input type="number" id="parallel-v" value="12" oninput="parallelCalc.calculate()" class="w-24 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm">
-                    </div>
-                </div>
-
-                <div class="flex space-x-2">
-                    <button onclick="parallelCalc.addResistor()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium transition">Añadir Resistencia</button>
-                    <button onclick="parallelCalc.loadPreset()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded-lg text-xs font-medium transition">Cargar Caso de Prueba</button>
-                </div>
-
-                <div id="parallel-resistors-container" class="space-y-3">
-                    <!-- Dinámico -->
-                </div>
-
-                <div class="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-                    <h3 class="text-sm font-bold">Resultados y Leyes de Kirchhoff</h3>
-                    <div id="parallel-results" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
-                        <!-- Resultados -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 5. PESTAÑA: CIRCUITOS MIXTOS Y NODAL -->
-        <section id="tab-mixed" class="tab-content space-y-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-4xl mx-auto space-y-6">
+        <!-- Panel de Configuración del Partido -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
+            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                ⚙️ Parámetros del Partido y Cuotas
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Local -->
                 <div>
-                    <h2 class="text-base font-bold flex items-center space-x-2">
-                        <i data-lucide="cpu" class="w-5 h-5 text-indigo-600"></i>
-                        <span>Red Mixta Resistiva (Caso de Prueba 4)</span>
-                    </h2>
-                    <p class="text-xs text-slate-500">100 Ω en serie con dos resistencias de 100 Ω en paralelo, alimentadas a 12 V.</p>
+                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Local</label>
+                    <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
+                        <!-- Opciones cargadas por JS -->
+                    </select>
+                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xGF: <span class="font-semibold text-white">0.00</span></p>
                 </div>
-                <button onclick="mixedCalc.loadPreset4()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium transition">Ejecutar Análisis del Caso 4</button>
-                <div id="mixed-results" class="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-xs space-y-2">
-                    Pulsa el botón superior para calcular la resistencia equivalente total ($R_t = 150\,\Omega$), corriente total ($0.08\,\text{A}$) y caídas de tensión.
+
+                <!-- Visitante -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Visitante</label>
+                    <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
+                        <!-- Opciones cargadas por JS -->
+                    </select>
+                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xGF: <span class="font-semibold text-white">0.00</span></p>
+                </div>
+
+                <!-- Botón de Análisis -->
+                <div class="flex items-end">
+                    <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
+                        Calcular Modelo Poisson
+                    </button>
                 </div>
             </div>
         </section>
 
-        <!-- 6. PESTAÑA: CA Y TRIFÁSICA -->
-        <section id="tab-ac" class="tab-content space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Monofásica CA -->
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-                    <h2 class="text-base font-bold flex items-center space-x-2">
-                        <i data-lucide="refresh-cw" class="w-5 h-5 text-blue-600"></i>
-                        <span>CA Monofásica e Impedancia</span>
-                    </h2>
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                        <div>
-                            <label class="font-semibold">Voltaje RMS (V)</label>
-                            <input type="number" id="ac-v" value="120" oninput="acCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="font-semibold">Frecuencia (Hz)</label>
-                            <input type="number" id="ac-f" value="60" oninput="acCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="font-semibold">Resistencia R ($\Omega$)</label>
-                            <input type="number" id="ac-r" value="10" oninput="acCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="font-semibold">Inductancia L (mH)</label>
-                            <input type="number" id="ac-l" value="20" oninput="acCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                        </div>
-                    </div>
-                    <div id="ac-results" class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-xs space-y-1">
-                        <!-- Resultados -->
-                    </div>
+        <!-- Resultados y Resumen de Parámetros -->
+        <div id="seccionResultados" class="space-y-8 hidden">
+            
+            <!-- Parámetros Lambda -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                    <p class="text-xs text-slate-400 uppercase">λ Local ($\lambda_L$)</p>
+                    <p id="resLambdaLocal" class="text-xl font-bold text-white mt-1">0.00</p>
                 </div>
-
-                <!-- Trifásica -->
-                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-                    <h2 class="text-base font-bold flex items-center space-x-2">
-                        <i data-lucide="zap" class="w-5 h-5 text-amber-500"></i>
-                        <span>Sistema Trifásico Equilibrado</span>
-                    </h2>
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                        <div>
-                            <label class="font-semibold">Voltaje Línea $V_{LL}$ (V)</label>
-                            <input type="number" id="tri-v" value="220" oninput="triCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="font-semibold">Corriente Línea $I_L$ (A)</label>
-                            <input type="number" id="tri-i" value="15" oninput="triCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="font-semibold">Factor de Potencia (FP)</label>
-                            <input type="number" id="tri-fp" value="0.85" step="0.01" oninput="triCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                        </div>
-                        <div>
-                            <label class="font-semibold">Conexión</label>
-                            <select id="tri-conn" onchange="triCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                                <option value="star">Estrella (Y)</option>
-                                <option value="delta">Triángulo ($\Delta$)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="tri-results" class="p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-xs space-y-1">
-                        <!-- Resultados -->
-                    </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                    <p class="text-xs text-slate-400 uppercase">λ Visitante ($\lambda_V$)</p>
+                    <p id="resLambdaVisitante" class="text-xl font-bold text-white mt-1">0.00</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                    <p class="text-xs text-slate-400 uppercase">λ Total (FT)</p>
+                    <p id="resLambdaTotal" class="text-xl font-bold text-brand-500 mt-1">0.00</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
+                    <p class="text-xs text-slate-400 uppercase">λ HT (50% Provisional)</p>
+                    <p id="resLambdaHT" class="text-xl font-bold text-slate-300 mt-1">0.00</p>
                 </div>
             </div>
-        </section>
 
-        <!-- 7. PESTAÑA: COMPONENTES ELECTRÓNICOS -->
-        <section id="tab-components" class="tab-content space-y-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-2xl mx-auto space-y-4">
-                <h2 class="text-base font-bold flex items-center space-x-2">
-                    <i data-lucide="layers" class="w-5 h-5 text-purple-600"></i>
-                    <span>Calculadora de Resistencia Limitadora para LED</span>
-                </h2>
-                <div class="grid grid-cols-3 gap-3 text-xs">
-                    <div>
-                        <label class="font-semibold">Voltaje Fuente $V_{cc}$ (V)</label>
-                        <input type="number" id="led-vcc" value="9" oninput="ledCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="font-semibold">Caída LED $V_f$ (V)</label>
-                        <input type="number" id="led-vf" value="2.1" step="0.1" oninput="ledCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="font-semibold">Corriente $I_f$ (mA)</label>
-                        <input type="number" id="led-if" value="20" oninput="ledCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
+            <!-- Tabla Principal de Mercados -->
+            <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+                <div class="p-6 border-b border-slate-700">
+                    <h2 class="text-lg font-semibold text-white">📊 Tabla de Mercados y Probabilidades</h2>
+                    <p class="text-xs text-slate-400 mt-1">Cálculos basados en distribución de Poisson con umbral de valor esperado del 5% (EV+).</p>
                 </div>
-                <div id="led-results" class="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-xs">
-                    <!-- Resultados LED -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
+                                <th class="py-3 px-4">Mercado</th>
+                                <th class="py-3 px-4">Probabilidad</th>
+                                <th class="py-3 px-4">Cuota Justa</th>
+                                <th class="py-3 px-4">Cuota Mín. (EV +5%)</th>
+                                <th class="py-3 px-4">Evaluación Teórica</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaMercadosBody" class="divide-y divide-slate-700 text-sm">
+                            <!-- Inyectado por JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- 8. PESTAÑA: CONSUMO Y COSTO -->
-        <section id="tab-power" class="tab-content space-y-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-3xl mx-auto space-y-4">
-                <h2 class="text-base font-bold flex items-center space-x-2">
-                    <i data-lucide="dollar-sign" class="w-5 h-5 text-emerald-600"></i>
-                    <span>Calculadora de Consumo Energético y Costo (Caso de Prueba 5)</span>
-                </h2>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                    <div>
-                        <label class="font-semibold">Potencia (W)</label>
-                        <input type="number" id="cost-w" value="100" oninput="costCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="font-semibold">Horas / Día</label>
-                        <input type="number" id="cost-h" value="5" oninput="costCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="font-semibold">Días / Mes</label>
-                        <input type="number" id="cost-d" value="30" oninput="costCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="font-semibold">Tarifa ($ / kWh)</label>
-                        <input type="number" id="cost-rate" value="2.5" step="0.1" oninput="costCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
+            <!-- Interpretación y Veredicto -->
+            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-4">
+                <h2 class="text-lg font-semibold text-white">📝 Interpretación Cuantitativa y Conclusión</h2>
+                <div id="textoInterpretacion" class="text-sm text-slate-300 space-y-2 leading-relaxed">
+                    <!-- Dinámico -->
                 </div>
-                <div id="cost-results" class="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-xs">
-                    <!-- Resultados Consumo -->
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- 9. PESTAÑA: CAÍDA DE TENSIÓN -->
-        <section id="tab-voltage-drop" class="tab-content space-y-6">
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm max-w-2xl mx-auto space-y-4">
-                <h2 class="text-base font-bold flex items-center space-x-2">
-                    <i data-lucide="trending-down" class="w-5 h-5 text-blue-600"></i>
-                    <span>Calculadora Orientativa de Caída de Tensión en Conductores</span>
-                </h2>
-                <div class="grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                        <label class="font-semibold">Material</label>
-                        <select id="vdrop-mat" onchange="vdropCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                            <option value="cu">Cobre (Cu)</option>
-                            <option value="al">Aluminio (Al)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="font-semibold">Longitud Ida y Vuelta $L$ (m)</label>
-                        <input type="number" id="vdrop-len" value="30" oninput="vdropCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="font-semibold">Calibre / Sección ($mm^2$)</label>
-                        <input type="number" id="vdrop-sec" value="3.31" step="0.1" oninput="vdropCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                    <div>
-                        <label class="font-semibold">Corriente $I$ (A)</label>
-                        <input type="number" id="vdrop-i" value="15" oninput="vdropCalc.calculate()" class="w-full mt-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2">
-                    </div>
-                </div>
-                <div id="vdrop-results" class="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 font-mono text-xs">
-                    <!-- Resultados -->
-                </div>
+        </div>
+
+        <!-- Tabla de Datos Oficiales -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
+            <h2 class="text-lg font-semibold text-white mb-4">📋 Tabla de Referencia Liga MX (xGF Vigente)</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
+                            <th class="py-3 px-4">#</th>
+                            <th class="py-3 px-4">Team</th>
+                            <th class="py-3 px-4">xGF</th>
+                            <th class="py-3 px-4">1.5+</th>
+                            <th class="py-3 px-4">2.5+</th>
+                            <th class="py-3 px-4">AVG</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaEquiposBody" class="divide-y divide-slate-700">
+                        <!-- Inyectado por JS -->
+                    </tbody>
+                </table>
             </div>
         </section>
 
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-4 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 dark:text-slate-400">
-            ElectroCalc Pro &bull; Desarrollado para GitHub Pages &bull; Cumplimiento con estándares eléctricos y matemáticos.
-        </div>
+    <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
+        Analizador Cuantitativo Poisson — Diseñado para despliegue en GitHub Pages.
     </footer>
 
-    <!-- Script de la Aplicación -->
+    <!-- Script de Cálculo y Datos -->
     <script>
-        // Inicializar Iconos de Lucide
-        lucide.createIcons();
+        // Base de datos de equipos provista
+        const equiposData = [
+            { id: 1, name: "América", xGF: 2.14, p15: "90%", p25: "60%", avg: 3.30 },
+            { id: 2, name: "Toluca", xGF: 1.88, p15: "82%", p25: "73%", avg: 3.64 },
+            { id: 3, name: "Querétaro", xGF: 1.39, p15: "70%", p25: "40%", avg: 2.30 },
+            { id: 4, name: "Guadalajara", xGF: 1.71, p15: "82%", p25: "36%", avg: 2.64 },
+            { id: 5, name: "León", xGF: 1.51, p15: "82%", p25: "36%", avg: 2.45 },
+            { id: 6, name: "Atlas", xGF: 1.38, p15: "91%", p25: "45%", avg: 3.18 },
+            { id: 7, name: "Cruz Azul", xGF: 2.16, p15: "82%", p25: "73%", avg: 3.91 },
+            { id: 8, name: "Tijuana", xGF: 1.31, p15: "70%", p25: "50%", avg: 2.90 },
+            { id: 9, name: "Puebla", xGF: 1.43, p15: "64%", p25: "27%", avg: 2.27 },
+            { id: 10, name: "Monterrey", xGF: 1.87, p15: "80%", p25: "50%", avg: 3.20 },
+            { id: 11, name: "Pachuca", xGF: 1.69, p15: "82%", p25: "55%", avg: 2.91 },
+            { id: 12, name: "Tigres UANL", xGF: 1.75, p15: "73%", p25: "45%", avg: 2.55 },
+            { id: 13, name: "Pumas UNAM", xGF: 1.39, p15: "91%", p25: "64%", avg: 3.27 },
+            { id: 14, name: "Santos Laguna", xGF: 1.57, p15: "55%", p25: "55%", avg: 2.55 },
+            { id: 15, name: "Atlético San Luis", xGF: 1.34, p15: "91%", p25: "73%", avg: 3.18 },
+            { id: 16, name: "Atlante", xGF: 1.58, p15: "91%", p25: "36%", avg: 2.64 },
+            { id: 17, name: "Necaxa", xGF: 1.56, p15: "91%", p25: "73%", avg: 3.45 },
+            { id: 18, name: "Juárez", xGF: 1.03, p15: "82%", p25: "55%", avg: 3.09 }
+        ];
 
-        // Control de Pestañas y Tema
-        const app = {
-            switchTab(tabId) {
-                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
-                    btn.classList.add('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-800');
-                });
-                document.getElementById(`tab-${tabId}`).classList.add('active');
-                const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
-                if (activeBtn) {
-                    activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'hover:bg-slate-100', 'dark:hover:bg-slate-800');
-                    activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
-                }
-            },
-            toggleDarkMode() {
-                const isDark = document.documentElement.classList.toggle('dark');
-                document.getElementById('theme-icon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-                lucide.createIcons();
-            },
-            runAutomatedTests() {
-                let report = "PRUEBAS AUTOMATIZADAS ELECTROCALC PRO:\n\n";
-                // Caso 1
-                let v = 12, r = 6;
-                let i = v / r; let p = v * i;
-                report += `Caso 1 (V=12V, R=6Ω): I=${i}A (Esperado 2A), P=${p}W (Esperado 24W) -> ${i===2 && p===24 ? 'APROBADO' : 'FALLIDO'}\n`;
+        function inicializarUI() {
+            const selectLocal = document.getElementById('selectLocal');
+            const selectVisitante = document.getElementById('selectVisitante');
+            const tablaEquiposBody = document.getElementById('tablaEquiposBody');
 
-                // Caso 2: Serie 100 y 200, 12V
-                let rt2 = 100 + 200; let it2 = 12 / rt2;
-                report += `Caso 2 (Serie 100+200Ω, 12V): Rt=${rt2}Ω (Esperado 300), It=${it2.toFixed(4)}A (Esperado 0.04) -> APROBADO\n`;
+            // Poblar selects y tabla inferior
+            equiposData.forEach((eq, index) => {
+                let optL = document.createElement('option');
+                optL.value = index;
+                optL.text = eq.name;
+                selectLocal.appendChild(optL);
 
-                // Caso 3: Paralelo dos de 100, 12V
-                let rt3 = (100 * 100) / (100 + 100); let it3 = 12 / rt3;
-                report += `Caso 3 (Paralelo 100||100Ω, 12V): Rt=${rt3}Ω (Esperado 50), It=${it3.toFixed(2)}A (Esperado 0.24) -> APROBADO\n`;
+                let optV = document.createElement('option');
+                optV.value = index;
+                optV.text = eq.name;
+                selectVisitante.appendChild(optV);
 
-                // Caso 5: Consumo 100W, 5h, 30d
-                let kwh5 = (100 * 5 * 30) / 1000;
-                report += `Caso 5 (100W, 5h/d, 30d): ${kwh5} kWh (Esperado 15 kWh) -> ${kwh5===15 ? 'APROBADO' : 'FALLIDO'}\n`;
-
-                alert(report);
-            }
-        };
-
-        // 1. Módulo Ley de Ohm
-        const ohmCalc = {
-            handleInput(changed) {
-                this.calculate();
-            },
-            calculate() {
-                let vVal = parseFloat(document.getElementById('ohm-v').value);
-                let vUnit = parseFloat(document.getElementById('ohm-v-unit').value);
-                let V = !isNaN(vVal) ? vVal * vUnit : null;
-
-                let iVal = parseFloat(document.getElementById('ohm-i').value);
-                let iUnit = parseFloat(document.getElementById('ohm-i-unit').value);
-                let I = !isNaN(iVal) ? iVal * iUnit : null;
-
-                let rVal = parseFloat(document.getElementById('ohm-r').value);
-                let rUnit = parseFloat(document.getElementById('ohm-r-unit').value);
-                let R = !isNaN(rVal) ? rVal * rUnit : null;
-
-                let pVal = parseFloat(document.getElementById('ohm-p').value);
-                let pUnit = parseFloat(document.getElementById('ohm-p-unit').value);
-                let P = !isNaN(pVal) ? pVal * pUnit : null;
-
-                let count = [V !== null, I !== null, R !== null, P !== null].filter(Boolean).length;
-                let statusEl = document.getElementById('ohm-status');
-                let stepsEl = document.getElementById('ohm-steps');
-
-                if (count < 2) {
-                    statusEl.className = "p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-800 dark:text-blue-300 rounded-xl text-xs";
-                    statusEl.innerHTML = "Introduce al menos 2 valores conocidos.";
-                    stepsEl.innerHTML = "";
-                    return;
-                }
-
-                statusEl.className = "p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs font-semibold";
-                statusEl.innerHTML = "¡Cálculo completado con éxito!";
-
-                let steps = [];
-                // Lógica de cálculo combinatoria
-                if (V !== null && R !== null) {
-                    I = V / R; P = (V * V) / R;
-                    steps.push(`Fórmula I = V / R -> ${V} / ${R} = ${I.toFixed(4)} A`);
-                    steps.push(`Fórmula P = V² / R -> (${V})² / ${R} = ${P.toFixed(4)} W`);
-                } else if (V !== null && I !== null) {
-                    R = V / I; P = V * I;
-                    steps.push(`Fórmula R = V / I -> ${V} / ${I} = ${R.toFixed(4)} Ω`);
-                    steps.push(`Fórmula P = V × I -> ${V} × ${I} = ${P.toFixed(4)} W`);
-                } else if (V !== null && P !== null) {
-                    I = P / V; R = (V * V) / P;
-                    steps.push(`Fórmula I = P / V -> ${P} / ${V} = ${I.toFixed(4)} A`);
-                    steps.push(`Fórmula R = V² / P -> (${V})² / ${P} = ${R.toFixed(4)} Ω`);
-                } else if (I !== null && R !== null) {
-                    V = I * R; P = (I * I) * R;
-                    steps.push(`Fórmula V = I × R -> ${I} × ${R} = ${V.toFixed(4)} V`);
-                    steps.push(`Fórmula P = I² × R -> (${I})² × ${R} = ${P.toFixed(4)} W`);
-                } else if (I !== null && P !== null) {
-                    V = P / I; R = P / (I * I);
-                    steps.push(`Fórmula V = P / I -> ${P} / ${I} = ${V.toFixed(4)} V`);
-                    steps.push(`Fórmula R = P / I² -> ${P} / (${I})² = ${R.toFixed(4)} Ω`);
-                } else if (R !== null && P !== null) {
-                    I = Math.sqrt(P / R); V = Math.sqrt(P * R);
-                    steps.push(`Fórmula I = √(P / R) -> √(${P} / ${R}) = ${I.toFixed(4)} A`);
-                    steps.push(`Fórmula V = √(P × R) -> √(${P} × ${R}) = ${V.toFixed(4)} V`);
-                }
-
-                if (V !== null) document.getElementById('ohm-v').value = (V / vUnit).toFixed(4);
-                if (I !== null) document.getElementById('ohm-i').value = (I / iUnit).toFixed(4);
-                if (R !== null) document.getElementById('ohm-r').value = (R / rUnit).toFixed(4);
-                if (P !== null) document.getElementById('ohm-p').value = (P / pUnit).toFixed(4);
-
-                stepsEl.innerHTML = steps.map(s => `<div>• ${s}</div>`).join('');
-            },
-            clear() {
-                ['ohm-v', 'ohm-i', 'ohm-r', 'ohm-p'].forEach(id => document.getElementById(id).value = '');
-                document.getElementById('ohm-status').innerHTML = "Introduce dos valores para iniciar el análisis eléctrico.";
-                document.getElementById('ohm-steps').innerHTML = "";
-            },
-            loadPreset() {
-                document.getElementById('ohm-v').value = "12";
-                document.getElementById('ohm-v-unit').value = "1";
-                document.getElementById('ohm-r').value = "6";
-                document.getElementById('ohm-r-unit').value = "1";
-                document.getElementById('ohm-i').value = "";
-                document.getElementById('ohm-p').value = "";
-                this.calculate();
-            }
-        };
-
-        // 2. Módulo Conversor
-        const unitConv = {
-            unitsMap: {
-                voltage: [{name: 'µV', val: 1e-6}, {name: 'mV', val: 1e-3}, {name: 'V', val: 1}, {name: 'kV', val: 1e3}],
-                current: [{name: 'µA', val: 1e-6}, {name: 'mA', val: 1e-3}, {name: 'A', val: 1}, {name: 'kA', val: 1e3}],
-                resistance: [{name: 'mΩ', val: 1e-3}, {name: 'Ω', val: 1}, {name: 'kΩ', val: 1e3}, {name: 'MΩ', val: 1e6}],
-                power: [{name: 'µW', val: 1e-6}, {name: 'mW', val: 1e-3}, {name: 'W', val: 1}, {name: 'kW', val: 1e3}, {name: 'MW', val: 1e6}],
-                energy: [{name: 'J', val: 1}, {name: 'Wh', val: 3600}, {name: 'kWh', val: 3.6e6}],
-                capacitance: [{name: 'pF', val: 1e-12}, {name: 'nF', val: 1e-9}, {name: 'µF', val: 1e-6}, {name: 'mF', val: 1e-3}, {name: 'F', val: 1}],
-                inductance: [{name: 'µH', val: 1e-6}, {name: 'mH', val: 1e-3}, {name: 'H', val: 1}],
-                time: [{name: 'ms', val: 1e-3}, {name: 's', val: 1}, {name: 'min', val: 60}, {name: 'h', val: 3600}]
-            },
-            updateUnits() {
-                let type = document.getElementById('conv-type').value;
-                let select = document.getElementById('conv-unit-from');
-                select.innerHTML = this.unitsMap[type].map((u, idx) => `<option value="${idx}">${u.name}</option>`).join('');
-                this.convert();
-            },
-            convert() {
-                let type = document.getElementById('conv-type').value;
-                let val = parseFloat(document.getElementById('conv-val').value) || 0;
-                let unitIdx = parseInt(document.getElementById('conv-unit-from').value) || 0;
-                let list = this.unitsMap[type];
-                let baseVal = val * list[unitIdx].val;
-
-                let resContainer = document.getElementById('conv-results');
-                resContainer.innerHTML = list.map(u => {
-                    let converted = baseVal / u.val;
-                    return `<div class="p-2 bg-slate-50 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700">
-                        <span class="text-slate-500">${u.name}:</span> <span class="font-bold">${converted < 0.001 || converted > 1e6 ? converted.toExponential(4) : converted.toFixed(4)}</span>
-                    </div>`;
-                }).join('');
-            }
-        };
-
-        // 3. Módulo Serie
-        const seriesCalc = {
-            resistors: [100, 200],
-            init() { this.render(); },
-            addResistor() { this.resistors.push(100); this.render(); },
-            removeResistor(idx) { this.resistors.splice(idx, 1); this.render(); },
-            loadPreset() { this.resistors = [100, 200]; document.getElementById('series-v').value = 12; this.render(); },
-            render() {
-                let container = document.getElementById('series-resistors-container');
-                container.innerHTML = this.resistors.map((r, idx) => `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-xs font-bold w-16">R${idx+1} ($\Omega$):</span>
-                        <input type="number" value="${r}" oninput="seriesCalc.updateVal(${idx}, this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm">
-                        <button onclick="seriesCalc.removeResistor(${idx})" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold">X</button>
-                    </div>
-                `).join('');
-                this.calculate();
-            },
-            updateVal(idx, val) { this.resistors[idx] = parseFloat(val) || 0; this.calculate(); },
-            calculate() {
-                let v = parseFloat(document.getElementById('series-v').value) || 0;
-                let rt = this.resistors.reduce((a, b) => a + b, 0);
-                let it = rt > 0 ? v / rt : 0;
-                let results = this.resistors.map((r, idx) => {
-                    let drop = it * r;
-                    let p = it * it * r;
-                    return `R${idx+1}: Caída = ${drop.toFixed(3)} V, P = ${p.toFixed(3)} W`;
-                });
-                document.getElementById('series-results').innerHTML = `
-                    <div>Rt = ${rt.toFixed(2)} Ω</div>
-                    <div>It = ${it.toFixed(4)} A</div>
-                    <div class="col-span-1 sm:col-span-3 text-slate-500">${results.join(' | ')}</div>
+                // Fila tabla referencia
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-700/50 transition";
+                tr.innerHTML = `
+                    <td class="py-2.5 px-4 text-slate-400">${eq.id}</td>
+                    <td class="py-2.5 px-4 font-medium text-white">${eq.name}</td>
+                    <td class="py-2.5 px-4 text-brand-500 font-semibold">${eq.xGF}</td>
+                    <td class="py-2.5 px-4 text-slate-300">${eq.p15}</td>
+                    <td class="py-2.5 px-4 text-slate-300">${eq.p25}</td>
+                    <td class="py-2.5 px-4 text-slate-300">${eq.avg}</td>
                 `;
-            }
-        };
+                tablaEquiposBody.appendChild(tr);
+            });
 
-        // 4. Módulo Paralelo
-        const parallelCalc = {
-            resistors: [100, 100],
-            init() { this.render(); },
-            addResistor() { this.resistors.push(100); this.render(); },
-            removeResistor(idx) { this.resistors.splice(idx, 1); this.render(); },
-            loadPreset() { this.resistors = [100, 100]; document.getElementById('parallel-v').value = 12; this.render(); },
-            render() {
-                let container = document.getElementById('parallel-resistors-container');
-                container.innerHTML = this.resistors.map((r, idx) => `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-xs font-bold w-16">R${idx+1} ($\Omega$):</span>
-                        <input type="number" value="${r}" oninput="parallelCalc.updateVal(${idx}, this.value)" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm">
-                        <button onclick="parallelCalc.removeResistor(${idx})" class="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold">X</button>
-                    </div>
-                `).join('');
-                this.calculate();
-            },
-            updateVal(idx, val) { this.resistors[idx] = parseFloat(val) || 0; this.calculate(); },
-            calculate() {
-                let v = parseFloat(document.getElementById('parallel-v').value) || 0;
-                let sumG = this.resistors.reduce((acc, r) => acc + (r > 0 ? 1 / r : 0), 0);
-                let rt = sumG > 0 ? 1 / sumG : 0;
-                let it = v * sumG;
-                let branches = this.resistors.map((r, idx) => {
-                    let iBranch = r > 0 ? v / r : 0;
-                    let pBranch = v * iBranch;
-                    return `R${idx+1}: I = ${iBranch.toFixed(3)} A, P = ${pBranch.toFixed(3)} W`;
-                });
-                document.getElementById('parallel-results').innerHTML = `
-                    <div>Rt = ${rt.toFixed(2)} Ω</div>
-                    <div>It = ${it.toFixed(4)} A</div>
-                    <div class="col-span-1 sm:col-span-3 text-slate-500">${branches.join(' | ')}</div>
+            selectVisitante.selectedIndex = 1; // Seleccionar visitante distinto por defecto
+            actualizarInfoSelects();
+
+            selectLocal.addEventListener('change', actualizarInfoSelects);
+            selectVisitante.addEventListener('change', actualizarInfoSelects);
+        }
+
+        function actualizarInfoSelects() {
+            const idxL = document.getElementById('selectLocal').value;
+            const idxV = document.getElementById('selectVisitante').value;
+            document.getElementById('infoLocal').querySelector('span').innerText = equiposData[idxL].xGF;
+            document.getElementById('infoVisitante').querySelector('span').innerText = equiposData[idxV].xGF;
+        }
+
+        function ejecutarAnalisis() {
+            const idxL = document.getElementById('selectLocal').value;
+            const idxV = document.getElementById('selectVisitante').value;
+            
+            const eqL = equiposData[idxL];
+            const eqV = equiposData[idxV];
+
+            const lambdaL = eqL.xGF;
+            const lambdaV = eqV.xGF;
+            const lambdaTotal = lambdaL + lambdaV;
+            const lambdaHT = lambdaTotal * 0.50;
+
+            // Mostrar parámetros
+            document.getElementById('resLambdaLocal').innerText = lambdaL.toFixed(2);
+            document.getElementById('resLambdaVisitante').innerText = lambdaV.toFixed(2);
+            document.getElementById('resLambdaTotal').innerText = lambdaTotal.toFixed(2);
+            document.getElementById('resLambdaHT').innerText = lambdaHT.toFixed(2);
+
+            // Cálculos Poisson Under 2.5: P(U2.5) = exp(-lambda) * (1 + lambda + (lambda^2)/2)
+            const pU25 = Math.exp(-lambdaTotal) * (1 + lambdaTotal + (Math.pow(lambdaTotal, 2) / 2));
+            const pO25 = 1 - pU25;
+
+            // BTTS: P(Yes) = (1 - exp(-lambdaL)) * (1 - exp(-lambdaV))
+            const pBttsYes = (1 - Math.exp(-lambdaL)) * (1 - Math.exp(-lambdaV));
+            const pBttsNo = 1 - pBttsYes;
+
+            // HT 0.5: Under 0.5 HT = exp(-lambdaHT)
+            const pU05HT = Math.exp(-lambdaHT);
+            const pO05HT = 1 - pU05HT;
+
+            const mercados = [
+                { nombre: "Over 2.5 Goles FT", prob: pO25 },
+                { nombre: "Under 2.5 Goles FT", prob: pU25 },
+                { nombre: "BTTS Sí (Ambos Anotan)", prob: pBttsYes },
+                { nombre: "BTTS No (Ambos Anotan)", prob: pBttsNo },
+                { nombre: "Over 0.5 Goles HT", prob: pO05HT },
+                { nombre: "Under 0.5 Goles HT", prob: pU05HT }
+            ];
+
+            const tbody = document.getElementById('tablaMercadosBody');
+            tbody.innerHTML = "";
+
+            mercados.forEach(m => {
+                const probPorc = m.prob * 100;
+                const cuotaJusta = 1 / m.prob;
+                // Cuota mínima para EV +5%: 1.05 / prob (redondeada hacia arriba al centésimo)
+                const cuotaMin = Math.ceil((1.05 / m.prob) * 100) / 100;
+
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-700/50 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-white">${m.nombre}</td>
+                    <td class="py-3 px-4 text-brand-400 font-semibold">${probPorc.toFixed(2)}%</td>
+                    <td class="py-3 px-4 text-slate-300">${cuotaJusta.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-yellow-400 font-semibold">${cuotaMin.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs">Pendiente de cuota real</td>
                 `;
-            }
-        };
+                tbody.appendChild(tr);
+            });
 
-        // 5. Módulo Mixto (Caso 4)
-        const mixedCalc = {
-            loadPreset4() {
-                let v = 12;
-                let rParallel = (100 * 100) / (100 + 100); // 50 Ω
-                let rt = 100 + rParallel; // 150 Ω
-                let it = v / rt; // 0.08 A
-                let vSeries = it * 100; // 8 V
-                let vParallel = v - vSeries; // 4 V
-                document.getElementById('mixed-results').innerHTML = `
-                    <div><strong>Caso 4 Aprobado:</strong></div>
-                    <div>• Resistencia Total ($R_t$): 150 Ω (Esperado: 150 Ω)</div>
-                    <div>• Corriente Total ($I_t$): 0.08 A (Esperado: 0.08 A)</div>
-                    <div>• Caída en Resistencia Serie ($R_1$): 8.00 V (Esperado: 8 V)</div>
-                    <div>• Voltaje en Paralelo ($R_2 || R_3$): 4.00 V (Esperado: 4 V)</div>
-                `;
-            }
-        };
+            // Generar interpretación
+            document.getElementById('textoInterpretacion').innerHTML = `
+                <p>• Análisis generado entre <strong>${eqL.name}</strong> (Local) y <strong>${eqV.name}</strong> (Visitante).</p>
+                <p>• El parámetro de goles esperados totales ($\lambda_{total}$) se sitúa en <strong>${lambdaTotal.toFixed(2)}</strong> goles, reflejando el potencial ofensivo combinado basado en el xGF vigente de la tabla.</p>
+                <p>• Revise las cuotas ofrecidas por su casa de apuestas y compárelas con las <strong>cuotas mínimas (EV +5%)</strong> calculadas en la tabla para identificar oportunidades con valor matemático positivo.</p>
+            `;
 
-        // 6. Módulo CA Monofásica
-        const acCalc = {
-            calculate() {
-                let v = parseFloat(document.getElementById('ac-v').value) || 0;
-                let f = parseFloat(document.getElementById('ac-f').value) || 0;
-                let r = parseFloat(document.getElementById('ac-r').value) || 0;
-                let l = (parseFloat(document.getElementById('ac-l').value) || 0) * 1e-3;
+            document.getElementById('seccionResultados').classList.remove('hidden');
+        }
 
-                let xl = 2 * Math.PI * f * l;
-                let z = Math.sqrt(r * r + xl * xl);
-                let i = z > 0 ? v / z : 0;
-                let phi = Math.atan2(xl, r) * (180 / Math.PI);
-                let fp = Math.cos(phi * (Math.PI / 180));
-                let p = v * i * fp;
-                let q = v * i * Math.sin(phi * (Math.PI / 180));
-                let s = v * i;
-
-                document.getElementById('ac-results').innerHTML = `
-                    <div>Reactancia Inductiva ($X_L$): ${xl.toFixed(2)} Ω</div>
-                    <div>Impedancia ($Z$): ${z.toFixed(2)} Ω</div>
-                    <div>Corriente RMS ($I$): ${i.toFixed(3)} A</div>
-                    <div>Factor de Potencia ($FP$): ${fp.toFixed(3)}</div>
-                    <div>Potencia Activa ($P$): ${p.toFixed(2)} W</div>
-                    <div>Potencia Reactiva ($Q$): ${q.toFixed(2)} VAR</div>
-                    <div>Potencia Aparente ($S$): ${s.toFixed(2)} VA</div>
-                `;
-            }
-        };
-
-        // Trifásica
-        const triCalc = {
-            calculate() {
-                let vll = parseFloat(document.getElementById('tri-v').value) || 0;
-                let il = parseFloat(document.getElementById('tri-i').value) || 0;
-                let fp = parseFloat(document.getElementById('tri-fp').value) || 0;
-                let conn = document.getElementById('tri-conn').value;
-
-                let p = Math.sqrt(3) * vll * il * fp;
-                let q = p * Math.tan(Math.acos(fp));
-                let s = Math.sqrt(p * p + q * q);
-
-                document.getElementById('tri-results').innerHTML = `
-                    <div>Conexión: ${conn === 'star' ? 'Estrella (Y)' : 'Triángulo (Δ)'}</div>
-                    <div>Potencia Activa ($P$): ${(p/1000).toFixed(3)} kW</div>
-                    <div>Potencia Reactiva ($Q$): ${(q/1000).toFixed(3)} kVAR</div>
-                    <div>Potencia Aparente ($S$): ${(s/1000).toFixed(3)} kVA</div>
-                `;
-            }
-        };
-
-        // 7. Componentes (LED)
-        const ledCalc = {
-            calculate() {
-                let vcc = parseFloat(document.getElementById('led-vcc').value) || 0;
-                let vf = parseFloat(document.getElementById('led-vf').value) || 0;
-                let iif = (parseFloat(document.getElementById('led-if').value) || 0) * 1e-3;
-
-                let r = iif > 0 ? (vcc - vf) / iif : 0;
-                let p = iif > 0 ? (vcc - vf) * iif : 0;
-
-                document.getElementById('led-results').innerHTML = `
-                    <div>Resistencia Requerida ($R$): <strong>${r.toFixed(2)} Ω</strong></div>
-                    <div>Disipación en Resistencia ($P$): <strong>${p.toFixed(3)} W</strong></div>
-                    <div class="text-slate-500 mt-1">Sugerencia: Utiliza una resistencia comercial estándar superior cercana (ej. 1/4W o 1/2W).</div>
-                `;
-            }
-        };
-
-        // 8. Consumo (Caso 5)
-        const costCalc = {
-            calculate() {
-                let w = parseFloat(document.getElementById('cost-w').value) || 0;
-                let h = parseFloat(document.getElementById('cost-h').value) || 0;
-                let d = parseFloat(document.getElementById('cost-d').value) || 0;
-                let rate = parseFloat(document.getElementById('cost-rate').value) || 0;
-
-                let kwh = (w * h * d) / 1000;
-                let cost = kwh * rate;
-
-                document.getElementById('cost-results').innerHTML = `
-                    <div>Consumo Mensual: <strong>${kwh.toFixed(2)} kWh</strong> (Esperado Caso 5: 15 kWh para 100W, 5h, 30d)</div>
-                    <div>Costo Estimado: <strong>$${cost.toFixed(2)}</strong></div>
-                `;
-            }
-        };
-
-        // 9. Caída de Tensión
-        const vdropCalc = {
-            calculate() {
-                let mat = document.getElementById('vdrop-mat').value;
-                let rho = mat === 'cu' ? 0.0172 : 0.0282; // Resistividad Ω·mm²/m
-                let len = parseFloat(document.getElementById('vdrop-len').value) || 0;
-                let sec = parseFloat(document.getElementById('vdrop-sec').value) || 1;
-                let i = parseFloat(document.getElementById('vdrop-i').value) || 0;
-                let vNom = 120; // Voltaje de referencia monofásico
-
-                let rCond = (2 * rho * len) / sec;
-                let vDrop = i * rCond;
-                let pct = (vDrop / vNom) * 100;
-
-                document.getElementById('vdrop-results').innerHTML = `
-                    <div>Resistencia del Conductor: ${rCond.toFixed(4)} Ω</div>
-                    <div>Caída de Tensión: <strong>${vDrop.toFixed(3)} V</strong></div>
-                    <div>Caída Porcentual: <strong>${pct.toFixed(2)}%</strong></div>
-                    <div class="text-slate-500 mt-1">${pct > 3 ? '⚠️ Advertencia: Supera el límite recomendado del 3% para alimentadores.' : '✅ Dentro del rango aceptable (<3%).'}</div>
-                `;
-            }
-        };
-
-        // Inicializar módulos al cargar
-        window.onload = () => {
-            seriesCalc.init();
-            parallelCalc.init();
-            unitConv.updateUnits();
-            acCalc.calculate();
-            triCalc.calculate();
-            ledCalc.calculate();
-            costCalc.calculate();
-            vdropCalc.calculate();
-        };
+        window.onload = inicializarUI;
     </script>
 </body>
 </html>
