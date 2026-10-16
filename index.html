@@ -116,9 +116,17 @@
 
             <!-- Tabla Principal de Mercados -->
             <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
-                <div class="p-6 border-b border-slate-700">
-                    <h2 class="text-lg font-semibold text-white">📊 Tabla de Mercados y Probabilidades</h2>
-                    <p class="text-xs text-slate-400 mt-1">Cálculos basados en distribución de Poisson con umbral de valor esperado del 5% (EV+).</p>
+                <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-white">📊 Tabla de Mercados y Probabilidades</h2>
+                        <p class="text-xs text-slate-400 mt-1">Cálculos basados en distribución de Poisson con umbral de valor esperado del 5% (EV+).</p>
+                    </div>
+                    <!-- Leyenda de Colores -->
+                    <div class="flex items-center gap-3 text-xs bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-700/60 self-start sm:self-auto">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Alta</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Media</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Baja</span>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -237,7 +245,6 @@
         let ligaActualKey = "liga_mx";
 
         function inicializarApp() {
-            // Cargar ligas guardadas en localStorage con respaldo seguro
             const saved = localStorage.getItem('poisson_ligas_db');
             if (saved) {
                 try {
@@ -279,7 +286,6 @@
             document.getElementById('badgeLigaActiva').innerText = liga.nombre;
             document.getElementById('tituloTablaEquipos').innerText = `📋 Tabla de Referencia ${liga.nombre} (xGF Vigente)`;
 
-            // Deshabilitar botón de eliminar si es la liga base (Liga MX)
             const btnEliminar = document.getElementById('btnEliminarLiga');
             if (liga.esBase || ligaActualKey === "liga_mx") {
                 btnEliminar.classList.add('opacity-50', 'cursor-not-allowed');
@@ -336,6 +342,52 @@
             if(liga && liga.equipos[idxV]) document.getElementById('infoVisitante').querySelector('span').innerText = Number(liga.equipos[idxV].xGF).toFixed(2);
         }
 
+        // Función para obtener clase de color según el mercado y probabilidad
+        function getEstiloColorProbabilidad(idMercado, probPorcentaje) {
+            let p = probPorcentaje;
+            let bgClass = "bg-slate-700/50 text-slate-200 border-slate-600"; // Por defecto
+
+            switch (idMercado) {
+                case "O25":
+                    if (p >= 55) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 45) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
+
+                case "U25":
+                    if (p >= 52) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 42) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
+
+                case "BTTS_YES":
+                    if (p >= 58) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 48) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
+
+                case "BTTS_NO":
+                    if (p >= 50) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 40) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
+
+                case "O05HT":
+                    if (p >= 78) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 70) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
+
+                case "U05HT":
+                    if (p >= 30) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 22) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
+            }
+
+            return bgClass;
+        }
+
         function ejecutarAnalisis() {
             const liga = ligasDB[ligaActualKey];
             const idxL = document.getElementById('selectLocal').value;
@@ -364,12 +416,12 @@
             const pO05HT = 1 - pU05HT;
 
             const mercados = [
-                { nombre: "Over 2.5 Goles FT", prob: pO25 },
-                { nombre: "Under 2.5 Goles FT", prob: pU25 },
-                { nombre: "BTTS Sí (Ambos Anotan)", prob: pBttsYes },
-                { nombre: "BTTS No (Ambos Anotan)", prob: pBttsNo },
-                { nombre: "Over 0.5 Goles HT", prob: pO05HT },
-                { nombre: "Under 0.5 Goles HT", prob: pU05HT }
+                { id: "O25", nombre: "Over 2.5 Goles FT", prob: pO25 },
+                { id: "U25", nombre: "Under 2.5 Goles FT", prob: pU25 },
+                { id: "BTTS_YES", nombre: "BTTS Sí (Ambos Anotan)", prob: pBttsYes },
+                { id: "BTTS_NO", nombre: "BTTS No (Ambos Anotan)", prob: pBttsNo },
+                { id: "O05HT", nombre: "Over 0.5 Goles HT", prob: pO05HT },
+                { id: "U05HT", nombre: "Under 0.5 Goles HT", prob: pU05HT }
             ];
 
             const tbody = document.getElementById('tablaMercadosBody');
@@ -379,14 +431,21 @@
                 const probPorc = m.prob * 100;
                 const cuotaJusta = 1 / m.prob;
                 const cuotaMin = Math.ceil((1.05 / m.prob) * 100) / 100;
+                
+                // Obtener estilo visual según ponderación propia
+                const badgeColor = getEstiloColorProbabilidad(m.id, probPorc);
 
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/50 transition";
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-medium text-white">${m.nombre}</td>
-                    <td class="py-3 px-4 text-brand-400 font-semibold">${probPorc.toFixed(2)}%</td>
-                    <td class="py-3 px-4 text-slate-300">${cuotaJusta.toFixed(2)}</td>
-                    <td class="py-3 px-4 text-yellow-400 font-semibold">${cuotaMin.toFixed(2)}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-md border text-xs font-bold inline-block ${badgeColor}">
+                            ${probPorc.toFixed(2)}%
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-slate-300 font-mono">${cuotaJusta.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-yellow-400 font-semibold font-mono">${cuotaMin.toFixed(2)}</td>
                     <td class="py-3 px-4 text-slate-400 text-xs">Pendiente de cuota real</td>
                 `;
                 tbody.appendChild(tr);
@@ -411,14 +470,12 @@
             if (confirm(`¿Estás seguro de que deseas eliminar la liga "${liga.nombre}"? esta acción se guardará de inmediato.`)) {
                 delete ligasDB[ligaActualKey];
                 
-                // Actualizar localStorage
                 try {
                     localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
                 } catch(e) {
                     console.error("Error al guardar en localStorage", e);
                 }
 
-                // Regresar a Liga MX
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -453,7 +510,6 @@
                 }
 
                 if (partes.length >= 2) {
-                    // Ignorar fila de encabezados si se incluye por error
                     if (partes[0].toLowerCase() === "team" || partes.includes("xGF") || partes.includes("AVG")) {
                         return;
                     }
