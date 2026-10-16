@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Cuantitativo Poisson - Multi-Liga Pro</title>
+    <title>Analizador Cuantitativo Poisson - Calibrado</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,11 +27,11 @@
                 <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                     ⚽ Analizador Poisson <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">Modelo cuantitativo avanzado con Dixon-Coles, Fuerza Defensiva y Forma Reciente.</p>
+                <p class="text-sm text-slate-400 mt-1">Modelo cuantitativo calibrado estrictamente con datos tabulados de xGF y AVG.</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700">
-                    Modelo: <span class="text-brand-500 font-semibold">Poisson / Dixon-Coles Pro</span>
+                    Método: <span class="text-brand-500 font-semibold">Poisson / Dixon-Coles Medible</span>
                 </div>
             </div>
         </div>
@@ -58,10 +58,10 @@
             </div>
         </section>
 
-        <!-- Panel de Configuración del Partido y Ajustes Matemáticos Avanzados -->
+        <!-- Panel de Configuración del Partido -->
         <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
             <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                ⚙️ Parámetros del Partido y Ajustes Avanzados
+                ⚙️ Parámetros Medibles del Partido
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Local -->
@@ -70,7 +70,7 @@
                     <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                         <!-- Opciones cargadas por JS -->
                     </select>
-                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xGF Base: <span class="font-semibold text-white">0.00</span></p>
+                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xGF Base: <span class="font-semibold text-white">0.00</span> | xGA Est.: <span id="infoLocalXGA" class="font-semibold text-white">0.00</span></p>
                 </div>
 
                 <!-- Visitante -->
@@ -79,46 +79,32 @@
                     <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                         <!-- Opciones cargadas por JS -->
                     </select>
-                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xGF Base: <span class="font-semibold text-white">0.00</span></p>
+                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xGF Base: <span class="font-semibold text-white">0.00</span> | xGA Est.: <span id="infoVisitanteXGA" class="font-semibold text-white">0.00</span></p>
                 </div>
 
                 <!-- Botón de Análisis -->
                 <div class="flex items-end">
                     <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
-                        Calcular Modelo Avanzado
+                        Calcular Modelo Cuantitativo
                     </button>
                 </div>
             </div>
 
-            <!-- Módulos de Ajustes Cuantitativos Avanzados -->
-            <div class="border-t border-slate-700/80 pt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <!-- Módulos de Ajustes Medibles -->
+            <div class="border-t border-slate-700/80 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
                     <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
                         <input type="checkbox" id="chkDixonColes" checked class="rounded accent-brand-600">
-                        Dixon-Coles ($\rho = -0.135$)
+                        Ajuste Bivariado Dixon-Coles ($\rho = -0.135$)
                     </label>
-                    <p class="text-slate-400 mt-1">Corrige dependencia de empates bajos ($0-0, 1-1$).</p>
-                </div>
-                <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
-                    <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
-                        <input type="checkbox" id="chkLocalia" checked class="rounded accent-brand-600">
-                        Factor Localía (+8% / -8%)
-                    </label>
-                    <p class="text-slate-400 mt-1">Pondera ventaja de campo.</p>
+                    <p class="text-slate-400 mt-1">Corrige matemáticamente la subestimación de empates en marcadores bajos.</p>
                 </div>
                 <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
                     <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
                         <input type="checkbox" id="chkDefensaRelativa" checked class="rounded accent-brand-600">
-                        Fuerza Defensiva Relativa
+                        Ajuste por Fuerza Defensiva Relativa ($\text{xGA}_V / \bar{\text{xGA}}$)
                     </label>
-                    <p class="text-slate-400 mt-1">Ajusta $\lambda$ según concesión del rival vs AVG Liga.</p>
-                </div>
-                <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
-                    <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
-                        <input type="checkbox" id="chkTimeDecay" checked class="rounded accent-brand-600">
-                        Ponderación Forma Reciente
-                    </label>
-                    <p class="text-slate-400 mt-1">Mayor peso a métricas de partidos recientes.</p>
+                    <p class="text-slate-400 mt-1">Modula el ataque del local según los goles concedidos esperados del visitante.</p>
                 </div>
             </div>
         </section>
@@ -129,11 +115,11 @@
             <!-- Parámetros Lambda -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Local Ajustado ($\lambda_L$)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ Local Calibrado ($\lambda_L$)</p>
                     <p id="resLambdaLocal" class="text-xl font-bold text-white mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Visitante Ajustado ($\lambda_V$)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ Visitante Calibrado ($\lambda_V$)</p>
                     <p id="resLambdaVisitante" class="text-xl font-bold text-white mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
@@ -141,7 +127,7 @@
                     <p id="resLambdaTotal" class="text-xl font-bold text-brand-500 mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ HT (50% Provisional)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ HT (50% Hipótesis)</p>
                     <p id="resLambdaHT" class="text-xl font-bold text-slate-300 mt-1">0.00</p>
                 </div>
             </div>
@@ -151,7 +137,7 @@
                 <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-lg font-semibold text-white">📊 Tabla de Mercados y Probabilidades</h2>
-                        <p class="text-xs text-slate-400 mt-1">Cálculos basados en distribución de Poisson avanzada con umbral EV+ (5%).</p>
+                        <p class="text-xs text-slate-400 mt-1">Cálculos con umbral estricto de valor esperado del 5% (EV+).</p>
                     </div>
                     <!-- Leyenda de Colores -->
                     <div class="flex items-center gap-3 text-xs bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-700/60 self-start sm:self-auto">
@@ -241,7 +227,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
-        Analizador Cuantitativo Poisson Multi-Liga Pro — Diseñado para despliegue en GitHub Pages.
+        Analizador Cuantitativo Poisson Calibrado — Diseñado para despliegue en GitHub Pages.
     </footer>
 
     <!-- Script de Cálculo y Gestión de Ligas -->
@@ -370,8 +356,18 @@
             const liga = ligasDB[ligaActualKey];
             const idxL = document.getElementById('selectLocal').value;
             const idxV = document.getElementById('selectVisitante').value;
-            if(liga && liga.equipos[idxL]) document.getElementById('infoLocal').querySelector('span').innerText = Number(liga.equipos[idxL].xGF).toFixed(2);
-            if(liga && liga.equipos[idxV]) document.getElementById('infoVisitante').querySelector('span').innerText = Number(liga.equipos[idxV].xGF).toFixed(2);
+            if(liga && liga.equipos[idxL]) {
+                const eqL = liga.equipos[idxL];
+                const xgaL = Math.max(0.1, (parseFloat(eqL.avg) || 2.8) - parseFloat(eqL.xGF));
+                document.getElementById('infoLocal').querySelector('span').innerText = Number(eqL.xGF).toFixed(2);
+                document.getElementById('infoLocalXGA').innerText = xgaL.toFixed(2);
+            }
+            if(liga && liga.equipos[idxV]) {
+                const eqV = liga.equipos[idxV];
+                const xgaV = Math.max(0.1, (parseFloat(eqV.avg) || 2.8) - parseFloat(eqV.xGF));
+                document.getElementById('infoVisitante').querySelector('span').innerText = Number(eqV.xGF).toFixed(2);
+                document.getElementById('infoVisitanteXGA').innerText = xgaV.toFixed(2);
+            }
         }
 
         function getEstiloColorProbabilidad(idMercado, probPorcentaje) {
@@ -449,32 +445,25 @@
             let rawLambdaL = Number(eqL.xGF);
             let rawLambdaV = Number(eqV.xGF);
 
-            // Promedio global de la liga
+            // CÁLCULO MEDIBLE 1: Promedio real de la liga
             const avgLiga = liga.equipos.reduce((acc, curr) => acc + (parseFloat(curr.avg) || 2.8), 0) / (liga.equipos.length || 1);
+            
+            // CÁLCULO MEDIBLE 2: xGA Derivado de la tabla
+            const xgaL = Math.max(0.1, (parseFloat(eqL.avg) || 2.8) - rawLambdaL);
+            const xgaV = Math.max(0.1, (parseFloat(eqV.avg) || 2.8) - rawLambdaV);
+            const avgXGA = avgLiga / 2;
 
-            // 1. Ajuste de Fuerza Defensiva Relativa
+            // CÁLCULO MEDIBLE 3: Ratio de Fuerza Defensiva Relativa
             const usarDefensa = document.getElementById('chkDefensaRelativa').checked;
             let multDefL = 1.0, multDefV = 1.0;
             if (usarDefensa) {
-                let xGA_V = parseFloat(eqV.avg) ? (parseFloat(eqV.avg) / 2) : 1.4;
-                let xGA_L = parseFloat(eqL.avg) ? (parseFloat(eqL.avg) / 2) : 1.4;
-                multDefV = xGA_V / (avgLiga / 2);
-                multDefL = xGA_L / (avgLiga / 2);
+                multDefV = xgaV / avgXGA;
+                multDefL = xgaL / avgXGA;
             }
 
-            // 2. Ajuste de Forma Reciente / Time Decay
-            const usarTimeDecay = document.getElementById('chkTimeDecay').checked;
-            let multTimeL = usarTimeDecay ? 1.03 : 1.0;
-            let multTimeV = usarTimeDecay ? 0.98 : 1.0;
-
-            // 3. Ventaja de Localía (+8% / -8%)
-            const usarLocalia = document.getElementById('chkLocalia').checked;
-            let multLocL = usarLocalia ? 1.08 : 1.0;
-            let multLocV = usarLocalia ? 0.92 : 1.0;
-
-            // Integración de parámetros Lambda
-            let lambdaL = rawLambdaL * multDefV * multTimeL * multLocL;
-            let lambdaV = rawLambdaV * multDefL * multTimeV * multLocV;
+            // Aplicación directa de los parámetros medibles
+            let lambdaL = rawLambdaL * multDefV;
+            let lambdaV = rawLambdaV * multDefL;
 
             const lambdaTotal = lambdaL + lambdaV;
             const lambdaHT = lambdaTotal * 0.50;
@@ -484,9 +473,9 @@
             document.getElementById('resLambdaTotal').innerText = lambdaTotal.toFixed(2);
             document.getElementById('resLambdaHT').innerText = lambdaHT.toFixed(2);
 
-            // Matriz Dixon-Coles
+            // CÁLCULO MEDIBLE 4: Matriz Dixon-Coles Bivariada
             const usarDC = document.getElementById('chkDixonColes').checked;
-            const rho = -0.135;
+            const rho = -0.135; // Parámetro empírico calibrado para fútbol bivariado
 
             let pO25 = 0, pU25 = 0;
             let pBttsYes = 0, pBttsNo = 0;
@@ -505,7 +494,7 @@
                 }
             }
 
-            // Normalización
+            // Normalización matemática estricta
             let sumFT = pO25 + pU25;
             pO25 /= sumFT;
             pU25 /= sumFT;
@@ -514,7 +503,7 @@
             pBttsYes /= sumBTTS;
             pBttsNo /= sumBTTS;
 
-            // HT
+            // Hipótesis provisional 50% primer tiempo
             const pU05HT = Math.exp(-lambdaHT);
             const pO05HT = 1 - pU05HT;
 
@@ -556,7 +545,7 @@
             document.getElementById('textoInterpretacion').innerHTML = `
                 <p>• Partido: <strong>${eqL.name}</strong> ($\lambda_L = ${lambdaL.toFixed(2)}$) vs <strong>${eqV.name}</strong> ($\lambda_V = ${lambdaV.toFixed(2)}$).</p>
                 <p>• Parámetro combinado ajustado ($\lambda_{total}$): <strong>${lambdaTotal.toFixed(2)}</strong> goles.</p>
-                <p>• Ajustes aplicados: ${usarDC ? "Dixon-Coles ($\rho=-0.135$)" : ""}${usarDefensa ? ", Fuerza Defensiva Relativa" : ""}${usarTimeDecay ? ", Ponderación Temporal Reciente" : ""}.</p>
+                <p>• Ajustes exclusivamente medibles aplicados: ${usarDC ? "Dixon-Coles ($\rho=-0.135$)" : ""}${usarDefensa ? ", Ratio de Fuerza Defensiva Derivado ($\text{xGA}_V / \bar{\text{xGA}} = " + multDefV.toFixed(2) + "$)" : ""}.</p>
             `;
 
             document.getElementById('seccionResultados').classList.remove('hidden');
