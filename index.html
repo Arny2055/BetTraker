@@ -27,11 +27,11 @@
                 <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                     ⚽ Analizador Poisson <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">Modelo cuantitativo multi-liga de 6 mercados, cuotas justas y valor esperado (EV+).</p>
+                <p class="text-sm text-slate-400 mt-1">Modelo cuantitativo multi-liga con ajuste Dixon-Coles, cuotas justas y valor esperado (EV+).</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700">
-                    Estado: <span class="text-brand-500 font-semibold">Activo</span>
+                    Modelo: <span class="text-brand-500 font-semibold">Poisson + Dixon-Coles</span>
                 </div>
             </div>
         </div>
@@ -58,10 +58,10 @@
             </div>
         </section>
 
-        <!-- Panel de Configuración del Partido -->
-        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
-            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                ⚙️ Parámetros del Partido y Cuotas
+        <!-- Panel de Configuración del Partido y Ajustes Matemáticos -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
+            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                ⚙️ Parámetros del Partido y Ajustes del Modelo
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Local -->
@@ -70,7 +70,7 @@
                     <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                         <!-- Opciones cargadas por JS -->
                     </select>
-                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xGF: <span class="font-semibold text-white">0.00</span></p>
+                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xGF Base: <span class="font-semibold text-white">0.00</span></p>
                 </div>
 
                 <!-- Visitante -->
@@ -79,14 +79,32 @@
                     <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                         <!-- Opciones cargadas por JS -->
                     </select>
-                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xGF: <span class="font-semibold text-white">0.00</span></p>
+                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xGF Base: <span class="font-semibold text-white">0.00</span></p>
                 </div>
 
                 <!-- Botón de Análisis -->
                 <div class="flex items-end">
                     <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
-                        Calcular Modelo Poisson
+                        Calcular Modelo Ajustado
                     </button>
+                </div>
+            </div>
+
+            <!-- Módulos de Ajustes Cuantitativos -->
+            <div class="border-t border-slate-700/80 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
+                        <input type="checkbox" id="chkDixonColes" checked class="rounded accent-brand-600">
+                        Ajuste de Dependencia Dixon-Coles ($\rho = -0.135$)
+                    </label>
+                    <p class="text-slate-400 mt-1">Corrige el sesgo de independencia en marcadores bajos ($0-0, 1-0, 0-1, 1-1$).</p>
+                </div>
+                <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-200 font-medium">
+                        <input type="checkbox" id="chkLocalia" checked class="rounded accent-brand-600">
+                        Factor Ventaja de Localía (+8% Local / -8% Visitante)
+                    </label>
+                    <p class="text-slate-400 mt-1">Pondera el diferencial de goles esperados por disputarse en casa o fuera.</p>
                 </div>
             </div>
         </section>
@@ -97,15 +115,15 @@
             <!-- Parámetros Lambda -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Local (λ_L)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ Local Ajustado ($\lambda_L$)</p>
                     <p id="resLambdaLocal" class="text-xl font-bold text-white mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Visitante (λ_V)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ Visitante Ajustado ($\lambda_V$)</p>
                     <p id="resLambdaVisitante" class="text-xl font-bold text-white mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Total (FT)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ Total FT</p>
                     <p id="resLambdaTotal" class="text-xl font-bold text-brand-500 mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
@@ -119,7 +137,7 @@
                 <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 class="text-lg font-semibold text-white">📊 Tabla de Mercados y Probabilidades</h2>
-                        <p class="text-xs text-slate-400 mt-1">Cálculos basados en distribución de Poisson con umbral de valor esperado del 5% (EV+).</p>
+                        <p class="text-xs text-slate-400 mt-1">Cálculos basados en matriz Poisson/Dixon-Coles con umbral de valor esperado del 5% (EV+).</p>
                     </div>
                     <!-- Leyenda de Colores -->
                     <div class="flex items-center gap-3 text-xs bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-700/60 self-start sm:self-auto">
@@ -345,7 +363,7 @@
         // Función para obtener clase de color según el mercado y probabilidad
         function getEstiloColorProbabilidad(idMercado, probPorcentaje) {
             let p = probPorcentaje;
-            let bgClass = "bg-slate-700/50 text-slate-200 border-slate-600"; // Por defecto
+            let bgClass = "bg-slate-700/50 text-slate-200 border-slate-600";
 
             switch (idMercado) {
                 case "O25":
@@ -388,6 +406,28 @@
             return bgClass;
         }
 
+        // Función matemática auxiliar: Factorial
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let res = 1;
+            for (let i = 2; i <= n; i++) res *= i;
+            return res;
+        }
+
+        // Función Poisson estándar P(X = k)
+        function poissonPMF(k, lambda) {
+            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+        }
+
+        // Factor de corrección Dixon-Coles tau(x, y)
+        function dixonColesTau(x, y, lambdaL, lambdaV, rho) {
+            if (x === 0 && y === 0) return 1 - (lambdaL * lambdaV * rho);
+            if (x === 1 && y === 0) return 1 + (lambdaL * rho);
+            if (x === 0 && y === 1) return 1 + (lambdaV * rho);
+            if (x === 1 && y === 1) return 1 - rho;
+            return 1.0;
+        }
+
         function ejecutarAnalisis() {
             const liga = ligasDB[ligaActualKey];
             const idxL = document.getElementById('selectLocal').value;
@@ -396,8 +436,14 @@
             const eqL = liga.equipos[idxL];
             const eqV = liga.equipos[idxV];
 
-            const lambdaL = Number(eqL.xGF);
-            const lambdaV = Number(eqV.xGF);
+            let rawLambdaL = Number(eqL.xGF);
+            let rawLambdaV = Number(eqV.xGF);
+
+            // 1. Ajuste de ventaja de localía si está habilitado (+8% Local / -8% Visitante)
+            const usarLocalia = document.getElementById('chkLocalia').checked;
+            let lambdaL = usarLocalia ? rawLambdaL * 1.08 : rawLambdaL;
+            let lambdaV = usarLocalia ? rawLambdaV * 0.92 : rawLambdaV;
+
             const lambdaTotal = lambdaL + lambdaV;
             const lambdaHT = lambdaTotal * 0.50;
 
@@ -406,12 +452,41 @@
             document.getElementById('resLambdaTotal').innerText = lambdaTotal.toFixed(2);
             document.getElementById('resLambdaHT').innerText = lambdaHT.toFixed(2);
 
-            const pU25 = Math.exp(-lambdaTotal) * (1 + lambdaTotal + (Math.pow(lambdaTotal, 2) / 2));
-            const pO25 = 1 - pU25;
+            // 2. Construcción de Matriz de Marcadores 0 a 8 goles con Dixon-Coles
+            const usarDC = document.getElementById('chkDixonColes').checked;
+            const rho = -0.135; // Coeficiente óptimo Dixon-Coles
 
-            const pBttsYes = (1 - Math.exp(-lambdaL)) * (1 - Math.exp(-lambdaV));
-            const pBttsNo = 1 - pBttsYes;
+            let probMatrix = Array(9).fill(0).map(() => Array(9).fill(0));
+            let pO25 = 0, pU25 = 0;
+            let pBttsYes = 0, pBttsNo = 0;
 
+            for (let x = 0; x <= 8; x++) {
+                for (let y = 0; y <= 8; y++) {
+                    let pPoisson = poissonPMF(x, lambdaL) * poissonPMF(y, lambdaV);
+                    let tau = usarDC ? dixonColesTau(x, y, lambdaL, lambdaV, rho) : 1.0;
+                    let pFinal = pPoisson * tau;
+
+                    probMatrix[x][y] = pFinal;
+
+                    // Sumatoria de mercados FT
+                    if ((x + y) > 2.5) pO25 += pFinal;
+                    else pU25 += pFinal;
+
+                    if (x > 0 && y > 0) pBttsYes += pFinal;
+                    else pBttsNo += pFinal;
+                }
+            }
+
+            // Normalización por redondeos marginales
+            let sumFT = pO25 + pU25;
+            pO25 /= sumFT;
+            pU25 /= sumFT;
+
+            let sumBTTS = pBttsYes + pBttsNo;
+            pBttsYes /= sumBTTS;
+            pBttsNo /= sumBTTS;
+
+            // Mercados 0.5 HT (Poisson Estándar con Lambda HT)
             const pU05HT = Math.exp(-lambdaHT);
             const pO05HT = 1 - pU05HT;
 
@@ -432,7 +507,6 @@
                 const cuotaJusta = 1 / m.prob;
                 const cuotaMin = Math.ceil((1.05 / m.prob) * 100) / 100;
                 
-                // Obtener estilo visual según ponderación propia
                 const badgeColor = getEstiloColorProbabilidad(m.id, probPorc);
 
                 let tr = document.createElement('tr');
@@ -452,9 +526,10 @@
             });
 
             document.getElementById('textoInterpretacion').innerHTML = `
-                <p>• Análisis en <strong>${liga.nombre}</strong> entre <strong>${eqL.name}</strong> (Local) y <strong>${eqV.name}</strong> (Visitante).</p>
-                <p>• El parámetro de goles esperados totales ($\lambda_{total}$) se sitúa en <strong>${lambdaTotal.toFixed(2)}</strong> goles, basado en el xGF vigente.</p>
-                <p>• Valide las cuotas del mercado contra las <strong>cuotas mínimas (EV +5%)</strong> de la tabla para determinar si existe valor matemático positivo.</p>
+                <p>• Análisis en <strong>${liga.nombre}</strong> entre <strong>${eqL.name}</strong> ($\lambda_L = ${lambdaL.toFixed(2)}$) y <strong>${eqV.name}</strong> ($\lambda_V = ${lambdaV.toFixed(2)}$).</p>
+                <p>• Parámetro combinado de goles esperados ($\lambda_{total}$): <strong>${lambdaTotal.toFixed(2)}</strong> goles.</p>
+                <p>• ${usarDC ? "Se aplicó el <strong>Ajuste Dixon-Coles ($\rho = -0.135$)</strong> para corregir la correlación de empates y marcadores bajos." : "Modelo Poisson estándar sin ajuste de correlación."}</p>
+                <p>• Compare las cuotas del mercado con la columna <strong>Cuota Mínima (EV +5%)</strong> para verificar valor matemáticamente positivo.</p>
             `;
 
             document.getElementById('seccionResultados').classList.remove('hidden');
