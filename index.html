@@ -63,7 +63,7 @@
             <h2 class="text-lg font-semibold text-white flex items-center gap-2">
                 ⚙️ Configuración del Enfrentamiento
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <!-- Local -->
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Local</label>
@@ -80,6 +80,13 @@
                         <!-- Opciones cargadas por JS -->
                     </select>
                     <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xG: <span class="font-semibold text-white">0.00</span> | xGA: <span id="infoVisitanteXGA" class="font-semibold text-white">0.00</span></p>
+                </div>
+
+                <!-- Factor HT (Personalizable) -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2" title="Proporción del total de goles esperados que ocurren en el 1er tiempo">Factor Goles HT (Defecto: 0.5)</label>
+                    <input type="number" id="inputFactorHT" value="0.50" step="0.01" min="0.30" max="0.70" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-mono">
+                    <p class="text-xs text-slate-400 mt-1">Ajuste exclusivo para mercados de Medio Tiempo.</p>
                 </div>
 
                 <!-- Botón de Análisis -->
@@ -109,7 +116,7 @@
                     <p id="resLambdaTotal" class="text-xl font-bold text-brand-500 mt-1">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ HT (50% Hipótesis)</p>
+                    <p class="text-xs text-slate-400 uppercase">λ HT (Factor Personalizado)</p>
                     <p id="resLambdaHT" class="text-xl font-bold text-slate-300 mt-1">0.00</p>
                 </div>
             </div>
@@ -221,7 +228,6 @@
 
     <!-- Script de Cálculo y Gestión de Ligas -->
     <script>
-        // Ligas por defecto almacenadas con estructura unificada (xG y xGA)
         let ligasDB = {
             "liga_mx": {
                 nombre: "Liga MX",
@@ -302,7 +308,6 @@
                 btnEliminar.title = "Eliminar esta liga";
             }
 
-            // Calcular promedios globales de la liga activa
             const totalXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0);
             const totalXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0);
             const avgLigaXG = totalXG / (liga.equipos.length || 1);
@@ -430,7 +435,6 @@
             const eqL = liga.equipos[idxL];
             const eqV = liga.equipos[idxV];
 
-            // Promedios globales de la liga actual
             const totalXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0);
             const totalXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0);
             const avgLigaXG = totalXG / (liga.equipos.length || 1);
@@ -441,17 +445,21 @@
             const xGV = Number(eqV.xG);
             const xGAV = Number(eqV.xGA);
 
-            // Fuerza de Ataque y Fuerza de Defensa estrictamente computadas
             const faL = xGL / avgLigaXG;
             const fdV = xGAV / avgLigaXGA;
             const faV = xGV / avgLigaXG;
             const fdL = xGAL / avgLigaXGA;
 
-            // Modelo Maher Calibrado de Fuerzas Cruzadas
+            // Modelos Maher Calibrados
             const lambdaL = faL * fdV * avgLigaXG;
             const lambdaV = faV * fdL * avgLigaXG;
             const lambdaTotal = lambdaL + lambdaV;
-            const lambdaHT = lambdaTotal * 0.50;
+
+            // Obtener factor HT personalizado desde el input (por defecto 0.50 si está vacío o inválido)
+            let factorHT = parseFloat(document.getElementById('inputFactorHT').value);
+            if (isNaN(factorHT) || factorHT <= 0) factorHT = 0.50;
+
+            const lambdaHT = lambdaTotal * factorHT;
 
             document.getElementById('resLambdaLocal').innerText = lambdaL.toFixed(2);
             document.getElementById('resLambdaVisitante').innerText = lambdaV.toFixed(2);
@@ -463,7 +471,6 @@
 
             let marcadores = [];
 
-            // Matriz Conjunta Poisson 0 a 8 goles
             for (let x = 0; x <= 8; x++) {
                 for (let y = 0; y <= 8; y++) {
                     let pFinal = poissonPMF(x, lambdaL) * poissonPMF(y, lambdaV);
@@ -478,7 +485,6 @@
                 }
             }
 
-            // Ordenar marcadores más probables
             marcadores.sort((a, b) => b.prob - a.prob);
             const gridMarcadores = document.getElementById('gridMarcadores');
             gridMarcadores.innerHTML = "";
@@ -492,7 +498,6 @@
                 gridMarcadores.appendChild(div);
             });
 
-            // Normalización
             let sumFT = pO25 + pU25;
             pO25 /= sumFT;
             pU25 /= sumFT;
@@ -501,7 +506,6 @@
             pBttsYes /= sumBTTS;
             pBttsNo /= sumBTTS;
 
-            // HT
             const pU05HT = Math.exp(-lambdaHT);
             const pO05HT = 1 - pU05HT;
 
@@ -542,7 +546,7 @@
 
             document.getElementById('textoInterpretacion').innerHTML = `
                 <p>• Partido: <strong>${eqL.name}</strong> ($\lambda_L = ${lambdaL.toFixed(2)}$) vs <strong>${eqV.name}</strong> ($\lambda_V = ${lambdaV.toFixed(2)}$).</p>
-                <p>• Fuerza de Ataque Local ($FA_L = ${faL.toFixed(2)}$) x Vulnerabilidad Defensiva Visitante ($FD_V = ${fdV.toFixed(2)}$).</p>
+                <p>• Factor Goles HT aplicado: <strong>${factorHT}</strong> (λ_HT = ${lambdaHT.toFixed(2)}).</p>
                 <p>• Promedio global de xG de la liga: <strong>${avgLigaXG.toFixed(2)}</strong> goles por equipo.</p>
             `;
 
@@ -590,7 +594,6 @@
             const lineas = rawData.split('\n');
             let equipos = [];
 
-            // Detectar índices de columnas por encabezado
             let idxTeam = -1, idxXG = -1, idxXGA = -1, idxAVG = -1;
 
             lineas.forEach((linea) => {
@@ -600,7 +603,6 @@
                 }
 
                 if (partes.length >= 2) {
-                    // Detectar encabezado
                     const lineaLower = linea.toLowerCase();
                     if (lineaLower.includes("team") || lineaLower.includes("xg") || lineaLower.includes("avg")) {
                         partes.forEach((p, i) => {
@@ -619,7 +621,6 @@
 
                     let tokensValidos = partes.filter(p => p !== "");
 
-                    // Extracción inteligente por posición de columna si no se halló encabezado explícito
                     if (idxTeam !== -1 && tokensValidos[idxTeam]) {
                         nameCandidate = tokensValidos[idxTeam];
                     } else {
@@ -645,7 +646,6 @@
                         let avgVal = parseFloat(tokensValidos[idxAVG]);
                         xgaCandidate = Math.max(0.1, avgVal - xgCandidate);
                     } else {
-                        // Búsqueda de un segundo valor decimal que califique como xGA o AVG
                         let decimales = tokensValidos.filter(p => !isNaN(parseFloat(p)) && parseFloat(p) > 0.3 && parseFloat(p) < 5.0 && parseFloat(p) !== xgCandidate);
                         if (decimales.length > 0) {
                             xgaCandidate = parseFloat(decimales[0]);
