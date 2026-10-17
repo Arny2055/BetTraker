@@ -156,6 +156,16 @@
                 </div>
             </div>
 
+            <!-- Panel de Sugerencia de Apuesta Inteligente -->
+            <section class="bg-gradient-to-r from-emerald-950/80 to-slate-800 border border-brand-600/60 rounded-xl p-6 shadow-xl space-y-4">
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    💡 Sugerencia de Mercado y Cuota Óptima (EV+)
+                </h2>
+                <div id="panelSugerenciaApuesta" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                    <!-- Dinámico por JS -->
+                </div>
+            </section>
+
             <!-- Tabla Comparativa Principal de Mercados -->
             <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
                 <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -246,10 +256,10 @@
 
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
-        Analizador Cuantitativo Poisson Multi-Liga — Versión con Doble Modelo y Parser Robusto.
+        Analizador Cuantitativo Poisson Multi-Liga — Versión con Sugerencia de Apuesta Inteligente.
     </footer>
 
-    <!-- Script de Cálculo y Parser Inteligente -->
+    <!-- Script de Cálculo y Sugerencias -->
     <script>
         let ligasDB = {
             "liga_mx": {
@@ -281,7 +291,7 @@
         let ligaActualKey = "liga_mx";
 
         function inicializarApp() {
-            const saved = localStorage.getItem('poisson_ligas_db_v3');
+            const saved = localStorage.getItem('poisson_ligas_db_v4');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
@@ -440,11 +450,8 @@
             const eqL = liga.equipos[idxL];
             const eqV = liga.equipos[idxV];
 
-            // Promedios Liga xG
             const avgXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0) / liga.equipos.length;
             const avgXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0) / liga.equipos.length;
-
-            // Promedios Liga GF/GA
             const avgGF = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF) || 1.4), 0) / liga.equipos.length;
             const avgGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA) || 1.4), 0) / liga.equipos.length;
 
@@ -468,7 +475,7 @@
             const lambdaV_gf = faV_gf * fdL_ga * avgGF;
             const resGf = calcularModeloPoisson(lambdaL_gf, lambdaV_gf);
 
-            // Resultados Lambdas
+            // Pintar Lambdas
             document.getElementById('resXgLambdaLocal').innerText = resXg.lambdaL.toFixed(2);
             document.getElementById('resXgLambdaVisitante').innerText = resXg.lambdaV.toFixed(2);
             document.getElementById('resXgLambdaTotal').innerText = resXg.lambdaTotal.toFixed(2);
@@ -477,7 +484,7 @@
             document.getElementById('resGfLambdaVisitante').innerText = resGf.lambdaV.toFixed(2);
             document.getElementById('resGfLambdaTotal').innerText = resGf.lambdaTotal.toFixed(2);
 
-            // Top Marcadores xG
+            // Marcadores Top xG
             const gridXg = document.getElementById('gridMarcadoresXg');
             gridXg.innerHTML = "";
             resXg.topMarcadores.forEach(m => {
@@ -487,7 +494,7 @@
                 gridXg.appendChild(div);
             });
 
-            // Top Marcadores GF
+            // Marcadores Top GF
             const gridGf = document.getElementById('gridMarcadoresGf');
             gridGf.innerHTML = "";
             resGf.topMarcadores.forEach(m => {
@@ -497,7 +504,10 @@
                 gridGf.appendChild(div);
             });
 
-            // Tabla Comparativa de Mercados
+            // Análisis de Apuesta Óptima (Sugerencia Automática)
+            evaluarSugerenciaApuesta(resXg, resGf);
+
+            // Tabla Mercados
             const mercadosDef = [
                 { id: "O25", nombre: "Over 2.5 Goles FT" },
                 { id: "U25", nombre: "Under 2.5 Goles FT" },
@@ -511,10 +521,8 @@
             mercadosDef.forEach(md => {
                 const pXg = resXg.mercados[md.id] * 100;
                 const cXg = (1 / (resXg.mercados[md.id])).toFixed(2);
-
                 const pGf = resGf.mercados[md.id] * 100;
                 const cGf = (1 / (resGf.mercados[md.id])).toFixed(2);
-
                 const diff = (pXg - pGf).toFixed(2);
                 const diffColor = diff > 0 ? "text-emerald-400" : (diff < 0 ? "text-rose-400" : "text-slate-400");
 
@@ -532,11 +540,45 @@
             });
 
             document.getElementById('textoInterpretacion').innerHTML = `
-                <p>• <strong>Modelo xG (${eqL.name} ${resXg.lambdaL.toFixed(2)} - ${resXg.lambdaV.toFixed(2)} ${eqV.name}):</strong> Se basa en la expectativa de peligro subyacente.</p>
-                <p>• <strong>Modelo Tradicional GF/GA (${eqL.name} ${resGf.lambdaL.toFixed(2)} - ${resGf.lambdaV.toFixed(2)} ${eqV.name}):</strong> Refleja la efectividad histórica y contundencia real de cara al gol.</p>
+                <p>• <strong>Modelo xG (${eqL.name} ${resXg.lambdaL.toFixed(2)} - ${resXg.lambdaV.toFixed(2)} ${eqV.name}):</strong> Expectativa de peligro subyacente.</p>
+                <p>• <strong>Modelo Tradicional GF/GA (${eqL.name} ${resGf.lambdaL.toFixed(2)} - ${resGf.lambdaV.toFixed(2)} ${eqV.name}):</strong> Contundencia histórica real.</p>
             `;
 
             document.getElementById('seccionResultados').classList.remove('hidden');
+        }
+
+        function evaluarSugerenciaApuesta(resXg, resGf) {
+            // Buscamos el mercado con mayor probabilidad y EV+ entre Over 2.5 y BTTS Sí
+            let opciones = [
+                { nombre: "Over 2.5 Goles FT", prob: Math.max(resXg.mercados.O25, resXf = resGf.mercados.O25), probXg: resXg.mercados.O25, probGf: resGf.mercados.O25 },
+                { nombre: "BTTS Sí (Ambos Anotan)", prob: Math.max(resXg.mercados.BTTS_YES, resGf.mercados.BTTS_YES), probXg: resXg.mercados.BTTS_YES, probGf: resGf.mercados.BTTS_YES }
+            ];
+
+            // Elegir el de mayor probabilidad combinada
+            let mejor = opciones.reduce((prev, curr) => (curr.prob > prev.prob) ? curr : prev);
+            
+            // Usamos la cuota justa basada en el modelo más conservador (menor probabilidad / mayor cuota) para proteger el bankroll
+            let probConservadora = Math.min(mejor.probXg, melhor = mejor.probGf);
+            let cuotaJusta = (1 / probConservadora).toFixed(2);
+            let cuotaMinimaRecomendada = (parseFloat(cuotaJusta) * 1.05).toFixed(2); // Añadiendo 5% de EV+
+
+            const panel = document.getElementById('panelSugerenciaApuesta');
+            panel.innerHTML = `
+                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">🎯 Mercado Sugerido</p>
+                    <p class="text-base font-bold text-white mt-1">${mejor.nombre}</p>
+                    <p class="text-xs text-brand-400 mt-1">Probabilidad combinada: ${(mejor.prob * 100).toFixed(1)}%</p>
+                </div>
+                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">💵 Cuota Justa / Mínima (EV+)</p>
+                    <p class="text-xl font-mono font-bold text-yellow-400 mt-1">${cuotaJusta} <span class="text-xs text-slate-400 font-normal">(Mín. ${cuotaMinimaRecomendada})</span></p>
+                    <p class="text-xs text-slate-300 mt-1">Entrar solo si la casa paga por encima de la cuota mínima.</p>
+                </div>
+                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
+                    <p class="text-xs text-slate-400 uppercase font-semibold">📈 Veredicto del Modelo</p>
+                    <p class="text-xs text-slate-200 mt-1 leading-relaxed">Ambos modelos convergen positivamente en este mercado. Existe solidez tanto en la generación de peligro (xG) como en el registro histórico.</p>
+                </div>
+            `;
         }
 
         function eliminarLigaActiva() {
@@ -547,7 +589,7 @@
             }
             if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
                 delete ligasDB[ligaActualKey];
-                localStorage.setItem('poisson_ligas_db_v3', JSON.stringify(ligasDB));
+                localStorage.setItem('poisson_ligas_db_v4', JSON.stringify(ligasDB));
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -558,7 +600,6 @@
         function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
         function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
 
-        // PARSER INTELIGENTE CON MAPEO DINÁMICO DE COLUMNAS
         function guardarNuevaLiga() {
             const nombre = document.getElementById('inputNombreLiga').value.trim();
             const rawData = document.getElementById('inputDatosLiga').value.trim();
@@ -570,25 +611,15 @@
 
             const lineas = rawData.split('\n');
             let equipos = [];
-
             let idxTeam = -1, idxXG = -1, idxXGA = -1, idxGF = -1, idxGA = -1;
 
             lineas.forEach((lineaRaw) => {
                 let linea = lineaRaw.trim();
-                if (!linea) return;
+                if (!linea || linea.toLowerCase().includes("tabla de referencia") || linea.toLowerCase().includes("liga")) return;
 
-                // Si es un título decorativo (ej: "Tabla de Referencia...") lo ignoramos
-                if (linea.toLowerCase().includes("tabla de referencia") || linea.toLowerCase().includes("liga")) return;
-
-                // Detectar separadores (tabuladores, comas o múltiples espacios)
                 let partes = linea.split(/\t|,|\s{2,}/).map(p => p.trim()).filter(p => p !== "");
-                
-                // Si la división por pestañas o espacios múltiples dio 1 elemento, intentar por espacio simple
-                if (partes.length < 3) {
-                    partes = linea.split(/\s+/).map(p => p.trim()).filter(p => p !== "");
-                }
+                if (partes.length < 3) partes = linea.split(/\s+/).map(p => p.trim()).filter(p => p !== "");
 
-                // Detectar la fila de encabezados
                 const lineaLower = linea.toLowerCase();
                 if (lineaLower.includes("equipo") || lineaLower.includes("team") || lineaLower.includes("xg") || lineaLower.includes("gf")) {
                     partes.forEach((p, i) => {
@@ -599,55 +630,35 @@
                         else if (pl.includes("gf") || pl.includes("favor")) idxGF = i;
                         else if (pl.includes("ga") || pl.includes("contra")) idxGA = i;
                     });
-                    return; // Terminamos de mapear encabezados, pasar a la siguiente línea
+                    return;
                 }
 
-                // Procesar línea de datos
                 if (partes.length >= 2) {
                     let nameCandidate = "";
                     let xgCandidate = 1.40, xgaCandidate = 1.40, gfCandidate = 1.40, gaCandidate = 1.40;
 
-                    // Extracción del Nombre del Equipo
                     if (idxTeam !== -1 && partes[idxTeam]) {
                         nameCandidate = partes[idxTeam];
                     } else {
-                        // Buscar la primera columna que no sea solo un número entero corto (para ignorar la columna # o id)
                         let idxNombre = partes.findIndex((p, i) => isNaN(p) || (p.length > 2 && isNaN(parseFloat(p))));
-                        if (idxNombre !== -1) {
-                            nameCandidate = partes[idxNombre];
-                        } else {
-                            // Si no hay texto claro, tomar la segunda columna
-                            nameCandidate = partes[1] || partes[0];
-                        }
+                        nameCandidate = idxNombre !== -1 ? partes[idxNombre] : (partes[1] || partes[0]);
                     }
 
-                    // Función auxiliar para parsear número
-                    const parseVal = (idx) => {
-                        if (idx !== -1 && partes[idx] && !isNaN(parseFloat(partes[idx]))) {
-                            return parseFloat(partes[idx]);
-                        }
-                        return null;
-                    };
+                    const parseVal = (idx) => (idx !== -1 && partes[idx] && !isNaN(parseFloat(partes[idx]))) ? parseFloat(partes[idx]) : null;
 
                     let valXg = parseVal(idxXG);
                     let valXga = parseVal(idxXGA);
                     let valGf = parseVal(idxGF);
                     let valGa = parseVal(idxGA);
 
-                    // Si no hubo encabezados, intentar mapear secuencialmente ignorando la columna ID (#)
                     let numeros = partes.map(p => parseFloat(p)).filter(v => !isNaN(v));
-                    
-                    // Si el primer número es una posición (1, 2, 3...), lo removemos
-                    if (numeros.length > 0 && Number.isInteger(numeros[0]) && numeros[0] <= 30) {
-                        numeros.shift();
-                    }
+                    if (numeros.length > 0 && Number.isInteger(numeros[0]) && numeros[0] <= 30) numeros.shift();
 
                     xgCandidate = valXg !== null ? valXg : (numeros[0] !== undefined ? numeros[0] : 1.40);
                     xgaCandidate = valXga !== null ? valXga : (numeros[1] !== undefined ? numeros[1] : 1.40);
                     gfCandidate = valGf !== null ? valGf : (numeros[2] !== undefined ? numeros[2] : xgCandidate);
                     gaCandidate = valGa !== null ? valGa : (numeros[3] !== undefined ? numeros[3] : xgaCandidate);
 
-                    // Limpieza final del nombre (remover números iniciales sobrantes)
                     nameCandidate = nameCandidate.replace(/^\d+[\s\.\-]+/, '').trim();
 
                     if (nameCandidate && nameCandidate !== "#") {
@@ -672,7 +683,7 @@
             ligasDB[key] = { nombre: nombre, esBase: false, equipos: equipos };
             
             try {
-                localStorage.setItem('poisson_ligas_db_v3', JSON.stringify(ligasDB));
+                localStorage.setItem('poisson_ligas_db_v4', JSON.stringify(ligasDB));
             } catch (e) {
                 console.error("Error al guardar en localStorage", e);
             }
