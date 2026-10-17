@@ -25,7 +25,7 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                    ⚽ Analizador Poisson <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">La Liga</span>
+                    ⚽ Analizador Poisson <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
                 </h1>
                 <p class="text-sm text-slate-400 mt-1">Modelo de fuerza relativa (Maher) calibrado con xG, xGA y promedios oficiales de liga.</p>
             </div>
@@ -58,14 +58,8 @@
             </div>
         </section>
 
-        <!-- Pestañas de Modo (Partido Individual vs Jornada Completa) -->
-        <div class="flex border-b border-slate-700 gap-4">
-            <button onclick="cambiarModo('individual')" id="btnModoIndividual" class="pb-3 px-4 font-semibold text-sm border-b-2 border-brand-500 text-white transition">⚙️ Análisis Individual</button>
-            <button onclick="cambiarModo('jornada')" id="btnModoJornada" class="pb-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-white transition">📅 Análisis de Jornada Completa</button>
-        </div>
-
-        <!-- Panel de Configuración del Partido (Modo Individual) -->
-        <section id="panelIndividual" class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
+        <!-- Panel de Configuración del Partido -->
+        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
             <h2 class="text-lg font-semibold text-white flex items-center gap-2">
                 ⚙️ Configuración del Enfrentamiento
             </h2>
@@ -104,68 +98,7 @@
             </div>
         </section>
 
-        <!-- Panel de Jornada Completa (Modo Jornada) -->
-        <section id="panelJornada" class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6 hidden">
-            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                📅 Análisis Masivo de Jornada Completa (Desduplicado y Estructurado)
-            </h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Pega el bloque completo de partidos</label>
-                    <textarea id="inputJornada" rows="12" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500">Oct 17 ~
-HomeFormFormAway
-Levante UD 1.3312:00pm
-Stats
-1.50 Athletic Club Bilbao
-Getafe CF 2.001:00pm
-Stats
-0.25 Rayo Vallecano
-Real Madrid 3.001:00pm
-Stats
-2.00 Sevilla FC
-Málaga CF 0.7510:30am
-Stats
-1.50 Real Sociedad
-Celta de Vigo 1.008:15am
-Stats
-0.67 Deportivo Alavés
-CA Osasuna 1.256:00am
-Stats
-0.00 Racing Santander
-Valencia CF 0.251:00pm
-Stats
-1.50 Athletic Club Bilbao
-Real Betis 3.0010:30am
-●Soon
-3.00 FC Barcelona
-Villarreal 1.008:15am
-●Soon
-1.25 Elche CF
-RCD Espanyol 1.006:00am
-●Started
-2.25 Atlético Madrid</textarea>
-                    <p class="text-xs text-slate-400 mt-1">El parser leerá los bloques estructurados reconociendo el inicio, separador y fin de cada partido de forma exacta.</p>
-                </div>
-                <div>
-                    <button onclick="ejecutarAnalisisJornada()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 shadow-md text-sm">
-                        🚀 Pronosticar Jornada Completa
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Resultados de Jornada Masiva -->
-        <div id="seccionResultadosJornada" class="space-y-6 hidden">
-            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-                <h2 class="text-xl font-bold text-white">📊 Tabla de Pronósticos de la Jornada</h2>
-                <span id="contadorPartidosJornada" class="text-xs bg-slate-800 text-brand-500 font-mono font-bold px-3 py-1.5 rounded-lg border border-slate-700">0 Partidos Procesados</span>
-            </div>
-            <div id="gridResultadosJornada" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Inyectado por JS -->
-            </div>
-        </div>
-
-        <!-- Resultados y Resumen de Parámetros (Modo Individual) -->
+        <!-- Resultados y Resumen de Parámetros -->
         <div id="seccionResultados" class="space-y-8 hidden">
             
             <!-- Parámetros Lambda -->
@@ -240,7 +173,7 @@ RCD Espanyol 1.006:00am
         <!-- Tabla de Datos Oficiales -->
         <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
             <div class="flex justify-between items-center mb-4">
-                <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia La Liga</h2>
+                <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia Liga MX</h2>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
@@ -273,11 +206,12 @@ RCD Espanyol 1.006:00am
             <div class="space-y-3 text-sm">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre de la Liga</label>
-                    <input type="text" id="inputNombreLiga" placeholder="Ej. Premier League, Serie A..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    <input type="text" id="inputNombreLiga" placeholder="Ej. Premier League, La Liga..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Pegar tabla con cualquier formato de FBref, Understat o SoccerSTATS)</label>
-                    <textarea id="inputDatosLiga" rows="8" placeholder="Team	MP	xG	xGA	xGD	GF	GA	xG vs Actual&#10;1	Real Madrid	10	2.20	0.90	+1.30	2.10	0.80	+0.10" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    <textarea id="inputDatosLiga" rows="8" placeholder="Team	MP	xG	xGA	xGD	GF	GA	xG vs Actual&#10;1	Manchester United	6	2.15	1.29	+0.86	1.50	1.50	-0.65&#10;2	Brighton & Hove Albion	6	1.92	1.28	+0.64	3.00	0.83	+1.08" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">Admite columnas con encabezados `xG`, `xGA`, `xGF`, `AVG`, tabulados o separados por comas.</p>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
@@ -295,35 +229,9 @@ RCD Espanyol 1.006:00am
     <!-- Script de Cálculo y Gestión de Ligas -->
     <script>
         let ligasDB = {
-            "la_liga": {
-                nombre: "La Liga",
-                esBase: true,
-                equipos: [
-                    { id: 1, name: "Real Madrid", xG: 2.15, xGA: 0.95 },
-                    { id: 2, name: "FC Barcelona", xG: 2.25, xGA: 1.00 },
-                    { id: 3, name: "Atlético Madrid", xG: 1.75, xGA: 0.85 },
-                    { id: 4, name: "Athletic Club Bilbao", xG: 1.60, xGA: 1.05 },
-                    { id: 5, name: "Real Sociedad", xG: 1.50, xGA: 1.10 },
-                    { id: 6, name: "Villarreal", xG: 1.65, xGA: 1.35 },
-                    { id: 7, name: "Real Betis", xG: 1.45, xGA: 1.20 },
-                    { id: 8, name: "Sevilla FC", xG: 1.40, xGA: 1.30 },
-                    { id: 9, name: "Celta de Vigo", xG: 1.30, xGA: 1.35 },
-                    { id: 10, name: "Getafe CF", xG: 1.15, xGA: 1.05 },
-                    { id: 11, name: "Rayo Vallecano", xG: 1.25, xGA: 1.25 },
-                    { id: 12, name: "Valencia CF", xG: 1.20, xGA: 1.25 },
-                    { id: 13, name: "CA Osasuna", xG: 1.15, xGA: 1.30 },
-                    { id: 14, name: "RCD Espanyol", xG: 1.10, xGA: 1.40 },
-                    { id: 15, name: "Deportivo Alavés", xG: 1.05, xGA: 1.35 },
-                    { id: 16, name: "Levante UD", xG: 1.20, xGA: 1.45 },
-                    { id: 17, name: "Elche CF", xG: 1.00, xGA: 1.50 },
-                    { id: 18, name: "Málaga CF", xG: 1.10, xGA: 1.40 },
-                    { id: 19, name: "Racing Santander", xG: 1.00, xGA: 1.45 },
-                    { id: 20, name: "Real Valladolid", xG: 1.05, xGA: 1.55 }
-                ]
-            },
             "liga_mx": {
                 nombre: "Liga MX",
-                esBase: false,
+                esBase: true,
                 equipos: [
                     { id: 1, name: "América", xG: 2.14, xGA: 1.16 },
                     { id: 2, name: "Toluca", xG: 1.88, xGA: 1.76 },
@@ -347,7 +255,7 @@ RCD Espanyol 1.006:00am
             }
         };
 
-        let ligaActualKey = "la_liga";
+        let ligaActualKey = "liga_mx";
 
         function inicializarApp() {
             const saved = localStorage.getItem('poisson_ligas_db');
@@ -363,29 +271,6 @@ RCD Espanyol 1.006:00am
             }
             poblarSelectorLigas();
             cargarLigaSeleccionada();
-        }
-
-        function cambiarModo(modo) {
-            const btnInd = document.getElementById('btnModoIndividual');
-            const btnJor = document.getElementById('btnModoJornada');
-            const panelInd = document.getElementById('panelIndividual');
-            const panelJor = document.getElementById('panelJornada');
-            const secRes = document.getElementById('seccionResultados');
-            const secResJor = document.getElementById('seccionResultadosJornada');
-
-            if (modo === 'individual') {
-                btnInd.className = "pb-3 px-4 font-semibold text-sm border-b-2 border-brand-500 text-white transition";
-                btnJor.className = "pb-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-white transition";
-                panelInd.classList.remove('hidden');
-                panelJor.classList.add('hidden');
-                secResJor.classList.add('hidden');
-            } else {
-                btnJor.className = "pb-3 px-4 font-semibold text-sm border-b-2 border-brand-500 text-white transition";
-                btnInd.className = "pb-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-white transition";
-                panelJor.classList.remove('hidden');
-                panelInd.classList.add('hidden');
-                secRes.classList.add('hidden');
-            }
         }
 
         function poblarSelectorLigas() {
@@ -405,20 +290,19 @@ RCD Espanyol 1.006:00am
             ligaActualKey = select.value;
             cargarLigaSeleccionada();
             document.getElementById('seccionResultados').classList.add('hidden');
-            document.getElementById('seccionResultadosJornada').classList.add('hidden');
         }
 
         function cargarLigaSeleccionada() {
-            const liga = ligasDB[ligaActualKey] || ligasDB["la_liga"];
-            ligaActualKey = liga ? ligaActualKey : "la_liga";
+            const liga = ligasDB[ligaActualKey] || ligasDB["liga_mx"];
+            ligaActualKey = liga ? ligaActualKey : "liga_mx";
             
             document.getElementById('badgeLigaActiva').innerText = liga.nombre;
             document.getElementById('tituloTablaEquipos').innerText = `📋 Tabla de Referencia ${liga.nombre}`;
 
             const btnEliminar = document.getElementById('btnEliminarLiga');
-            if (liga.esBase) {
+            if (liga.esBase || ligaActualKey === "liga_mx") {
                 btnEliminar.classList.add('opacity-50', 'cursor-not-allowed');
-                btnEliminar.title = "La liga por defecto no se puede eliminar.";
+                btnEliminar.title = "La Liga MX por defecto no se puede eliminar.";
             } else {
                 btnEliminar.classList.remove('opacity-50', 'cursor-not-allowed');
                 btnEliminar.title = "Eliminar esta liga";
@@ -497,22 +381,38 @@ RCD Espanyol 1.006:00am
                     else if (p >= 45) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
                     else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
                     break;
+
                 case "U25":
                     if (p >= 52) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
                     else if (p >= 42) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
                     else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
                     break;
+
                 case "BTTS_YES":
                     if (p >= 58) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
                     else if (p >= 48) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
                     else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
                     break;
+
                 case "BTTS_NO":
                     if (p >= 50) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
                     else if (p >= 40) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
                     else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
                     break;
+
+                case "O05HT":
+                    if (p >= 78) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 70) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
+
+                case "U05HT":
+                    if (p >= 30) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
+                    else if (p >= 22) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
+                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
+                    break;
             }
+
             return bgClass;
         }
 
@@ -527,28 +427,54 @@ RCD Espanyol 1.006:00am
             return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
         }
 
-        function calcularPoissonPartido(eqL, eqV, liga) {
+        function ejecutarAnalisis() {
+            const liga = ligasDB[ligaActualKey];
+            const idxL = document.getElementById('selectLocal').value;
+            const idxV = document.getElementById('selectVisitante').value;
+            
+            const eqL = liga.equipos[idxL];
+            const eqV = liga.equipos[idxV];
+
             const totalXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0);
             const totalXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0);
             const avgLigaXG = totalXG / (liga.equipos.length || 1);
             const avgLigaXGA = totalXGA / (liga.equipos.length || 1);
 
-            const faL = Number(eqL.xG) / avgLigaXG;
-            const fdV = Number(eqV.xGA) / avgLigaXGA;
-            const faV = Number(eqV.xG) / avgLigaXG;
-            const fdL = Number(eqL.xGA) / avgLigaXGA;
+            const xGL = Number(eqL.xG);
+            const xGAL = Number(eqL.xGA);
+            const xGV = Number(eqV.xG);
+            const xGAV = Number(eqV.xGA);
 
+            const faL = xGL / avgLigaXG;
+            const fdV = xGAV / avgLigaXGA;
+            const faV = xGV / avgLigaXG;
+            const fdL = xGAL / avgLigaXGA;
+
+            // Modelos Maher Calibrados
             const lambdaL = faL * fdV * avgLigaXG;
             const lambdaV = faV * fdL * avgLigaXG;
             const lambdaTotal = lambdaL + lambdaV;
 
+            // Obtener factor HT personalizado desde el input (por defecto 0.50 si está vacío o inválido)
+            let factorHT = parseFloat(document.getElementById('inputFactorHT').value);
+            if (isNaN(factorHT) || factorHT <= 0) factorHT = 0.50;
+
+            const lambdaHT = lambdaTotal * factorHT;
+
+            document.getElementById('resLambdaLocal').innerText = lambdaL.toFixed(2);
+            document.getElementById('resLambdaVisitante').innerText = lambdaV.toFixed(2);
+            document.getElementById('resLambdaTotal').innerText = lambdaTotal.toFixed(2);
+            document.getElementById('resLambdaHT').innerText = lambdaHT.toFixed(2);
+
             let pO25 = 0, pU25 = 0;
             let pBttsYes = 0, pBttsNo = 0;
+
             let marcadores = [];
 
             for (let x = 0; x <= 8; x++) {
                 for (let y = 0; y <= 8; y++) {
                     let pFinal = poissonPMF(x, lambdaL) * poissonPMF(y, lambdaV);
+
                     marcadores.push({ marcador: `${x} - ${y}`, prob: pFinal });
 
                     if ((x + y) > 2.5) pO25 += pFinal;
@@ -560,43 +486,9 @@ RCD Espanyol 1.006:00am
             }
 
             marcadores.sort((a, b) => b.prob - a.prob);
-            let sumFT = pO25 + pU25;
-            pO25 /= sumFT;
-            pU25 /= sumFT;
-
-            let sumBTTS = pBttsYes + pBttsNo;
-            pBttsYes /= sumBTTS;
-            pBttsNo /= sumBTTS;
-
-            return {
-                lambdaL, lambdaV, lambdaTotal,
-                pO25: pO25 * 100,
-                pBttsYes: pBttsYes * 100,
-                topMarcadores: marcadores.slice(0, 3)
-            };
-        }
-
-        function ejecutarAnalisis() {
-            const liga = ligasDB[ligaActualKey];
-            const idxL = document.getElementById('selectLocal').value;
-            const idxV = document.getElementById('selectVisitante').value;
-            
-            const eqL = liga.equipos[idxL];
-            const eqV = liga.equipos[idxV];
-
-            const res = calcularPoissonPartido(eqL, eqV, liga);
-            let factorHT = parseFloat(document.getElementById('inputFactorHT').value);
-            if (isNaN(factorHT) || factorHT <= 0) factorHT = 0.50;
-            const lambdaHT = res.lambdaTotal * factorHT;
-
-            document.getElementById('resLambdaLocal').innerText = res.lambdaL.toFixed(2);
-            document.getElementById('resLambdaVisitante').innerText = res.lambdaV.toFixed(2);
-            document.getElementById('resLambdaTotal').innerText = res.lambdaTotal.toFixed(2);
-            document.getElementById('resLambdaHT').innerText = lambdaHT.toFixed(2);
-
             const gridMarcadores = document.getElementById('gridMarcadores');
             gridMarcadores.innerHTML = "";
-            res.topMarcadores.forEach(m => {
+            marcadores.slice(0, 5).forEach(m => {
                 let div = document.createElement('div');
                 div.className = "bg-slate-900/80 border border-slate-700 p-2.5 rounded-lg text-center";
                 div.innerHTML = `
@@ -606,208 +498,127 @@ RCD Espanyol 1.006:00am
                 gridMarcadores.appendChild(div);
             });
 
+            let sumFT = pO25 + pU25;
+            pO25 /= sumFT;
+            pU25 /= sumFT;
+
+            let sumBTTS = pBttsYes + pBttsNo;
+            pBttsYes /= sumBTTS;
+            pBttsNo /= sumBTTS;
+
+            const pU05HT = Math.exp(-lambdaHT);
+            const pO05HT = 1 - pU05HT;
+
             const mercados = [
-                { id: "O25", nombre: "Over 2.5 Goles FT", prob: res.pO25 / 100 },
-                { id: "U25", nombre: "Under 2.5 Goles FT", prob: (100 - res.pO25) / 100 },
-                { id: "BTTS_YES", nombre: "BTTS Sí (Ambos Anotan)", prob: res.pBttsYes / 100 },
-                { id: "BTTS_NO", nombre: "BTTS No (Ambos Anotan)", prob: (100 - res.pBttsYes) / 100 },
-                { id: "O05HT", nombre: "Over 0.5 Goles HT", prob: 1 - Math.exp(-lambdaHT) },
-                { id: "U05HT", nombre: "Under 0.5 Goles HT", prob: Math.exp(-lambdaHT) }
+                { id: "O25", nombre: "Over 2.5 Goles FT", prob: pO25 },
+                { id: "U25", nombre: "Under 2.5 Goles FT", prob: pU25 },
+                { id: "BTTS_YES", nombre: "BTTS Sí (Ambos Anotan)", prob: pBttsYes },
+                { id: "BTTS_NO", nombre: "BTTS No (Ambos Anotan)", prob: pBttsNo },
+                { id: "O05HT", nombre: "Over 0.5 Goles HT", prob: pO05HT },
+                { id: "U05HT", nombre: "Under 0.5 Goles HT", prob: pU05HT }
             ];
 
             const tbody = document.getElementById('tablaMercadosBody');
             tbody.innerHTML = "";
+
             mercados.forEach(m => {
                 const probPorc = m.prob * 100;
                 const cuotaJusta = 1 / m.prob;
                 const cuotaMin = Math.ceil((1.05 / m.prob) * 100) / 100;
+                
                 const badgeColor = getEstiloColorProbabilidad(m.id, probPorc);
 
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/50 transition";
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-medium text-white">${m.nombre}</td>
-                    <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-md border text-xs font-bold inline-block ${badgeColor}">${probPorc.toFixed(2)}%</span></td>
+                    <td class="py-3 px-4">
+                        <span class="px-2.5 py-1 rounded-md border text-xs font-bold inline-block ${badgeColor}">
+                            ${probPorc.toFixed(2)}%
+                        </span>
+                    </td>
                     <td class="py-3 px-4 text-slate-300 font-mono">${cuotaJusta.toFixed(2)}</td>
                     <td class="py-3 px-4 text-yellow-400 font-semibold font-mono">${cuotaMin.toFixed(2)}</td>
-                    <td class="py-3 px-4 text-slate-400 text-xs">Evaluado OK</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs">Pendiente de cuota real</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             document.getElementById('textoInterpretacion').innerHTML = `
-                <p>• Partido: <strong>${eqL.name}</strong> ($\lambda_L = ${res.lambdaL.toFixed(2)}$) vs <strong>${eqV.name}</strong> ($\lambda_V = ${res.lambdaV.toFixed(2)}$).</p>
+                <p>• Partido: <strong>${eqL.name}</strong> ($\lambda_L = ${lambdaL.toFixed(2)}$) vs <strong>${eqV.name}</strong> ($\lambda_V = ${lambdaV.toFixed(2)}$).</p>
                 <p>• Factor Goles HT aplicado: <strong>${factorHT}</strong> (λ_HT = ${lambdaHT.toFixed(2)}).</p>
+                <p>• Promedio global de xG de la liga: <strong>${avgLigaXG.toFixed(2)}</strong> goles por equipo.</p>
             `;
 
             document.getElementById('seccionResultados').classList.remove('hidden');
         }
 
-        function normalizarNombre(str) {
-            return str.toLowerCase()
-                .replace(/^(fc|ud|cf|rcd|ca|sd|cd)\s+/i, '')
-                .replace(/\s+(fc|ud|cf|rcd|ca|sd|cd)$/i, '')
-                .replace(/real\s+/i, '')
-                .replace(/deportivo\s+/i, '')
-                .replace(/athletic\s+club/i, 'athletic')
-                .replace(/atletico/i, 'atletico')
-                .replace(/atlético/i, 'atletico')
-                .replace(/[^a-z0-9]/g, '')
-                .trim();
-        }
-
-        // PARSER PRECISO POR BLOQUES DE 3 LÍNEAS
-        function ejecutarAnalisisJornada() {
-            const liga = ligasDB[ligaActualKey];
-            const texto = document.getElementById('inputJornada').value.trim();
-            if (!texto) {
-                alert("Por favor pega los partidos de la jornada.");
-                return;
-            }
-
-            const lineas = texto.split('\n').map(l => l.trim()).filter(l => l !== "");
-            let parejasExtraidas = [];
-
-            // Identificar partidos recorriendo las líneas buscando separadores de estado (Stats, ●Soon, ●Started, etc.)
-            for (let i = 0; i < lineas.length; i++) {
-                let actual = lineas[i];
-                if (actual === "Stats" || actual.startsWith("●")) {
-                    // La línea anterior es el Local (con hora/cuota pegada)
-                    // La línea posterior es el Visitante (con cuota inicial)
-                    if (i > 0 && i + 1 < lineas.length) {
-                        let lineaLocal = lineas[i - 1];
-                        let lineaVisitante = lineas[i + 1];
-
-                        // Limpiar hora pegada al final (ej. "12:00pm") y cuotas iniciales en el local
-                        let localLimpio = lineaLocal.replace(/\d{1,2}:\d{2}(am|pm)?/gi, '').replace(/[\d\.]+$/, '').trim();
-                        // Limpiar cuota al inicio del visitante (ej. "1.50 Athletic Club")
-                        let visitanteLimpio = lineaVisitante.replace(/^[\d\.]+\s+/, '').trim();
-
-                        if (localLimpio && visitanteLimpio) {
-                            parejasExtraidas.push({ localRaw: localLimpio, visitanteRaw: visitanteLimpio });
-                        }
-                    }
-                }
-            }
-
-            const gridResultadosJornada = document.getElementById('gridResultadosJornada');
-            gridResultadosJornada.innerHTML = "";
-
-            let procesadosSet = new Set();
-            let analizadosCount = 0;
-
-            parejasExtraidas.forEach(p => {
-                let normL = normalizarNombre(p.localRaw);
-                let normV = normalizarNombre(p.visitanteRaw);
-
-                let eqL = liga.equipos.find(e => {
-                    let ne = normalizarNombre(e.name);
-                    return ne === normL || ne.includes(normL) || normL.includes(ne);
-                });
-
-                let eqV = liga.equipos.find(e => {
-                    let ne = normalizarNombre(e.name);
-                    return ne === normV || ne.includes(normV) || normV.includes(ne);
-                });
-
-                if (eqL && eqV && eqL.id !== eqV.id) {
-                    let clavePartido = [eqL.id, eqV.id].sort().join('__VS__');
-                    if (procesadosSet.has(clavePartido)) return;
-
-                    procesadosSet.add(clavePartido);
-                    analizadosCount++;
-
-                    const res = calcularPoissonPartido(eqL, eqV, liga);
-
-                    let card = document.createElement('div');
-                    card.className = "bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg space-y-4 hover:border-slate-600 transition";
-                    card.innerHTML = `
-                        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-                            <h3 class="font-bold text-white text-base flex items-center gap-2">
-                                ⚽ ${eqL.name} <span class="text-xs text-slate-400">vs</span> ${eqV.name}
-                            </h3>
-                            <span class="text-xs bg-slate-900 px-2.5 py-1 rounded-md text-brand-500 font-mono font-semibold">λ Total: ${res.lambdaTotal.toFixed(2)}</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 text-center text-xs">
-                            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
-                                <p class="text-slate-400">λ Local / Vis</p>
-                                <p class="font-bold text-white mt-0.5">${res.lambdaL.toFixed(2)} / ${res.lambdaV.toFixed(2)}</p>
-                            </div>
-                            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
-                                <p class="text-slate-400">Over 2.5</p>
-                                <p class="font-bold text-emerald-400 mt-0.5">${res.pO25.toFixed(1)}%</p>
-                            </div>
-                            <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
-                                <p class="text-slate-400">BTTS Sí</p>
-                                <p class="font-bold text-amber-400 mt-0.5">${res.pBttsYes.toFixed(1)}%</p>
-                            </div>
-                        </div>
-                        <div>
-                            <p class="text-xs text-slate-400 mb-1.5 font-medium">Top 3 Marcadores Probables:</p>
-                            <div class="flex gap-2">
-                                ${res.topMarcadores.map(m => `<span class="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-xs font-mono text-slate-200"><strong>${m.marcador}</strong> (${(m.prob*100).toFixed(1)}%)</span>`).join('')}
-                            </div>
-                        </div>
-                    `;
-                    gridResultadosJornada.appendChild(card);
-                }
-            });
-
-            document.getElementById('contadorPartidosJornada').innerText = `${analizadosCount} Partidos Únicos Procesados`;
-
-            if(analizadosCount === 0) {
-                alert("No se pudieron emparejar los nombres con la tabla de la liga seleccionada. Asegúrate de tener seleccionada 'La Liga' en el selector superior.");
-            } else {
-                document.getElementById('seccionResultadosJornada').classList.remove('hidden');
-            }
-        }
-
         function eliminarLigaActiva() {
             const liga = ligasDB[ligaActualKey];
-            if (!liga || liga.esBase) {
-                alert("Esta liga por defecto no se puede eliminar.");
+            if (!liga || liga.esBase || ligaActualKey === "liga_mx") {
+                alert("La Liga MX principal no puede ser eliminada.");
                 return;
             }
 
-            if (confirm(`¿Estás seguro de que deseas eliminar la liga "${liga.nombre}"?`)) {
+            if (confirm(`¿Estás seguro de que deseas eliminar la liga "${liga.nombre}"? esta acción se guardará de inmediato.`)) {
                 delete ligasDB[ligaActualKey];
-                try { localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB)); } catch(e) {}
-                ligaActualKey = "la_liga";
+                try {
+                    localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
+                } catch(e) {
+                    console.error("Error al guardar en localStorage", e);
+                }
+                ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
+                document.getElementById('seccionResultados').classList.add('hidden');
             }
         }
 
-        function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
-        function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
+        function abrirModalLiga() {
+            document.getElementById('modalLiga').classList.remove('hidden');
+        }
+
+        function cerrarModalLiga() {
+            document.getElementById('modalLiga').classList.add('hidden');
+        }
 
         function guardarNuevaLiga() {
             const nombre = document.getElementById('inputNombreLiga').value.trim();
             const rawData = document.getElementById('inputDatosLiga').value.trim();
-            if (!nombre || !rawData) return alert("Ingresa nombre y datos.");
+
+            if (!nombre || !rawData) {
+                alert("Por favor ingresa un nombre y los datos de la liga.");
+                return;
+            }
 
             const lineas = rawData.split('\n');
             let equipos = [];
-            let idxTeam = -1, idxXG = -1, idxXGA = -1;
+
+            let idxTeam = -1, idxXG = -1, idxXGA = -1, idxAVG = -1;
 
             lineas.forEach((linea) => {
                 let partes = linea.split('\t').map(p => p.trim()).filter(p => p !== "");
-                if (partes.length < 2) partes = linea.split(/,\s*/).map(p => p.trim()).filter(p => p !== "");
+                if (partes.length < 2) {
+                    partes = linea.split(/,\s*/).map(p => p.trim()).filter(p => p !== "");
+                }
 
                 if (partes.length >= 2) {
                     const lineaLower = linea.toLowerCase();
-                    if (lineaLower.includes("team") || lineaLower.includes("xg")) {
+                    if (lineaLower.includes("team") || lineaLower.includes("xg") || lineaLower.includes("avg")) {
                         partes.forEach((p, i) => {
                             const pl = p.toLowerCase();
                             if (pl === "team" || pl === "equipo") idxTeam = i;
                             if (pl === "xg" || pl === "xgf") idxXG = i;
                             if (pl === "xga") idxXGA = i;
+                            if (pl === "avg") idxAVG = i;
                         });
                         return;
                     }
 
                     let nameCandidate = "";
-                    let xgCandidate = 1.40, xgaCandidate = 1.40;
+                    let xgCandidate = 1.40;
+                    let xgaCandidate = 1.40;
+
                     let tokensValidos = partes.filter(p => p !== "");
 
                     if (idxTeam !== -1 && tokensValidos[idxTeam]) {
@@ -817,34 +628,60 @@ RCD Espanyol 1.006:00am
                         nameCandidate = tokensValidos[offset] || "Equipo";
                     }
 
-                    if (idxXG !== -1 && tokensValidos[idxXG]) xgCandidate = parseFloat(tokensValidos[idxXG]) || 1.40;
-                    else {
+                    if (idxXG !== -1 && tokensValidos[idxXG] && !isNaN(parseFloat(tokensValidos[idxXG]))) {
+                        xgCandidate = parseFloat(tokensValidos[idxXG]);
+                    } else {
                         for (let i = 1; i < tokensValidos.length; i++) {
                             let val = parseFloat(tokensValidos[i]);
-                            if (!isNaN(val) && val > 0.3 && val < 4.5) { xgCandidate = val; break; }
+                            if (!isNaN(val) && val > 0.3 && val < 4.5) {
+                                xgCandidate = val;
+                                break;
+                            }
                         }
                     }
 
-                    if (idxXGA !== -1 && tokensValidos[idxXGA]) xgaCandidate = parseFloat(tokensValidos[idxXGA]) || 1.40;
-                    else {
+                    if (idxXGA !== -1 && tokensValidos[idxXGA] && !isNaN(parseFloat(tokensValidos[idxXGA]))) {
+                        xgaCandidate = parseFloat(tokensValidos[idxXGA]);
+                    } else if (idxAVG !== -1 && tokensValidos[idxAVG] && !isNaN(parseFloat(tokensValidos[idxAVG]))) {
+                        let avgVal = parseFloat(tokensValidos[idxAVG]);
+                        xgaCandidate = Math.max(0.1, avgVal - xgCandidate);
+                    } else {
                         let decimales = tokensValidos.filter(p => !isNaN(parseFloat(p)) && parseFloat(p) > 0.3 && parseFloat(p) < 5.0 && parseFloat(p) !== xgCandidate);
-                        if (decimales.length > 0) xgaCandidate = parseFloat(decimales[0]);
+                        if (decimales.length > 0) {
+                            xgaCandidate = parseFloat(decimales[0]);
+                        } else {
+                            xgaCandidate = 1.40;
+                        }
                     }
 
-                    equipos.push({ id: equipos.length + 1, name: nameCandidate.replace(/^\d+\s*/, '').trim(), xG: xgCandidate, xGA: xgaCandidate });
+                    equipos.push({
+                        id: equipos.length + 1,
+                        name: nameCandidate.replace(/^\d+\s*/, '').trim(),
+                        xG: xgCandidate,
+                        xGA: xgaCandidate
+                    });
                 }
             });
 
-            if (equipos.length === 0) return alert("No se pudieron parsear los equipos.");
+            if (equipos.length === 0) {
+                alert("No se pudieron parsear los equipos correctamente. Revisa que el formato sea tabulado.");
+                return;
+            }
 
             const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
             ligasDB[key] = { nombre: nombre, esBase: false, equipos: equipos };
-            try { localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB)); } catch (e) {}
+            
+            try {
+                localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
+            } catch (e) {
+                console.error("Error al guardar en localStorage", e);
+            }
 
             ligaActualKey = key;
             poblarSelectorLigas();
             cargarLigaSeleccionada();
             cerrarModalLiga();
+
             document.getElementById('inputNombreLiga').value = "";
             document.getElementById('inputDatosLiga').value = "";
         }
