@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Cuantitativo Poisson Multi-Liga</title>
+    <title>Analizador Cuantitativo Poisson Multi-Liga (xG vs GF/GA)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,11 +27,11 @@
                 <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
                     ⚽ Analizador Poisson <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">Modelo de fuerza relativa (Maher) calibrado con xG, xGA y promedios oficiales de liga.</p>
+                <p class="text-sm text-slate-400 mt-1">Comparativa simultánea: Modelo xG vs Modelo Tradicional (GF / GA).</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700">
-                    Estado: <span class="text-brand-500 font-semibold">Poisson Calibrado</span>
+                    Estado: <span class="text-brand-500 font-semibold">Doble Calibración Activa</span>
                 </div>
             </div>
         </div>
@@ -70,7 +70,7 @@
                     <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                         <!-- Opciones cargadas por JS -->
                     </select>
-                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xG: <span class="font-semibold text-white">0.00</span> | xGA: <span id="infoLocalXGA" class="font-semibold text-white">0.00</span></p>
+                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoLocalGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
                 </div>
 
                 <!-- Visitante -->
@@ -79,67 +79,89 @@
                     <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                         <!-- Opciones cargadas por JS -->
                     </select>
-                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xG: <span class="font-semibold text-white">0.00</span> | xGA: <span id="infoVisitanteXGA" class="font-semibold text-white">0.00</span></p>
+                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoVisitanteGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
                 </div>
 
                 <!-- Factor HT (Personalizable) -->
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2" title="Proporción del total de goles esperados que ocurren en el 1er tiempo">Factor Goles HT (Defecto: 0.5)</label>
                     <input type="number" id="inputFactorHT" value="0.50" step="0.01" min="0.30" max="0.70" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-mono">
-                    <p class="text-xs text-slate-400 mt-1">Ajuste exclusivo para mercados de Medio Tiempo.</p>
+                    <p class="text-xs text-slate-400 mt-1">Ajuste exclusivo para mercados HT.</p>
                 </div>
 
                 <!-- Botón de Análisis -->
                 <div class="flex items-end">
                     <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
-                        Calcular Modelo Poisson
+                        Calcular Modelos (xG vs GF)
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- Resultados y Resumen de Parámetros -->
+        <!-- Resultados y Resumen Comparativo de Parámetros -->
         <div id="seccionResultados" class="space-y-8 hidden">
             
-            <!-- Parámetros Lambda -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Local Calibrado ($\lambda_L$)</p>
-                    <p id="resLambdaLocal" class="text-xl font-bold text-white mt-1">0.00</p>
+            <!-- Comparativa de Lambdas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Modelo xG -->
+                <div class="bg-slate-800 border border-brand-600/50 p-5 rounded-xl space-y-3 shadow-lg">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                        <h3 class="text-sm font-bold text-brand-400 uppercase tracking-wider">📊 Modelo 1: Basado en xG / xGA</h3>
+                        <span class="text-xs text-slate-400">Predicción Subyacente</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                            <p class="text-[10px] text-slate-400 uppercase">λ Local ($\lambda_L$)</p>
+                            <p id="resXgLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                        </div>
+                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                            <p class="text-[10px] text-slate-400 uppercase">λ Visitante ($\lambda_V$)</p>
+                            <p id="resXgLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                        </div>
+                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                            <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
+                            <p id="resXgLambdaTotal" class="text-lg font-bold text-brand-400 mt-0.5">0.00</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (xG)</h4>
+                        <div id="gridMarcadoresXg" class="grid grid-cols-3 gap-2"></div>
+                    </div>
                 </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Visitante Calibrado ($\lambda_V$)</p>
-                    <p id="resLambdaVisitante" class="text-xl font-bold text-white mt-1">0.00</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ Total FT</p>
-                    <p id="resLambdaTotal" class="text-xl font-bold text-brand-500 mt-1">0.00</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 uppercase">λ HT (Factor Personalizado)</p>
-                    <p id="resLambdaHT" class="text-xl font-bold text-slate-300 mt-1">0.00</p>
+
+                <!-- Modelo GF / GA -->
+                <div class="bg-slate-800 border border-blue-600/50 p-5 rounded-xl space-y-3 shadow-lg">
+                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                        <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">📊 Modelo 2: Basado en GF / GA (Goles Reales)</h3>
+                        <span class="text-xs text-slate-400">Predicción Histórica Real</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 text-center">
+                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                            <p class="text-[10px] text-slate-400 uppercase">λ Local ($\lambda_L$)</p>
+                            <p id="resGfLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                        </div>
+                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                            <p class="text-[10px] text-slate-400 uppercase">λ Visitante ($\lambda_V$)</p>
+                            <p id="resGfLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                        </div>
+                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                            <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
+                            <p id="resGfLambdaTotal" class="text-lg font-bold text-blue-400 mt-0.5">0.00</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (GF/GA)</h4>
+                        <div id="gridMarcadoresGf" class="grid grid-cols-3 gap-2"></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Marcadores Exactos Más Probables -->
-            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
-                <h3 class="text-md font-semibold text-white mb-3">🎯 Marcadores Exactos Top 5</h3>
-                <div id="gridMarcadores" class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    <!-- Inyectado por JS -->
-                </div>
-            </section>
-
-            <!-- Tabla Principal de Mercados -->
+            <!-- Tabla Comparativa Principal de Mercados -->
             <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
                 <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 class="text-lg font-semibold text-white">📊 Tabla de Mercados y Probabilidades</h2>
-                        <p class="text-xs text-slate-400 mt-1">Calculado sobre la matriz bivariada de Poisson con umbral del 5% de EV+.</p>
-                    </div>
-                    <div class="flex items-center gap-3 text-xs bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-700/60 self-start sm:self-auto">
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Alta</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Media</span>
-                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Baja</span>
+                        <h2 class="text-lg font-semibold text-white">📊 Comparativa de Mercados y Probabilidades (xG vs GF/GA)</h2>
+                        <p class="text-xs text-slate-400 mt-1">Contraste directo entre la expectativa de calidad de ocasión (xG) y el rendimiento real de conversión (GF/GA).</p>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -147,10 +169,11 @@
                         <thead>
                             <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
                                 <th class="py-3 px-4">Mercado</th>
-                                <th class="py-3 px-4">Probabilidad</th>
-                                <th class="py-3 px-4">Cuota Justa</th>
-                                <th class="py-3 px-4">Cuota Mín. (EV +5%)</th>
-                                <th class="py-3 px-4">Evaluación Teórica</th>
+                                <th class="py-3 px-4 text-brand-400">Prob. Modelo xG</th>
+                                <th class="py-3 px-4 text-brand-400">Cuota Justa (xG)</th>
+                                <th class="py-3 px-4 text-blue-400">Prob. Modelo GF/GA</th>
+                                <th class="py-3 px-4 text-blue-400">Cuota Justa (GF/GA)</th>
+                                <th class="py-3 px-4">Diferencia (xG - GF)</th>
                             </tr>
                         </thead>
                         <tbody id="tablaMercadosBody" class="divide-y divide-slate-700 text-sm">
@@ -162,7 +185,7 @@
 
             <!-- Interpretación y Veredicto -->
             <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-4">
-                <h2 class="text-lg font-semibold text-white">📝 Interpretación Cuantitativa</h2>
+                <h2 class="text-lg font-semibold text-white">📝 Análisis de Desviación (Variaza xG vs Goles Reales)</h2>
                 <div id="textoInterpretacion" class="text-sm text-slate-300 space-y-2 leading-relaxed">
                     <!-- Dinámico -->
                 </div>
@@ -181,10 +204,10 @@
                         <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
                             <th class="py-3 px-4">#</th>
                             <th class="py-3 px-4">Equipo</th>
-                            <th class="py-3 px-4">xG (Ataque)</th>
-                            <th class="py-3 px-4">xGA (Defensa)</th>
-                            <th class="py-3 px-4">Fuerza Atq (FA)</th>
-                            <th class="py-3 px-4">Fuerza Def (FD)</th>
+                            <th class="py-3 px-4 text-brand-400">xG</th>
+                            <th class="py-3 px-4 text-brand-400">xGA</th>
+                            <th class="py-3 px-4 text-blue-400">GF (Goles Favor)</th>
+                            <th class="py-3 px-4 text-blue-400">GA (Goles Contra)</th>
                         </tr>
                     </thead>
                     <tbody id="tablaEquiposBody" class="divide-y divide-slate-700">
@@ -206,12 +229,12 @@
             <div class="space-y-3 text-sm">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre de la Liga</label>
-                    <input type="text" id="inputNombreLiga" placeholder="Ej. Premier League, La Liga..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    <input type="text" id="inputNombreLiga" placeholder="Ej. Premier League..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Pegar tabla con cualquier formato de FBref, Understat o SoccerSTATS)</label>
-                    <textarea id="inputDatosLiga" rows="8" placeholder="Team	MP	xG	xGA	xGD	GF	GA	xG vs Actual&#10;1	Manchester United	6	2.15	1.29	+0.86	1.50	1.50	-0.65&#10;2	Brighton & Hove Albion	6	1.92	1.28	+0.64	3.00	0.83	+1.08" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
-                    <p class="text-xs text-slate-400 mt-1">Admite columnas con encabezados `xG`, `xGA`, `xGF`, `AVG`, tabulados o separados por comas.</p>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Incluyendo xG, xGA, GF y GA)</label>
+                    <textarea id="inputDatosLiga" rows="8" placeholder="Team	xG	xGA	GF	GA&#10;América	2.14	1.16	1.90	1.05&#10;Toluca	1.88	1.76	2.10	1.80" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    <p class="text-xs text-slate-400 mt-1">Acepta formato tabulado con columnas `Team`, `xG`, `xGA`, `GF`, `GA`.</p>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
@@ -223,34 +246,34 @@
 
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
-        Analizador Cuantitativo Poisson Multi-Liga — Diseñado para despliegue en GitHub Pages.
+        Analizador Cuantitativo Poisson Multi-Liga — Versión con Doble Modelo (xG vs GF/GA).
     </footer>
 
-    <!-- Script de Cálculo y Gestión de Ligas -->
+    <!-- Script de Cálculo y Doble Modelo -->
     <script>
         let ligasDB = {
             "liga_mx": {
                 nombre: "Liga MX",
                 esBase: true,
                 equipos: [
-                    { id: 1, name: "América", xG: 2.14, xGA: 1.16 },
-                    { id: 2, name: "Toluca", xG: 1.88, xGA: 1.76 },
-                    { id: 3, name: "Querétaro", xG: 1.39, xGA: 0.91 },
-                    { id: 4, name: "Guadalajara", xG: 1.71, xGA: 0.93 },
-                    { id: 5, name: "León", xG: 1.51, xGA: 0.94 },
-                    { id: 6, name: "Atlas", xG: 1.38, xGA: 1.80 },
-                    { id: 7, name: "Cruz Azul", xG: 2.16, xGA: 1.75 },
-                    { id: 8, name: "Tijuana", xG: 1.31, xGA: 1.59 },
-                    { id: 9, name: "Puebla", xG: 1.43, xGA: 0.84 },
-                    { id: 10, name: "Monterrey", xG: 1.87, xGA: 1.33 },
-                    { id: 11, name: "Pachuca", xG: 1.69, xGA: 1.22 },
-                    { id: 12, name: "Tigres UANL", xG: 1.75, xGA: 0.80 },
-                    { id: 13, name: "Pumas UNAM", xG: 1.39, xGA: 1.88 },
-                    { id: 14, name: "Santos Laguna", xG: 1.57, xGA: 0.98 },
-                    { id: 15, name: "Atlético San Luis", xG: 1.34, xGA: 1.84 },
-                    { id: 16, name: "Atlante", xG: 1.58, xGA: 1.06 },
-                    { id: 17, name: "Necaxa", xG: 1.56, xGA: 1.89 },
-                    { id: 18, name: "Juárez", xG: 1.03, xGA: 2.06 }
+                    { id: 1, name: "América", xG: 2.14, xGA: 1.16, GF: 1.95, GA: 1.00 },
+                    { id: 2, name: "Toluca", xG: 1.88, xGA: 1.76, GF: 2.05, GA: 1.60 },
+                    { id: 3, name: "Querétaro", xG: 1.39, xGA: 0.91, GF: 1.10, GA: 0.95 },
+                    { id: 4, name: "Guadalajara", xG: 1.71, xGA: 0.93, GF: 1.50, GA: 0.85 },
+                    { id: 5, name: "León", xG: 1.51, xGA: 0.94, GF: 1.40, GA: 1.10 },
+                    { id: 6, name: "Atlas", xG: 1.38, xGA: 1.80, GF: 1.20, GA: 1.75 },
+                    { id: 7, name: "Cruz Azul", xG: 2.16, xGA: 1.75, GF: 2.20, GA: 1.50 },
+                    { id: 8, name: "Tijuana", xG: 1.31, xGA: 1.59, GF: 1.25, GA: 1.65 },
+                    { id: 9, name: "Puebla", xG: 1.43, xGA: 0.84, GF: 1.30, GA: 0.90 },
+                    { id: 10, name: "Monterrey", xG: 1.87, xGA: 1.33, GF: 1.75, GA: 1.20 },
+                    { id: 11, name: "Pachuca", xG: 1.69, xGA: 1.22, GF: 1.60, GA: 1.30 },
+                    { id: 12, name: "Tigres UANL", xG: 1.75, xGA: 0.80, GF: 1.80, GA: 0.75 },
+                    { id: 13, name: "Pumas UNAM", xG: 1.39, xGA: 1.88, GF: 1.35, GA: 1.70 },
+                    { id: 14, name: "Santos Laguna", xG: 1.57, xGA: 0.98, GF: 1.45, GA: 1.05 },
+                    { id: 15, name: "Atlético San Luis", xG: 1.34, xGA: 1.84, GF: 1.40, GA: 1.90 },
+                    { id: 16, name: "Atlante", xG: 1.58, xGA: 1.06, GF: 1.50, GA: 1.00 },
+                    { id: 17, name: "Necaxa", xG: 1.56, xGA: 1.89, GF: 1.45, GA: 1.80 },
+                    { id: 18, name: "Juárez", xG: 1.03, xGA: 2.06, GF: 0.95, GA: 2.15 }
                 ]
             }
         };
@@ -258,16 +281,14 @@
         let ligaActualKey = "liga_mx";
 
         function inicializarApp() {
-            const saved = localStorage.getItem('poisson_ligas_db');
+            const saved = localStorage.getItem('poisson_ligas_db_dual');
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
                     if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
                         ligasDB = parsed;
                     }
-                } catch(e) { 
-                    console.error("Error al cargar localStorage", e); 
-                }
+                } catch(e) { console.error("Error al cargar localStorage", e); }
             }
             poblarSelectorLigas();
             cargarLigaSeleccionada();
@@ -302,16 +323,9 @@
             const btnEliminar = document.getElementById('btnEliminarLiga');
             if (liga.esBase || ligaActualKey === "liga_mx") {
                 btnEliminar.classList.add('opacity-50', 'cursor-not-allowed');
-                btnEliminar.title = "La Liga MX por defecto no se puede eliminar.";
             } else {
                 btnEliminar.classList.remove('opacity-50', 'cursor-not-allowed');
-                btnEliminar.title = "Eliminar esta liga";
             }
-
-            const totalXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0);
-            const totalXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0);
-            const avgLigaXG = totalXG / (liga.equipos.length || 1);
-            const avgLigaXGA = totalXGA / (liga.equipos.length || 1);
 
             const selectLocal = document.getElementById('selectLocal');
             const selectVisitante = document.getElementById('selectVisitante');
@@ -332,18 +346,15 @@
                 optV.text = eq.name;
                 selectVisitante.appendChild(optV);
 
-                const fa = ((parseFloat(eq.xG) || 1.4) / avgLigaXG).toFixed(2);
-                const fd = ((parseFloat(eq.xGA) || 1.4) / avgLigaXGA).toFixed(2);
-
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/50 transition";
                 tr.innerHTML = `
                     <td class="py-2.5 px-4 text-slate-400">${eq.id || (index+1)}</td>
                     <td class="py-2.5 px-4 font-medium text-white">${eq.name}</td>
-                    <td class="py-2.5 px-4 text-brand-500 font-semibold">${Number(eq.xG).toFixed(2)}</td>
-                    <td class="py-2.5 px-4 text-rose-400 font-semibold">${Number(eq.xGA).toFixed(2)}</td>
-                    <td class="py-2.5 px-4 text-slate-300 font-mono">${fa}</td>
-                    <td class="py-2.5 px-4 text-slate-300 font-mono">${fd}</td>
+                    <td class="py-2.5 px-4 text-brand-400 font-semibold">${Number(eq.xG || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-4 text-brand-400 font-semibold">${Number(eq.xGA || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-4 text-blue-400 font-semibold">${Number(eq.GF || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-4 text-blue-400 font-semibold">${Number(eq.GA || 1.4).toFixed(2)}</td>
                 `;
                 tablaEquiposBody.appendChild(tr);
             });
@@ -361,59 +372,12 @@
             const idxV = document.getElementById('selectVisitante').value;
             if(liga && liga.equipos[idxL]) {
                 const eqL = liga.equipos[idxL];
-                document.getElementById('infoLocal').querySelector('span').innerText = Number(eqL.xG).toFixed(2);
-                document.getElementById('infoLocalXGA').innerText = Number(eqL.xGA).toFixed(2);
+                document.getElementById('infoLocal').innerHTML = `xG/xGA: <span class="font-semibold text-white">${Number(eqL.xG||1.4).toFixed(2)} / ${Number(eqL.xGA||1.4).toFixed(2)}</span><br>GF/GA: <span class="font-semibold text-slate-300">${Number(eqL.GF||1.4).toFixed(2)} / ${Number(eqL.GA||1.4).toFixed(2)}</span>`;
             }
             if(liga && liga.equipos[idxV]) {
                 const eqV = liga.equipos[idxV];
-                document.getElementById('infoVisitante').querySelector('span').innerText = Number(eqV.xG).toFixed(2);
-                document.getElementById('infoVisitanteXGA').innerText = Number(eqV.xGA).toFixed(2);
+                document.getElementById('infoVisitante').innerHTML = `xG/xGA: <span class="font-semibold text-white">${Number(eqV.xG||1.4).toFixed(2)} / ${Number(eqV.xGA||1.4).toFixed(2)}</span><br>GF/GA: <span class="font-semibold text-slate-300">${Number(eqV.GF||1.4).toFixed(2)} / ${Number(eqV.GA||1.4).toFixed(2)}</span>`;
             }
-        }
-
-        function getEstiloColorProbabilidad(idMercado, probPorcentaje) {
-            let p = probPorcentaje;
-            let bgClass = "bg-slate-700/50 text-slate-200 border-slate-600";
-
-            switch (idMercado) {
-                case "O25":
-                    if (p >= 55) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
-                    else if (p >= 45) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
-                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
-                    break;
-
-                case "U25":
-                    if (p >= 52) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
-                    else if (p >= 42) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
-                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
-                    break;
-
-                case "BTTS_YES":
-                    if (p >= 58) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
-                    else if (p >= 48) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
-                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
-                    break;
-
-                case "BTTS_NO":
-                    if (p >= 50) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
-                    else if (p >= 40) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
-                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
-                    break;
-
-                case "O05HT":
-                    if (p >= 78) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
-                    else if (p >= 70) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
-                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
-                    break;
-
-                case "U05HT":
-                    if (p >= 30) bgClass = "bg-emerald-950/60 text-emerald-300 border-emerald-700/80";
-                    else if (p >= 22) bgClass = "bg-amber-950/60 text-amber-300 border-amber-700/80";
-                    else bgClass = "bg-rose-950/60 text-rose-300 border-rose-700/80";
-                    break;
-            }
-
-            return bgClass;
         }
 
         function factorial(n) {
@@ -427,54 +391,14 @@
             return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
         }
 
-        function ejecutarAnalisis() {
-            const liga = ligasDB[ligaActualKey];
-            const idxL = document.getElementById('selectLocal').value;
-            const idxV = document.getElementById('selectVisitante').value;
-            
-            const eqL = liga.equipos[idxL];
-            const eqV = liga.equipos[idxV];
-
-            const totalXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0);
-            const totalXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0);
-            const avgLigaXG = totalXG / (liga.equipos.length || 1);
-            const avgLigaXGA = totalXGA / (liga.equipos.length || 1);
-
-            const xGL = Number(eqL.xG);
-            const xGAL = Number(eqL.xGA);
-            const xGV = Number(eqV.xG);
-            const xGAV = Number(eqV.xGA);
-
-            const faL = xGL / avgLigaXG;
-            const fdV = xGAV / avgLigaXGA;
-            const faV = xGV / avgLigaXG;
-            const fdL = xGAL / avgLigaXGA;
-
-            // Modelos Maher Calibrados
-            const lambdaL = faL * fdV * avgLigaXG;
-            const lambdaV = faV * fdL * avgLigaXG;
-            const lambdaTotal = lambdaL + lambdaV;
-
-            // Obtener factor HT personalizado desde el input (por defecto 0.50 si está vacío o inválido)
-            let factorHT = parseFloat(document.getElementById('inputFactorHT').value);
-            if (isNaN(factorHT) || factorHT <= 0) factorHT = 0.50;
-
-            const lambdaHT = lambdaTotal * factorHT;
-
-            document.getElementById('resLambdaLocal').innerText = lambdaL.toFixed(2);
-            document.getElementById('resLambdaVisitante').innerText = lambdaV.toFixed(2);
-            document.getElementById('resLambdaTotal').innerText = lambdaTotal.toFixed(2);
-            document.getElementById('resLambdaHT').innerText = lambdaHT.toFixed(2);
-
+        function calcularModeloPoisson(lambdaL, lambdaV) {
             let pO25 = 0, pU25 = 0;
             let pBttsYes = 0, pBttsNo = 0;
-
             let marcadores = [];
 
             for (let x = 0; x <= 8; x++) {
                 for (let y = 0; y <= 8; y++) {
                     let pFinal = poissonPMF(x, lambdaL) * poissonPMF(y, lambdaV);
-
                     marcadores.push({ marcador: `${x} - ${y}`, prob: pFinal });
 
                     if ((x + y) > 2.5) pO25 += pFinal;
@@ -486,18 +410,6 @@
             }
 
             marcadores.sort((a, b) => b.prob - a.prob);
-            const gridMarcadores = document.getElementById('gridMarcadores');
-            gridMarcadores.innerHTML = "";
-            marcadores.slice(0, 5).forEach(m => {
-                let div = document.createElement('div');
-                div.className = "bg-slate-900/80 border border-slate-700 p-2.5 rounded-lg text-center";
-                div.innerHTML = `
-                    <p class="text-xs text-slate-400 font-mono">${m.marcador}</p>
-                    <p class="text-sm font-bold text-brand-500 mt-0.5">${(m.prob * 100).toFixed(1)}%</p>
-                `;
-                gridMarcadores.appendChild(div);
-            });
-
             let sumFT = pO25 + pU25;
             pO25 /= sumFT;
             pU25 /= sumFT;
@@ -506,48 +418,123 @@
             pBttsYes /= sumBTTS;
             pBttsNo /= sumBTTS;
 
-            const pU05HT = Math.exp(-lambdaHT);
-            const pO05HT = 1 - pU05HT;
+            return {
+                lambdaL,
+                lambdaV,
+                lambdaTotal: lambdaL + lambdaV,
+                topMarcadores: marcadores.slice(0, 3),
+                mercados: {
+                    O25: pO25,
+                    U25: pU25,
+                    BTTS_YES: pBttsYes,
+                    BTTS_NO: pBttsNo
+                }
+            };
+        }
 
-            const mercados = [
-                { id: "O25", nombre: "Over 2.5 Goles FT", prob: pO25 },
-                { id: "U25", nombre: "Under 2.5 Goles FT", prob: pU25 },
-                { id: "BTTS_YES", nombre: "BTTS Sí (Ambos Anotan)", prob: pBttsYes },
-                { id: "BTTS_NO", nombre: "BTTS No (Ambos Anotan)", prob: pBttsNo },
-                { id: "O05HT", nombre: "Over 0.5 Goles HT", prob: pO05HT },
-                { id: "U05HT", nombre: "Under 0.5 Goles HT", prob: pU05HT }
+        function ejecutarAnalisis() {
+            const liga = ligasDB[ligaActualKey];
+            const idxL = document.getElementById('selectLocal').value;
+            const idxV = document.getElementById('selectVisitante').value;
+            
+            const eqL = liga.equipos[idxL];
+            const eqV = liga.equipos[idxV];
+
+            // Promedios Liga xG
+            const avgXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0) / liga.equipos.length;
+            const avgXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0) / liga.equipos.length;
+
+            // Promedios Liga GF/GA
+            const avgGF = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF) || 1.4), 0) / liga.equipos.length;
+            const avgGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA) || 1.4), 0) / liga.equipos.length;
+
+            // 1. Cálculo Modelo xG
+            const faL_xg = (parseFloat(eqL.xG) || 1.4) / avgXG;
+            const fdV_xg = (parseFloat(eqV.xGA) || 1.4) / avgXGA;
+            const faV_xg = (parseFloat(eqV.xG) || 1.4) / avgXG;
+            const fdL_xg = (parseFloat(eqL.xGA) || 1.4) / avgXGA;
+
+            const lambdaL_xg = faL_xg * fdV_xg * avgXG;
+            const lambdaV_xg = faV_xg * fdL_xg * avgXG;
+            const resXg = calcularModeloPoisson(lambdaL_xg, lambdaV_xg);
+
+            // 2. Cálculo Modelo GF / GA
+            const faL_gf = (parseFloat(eqL.GF) || 1.4) / avgGF;
+            const fdV_ga = (parseFloat(eqV.GA) || 1.4) / avgGA;
+            const faV_gf = (parseFloat(eqV.GF) || 1.4) / avgGF;
+            const fdL_ga = (parseFloat(eqL.GA) || 1.4) / avgGA;
+
+            const lambdaL_gf = faL_gf * fdV_ga * avgGF;
+            const lambdaV_gf = faV_gf * fdL_ga * avgGF;
+            const resGf = calcularModeloPoisson(lambdaL_gf, lambdaV_gf);
+
+            // Pintar Resultados de Parámetros
+            document.getElementById('resXgLambdaLocal').innerText = resXg.lambdaL.toFixed(2);
+            document.getElementById('resXgLambdaVisitante').innerText = resXg.lambdaV.toFixed(2);
+            document.getElementById('resXgLambdaTotal').innerText = resXg.lambdaTotal.toFixed(2);
+
+            document.getElementById('resGfLambdaLocal').innerText = resGf.lambdaL.toFixed(2);
+            document.getElementById('resGfLambdaVisitante').innerText = resGf.lambdaV.toFixed(2);
+            document.getElementById('resGfLambdaTotal').innerText = resGf.lambdaTotal.toFixed(2);
+
+            // Pintar Top Marcadores xG
+            const gridXg = document.getElementById('gridMarcadoresXg');
+            gridXg.innerHTML = "";
+            resXg.topMarcadores.forEach(m => {
+                let div = document.createElement('div');
+                div.className = "bg-slate-900/80 border border-slate-700 p-2 rounded text-center";
+                div.innerHTML = `<p class="text-[10px] text-slate-400 font-mono">${m.marcador}</p><p class="text-xs font-bold text-brand-400">${(m.prob * 100).toFixed(1)}%</p>`;
+                gridXg.appendChild(div);
+            });
+
+            // Pintar Top Marcadores GF
+            const gridGf = document.getElementById('gridMarcadoresGf');
+            gridGf.innerHTML = "";
+            resGf.topMarcadores.forEach(m => {
+                let div = document.createElement('div');
+                div.className = "bg-slate-900/80 border border-slate-700 p-2 rounded text-center";
+                div.innerHTML = `<p class="text-[10px] text-slate-400 font-mono">${m.marcador}</p><p class="text-xs font-bold text-blue-400">${(m.prob * 100).toFixed(1)}%</p>`;
+                gridGf.appendChild(div);
+            });
+
+            // Tabla Comparativa de Mercados
+            const mercadosDef = [
+                { id: "O25", nombre: "Over 2.5 Goles FT" },
+                { id: "U25", nombre: "Under 2.5 Goles FT" },
+                { id: "BTTS_YES", nombre: "BTTS Sí (Ambos Anotan)" },
+                { id: "BTTS_NO", nombre: "BTTS No (Ambos Anotan)" }
             ];
 
             const tbody = document.getElementById('tablaMercadosBody');
             tbody.innerHTML = "";
 
-            mercados.forEach(m => {
-                const probPorc = m.prob * 100;
-                const cuotaJusta = 1 / m.prob;
-                const cuotaMin = Math.ceil((1.05 / m.prob) * 100) / 100;
-                
-                const badgeColor = getEstiloColorProbabilidad(m.id, probPorc);
+            mercadosDef.forEach(md => {
+                const pXg = resXg.mercados[md.id] * 100;
+                const cXg = (1 / (resXg.mercados[md.id])).toFixed(2);
+
+                const pGf = resGf.mercados[md.id] * 100;
+                const cGf = (1 / (resGf.mercados[md.id])).toFixed(2);
+
+                const diff = (pXg - pGf).toFixed(2);
+                const diffColor = diff > 0 ? "text-emerald-400" : (diff < 0 ? "text-rose-400" : "text-slate-400");
 
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/50 transition";
                 tr.innerHTML = `
-                    <td class="py-3 px-4 font-medium text-white">${m.nombre}</td>
-                    <td class="py-3 px-4">
-                        <span class="px-2.5 py-1 rounded-md border text-xs font-bold inline-block ${badgeColor}">
-                            ${probPorc.toFixed(2)}%
-                        </span>
-                    </td>
-                    <td class="py-3 px-4 text-slate-300 font-mono">${cuotaJusta.toFixed(2)}</td>
-                    <td class="py-3 px-4 text-yellow-400 font-semibold font-mono">${cuotaMin.toFixed(2)}</td>
-                    <td class="py-3 px-4 text-slate-400 text-xs">Pendiente de cuota real</td>
+                    <td class="py-3 px-4 font-medium text-white">${md.nombre}</td>
+                    <td class="py-3 px-4 text-brand-400 font-bold">${pXg.toFixed(2)}%</td>
+                    <td class="py-3 px-4 text-slate-300 font-mono">${cXg}</td>
+                    <td class="py-3 px-4 text-blue-400 font-bold">${pGf.toFixed(2)}%</td>
+                    <td class="py-3 px-4 text-slate-300 font-mono">${cGf}</td>
+                    <td class="py-3 px-4 font-mono font-semibold ${diffColor}">${diff > 0 ? '+' : ''}${diff}%</td>
                 `;
                 tbody.appendChild(tr);
             });
 
             document.getElementById('textoInterpretacion').innerHTML = `
-                <p>• Partido: <strong>${eqL.name}</strong> ($\lambda_L = ${lambdaL.toFixed(2)}$) vs <strong>${eqV.name}</strong> ($\lambda_V = ${lambdaV.toFixed(2)}$).</p>
-                <p>• Factor Goles HT aplicado: <strong>${factorHT}</strong> (λ_HT = ${lambdaHT.toFixed(2)}).</p>
-                <p>• Promedio global de xG de la liga: <strong>${avgLigaXG.toFixed(2)}</strong> goles por equipo.</p>
+                <p>• <strong>Modelo xG (${eqL.name} ${resXg.lambdaL.toFixed(2)} - ${resXg.lambdaV.toFixed(2)} ${eqV.name}):</strong> Se basa en la calidad de las oportunidades generadas y concedidas, mitigando el ruido de la definición circunstancial.</p>
+                <p>• <strong>Modelo Tradicional GF/GA (${eqL.name} ${resGf.lambdaL.toFixed(2)} - ${resGf.lambdaV.toFixed(2)} ${eqV.name}):</strong> Refleja estrictamente la contundencia histórica real de los marcadores pasados.</p>
+                <p>• <em>Nota analítica:</em> Si la probabilidad por xG es considerablemente mayor a la de GF/GA, el equipo local está generando ocasiones pero desaprovechándolas (sufrimiento de varianza en definición).</p>
             `;
 
             document.getElementById('seccionResultados').classList.remove('hidden');
@@ -559,14 +546,9 @@
                 alert("La Liga MX principal no puede ser eliminada.");
                 return;
             }
-
-            if (confirm(`¿Estás seguro de que deseas eliminar la liga "${liga.nombre}"? esta acción se guardará de inmediato.`)) {
+            if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
                 delete ligasDB[ligaActualKey];
-                try {
-                    localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
-                } catch(e) {
-                    console.error("Error al guardar en localStorage", e);
-                }
+                localStorage.setItem('poisson_ligas_db_dual', JSON.stringify(ligasDB));
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -574,116 +556,43 @@
             }
         }
 
-        function abrirModalLiga() {
-            document.getElementById('modalLiga').classList.remove('hidden');
-        }
-
-        function cerrarModalLiga() {
-            document.getElementById('modalLiga').classList.add('hidden');
-        }
+        function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
+        function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
 
         function guardarNuevaLiga() {
             const nombre = document.getElementById('inputNombreLiga').value.trim();
             const rawData = document.getElementById('inputDatosLiga').value.trim();
-
-            if (!nombre || !rawData) {
-                alert("Por favor ingresa un nombre y los datos de la liga.");
-                return;
-            }
+            if (!nombre || !rawData) { alert("Ingresa nombre y datos."); return; }
 
             const lineas = rawData.split('\n');
             let equipos = [];
 
-            let idxTeam = -1, idxXG = -1, idxXGA = -1, idxAVG = -1;
-
-            lineas.forEach((linea) => {
+            lineas.forEach(linea => {
                 let partes = linea.split('\t').map(p => p.trim()).filter(p => p !== "");
-                if (partes.length < 2) {
-                    partes = linea.split(/,\s*/).map(p => p.trim()).filter(p => p !== "");
-                }
+                if (partes.length < 5) partes = linea.split(/,\s*/).map(p => p.trim()).filter(p => p !== "");
 
-                if (partes.length >= 2) {
-                    const lineaLower = linea.toLowerCase();
-                    if (lineaLower.includes("team") || lineaLower.includes("xg") || lineaLower.includes("avg")) {
-                        partes.forEach((p, i) => {
-                            const pl = p.toLowerCase();
-                            if (pl === "team" || pl === "equipo") idxTeam = i;
-                            if (pl === "xg" || pl === "xgf") idxXG = i;
-                            if (pl === "xga") idxXGA = i;
-                            if (pl === "avg") idxAVG = i;
-                        });
-                        return;
-                    }
-
-                    let nameCandidate = "";
-                    let xgCandidate = 1.40;
-                    let xgaCandidate = 1.40;
-
-                    let tokensValidos = partes.filter(p => p !== "");
-
-                    if (idxTeam !== -1 && tokensValidos[idxTeam]) {
-                        nameCandidate = tokensValidos[idxTeam];
-                    } else {
-                        let offset = (!isNaN(tokensValidos[0]) && tokensValidos.length > 3) ? 1 : 0;
-                        nameCandidate = tokensValidos[offset] || "Equipo";
-                    }
-
-                    if (idxXG !== -1 && tokensValidos[idxXG] && !isNaN(parseFloat(tokensValidos[idxXG]))) {
-                        xgCandidate = parseFloat(tokensValidos[idxXG]);
-                    } else {
-                        for (let i = 1; i < tokensValidos.length; i++) {
-                            let val = parseFloat(tokensValidos[i]);
-                            if (!isNaN(val) && val > 0.3 && val < 4.5) {
-                                xgCandidate = val;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (idxXGA !== -1 && tokensValidos[idxXGA] && !isNaN(parseFloat(tokensValidos[idxXGA]))) {
-                        xgaCandidate = parseFloat(tokensValidos[idxXGA]);
-                    } else if (idxAVG !== -1 && tokensValidos[idxAVG] && !isNaN(parseFloat(tokensValidos[idxAVG]))) {
-                        let avgVal = parseFloat(tokensValidos[idxAVG]);
-                        xgaCandidate = Math.max(0.1, avgVal - xgCandidate);
-                    } else {
-                        let decimales = tokensValidos.filter(p => !isNaN(parseFloat(p)) && parseFloat(p) > 0.3 && parseFloat(p) < 5.0 && parseFloat(p) !== xgCandidate);
-                        if (decimales.length > 0) {
-                            xgaCandidate = parseFloat(decimales[0]);
-                        } else {
-                            xgaCandidate = 1.40;
-                        }
-                    }
-
+                if (partes.length >= 5 && !partes[0].toLowerCase().includes("team")) {
                     equipos.push({
                         id: equipos.length + 1,
-                        name: nameCandidate.replace(/^\d+\s*/, '').trim(),
-                        xG: xgCandidate,
-                        xGA: xgaCandidate
+                        name: partes[0],
+                        xG: parseFloat(partes[1]) || 1.4,
+                        xGA: parseFloat(partes[2]) || 1.4,
+                        GF: parseFloat(partes[3]) || 1.4,
+                        GA: parseFloat(partes[4]) || 1.4
                     });
                 }
             });
 
-            if (equipos.length === 0) {
-                alert("No se pudieron parsear los equipos correctamente. Revisa que el formato sea tabulado.");
-                return;
-            }
+            if (equipos.length === 0) { alert("Formato de columnas no reconocido. Asegúrate de incluir columnas para xG, xGA, GF y GA."); return; }
 
             const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            ligasDB[key] = { nombre: nombre, esBase: false, equipos: equipos };
-            
-            try {
-                localStorage.setItem('poisson_ligas_db', JSON.stringify(ligasDB));
-            } catch (e) {
-                console.error("Error al guardar en localStorage", e);
-            }
+            ligasDB[key] = { nombre, esBase: false, equipos };
+            localStorage.setItem('poisson_ligas_db_dual', JSON.stringify(ligasDB));
 
             ligaActualKey = key;
             poblarSelectorLigas();
             cargarLigaSeleccionada();
             cerrarModalLiga();
-
-            document.getElementById('inputNombreLiga').value = "";
-            document.getElementById('inputDatosLiga').value = "";
         }
 
         window.onload = inicializarApp;
