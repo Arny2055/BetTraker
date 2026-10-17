@@ -30,9 +30,8 @@
                 <p class="text-sm text-slate-400 mt-1">Comparativa simultánea: Modelo xG vs Modelo Tradicional (GF / GA).</p>
             </div>
             <div class="flex items-center gap-3">
-                <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700">
-                    Estado: <span class="text-brand-500 font-semibold">Doble Calibración Activa</span>
-                </div>
+                <button onclick="cambiarVista('analizador')" id="btnNavAnalizador" class="bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">🔍 Analizador</button>
+                <button onclick="cambiarVista('tracker')" id="btnNavTracker" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">📊 Mis Picks & Dashboard</button>
             </div>
         </div>
     </header>
@@ -40,196 +39,283 @@
     <!-- Main Container -->
     <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
 
-        <!-- Selector de Liga y Gestión -->
-        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="w-full md:w-1/2">
-                <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Seleccionar Liga Activa</label>
-                <select id="selectLiga" onchange="cambiarLiga()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-semibold">
-                    <!-- Dinámico por JS -->
-                </select>
-            </div>
-            <div class="w-full md:w-auto flex items-end gap-2">
-                <button onclick="abrirModalLiga()" class="w-full md:w-auto bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
-                    ➕ Añadir Liga
-                </button>
-                <button id="btnEliminarLiga" onclick="eliminarLigaActiva()" class="w-full md:w-auto bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
-                    🗑️ Eliminar
-                </button>
-            </div>
-        </section>
+        <!-- ================= VISTA 1: ANALIZADOR ================= -->
+        <div id="vistaAnalizador" class="space-y-8">
 
-        <!-- Panel de Configuración del Partido -->
-        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
-            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                ⚙️ Configuración del Enfrentamiento
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- Local -->
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Local</label>
-                    <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
-                        <!-- Opciones cargadas por JS -->
+            <!-- Selector de Liga y Gestión -->
+            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="w-full md:w-1/2">
+                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Seleccionar Liga Activa</label>
+                    <select id="selectLiga" onchange="cambiarLiga()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-semibold">
+                        <!-- Dinámico por JS -->
                     </select>
-                    <p id="infoLocal" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoLocalGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
                 </div>
-
-                <!-- Visitante -->
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Visitante</label>
-                    <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
-                        <!-- Opciones cargadas por JS -->
-                    </select>
-                    <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoVisitanteGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
-                </div>
-
-                <!-- Factor HT -->
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2" title="Proporción del total de goles esperados que ocurren en el 1er tiempo">Factor Goles HT (Defecto: 0.5)</label>
-                    <input type="number" id="inputFactorHT" value="0.50" step="0.01" min="0.30" max="0.70" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-mono">
-                    <p class="text-xs text-slate-400 mt-1">Ajuste exclusivo para mercados HT.</p>
-                </div>
-
-                <!-- Botón de Análisis -->
-                <div class="flex items-end">
-                    <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
-                        Calcular Modelos (xG vs GF)
+                <div class="w-full md:w-auto flex items-end gap-2">
+                    <button onclick="abrirModalLiga()" class="w-full md:w-auto bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
+                        ➕ Añadir Liga
                     </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Resultados y Resumen Comparativo de Parámetros -->
-        <div id="seccionResultados" class="space-y-8 hidden">
-            
-            <!-- Comparativa de Lambdas -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Modelo xG -->
-                <div class="bg-slate-800 border border-brand-600/50 p-5 rounded-xl space-y-3 shadow-lg">
-                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                        <h3 class="text-sm font-bold text-brand-400 uppercase tracking-wider">📊 Modelo 1: Basado en xG / xGA</h3>
-                        <span class="text-xs text-slate-400">Predicción Subyacente</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3 text-center">
-                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                            <p class="text-[10px] text-slate-400 uppercase">λ Local ($\lambda_L$)</p>
-                            <p id="resXgLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                        </div>
-                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                            <p class="text-[10px] text-slate-400 uppercase">λ Visitante ($\lambda_V$)</p>
-                            <p id="resXgLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                        </div>
-                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                            <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
-                            <p id="resXgLambdaTotal" class="text-lg font-bold text-brand-400 mt-0.5">0.00</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (xG)</h4>
-                        <div id="gridMarcadoresXg" class="grid grid-cols-3 gap-2"></div>
-                    </div>
-                </div>
-
-                <!-- Modelo GF / GA -->
-                <div class="bg-slate-800 border border-blue-600/50 p-5 rounded-xl space-y-3 shadow-lg">
-                    <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                        <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">📊 Modelo 2: Basado en GF / GA (Goles Reales)</h3>
-                        <span class="text-xs text-slate-400">Predicción Histórica Real</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3 text-center">
-                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                            <p class="text-[10px] text-slate-400 uppercase">λ Local ($\lambda_L$)</p>
-                            <p id="resGfLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                        </div>
-                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                            <p class="text-[10px] text-slate-400 uppercase">λ Visitante ($\lambda_V$)</p>
-                            <p id="resGfLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                        </div>
-                        <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                            <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
-                            <p id="resGfLambdaTotal" class="text-lg font-bold text-blue-400 mt-0.5">0.00</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (GF/GA)</h4>
-                        <div id="gridMarcadoresGf" class="grid grid-cols-3 gap-2"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Panel de Sugerencia de Apuesta Inteligente -->
-            <section class="bg-gradient-to-r from-emerald-950/80 to-slate-800 border border-brand-600/60 rounded-xl p-6 shadow-xl space-y-4">
-                <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                    💡 Sugerencia de Mercado y Cuota Óptima (EV+)
-                </h2>
-                <div id="panelSugerenciaApuesta" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                    <!-- Dinámico por JS -->
+                    <button id="btnEliminarLiga" onclick="eliminarLigaActiva()" class="w-full md:w-auto bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
+                        🗑️ Eliminar
+                    </button>
                 </div>
             </section>
 
-            <!-- Tabla Comparativa Principal de Mercados -->
-            <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
-                <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- Panel de Configuración del Partido -->
+            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
+                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                    ⚙️ Configuración del Enfrentamiento
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <!-- Local -->
                     <div>
-                        <h2 class="text-lg font-semibold text-white">📊 Comparativa de Mercados y Probabilidades (xG vs GF/GA)</h2>
-                        <p class="text-xs text-slate-400 mt-1">Contraste directo entre la expectativa de calidad de ocasión (xG) y el rendimiento real de conversión (GF/GA).</p>
+                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Local</label>
+                        <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
+                            <!-- Opciones cargadas por JS -->
+                        </select>
+                        <p id="infoLocal" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoLocalGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
+                    </div>
+
+                    <!-- Visitante -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Visitante</label>
+                        <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
+                            <!-- Opciones cargadas por JS -->
+                        </select>
+                        <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoVisitanteGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
+                    </div>
+
+                    <!-- Factor HT -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2" title="Proporción del total de goles esperados que ocurren en el 1er tiempo">Factor Goles HT (Defecto: 0.5)</label>
+                        <input type="number" id="inputFactorHT" value="0.50" step="0.01" min="0.30" max="0.70" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-mono">
+                        <p class="text-xs text-slate-400 mt-1">Ajuste exclusivo para mercados HT.</p>
+                    </div>
+
+                    <!-- Botón de Análisis -->
+                    <div class="flex items-end">
+                        <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
+                            Calcular Modelos (xG vs GF)
+                        </button>
                     </div>
                 </div>
+            </section>
+
+            <!-- Resultados y Resumen Comparativo de Parámetros -->
+            <div id="seccionResultados" class="space-y-8 hidden">
+                
+                <!-- Comparativa de Lambdas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Modelo xG -->
+                    <div class="bg-slate-800 border border-brand-600/50 p-5 rounded-xl space-y-3 shadow-lg">
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                            <h3 class="text-sm font-bold text-brand-400 uppercase tracking-wider">📊 Modelo 1: Basado en xG / xGA</h3>
+                            <span class="text-xs text-slate-400">Predicción Subyacente</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase">λ Local</p>
+                                <p id="resXgLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                            </div>
+                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante</p>
+                                <p id="resXgLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                            </div>
+                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
+                                <p id="resXgLambdaTotal" class="text-lg font-bold text-brand-400 mt-0.5">0.00</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (xG)</h4>
+                            <div id="gridMarcadoresXg" class="grid grid-cols-3 gap-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Modelo GF / GA -->
+                    <div class="bg-slate-800 border border-blue-600/50 p-5 rounded-xl space-y-3 shadow-lg">
+                        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">📊 Modelo 2: Basado en GF / GA (Goles Reales)</h3>
+                            <span class="text-xs text-slate-400">Predicción Histórica Real</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3 text-center">
+                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase">λ Local</p>
+                                <p id="resGfLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                            </div>
+                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante</p>
+                                <p id="resGfLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
+                            </div>
+                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                                <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
+                                <p id="resGfLambdaTotal" class="text-lg font-bold text-blue-400 mt-0.5">0.00</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (GF/GA)</h4>
+                            <div id="gridMarcadoresGf" class="grid grid-cols-3 gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Sugerencia de Apuesta Inteligente -->
+                <section class="bg-gradient-to-r from-emerald-950/80 to-slate-800 border border-brand-600/60 rounded-xl p-6 shadow-xl space-y-4">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        💡 Sugerencia de Mercado y Cuota Óptima (EV+)
+                    </h2>
+                    <div id="panelSugerenciaApuesta" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                        <!-- Dinámico por JS -->
+                    </div>
+                </section>
+
+                <!-- Tabla Comparativa Principal de Mercados -->
+                <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+                    <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-semibold text-white">📊 Comparativa de Mercados y Probabilidades (xG vs GF/GA)</h2>
+                            <p class="text-xs text-slate-400 mt-1">Selecciona el mercado y envíalo directamente a tu panel de control de apuestas.</p>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
+                                    <th class="py-3 px-4">Mercado</th>
+                                    <th class="py-3 px-4 text-brand-400">Prob. Modelo xG</th>
+                                    <th class="py-3 px-4 text-brand-400">Cuota Justa (xG)</th>
+                                    <th class="py-3 px-4 text-blue-400">Prob. Modelo GF/GA</th>
+                                    <th class="py-3 px-4 text-blue-400">Cuota Justa (GF/GA)</th>
+                                    <th class="py-3 px-4">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaMercadosBody" class="divide-y divide-slate-700 text-sm">
+                                <!-- Inyectado por JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Interpretación -->
+                <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-4">
+                    <h2 class="text-lg font-semibold text-white">📝 Análisis de Desviación</h2>
+                    <div id="textoInterpretacion" class="text-sm text-slate-300 space-y-2 leading-relaxed">
+                        <!-- Dinámico -->
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Tabla de Datos Oficiales -->
+            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia Liga MX</h2>
+                </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
-                                <th class="py-3 px-4">Mercado</th>
-                                <th class="py-3 px-4 text-brand-400">Prob. Modelo xG</th>
-                                <th class="py-3 px-4 text-brand-400">Cuota Justa (xG)</th>
-                                <th class="py-3 px-4 text-blue-400">Prob. Modelo GF/GA</th>
-                                <th class="py-3 px-4 text-blue-400">Cuota Justa (GF/GA)</th>
-                                <th class="py-3 px-4">Diferencia (xG - GF)</th>
+                                <th class="py-3 px-4">#</th>
+                                <th class="py-3 px-4">Equipo</th>
+                                <th class="py-3 px-4 text-brand-400">xG</th>
+                                <th class="py-3 px-4 text-brand-400">xGA</th>
+                                <th class="py-3 px-4 text-blue-400">GF</th>
+                                <th class="py-3 px-4 text-blue-400">GA</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaMercadosBody" class="divide-y divide-slate-700 text-sm">
-                            <!-- Inyectado por JavaScript -->
+                        <tbody id="tablaEquiposBody" class="divide-y divide-slate-700">
+                            <!-- Inyectado por JS -->
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- Interpretación -->
-            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-4">
-                <h2 class="text-lg font-semibold text-white">📝 Análisis de Desviación (Varianza xG vs Goles Reales)</h2>
-                <div id="textoInterpretacion" class="text-sm text-slate-300 space-y-2 leading-relaxed">
-                    <!-- Dinámico -->
-                </div>
-            </section>
-
         </div>
 
-        <!-- Tabla de Datos Oficiales -->
-        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-                <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia Liga MX</h2>
+        <!-- ================= VISTA 2: BETTRACKER & DASHBOARD ================= -->
+        <div id="vistaTracker" class="space-y-8 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">📊 Dashboard de Apuestas & Picks</h2>
+                    <p class="text-sm text-slate-400">Control analítico de rendimiento, profit y efectividad de tus picks.</p>
+                </div>
+                <button onclick="limpiarTracker()" class="bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700 text-xs font-semibold px-4 py-2 rounded-lg transition">🗑️ Borrar Historial</button>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
-                            <th class="py-3 px-4">#</th>
-                            <th class="py-3 px-4">Equipo</th>
-                            <th class="py-3 px-4 text-brand-400">xG</th>
-                            <th class="py-3 px-4 text-brand-400">xGA</th>
-                            <th class="py-3 px-4 text-blue-400">GF (Goles Favor)</th>
-                            <th class="py-3 px-4 text-blue-400">GA (Goles Contra)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaEquiposBody" class="divide-y divide-slate-700">
-                        <!-- Inyectado por JS -->
-                    </tbody>
-                </table>
+
+            <!-- Tarjetas de Estadísticas Principales -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase">Profit Total</p>
+                    <p id="statProfit" class="text-2xl font-bold text-white mt-1">$0.00</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase">ROI (%)</p>
+                    <p id="statRoi" class="text-2xl font-bold text-brand-500 mt-1">0.00%</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase">% de Acierto</p>
+                    <p id="statAcierto" class="text-2xl font-bold text-blue-400 mt-1">0.0%</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
+                    <p class="text-xs text-slate-400 uppercase">Total Picks (G/P/Pdt)</p>
+                    <p id="statTotalPicks" class="text-2xl font-bold text-slate-300 mt-1">0 (0/0/0)</p>
+                </div>
             </div>
-        </section>
+
+            <!-- Segunda Fila de Métricas Avanzadas -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
+                    <p class="text-[10px] text-slate-400 uppercase">Cuota Media Global</p>
+                    <p id="statCuotaMedia" class="text-lg font-mono font-bold text-white mt-0.5">0.00</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
+                    <p class="text-[10px] text-slate-400 uppercase">Cuota Media Ganadora</p>
+                    <p id="statCuotaGanadora" class="text-lg font-mono font-bold text-emerald-400 mt-0.5">0.00</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
+                    <p class="text-[10px] text-slate-400 uppercase">Cuota Media Perdedora</p>
+                    <p id="statCuotaPerdedora" class="text-lg font-mono font-bold text-rose-400 mt-0.5">0.00</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
+                    <p class="text-[10px] text-slate-400 uppercase">Stake Promedio ($)</p>
+                    <p id="statStakePromedio" class="text-lg font-mono font-bold text-yellow-400 mt-0.5">$10.00</p>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
+                    <p class="text-[10px] text-slate-400 uppercase">Racha Actual</p>
+                    <p id="statRacha" class="text-lg font-bold text-white mt-0.5">-</p>
+                </div>
+            </div>
+
+            <!-- Tabla de Historial de Picks -->
+            <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
+                <div class="p-6 border-b border-slate-700">
+                    <h3 class="text-lg font-semibold text-white">📋 Historial de Picks Registrados</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
+                                <th class="py-3 px-4">Liga</th>
+                                <th class="py-3 px-4">Enfrentamiento</th>
+                                <th class="py-3 px-4">Mercado / Pick</th>
+                                <th class="py-3 px-4">Prob. (xG / GF)</th>
+                                <th class="py-3 px-4">Cuota Bookie</th>
+                                <th class="py-3 px-4">Stake</th>
+                                <th class="py-3 px-4">Resultado</th>
+                                <th class="py-3 px-4">Profit ($)</th>
+                                <th class="py-3 px-4 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaTrackerBody" class="divide-y divide-slate-700">
+                            <!-- Inyectado por JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
 
     </main>
 
-    <!-- Modal para Añadir / Gestionar Ligas -->
+    <!-- Modal para Añadir Liga -->
     <div id="modalLiga" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3">
@@ -242,9 +328,8 @@
                     <input type="text" id="inputNombreLiga" placeholder="Ej. La Liga España..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Pegar directo desde la app o Excel)</label>
-                    <textarea id="inputDatosLiga" rows="8" placeholder="Copiar y pegar tabla con encabezados `# EQUIPO XG XGA GF GA` o similar..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
-                    <p class="text-xs text-slate-400 mt-1">Soporta formatos tabulados o separados por espacios/comas con encabezados dinámicos.</p>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos</label>
+                    <textarea id="inputDatosLiga" rows="8" placeholder="Equipo xG xGA GF GA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
@@ -254,12 +339,51 @@
         </div>
     </div>
 
+    <!-- Modal para Enviar Pick -->
+    <div id="modalPick" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h3 class="text-lg font-bold text-white">📥 Enviar Pick al Tracker</h3>
+                <button onclick="cerrarModalPick()" class="text-slate-400 hover:text-white font-bold">✕</button>
+            </div>
+            <div class="space-y-3 text-sm">
+                <input type="hidden" id="pickLiga">
+                <input type="hidden" id="pickLocal">
+                <input type="hidden" id="pickVisitante">
+                <input type="hidden" id="pickMercado">
+                <input type="hidden" id="pickProbXg">
+                <input type="hidden" id="pickProbGf">
+
+                <div>
+                    <p class="text-xs text-slate-400 uppercase">Enfrentamiento</p>
+                    <p id="pickLabelPartido" class="font-bold text-white text-base"></p>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-400 uppercase">Mercado Seleccionado</p>
+                    <p id="pickLabelMercado" class="font-bold text-brand-400 text-sm"></p>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Cuota de la Bookie</label>
+                    <input type="number" id="inputCuotaBookie" step="0.01" min="1.01" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Stake / Cantidad apostada ($)</label>
+                    <input type="number" id="inputStakePick" value="10.00" step="1" min="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-brand-500">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
+                <button onclick="cerrarModalPick()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm text-white">Cancelar</button>
+                <button onclick="confirmarEnviarPick()" class="bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-lg text-sm text-white font-semibold">Guardar en Mis Picks</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
-        Analizador Cuantitativo Poisson Multi-Liga — Versión con Sugerencia de Apuesta Inteligente.
+        Analizador Cuantitativo Poisson Multi-Liga — BetTracker Integrado.
     </footer>
 
-    <!-- Script de Cálculo y Sugerencias -->
+    <!-- Script Principal -->
     <script>
         let ligasDB = {
             "liga_mx": {
@@ -289,19 +413,40 @@
         };
 
         let ligaActualKey = "liga_mx";
+        let misPicks = [];
 
         function inicializarApp() {
-            const saved = localStorage.getItem('poisson_ligas_db_v4');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-                        ligasDB = parsed;
-                    }
-                } catch(e) { console.error("Error al cargar localStorage", e); }
+            const savedLigas = localStorage.getItem('poisson_ligas_db_v5');
+            if (savedLigas) {
+                try { ligasDB = JSON.parse(savedLigas); } catch(e) {}
+            }
+            const savedPicks = localStorage.getItem('poisson_mis_picks_v1');
+            if (savedPicks) {
+                try { misPicks = JSON.parse(savedPicks); } catch(e) {}
             }
             poblarSelectorLigas();
             cargarLigaSeleccionada();
+            actualizarDashboardTracker();
+        }
+
+        function cambiarVista(vista) {
+            const vAnalizador = document.getElementById('vistaAnalizador');
+            const vTracker = document.getElementById('vistaTracker');
+            const btnAnalizador = document.getElementById('btnNavAnalizador');
+            const btnTracker = document.getElementById('btnNavTracker');
+
+            if (vista === 'analizador') {
+                vAnalizador.classList.remove('hidden');
+                vTracker.classList.add('hidden');
+                btnAnalizador.className = "bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
+                btnTracker.className = "bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
+            } else {
+                vAnalizador.classList.add('hidden');
+                vTracker.classList.remove('hidden');
+                btnTracker.className = "bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
+                btnAnalizador.className = "bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
+                actualizarDashboardTracker();
+            }
         }
 
         function poblarSelectorLigas() {
@@ -371,7 +516,6 @@
 
             if(liga.equipos.length > 1) selectVisitante.selectedIndex = 1;
             actualizarInfoSelects();
-
             selectLocal.onchange = actualizarInfoSelects;
             selectVisitante.onchange = actualizarInfoSelects;
         }
@@ -410,72 +554,62 @@
                 for (let y = 0; y <= 8; y++) {
                     let pFinal = poissonPMF(x, lambdaL) * poissonPMF(y, lambdaV);
                     marcadores.push({ marcador: `${x} - ${y}`, prob: pFinal });
-
-                    if ((x + y) > 2.5) pO25 += pFinal;
-                    else pU25 += pFinal;
-
-                    if (x > 0 && y > 0) pBttsYes += pFinal;
-                    else pBttsNo += pFinal;
+                    if ((x + y) > 2.5) pO25 += pFinal; else pU25 += pFinal;
+                    if (x > 0 && y > 0) pBttsYes += pFinal; else pBttsNo += pFinal;
                 }
             }
 
             marcadores.sort((a, b) => b.prob - a.prob);
-            let sumFT = pO25 + pU25;
-            pO25 /= sumFT;
-            pU25 /= sumFT;
-
-            let sumBTTS = pBttsYes + pBttsNo;
-            pBttsYes /= sumBTTS;
-            pBttsNo /= sumBTTS;
+            let sumFT = pO25 + pU25; pO25 /= sumFT; pU25 /= sumFT;
+            let sumBTTS = pBttsYes + pBttsNo; pBttsYes /= sumBTTS; pBttsNo /= sumBTTS;
 
             return {
-                lambdaL,
-                lambdaV,
-                lambdaTotal: lambdaL + lambdaV,
+                lambdaL, lambdaV, lambdaTotal: lambdaL + lambdaV,
                 topMarcadores: marcadores.slice(0, 3),
-                mercados: {
-                    O25: pO25,
-                    U25: pU25,
-                    BTTS_YES: pBttsYes,
-                    BTTS_NO: pBttsNo
-                }
+                mercados: { O25: pO25, U25: pU25, BTTS_YES: pBttsYes, BTTS_NO: pBttsNo }
             };
         }
+
+        let datosUltimoAnalisis = null;
 
         function ejecutarAnalisis() {
             const liga = ligasDB[ligaActualKey];
             const idxL = document.getElementById('selectLocal').value;
             const idxV = document.getElementById('selectVisitante').value;
-            
             const eqL = liga.equipos[idxL];
             const eqV = liga.equipos[idxV];
+
+            if (idxL === idxV) {
+                alert("El equipo local y visitante no pueden ser el mismo.");
+                return;
+            }
 
             const avgXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0) / liga.equipos.length;
             const avgXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0) / liga.equipos.length;
             const avgGF = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF) || 1.4), 0) / liga.equipos.length;
             const avgGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA) || 1.4), 0) / liga.equipos.length;
 
-            // 1. Modelo xG
             const faL_xg = (parseFloat(eqL.xG) || 1.4) / avgXG;
             const fdV_xg = (parseFloat(eqV.xGA) || 1.4) / avgXGA;
             const faV_xg = (parseFloat(eqV.xG) || 1.4) / avgXG;
             const fdL_xg = (parseFloat(eqL.xGA) || 1.4) / avgXGA;
 
-            const lambdaL_xg = faL_xg * fdV_xg * avgXG;
-            const lambdaV_xg = faV_xg * fdL_xg * avgXG;
-            const resXg = calcularModeloPoisson(lambdaL_xg, lambdaV_xg);
+            const resXg = calcularModeloPoisson(faL_xg * fdV_xg * avgXG, faV_xg * fdL_xg * avgXG);
 
-            // 2. Modelo GF / GA
             const faL_gf = (parseFloat(eqL.GF) || 1.4) / avgGF;
             const fdV_ga = (parseFloat(eqV.GA) || 1.4) / avgGA;
             const faV_gf = (parseFloat(eqV.GF) || 1.4) / avgGF;
             const fdL_ga = (parseFloat(eqL.GA) || 1.4) / avgGA;
 
-            const lambdaL_gf = faL_gf * fdV_ga * avgGF;
-            const lambdaV_gf = faV_gf * fdL_ga * avgGF;
-            const resGf = calcularModeloPoisson(lambdaL_gf, lambdaV_gf);
+            const resGf = calcularModeloPoisson(faL_gf * fdV_ga * avgGF, faV_gf * fdL_ga * avgGF);
 
-            // Pintar Lambdas
+            datosUltimoAnalisis = {
+                liga: liga.nombre,
+                local: eqL.name,
+                visitante: eqV.name,
+                resXg, resGf
+            };
+
             document.getElementById('resXgLambdaLocal').innerText = resXg.lambdaL.toFixed(2);
             document.getElementById('resXgLambdaVisitante').innerText = resXg.lambdaV.toFixed(2);
             document.getElementById('resXgLambdaTotal').innerText = resXg.lambdaTotal.toFixed(2);
@@ -484,7 +618,6 @@
             document.getElementById('resGfLambdaVisitante').innerText = resGf.lambdaV.toFixed(2);
             document.getElementById('resGfLambdaTotal').innerText = resGf.lambdaTotal.toFixed(2);
 
-            // Marcadores Top xG
             const gridXg = document.getElementById('gridMarcadoresXg');
             gridXg.innerHTML = "";
             resXg.topMarcadores.forEach(m => {
@@ -494,7 +627,6 @@
                 gridXg.appendChild(div);
             });
 
-            // Marcadores Top GF
             const gridGf = document.getElementById('gridMarcadoresGf');
             gridGf.innerHTML = "";
             resGf.topMarcadores.forEach(m => {
@@ -504,10 +636,8 @@
                 gridGf.appendChild(div);
             });
 
-            // Análisis de Apuesta Óptima (Sugerencia Automática)
             evaluarSugerenciaApuesta(resXg, resGf);
 
-            // Tabla Mercados
             const mercadosDef = [
                 { id: "O25", nombre: "Over 2.5 Goles FT" },
                 { id: "U25", nombre: "Under 2.5 Goles FT" },
@@ -520,11 +650,9 @@
 
             mercadosDef.forEach(md => {
                 const pXg = resXg.mercados[md.id] * 100;
-                const cXg = (1 / (resXg.mercados[md.id])).toFixed(2);
+                const cXg = (1 / resXg.mercados[md.id]).toFixed(2);
                 const pGf = resGf.mercados[md.id] * 100;
-                const cGf = (1 / (resGf.mercados[md.id])).toFixed(2);
-                const diff = (pXg - pGf).toFixed(2);
-                const diffColor = diff > 0 ? "text-emerald-400" : (diff < 0 ? "text-rose-400" : "text-slate-400");
+                const cGf = (1 / resGf.mercados[md.id]).toFixed(2);
 
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/50 transition";
@@ -534,36 +662,29 @@
                     <td class="py-3 px-4 text-slate-300 font-mono">${cXg}</td>
                     <td class="py-3 px-4 text-blue-400 font-bold">${pGf.toFixed(2)}%</td>
                     <td class="py-3 px-4 text-slate-300 font-mono">${cGf}</td>
-                    <td class="py-3 px-4 font-mono font-semibold ${diffColor}">${diff > 0 ? '+' : ''}${diff}%</td>
+                    <td class="py-3 px-4">
+                        <button onclick="abrirModalPick('${md.nombre}', ${resXg.mercados[md.id]}, ${resGf.mercados[md.id]}, ${cXg})" class="bg-brand-600 hover:bg-brand-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-semibold flex items-center gap-1">
+                            ➕ Enviar Pick
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
-
-            document.getElementById('textoInterpretacion').innerHTML = `
-                <p>• <strong>Modelo xG (${eqL.name} ${resXg.lambdaL.toFixed(2)} - ${resXg.lambdaV.toFixed(2)} ${eqV.name}):</strong> Expectativa de peligro subyacente.</p>
-                <p>• <strong>Modelo Tradicional GF/GA (${eqL.name} ${resGf.lambdaL.toFixed(2)} - ${resGf.lambdaV.toFixed(2)} ${eqV.name}):</strong> Contundencia histórica real.</p>
-            `;
 
             document.getElementById('seccionResultados').classList.remove('hidden');
         }
 
         function evaluarSugerenciaApuesta(resXg, resGf) {
-            // Buscamos el mercado con mayor probabilidad y EV+ entre Over 2.5 y BTTS Sí
             let opciones = [
-                { nombre: "Over 2.5 Goles FT", prob: Math.max(resXg.mercados.O25, resXf = resGf.mercados.O25), probXg: resXg.mercados.O25, probGf: resGf.mercados.O25 },
+                { nombre: "Over 2.5 Goles FT", prob: Math.max(resXg.mercados.O25, resGf.mercados.O25), probXg: resXg.mercados.O25, probGf: resGf.mercados.O25 },
                 { nombre: "BTTS Sí (Ambos Anotan)", prob: Math.max(resXg.mercados.BTTS_YES, resGf.mercados.BTTS_YES), probXg: resXg.mercados.BTTS_YES, probGf: resGf.mercados.BTTS_YES }
             ];
-
-            // Elegir el de mayor probabilidad combinada
             let mejor = opciones.reduce((prev, curr) => (curr.prob > prev.prob) ? curr : prev);
-            
-            // Usamos la cuota justa basada en el modelo más conservador (menor probabilidad / mayor cuota) para proteger el bankroll
-            let probConservadora = Math.min(mejor.probXg, melhor = mejor.probGf);
+            let probConservadora = Math.min(mejor.probXg, mejor.probGf);
             let cuotaJusta = (1 / probConservadora).toFixed(2);
-            let cuotaMinimaRecomendada = (parseFloat(cuotaJusta) * 1.05).toFixed(2); // Añadiendo 5% de EV+
+            let cuotaMinima = (parseFloat(cuotaJusta) * 1.05).toFixed(2);
 
-            const panel = document.getElementById('panelSugerenciaApuesta');
-            panel.innerHTML = `
+            document.getElementById('panelSugerenciaApuesta').innerHTML = `
                 <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
                     <p class="text-xs text-slate-400 uppercase font-semibold">🎯 Mercado Sugerido</p>
                     <p class="text-base font-bold text-white mt-1">${mejor.nombre}</p>
@@ -571,15 +692,198 @@
                 </div>
                 <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
                     <p class="text-xs text-slate-400 uppercase font-semibold">💵 Cuota Justa / Mínima (EV+)</p>
-                    <p class="text-xl font-mono font-bold text-yellow-400 mt-1">${cuotaJusta} <span class="text-xs text-slate-400 font-normal">(Mín. ${cuotaMinimaRecomendada})</span></p>
-                    <p class="text-xs text-slate-300 mt-1">Entrar solo si la casa paga por encima de la cuota mínima.</p>
+                    <p class="text-xl font-mono font-bold text-yellow-400 mt-1">${cuotaJusta} <span class="text-xs text-slate-400 font-normal">(Mín. ${cuotaMinima})</span></p>
+                    <p class="text-xs text-slate-300 mt-1">Entrar si la bookie paga por encima de la mínima.</p>
                 </div>
-                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400 uppercase font-semibold">📈 Veredicto del Modelo</p>
-                    <p class="text-xs text-slate-200 mt-1 leading-relaxed">Ambos modelos convergen positivamente en este mercado. Existe solidez tanto en la generación de peligro (xG) como en el registro histórico.</p>
+                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                    <button onclick="abrirModalPick('${mejor.nombre}', ${mejor.probXg}, ${mejor.probGf}, ${cuotaJusta})" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-3 rounded-lg text-xs transition">
+                        📥 Enviar este Pick al Tracker
+                    </button>
                 </div>
             `;
         }
+
+        // ================= GESTIÓN DEL BETTRACKER =================
+        function abrirModalPick(mercado, probXg, probGf, cuotaSugerida) {
+            if (!datosUltimoAnalisis) return;
+            document.getElementById('pickLiga').value = datosUltimoAnalisis.liga;
+            document.getElementById('pickLocal').value = datosUltimoAnalisis.local;
+            document.getElementById('pickVisitante').value = datosUltimoAnalisis.visitante;
+            document.getElementById('pickMercado').value = mercado;
+            document.getElementById('pickProbXg').value = probXg;
+            document.getElementById('pickProbGf').value = probGf;
+
+            document.getElementById('pickLabelPartido').innerText = `${datosUltimoAnalisis.local} vs ${datosUltimoAnalisis.visitante}`;
+            document.getElementById('pickLabelMercado').innerText = mercado;
+            document.getElementById('inputCuotaBookie').value = cuotaSugerida;
+
+            document.getElementById('modalPick').classList.remove('hidden');
+        }
+
+        function cerrarModalPick() {
+            document.getElementById('modalPick').classList.add('hidden');
+        }
+
+        function confirmarEnviarPick() {
+            const nuevaApuesta = {
+                id: Date.now(),
+                liga: document.getElementById('pickLiga').value,
+                local: document.getElementById('pickLocal').value,
+                visitante: document.getElementById('pickVisitante').value,
+                mercado: document.getElementById('pickMercado').value,
+                probXg: parseFloat(document.getElementById('pickProbXg').value),
+                probGf: parseFloat(document.getElementById('pickProbGf').value),
+                cuota: parseFloat(document.getElementById('inputCuotaBookie').value) || 1.80,
+                stake: parseFloat(document.getElementById('inputStakePick').value) || 10.00,
+                resultado: 'pendiente' // pendiente, ganada, perdida
+            };
+
+            misPicks.unshift(nuevaApuesta);
+            guardarPicksStorage();
+            cerrarModalPick();
+            alert("¡Pick guardado correctamente en tu Tracker!");
+        }
+
+        function guardarPicksStorage() {
+            localStorage.setItem('poisson_mis_picks_v1', JSON.stringify(misPicks));
+        }
+
+        function actualizarEstadoPick(id, nuevoResultado) {
+            const pick = misPicks.find(p => p.id === id);
+            if (pick) {
+                pick.resultado = nuevoResultado;
+                guardarPicksStorage();
+                actualizarDashboardTracker();
+            }
+        }
+
+        function eliminarPick(id) {
+            misPicks = misPicks.filter(p => p.id !== id);
+            guardarPicksStorage();
+            actualizarDashboardTracker();
+        }
+
+        function limpiarTracker() {
+            if (confirm("¿Estás seguro de vaciar todo el historial de picks?")) {
+                misPicks = [];
+                guardarPicksStorage();
+                actualizarDashboardTracker();
+            }
+        }
+
+        function actualizarDashboardTracker() {
+            const tbody = document.getElementById('tablaTrackerBody');
+            tbody.innerHTML = "";
+
+            let totalProfit = 0;
+            let totalInvertido = 0;
+            let ganadas = 0;
+            let perdidas = 0;
+            let pendientes = 0;
+
+            let sumaCuotasGlobal = 0;
+            let sumaCuotasGanadas = 0;
+            let sumaCuotasPerdidas = 0;
+            let countGanadas = 0;
+            let countPerdidas = 0;
+            let countSettled = 0;
+
+            // Racha actual
+            let rachaTexto = "-";
+            let rachaTipo = null;
+            let rachaCount = 0;
+
+            misPicks.forEach((p, idx) => {
+                let profitPick = 0;
+                totalInvertido += p.stake;
+                sumaCuotasGlobal += p.cuota;
+
+                if (p.resultado === 'ganada') {
+                    profitPick = (p.cuota - 1) * p.stake;
+                    totalProfit += profitPick;
+                    ganadas++;
+                    countGanadas++;
+                    sumaCuotasGanadas += p.cuota;
+                    countSettled++;
+
+                    if (rachaTipo === 'G' || rachaTipo === null) { rachaTipo = 'G'; rachaCount++; }
+                } else if (p.resultado === 'perdida') {
+                    profitPick = -p.stake;
+                    totalProfit -= p.stake;
+                    perdidas++;
+                    countPerdidas++;
+                    sumaCuotasPerdidas += p.cuota;
+                    countSettled++;
+
+                    if (rachaTipo === 'P' || rachaTipo === null) { rachaTipo = 'P'; rachaCount++; }
+                } else {
+                    pendientes++;
+                }
+
+                if (rachaTypeCheckFirst(idx, p.resultado)) {
+                    // Control de racha en orden cronológico inverso
+                }
+
+                let badgeRes = "";
+                if (p.resultado === 'ganada') badgeRes = `<span class="bg-emerald-950 text-emerald-400 border border-emerald-700 px-2.5 py-1 rounded-md text-xs font-bold">Ganada</span>`;
+                else if (p.resultado === 'perdida') badgeRes = `<span class="bg-rose-950 text-rose-400 border border-rose-700 px-2.5 py-1 rounded-md text-xs font-bold">Perdida</span>`;
+                else badgeRes = `<span class="bg-amber-950 text-amber-400 border border-amber-700 px-2.5 py-1 rounded-md text-xs font-bold">Pendiente</span>`;
+
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-700/50 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-xs text-slate-400 font-semibold">${p.liga}</td>
+                    <td class="py-3 px-4 font-medium text-white">${p.local} vs ${p.visitante}</td>
+                    <td class="py-3 px-4 text-brand-400 font-semibold">${p.mercado}</td>
+                    <td class="py-3 px-4 text-xs text-slate-300">xG: ${(p.probXg*100).toFixed(0)}%<br>GF: ${(p.probGf*100).toFixed(0)}%</td>
+                    <td class="py-3 px-4 font-mono text-white">${p.cuota.toFixed(2)}</td>
+                    <td class="py-3 px-4 font-mono text-slate-300">$${p.stake.toFixed(2)}</td>
+                    <td class="py-3 px-4">${badgeRes}</td>
+                    <td class="py-3 px-4 font-mono font-bold ${profitPick > 0 ? 'text-emerald-400' : (profitPick < 0 ? 'text-rose-400' : 'text-slate-400')}">${profitPick >= 0 ? '+' : ''}$${profitPick.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-center space-x-1">
+                        <select onchange="actualizarEstadoPick(${p.id}, this.value)" class="bg-slate-900 border border-slate-700 text-xs rounded px-2 py-1 text-white">
+                            <option value="pendiente" ${p.resultado==='pendiente'?'selected':''}>Pdt</option>
+                            <option value="ganada" ${p.resultado==='ganada'?'selected':''}>Win</option>
+                            <option value="perdida" ${p.resultado==='perdida'?'selected':''}>Loss</option>
+                        </select>
+                        <button onclick="eliminarPick(${p.id})" class="text-rose-400 hover:text-rose-300 text-xs px-1">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Cálculo de Estadísticas del Dashboard
+            const roi = totalInvertido > 0 ? (totalProfit / totalInvertido) * 100 : 0;
+            const porcentajeAcierto = countSettled > 0 ? (ganadas / countSettled) * 100 : 0;
+            const cuotaMedia = misPicks.length > 0 ? sumaCuotasGlobal / misPicks.length : 0;
+            const cuotaGanadora = countGanadas > 0 ? sumaCuotasGanadas / countGanadas : 0;
+            const cuotaPerdidora = countPerdidas > 0 ? sumaCuotasPerdidas / countPerdidas : 0;
+
+            // Racha cálculo simple
+            if (misPicks.length > 0 && misPicks[0].resultado !== 'pendiente') {
+                let tipoRacha = misPicks[0].resultado;
+                let cRacha = 0;
+                for (let pick of misPicks) {
+                    if (pick.resultado === tipoRacha) cRacha++;
+                    else break;
+                }
+                rachaTexto = `${cRacha} ${tipoRacha === 'ganada' ? 'Win(s)' : 'Loss(s)'}`;
+            }
+
+            // Pintar tarjetas
+            document.getElementById('statProfit').innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
+            document.getElementById('statProfit').className = `text-2xl font-bold mt-1 ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            document.getElementById('statRoi').innerText = `${roi.toFixed(2)}%`;
+            document.getElementById('statRoi').className = `text-2xl font-bold mt-1 ${roi >= 0 ? 'text-brand-500' : 'text-rose-400'}`;
+            document.getElementById('statAcierto').innerText = `${porcentajeAcierto.toFixed(1)}%`;
+            document.getElementById('statTotalPicks').innerText = `${misPicks.length} (${ganadas}/${perdidas}/${pendientes})`;
+            document.getElementById('statCuotaMedia').innerText = cuotaMedia.toFixed(2);
+            document.getElementById('statCuotaGanadora').innerText = cuotaGanadora.toFixed(2);
+            document.getElementById('statCuotaPerdidora').innerText = cuotaPerdidora.toFixed(2);
+            document.getElementById('statRacha').innerText = rachaTexto;
+        }
+
+        function rachaTypeCheckFirst(idx, res) { return idx === 0 && res !== 'pendiente'; }
 
         function eliminarLigaActiva() {
             const liga = ligasDB[ligaActualKey];
@@ -589,7 +893,7 @@
             }
             if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
                 delete ligasDB[ligaActualKey];
-                localStorage.setItem('poisson_ligas_db_v4', JSON.stringify(ligasDB));
+                localStorage.setItem('poisson_ligas_db_v5', JSON.stringify(ligasDB));
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -603,11 +907,7 @@
         function guardarNuevaLiga() {
             const nombre = document.getElementById('inputNombreLiga').value.trim();
             const rawData = document.getElementById('inputDatosLiga').value.trim();
-
-            if (!nombre || !rawData) {
-                alert("Por favor ingresa un nombre y los datos de la liga.");
-                return;
-            }
+            if (!nombre || !rawData) { alert("Ingresa nombre y datos."); return; }
 
             const lineas = rawData.split('\n');
             let equipos = [];
@@ -635,66 +935,40 @@
 
                 if (partes.length >= 2) {
                     let nameCandidate = "";
-                    let xgCandidate = 1.40, xgaCandidate = 1.40, gfCandidate = 1.40, gaCandidate = 1.40;
-
-                    if (idxTeam !== -1 && partes[idxTeam]) {
-                        nameCandidate = partes[idxTeam];
-                    } else {
+                    if (idxTeam !== -1 && partes[idxTeam]) nameCandidate = partes[idxTeam];
+                    else {
                         let idxNombre = partes.findIndex((p, i) => isNaN(p) || (p.length > 2 && isNaN(parseFloat(p))));
                         nameCandidate = idxNombre !== -1 ? partes[idxNombre] : (partes[1] || partes[0]);
                     }
 
                     const parseVal = (idx) => (idx !== -1 && partes[idx] && !isNaN(parseFloat(partes[idx]))) ? parseFloat(partes[idx]) : null;
-
-                    let valXg = parseVal(idxXG);
-                    let valXga = parseVal(idxXGA);
-                    let valGf = parseVal(idxGF);
-                    let valGa = parseVal(idxGA);
+                    let valXg = parseVal(idxXG), valXga = parseVal(idxXGA), valGf = parseVal(idxGF), valGa = parseVal(idxGA);
 
                     let numeros = partes.map(p => parseFloat(p)).filter(v => !isNaN(v));
                     if (numeros.length > 0 && Number.isInteger(numeros[0]) && numeros[0] <= 30) numeros.shift();
 
-                    xgCandidate = valXg !== null ? valXg : (numeros[0] !== undefined ? numeros[0] : 1.40);
-                    xgaCandidate = valXga !== null ? valXga : (numeros[1] !== undefined ? numeros[1] : 1.40);
-                    gfCandidate = valGf !== null ? valGf : (numeros[2] !== undefined ? numeros[2] : xgCandidate);
-                    gaCandidate = valGa !== null ? valGa : (numeros[3] !== undefined ? numeros[3] : xgaCandidate);
+                    let xgCandidate = valXg !== null ? valXg : (numeros[0] !== undefined ? numeros[0] : 1.40);
+                    let xgaCandidate = valXga !== null ? valXga : (numeros[1] !== undefined ? numeros[1] : 1.40);
+                    let gfCandidate = valGf !== null ? valGf : (numeros[2] !== undefined ? numeros[2] : xgCandidate);
+                    let gaCandidate = valGa !== null ? valGa : (numeros[3] !== undefined ? numeros[3] : xgaCandidate);
 
                     nameCandidate = nameCandidate.replace(/^\d+[\s\.\-]+/, '').trim();
-
                     if (nameCandidate && nameCandidate !== "#") {
-                        equipos.push({
-                            id: equipos.length + 1,
-                            name: nameCandidate,
-                            xG: xgCandidate,
-                            xGA: xgaCandidate,
-                            GF: gfCandidate,
-                            GA: gaCandidate
-                        });
+                        equipos.push({ id: equipos.length + 1, name: nameCandidate, xG: xgCandidate, xGA: xgaCandidate, GF: gfCandidate, GA: gaCandidate });
                     }
                 }
             });
 
-            if (equipos.length === 0) {
-                alert("No se pudieron extraer los equipos. Asegúrate de incluir los datos formateados correctamente.");
-                return;
-            }
+            if (equipos.length === 0) { alert("No se pudieron extraer los equipos."); return; }
 
             const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            ligasDB[key] = { nombre: nombre, esBase: false, equipos: equipos };
-            
-            try {
-                localStorage.setItem('poisson_ligas_db_v4', JSON.stringify(ligasDB));
-            } catch (e) {
-                console.error("Error al guardar en localStorage", e);
-            }
+            ligasDB[key] = { nombre, esBase: false, equipos };
+            localStorage.setItem('poisson_ligas_db_v5', JSON.stringify(ligasDB));
 
             ligaActualKey = key;
             poblarSelectorLigas();
             cargarLigaSeleccionada();
             cerrarModalLiga();
-
-            document.getElementById('inputNombreLiga').value = "";
-            document.getElementById('inputDatosLiga').value = "";
         }
 
         window.onload = inicializarApp;
