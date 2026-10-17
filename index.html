@@ -107,26 +107,48 @@
         <!-- Panel de Jornada Completa (Modo Jornada) -->
         <section id="panelJornada" class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6 hidden">
             <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                📅 Análisis Masivo de Jornada Completa
+                📅 Análisis Masivo de Jornada Completa (Desduplicado)
             </h2>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Pega la jornada completa (Equipos enfrentados)</label>
-                    <textarea id="inputJornada" rows="8" placeholder="Köln 2.33 7:30am 1.00 Schalke 04&#10;Stuttgart 1.50 12:30pm 0.00 Borussia M'gladbach" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500">Köln 2.33 7:30am 1.00 Schalke 04
-Stuttgart 1.50 12:30pm 0.00 Borussia M'gladbach
-Borussia M'gladbach 0.00 9:30am 0.00 Hoffenheim
-Bayer Leverkusen 3.00 7:30am 2.00 Freiburg
-Bayern München 3.00 10:30am 0.00 RB Leipzig
-Schalke 04 1.00 7:30am 3.00 Mainz 05
-Union Berlin 1.33 7:30am 3.00 Borussia Dortmund
-Hamburger SV 1.50 7:30am 1.00 Stuttgart
-Werder Bremen 3.00 7:30am 0.50 Paderborn
-Elversberg 1.50 7:30am 1.50 Augsburg</textarea>
-                    <p class="text-xs text-slate-400 mt-1">El sistema identificará automáticamente los nombres de los equipos y buscará sus métricas en la tabla de la liga activa.</p>
+                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Pega el bloque de partidos de la jornada</label>
+                    <textarea id="inputJornada" rows="10" placeholder="Levante UD 1.33 12:00pm 1.50 Athletic Club Bilbao&#10;Getafe CF 2.00 1:00pm 0.25 Rayo Vallecano..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500">Oct 17 ~
+HomeFormFormAway
+Levante UD 1.3312:00pm
+Stats
+1.50 Athletic Club Bilbao
+Getafe CF 2.001:00pm
+Stats
+0.25 Rayo Vallecano
+Real Madrid 3.001:00pm
+Stats
+2.00 Sevilla FC
+Málaga CF 0.7510:30am
+Stats
+1.50 Real Sociedad
+Celta de Vigo 1.008:15am
+Stats
+0.67 Deportivo Alavés
+CA Osasuna 1.256:00am
+Stats
+0.00 Racing Santander
+Valencia CF 0.251:00pm
+Stats
+1.50 Athletic Club Bilbao
+Real Betis 3.0010:30am
+●Soon
+3.00 FC Barcelona
+Villarreal 1.008:15am
+●Soon
+1.25 Elche CF
+RCD Espanyol 1.006:00am
+●Started
+2.25 Atlético Madrid</textarea>
+                    <p class="text-xs text-slate-400 mt-1">El parser identificará los cruces, descartará repeticiones y calculará Poisson para cada pareja sin duplicados.</p>
                 </div>
                 <div>
                     <button onclick="ejecutarAnalisisJornada()" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 shadow-md text-sm">
-                        🚀 Pronosticar Toda la Jornada con Poisson
+                        🚀 Pronosticar Jornada Completa (Sin Duplicados)
                     </button>
                 </div>
             </div>
@@ -134,7 +156,10 @@ Elversberg 1.50 7:30am 1.50 Augsburg</textarea>
 
         <!-- Resultados de Jornada Masiva -->
         <div id="seccionResultadosJornada" class="space-y-6 hidden">
-            <h2 class="text-xl font-bold text-white">📊 Resultados del Modelo para la Jornada</h2>
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <h2 class="text-xl font-bold text-white">📊 Tabla de Pronósticos de la Jornada</h2>
+                <span id="contadorPartidosJornada" class="text-xs bg-slate-800 text-brand-500 font-mono font-bold px-3 py-1.5 rounded-lg border border-slate-700">0 Partidos Procesados</span>
+            </div>
             <div id="gridResultadosJornada" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Inyectado por JS -->
             </div>
@@ -480,7 +505,6 @@ Elversberg 1.50 7:30am 1.50 Augsburg</textarea>
             return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
         }
 
-        // FUNCIÓN CENTRAL DE CÁLCULO (Mantiene intactas las fórmulas matemáticas)
         function calcularPoissonPartido(eqL, eqV, liga) {
             const totalXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0);
             const totalXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0);
@@ -560,7 +584,6 @@ Elversberg 1.50 7:30am 1.50 Augsburg</textarea>
                 gridMarcadores.appendChild(div);
             });
 
-            // Reconstruir mercados individuales
             const mercados = [
                 { id: "O25", nombre: "Over 2.5 Goles FT", prob: res.pO25 / 100 },
                 { id: "U25", nombre: "Under 2.5 Goles FT", prob: (100 - res.pO25) / 100 },
@@ -598,7 +621,21 @@ Elversberg 1.50 7:30am 1.50 Augsburg</textarea>
             document.getElementById('seccionResultados').classList.remove('hidden');
         }
 
-        // PARSER INTELIGENTE PARA LA JORNADA COMPLETA
+        // NORMALIZACIÓN Y FUZZY MATCHING PARA EQUIPOS
+        function normalizarNombre(str) {
+            return str.toLowerCase()
+                .replace(/^(fc|ud|cf|rcd|ca|sd|cd)\s+/i, '')
+                .replace(/\s+(fc|ud|cf|rcd|ca|sd|cd)$/i, '')
+                .replace(/real\s+/i, '')
+                .replace(/deportivo\s+/i, '')
+                .replace(/athletic\s+club/i, 'athletic')
+                .replace(/atletico/i, 'atletico')
+                .replace(/atlético/i, 'atletico')
+                .replace(/[^a-z0-9]/g, '')
+                .trim();
+        }
+
+        // PARSER INTELIGENTE CON CONTROL DE DUPLICADOS Y MATCHING
         function ejecutarAnalisisJornada() {
             const liga = ligasDB[ligaActualKey];
             const texto = document.getElementById('inputJornada').value.trim();
@@ -608,52 +645,84 @@ Elversberg 1.50 7:30am 1.50 Augsburg</textarea>
             }
 
             const lineas = texto.split('\n');
-            let partidosRaw = [];
+            let parejasExtraidas = [];
 
+            // Limpieza y extracción por líneas continuas
+            let tokensTexto = [];
             lineas.forEach(linea => {
-                let limpia = linea.trim();
-                if(!limpia || limpia.startsWith("Oct") || limpia.includes("Home") || limpia.includes("Stats")) return;
-
-                // Limpiar textos sobrantes como "●Soon", "●Started", horas y cuotas sueltas para aislar nombres
-                let tokens = limpia.split(/\s+/);
-                let nombresLimpios = tokens.filter(t => isNaN(parseFloat(t)) && !t.includes("am") && !t.includes("pm") && !t.includes("●"));
+                let l = linea.trim();
+                if (!l || l.startsWith("Oct") || l.includes("Home") || l.includes("Stats") || l.startsWith("●")) return;
                 
-                if (nombresLimpios.length >= 2) {
-                    // Dividir inteligentemente la mitad izquierda como Local y derecha como Visitante
-                    let mitad = Math.floor(nombresLimpios.length / 2);
-                    let local = nombresLimpios.slice(0, mitad).join(" ");
-                    let visitante = nombresLimpios.slice(mitad).join(" ");
-                    if(local && visitante) {
-                        partidosRaw.push({ local, visitante });
+                // Remover horas (ej. 12:00pm) y palabras irrelevantes
+                l = l.replace(/\d{1,2}:\d{2}(am|pm)?/gi, '');
+                l = l.replace(/Stats|●Started|●Soon/gi, '');
+                tokensTexto.push(l);
+            });
+
+            let textoUnificado = tokensTexto.join("\n");
+            let bloques = textoUnificado.split(/\n+/);
+
+            // Reconstrucción inteligente por bloques enfrentados
+            for (let i = 0; i < bloques.length; i++) {
+                let b = bloques[i].trim();
+                if (!b) continue;
+
+                // Extraer el nombre del equipo quitando números decimales sueltos
+                let nombreL = b.replace(/[\d\.]+/g, '').trim();
+                if (i + 1 < bloques.length) {
+                    let nextB = bloques[i+1].trim();
+                    let nombreV = nextB.replace(/[\d\.]+/g, '').trim();
+
+                    if (nombreL && nombreV && nombreL !== nombreV) {
+                        parejasExtraidas.push({ localRaw: nombreL, visitanteRaw: nombreV });
                     }
                 }
-            });
+            }
 
             const gridResultadosJornada = document.getElementById('gridResultadosJornada');
             gridResultadosJornada.innerHTML = "";
 
+            let procesadosSet = new Set();
             let analizadosCount = 0;
 
-            partidosRaw.forEach(p => {
-                // Buscar equipos en la base de datos de la liga actual por coincidencia flexible
-                let eqL = liga.equipos.find(e => e.name.toLowerCase().includes(p.local.toLowerCase()) || p.local.toLowerCase().includes(e.name.toLowerCase()));
-                let eqV = liga.equipos.find(e => e.name.toLowerCase().includes(p.visitante.toLowerCase()) || p.visitante.toLowerCase().includes(e.name.toLowerCase()));
+            parejasExtraidas.forEach(p => {
+                let normL = normalizarNombre(p.localRaw);
+                let normV = normalizarNombre(p.visitanteRaw);
 
-                if (eqL && eqV) {
-                    const res = calcularPoissonPartido(eqL, eqV, liga);
+                // Buscar en la liga activa
+                let eqL = liga.equipos.find(e => {
+                    let ne = normalizarNombre(e.name);
+                    return ne.includes(normL) || normL.includes(ne);
+                });
+
+                let eqV = liga.equipos.find(e => {
+                    let ne = normalizarNombre(e.name);
+                    return ne.includes(normV) || normV.includes(ne);
+                });
+
+                if (eqL && eqV && eqL.id !== eqV.id) {
+                    // Generar Clave de Desduplicado Única
+                    let clavePartido = [eqL.id, eqV.id].sort().join('__VS__');
+                    if (procesadosSet.has(clavePartido)) return; // Evita duplicaods
+
+                    procesadosSet.add(clavePartido);
                     analizadosCount++;
 
+                    const res = calcularPoissonPartido(eqL, eqV, liga);
+
                     let card = document.createElement('div');
-                    card.className = "bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg space-y-4";
+                    card.className = "bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-lg space-y-4 hover:border-slate-600 transition";
                     card.innerHTML = `
                         <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-                            <h3 class="font-bold text-white text-base">${eqL.name} vs ${eqV.name}</h3>
+                            <h3 class="font-bold text-white text-base flex items-center gap-2">
+                                ⚽ ${eqL.name} <span class="text-xs text-slate-400">vs</span> ${eqV.name}
+                            </h3>
                             <span class="text-xs bg-slate-900 px-2.5 py-1 rounded-md text-brand-500 font-mono font-semibold">λ Total: ${res.lambdaTotal.toFixed(2)}</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 text-center text-xs">
                             <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
-                                <p class="text-slate-400">λ Local</p>
-                                <p class="font-bold text-white mt-0.5">${res.lambdaL.toFixed(2)}</p>
+                                <p class="text-slate-400">λ Local / Vis</p>
+                                <p class="font-bold text-white mt-0.5">${res.lambdaL.toFixed(2)} / ${res.lambdaV.toFixed(2)}</p>
                             </div>
                             <div class="bg-slate-900/60 p-2 rounded-lg border border-slate-700/60">
                                 <p class="text-slate-400">Over 2.5</p>
@@ -675,8 +744,10 @@ Elversberg 1.50 7:30am 1.50 Augsburg</textarea>
                 }
             });
 
+            document.getElementById('contadorPartidosJornada').innerText = `${analizadosCount} Partidos Únicos Procesados`;
+
             if(analizadosCount === 0) {
-                alert("No se pudieron emparejar los nombres con la tabla activa. Asegúrate de que los nombres de los equipos coincidan con la liga seleccionada.");
+                alert("No se pudieron emparejar los nombres con la tabla de la liga seleccionada. Verifica que la liga activa contenga a estos equipos.");
             } else {
                 document.getElementById('seccionResultadosJornada').classList.remove('hidden');
             }
