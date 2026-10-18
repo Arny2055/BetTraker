@@ -1,738 +1,418 @@
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Poisson Betting Pro - Predictor de Fútbol</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js para visualización -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Poisson Pro Analytics - EV+ Calculator</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        emerald: {
-                            400: '#34d399',
-                            500: '#10b981',
-                            600: '#059669',
-                            900: '#064e3b',
-                        },
-                        gold: {
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                        },
-                        darkBg: '#0b0f19',
-                        cardBg: '#151c2c',
-                        inputBg: '#1e293b',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-                    }
-                }
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              accent: '#10b981',
+              gold: '#f59e0b',
+              dark: '#0b0f17',
+              card: '#161e2e',
+              border: '#243044'
             }
+          }
         }
-    </script>
+      }
+    }
+  </script>
 
-    <style>
-        /* Estilos personalizados para sensación nativa de iOS en iPhone 14 */
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #0b0f19;
-            color: #f8fafc;
-            -webkit-tap-highlight-color: transparent;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        
-        /* Ocultar flechas en inputs numéricos */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none;
-            margin: 0; 
-        }
-        input[type=number] {
-            -moz-appearance: textfield;
-        }
-
-        /* Scrollbar personalizada */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0b0f19;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 9999px;
-        }
-
-        /* Resplandor Neón VIP */
-        .neon-glow-emerald {
-            box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.4);
-        }
-        .neon-glow-gold {
-            box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.3);
-        }
-        .gradient-border {
-            border: 1px solid transparent;
-            background-image: linear-gradient(#151c2c, #151c2c), linear-gradient(135deg, #10b981, #f59e0b);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-        }
-    </style>
+  <style>
+    body {
+      background-color: #0b0f17;
+      color: #f3f4f6;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glass-card {
+      background: rgba(22, 30, 46, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .gold-gradient {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+    .brand-gradient {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+    .iphone-container {
+      max-width: 390px; /* iPhone 14 Viewport Width */
+      margin: 0 auto;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-emerald-500 selection:text-white">
+<body class="antialiased pb-10">
 
-    <!-- Encabezado Pro / VIP Header -->
-    <header class="sticky top-0 z-50 bg-[#0b0f19]/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 pt-safe">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <div class="p-2 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl shadow-lg shadow-emerald-500/20">
-                    <i data-lucide="calculator" class="w-5 h-5 text-white"></i>
-                </div>
-                <div>
-                    <h1 class="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">
-                        POISSON BETTING PRO
-                    </h1>
-                    <p class="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">Modelador Predictivo VIP</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded-full">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[11px] font-bold text-emerald-300">v2.5 FT</span>
-            </div>
+  <div class="iphone-container px-4 pt-4">
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-9 h-9 rounded-xl brand-gradient flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+          <i class="fa-solid fa-calculator text-lg"></i>
         </div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight text-white leading-tight">Poisson<span class="text-blue-500">PRO</span></h1>
+          <p class="text-[10px] text-gray-400 font-medium">Modelo xG + Fair Odds EV+</p>
+        </div>
+      </div>
+      <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+        <i class="fa-solid fa-bolt mr-1"></i> Fast-Mode
+      </span>
     </header>
 
-    <!-- Contenido Principal Opciones e Inputs -->
-    <main class="max-w-md mx-auto w-full px-4 py-4 space-y-4">
+    <!-- RÁPIDO / PREAJUSTES -->
+    <div class="glass-card rounded-2xl p-3 mb-4">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs font-bold text-gray-300 flex items-center">
+          <i class="fa-solid fa-sliders text-blue-400 mr-1.5"></i> Carga Rápida de Perfiles
+        </span>
+        <span class="text-[10px] text-gray-500">1-Clic</span>
+      </div>
+      <div class="grid grid-cols-3 gap-1.5 text-xs">
+        <button onclick="loadPreset('Real Madrid', 2.10, 0.85, 'Barcelona', 1.95, 0.90)" class="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-gray-300 font-medium text-center border border-slate-700">
+          🔥 Top Match
+        </button>
+        <button onclick="loadPreset('Local Fuerte', 2.25, 0.60, 'Visita Débil', 0.70, 1.90)" class="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-gray-300 font-medium text-center border border-slate-700">
+          🏰 Dominio Local
+        </button>
+        <button onclick="loadPreset('Equipo A', 1.10, 1.20, 'Equipo B', 1.05, 1.15)" class="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-gray-300 font-medium text-center border border-slate-700">
+          🛡️ Over Under
+        </button>
+      </div>
+    </div>
 
-        <!-- Selector de Modo de Entrada (Pestañas) -->
-        <div class="bg-cardBg p-1 rounded-xl border border-slate-800 flex text-xs font-semibold">
-            <button id="btnModeXg" onclick="switchMode('xg')" class="flex-1 py-2 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-bold shadow-md">
-                <i data-lucide="shield-alert" class="w-3.5 h-3.5 inline mr-1 -mt-0.5"></i> Vía xG Favor/Contra
-            </button>
-            <button id="btnModeDirect" onclick="switchMode('direct')" class="flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
-                <i data-lucide="target" class="w-3.5 h-3.5 inline mr-1 -mt-0.5"></i> xG Directo
-            </button>
+    <!-- Formulario Principales Equipos y xG -->
+    <div class="glass-card rounded-2xl p-4 mb-4 shadow-xl">
+      
+      <!-- Equipo Local -->
+      <div class="mb-3">
+        <div class="flex justify-between items-center mb-1">
+          <label class="text-xs font-bold text-blue-400 flex items-center">
+            <i class="fa-solid fa-house text-[10px] mr-1.5"></i> Equipo Local
+          </label>
         </div>
-
-        <!-- Formulario de Entrada de Datos -->
-        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800/80 shadow-xl space-y-4">
-            
-            <!-- Nombres de Equipos -->
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Local</label>
-                    <div class="relative">
-                        <input type="text" id="homeName" value="Real Madrid" class="w-full bg-inputBg border border-slate-700/70 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Visitante</label>
-                    <div class="relative">
-                        <input type="text" id="awayName" value="Barcelona" class="w-full bg-inputBg border border-slate-700/70 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-800">
-
-            <!-- MODO 1: xG Favor / Contra -->
-            <div id="modeXgSection" class="space-y-3">
-                <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
-                    <i data-lucide="info" class="w-3.5 h-3.5 text-emerald-400"></i>
-                    Introduce xG promedio acumulado o de los últimos partidos
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <!-- Local Stats -->
-                    <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                        <span class="text-xs font-bold text-emerald-400 block border-b border-slate-800 pb-1">Local (A)</span>
-                        <div>
-                            <label class="block text-[10px] text-slate-400">xG Favor (Ataque)</label>
-                            <input type="number" id="homeXgFor" value="1.85" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-emerald-300 text-center focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-400">xG Contra (Defensa)</label>
-                            <input type="number" id="homeXgAgainst" value="0.95" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-rose-300 text-center focus:outline-none focus:border-rose-500">
-                        </div>
-                    </div>
-
-                    <!-- Away Stats -->
-                    <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                        <span class="text-xs font-bold text-emerald-400 block border-b border-slate-800 pb-1">Visitante (B)</span>
-                        <div>
-                            <label class="block text-[10px] text-slate-400">xG Favor (Ataque)</label>
-                            <input type="number" id="awayXgFor" value="1.60" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-emerald-300 text-center focus:outline-none focus:border-emerald-500">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] text-slate-400">xG Contra (Defensa)</label>
-                            <input type="number" id="awayXgAgainst" value="1.20" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-rose-300 text-center focus:outline-none focus:border-rose-500">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MODO 2: Direct Expected Goals -->
-            <div id="modeDirectSection" class="hidden space-y-3">
-                <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
-                    <i data-lucide="target" class="w-3.5 h-3.5 text-gold-400"></i>
-                    Goles Esperados Calculados Directos
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                        <label class="block text-[11px] font-bold text-slate-300 mb-1">xG Final Local</label>
-                        <input type="number" id="directHomeXg" value="1.525" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-2 text-base font-extrabold text-emerald-400 text-center focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                        <label class="block text-[11px] font-bold text-slate-300 mb-1">xG Final Visitante</label>
-                        <input type="number" id="directAwayXg" value="1.275" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-2 text-base font-extrabold text-emerald-400 text-center focus:outline-none focus:border-emerald-500">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Botón de Calcular -->
-            <button onclick="calculatePoisson()" class="w-full py-3 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                <i data-lucide="zap" class="w-4 h-4 fill-slate-950"></i> CALCULAR PROBABILIDADES
-            </button>
-        </div>
-
-        <!-- MUESTRA DE GOLES ESPERADOS (LAMBDAS) -->
-        <div class="bg-gradient-to-r from-slate-900 via-cardBg to-slate-900 rounded-xl p-3 border border-slate-800 flex items-center justify-between">
-            <div class="text-center flex-1">
-                <p class="text-[10px] uppercase font-bold text-slate-400" id="labelHomeLambda">Exp. Goles Local</p>
-                <p class="text-lg font-black text-emerald-400" id="valHomeLambda">1.525</p>
-            </div>
-            <div class="h-8 w-px bg-slate-800"></div>
-            <div class="text-center flex-1">
-                <p class="text-[10px] uppercase font-bold text-slate-400" id="labelAwayLambda">Exp. Goles Visitante</p>
-                <p class="text-lg font-black text-emerald-400" id="valAwayLambda">1.275</p>
-            </div>
-        </div>
-
-        <!-- RESULTADOS DESTACADOS GANADORES -->
+        <input type="text" id="homeName" placeholder="Ej: Real Madrid" value="Real Madrid" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-medium mb-2">
         
-        <!-- 1. OVER / UNDER 2.5 GOLES -->
-        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3 relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
-            
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="flame" class="w-4 h-4 text-emerald-400"></i>
-                    <h2 class="font-extrabold text-sm text-white">Mercado Total de Goles (Over / Under 2.5)</h2>
-                </div>
-                <span class="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Clave</span>
-            </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-[10px] text-gray-400 font-semibold block mb-0.5">xG a Favor (GF)</span>
+            <input type="number" step="0.01" id="homeXgFavor" value="1.85" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-bold text-emerald-400 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <span class="text-[10px] text-gray-400 font-semibold block mb-0.5">xG en Contra (GC)</span>
+            <input type="number" step="0.01" id="homeXgContra" value="0.95" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-bold text-rose-400 focus:outline-none focus:border-rose-500">
+          </div>
+        </div>
+      </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <!-- Over 2.5 -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-emerald-500/30 neon-glow-emerald">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-xs font-black text-white">OVER 2.5 FT</span>
-                        <span class="text-[10px] text-slate-400">Goles &gt; 2.5</span>
-                    </div>
-                    <div class="flex items-baseline justify-between mt-1">
-                        <span class="text-2xl font-black text-emerald-400" id="pctOver25">55.4%</span>
-                        <div class="text-right">
-                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
-                            <span class="text-xs font-black text-gold-400" id="oddsOver25">@1.80</span>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div id="barOver25" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 55.4%"></div>
-                    </div>
-                </div>
+      <hr class="border-slate-800 my-3">
 
-                <!-- Under 2.5 -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-xs font-black text-slate-300">UNDER 2.5 FT</span>
-                        <span class="text-[10px] text-slate-400">Goles &lt; 2.5</span>
-                    </div>
-                    <div class="flex items-baseline justify-between mt-1">
-                        <span class="text-2xl font-black text-slate-300" id="pctUnder25">44.6%</span>
-                        <div class="text-right">
-                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
-                            <span class="text-xs font-black text-slate-300" id="oddsUnder25">@2.24</span>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div id="barUnder25" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 44.6%"></div>
-                    </div>
-                </div>
-            </div>
+      <!-- Equipo Visitante -->
+      <div class="mb-4">
+        <div class="flex justify-between items-center mb-1">
+          <label class="text-xs font-bold text-amber-400 flex items-center">
+            <i class="fa-solid fa-plane text-[10px] mr-1.5"></i> Equipo Visitante
+          </label>
+        </div>
+        <input type="text" id="awayName" placeholder="Ej: Barcelona" value="Barcelona" class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 font-medium mb-2">
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <span class="text-[10px] text-gray-400 font-semibold block mb-0.5">xG a Favor (GF)</span>
+            <input type="number" step="0.01" id="awayXgFavor" value="1.60" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-bold text-emerald-400 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <span class="text-[10px] text-gray-400 font-semibold block mb-0.5">xG en Contra (GC)</span>
+            <input type="number" step="0.01" id="awayXgContra" value="1.10" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm font-bold text-rose-400 focus:outline-none focus:border-rose-500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones Acción -->
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="clearFields()" class="col-span-1 bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center transition border border-slate-700 active:scale-95">
+          <i class="fa-solid fa-trash-can mr-1.5"></i> Limpiar
+        </button>
+        <button onclick="calculatePoisson()" class="col-span-2 brand-gradient hover:opacity-90 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs shadow-lg shadow-blue-500/20 flex items-center justify-center transition active:scale-95">
+          <i class="fa-solid fa-bolt mr-1.5 text-amber-300"></i> Calcular Poisson
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Resultados Principales -->
+    <div id="resultsArea">
+      
+      <!-- Promedio de Goles Estimado -->
+      <div class="glass-card rounded-2xl p-3 mb-4 flex justify-around items-center text-center">
+        <div>
+          <span class="text-[10px] text-gray-400 font-bold uppercase block">Goles Exp. Local</span>
+          <span id="expGolesHome" class="text-lg font-black text-blue-400">0.00</span>
+        </div>
+        <div class="text-gray-600 font-bold text-sm">vs</div>
+        <div>
+          <span class="text-[10px] text-gray-400 font-bold uppercase block">Goles Exp. Visita</span>
+          <span id="expGolesAway" class="text-lg font-black text-amber-400">0.00</span>
+        </div>
+        <div class="border-l border-slate-800 pl-3">
+          <span class="text-[10px] text-gray-400 font-bold uppercase block">Total Partido</span>
+          <span id="expGolesTotal" class="text-lg font-black text-emerald-400">0.00</span>
+        </div>
+      </div>
+
+      <!-- Tarjetas de Probabilidad Clave -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        
+        <!-- Over 2.5 FT -->
+        <div class="glass-card rounded-2xl p-3 border-l-4 border-blue-500">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-bold text-gray-200">Over 2.5 FT</span>
+            <i class="fa-solid fa-chart-line text-blue-400 text-xs"></i>
+          </div>
+          <div class="flex items-baseline justify-between">
+            <span id="probOver25" class="text-xl font-black text-white">0%</span>
+            <span class="text-[10px] text-gray-400 font-semibold">Cuota Justa: <strong id="fairOver25" class="text-blue-400">@0.00</strong></span>
+          </div>
+          <!-- Mini Progress Bar -->
+          <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+            <div id="barOver25" class="bg-blue-500 h-full rounded-full" style="width: 0%"></div>
+          </div>
         </div>
 
-        <!-- 2. BTTS (AMBOS EQUIPOS ANOTAN) -->
-        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="arrow-left-right" class="w-4 h-4 text-gold-400"></i>
-                    <h2 class="font-extrabold text-sm text-white">Ambos Equipos Anotan (BTTS)</h2>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <!-- BTTS YES -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-gold-500/30 neon-glow-gold">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-xs font-black text-white">BTTS SÍ</span>
-                        <span class="text-[10px] text-slate-400">Ambos marcan</span>
-                    </div>
-                    <div class="flex items-baseline justify-between mt-1">
-                        <span class="text-2xl font-black text-gold-400" id="pctBttsYes">56.2%</span>
-                        <div class="text-right">
-                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
-                            <span class="text-xs font-black text-gold-400" id="oddsBttsYes">@1.78</span>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div id="barBttsYes" class="bg-gold-400 h-full rounded-full transition-all duration-500" style="width: 56.2%"></div>
-                    </div>
-                </div>
-
-                <!-- BTTS NO -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-xs font-black text-slate-300">BTTS NO</span>
-                        <span class="text-[10px] text-slate-400">Al menos 0-0</span>
-                    </div>
-                    <div class="flex items-baseline justify-between mt-1">
-                        <span class="text-2xl font-black text-slate-300" id="pctBttsNo">43.8%</span>
-                        <div class="text-right">
-                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
-                            <span class="text-xs font-black text-slate-300" id="oddsBttsNo">@2.28</span>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                        <div id="barBttsNo" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 43.8%"></div>
-                    </div>
-                </div>
-            </div>
+        <!-- BTTS Yes FT -->
+        <div class="glass-card rounded-2xl p-3 border-l-4 border-emerald-500">
+          <div class="flex justify-between items-center mb-1">
+            <span class="text-xs font-bold text-gray-200">BTTS Sí (Ambos)</span>
+            <i class="fa-solid fa-arrows-retweet text-emerald-400 text-xs"></i>
+          </div>
+          <div class="flex items-baseline justify-between">
+            <span id="probBtts" class="text-xl font-black text-white">0%</span>
+            <span class="text-[10px] text-gray-400 font-semibold">Cuota Justa: <strong id="fairBtts" class="text-emerald-400">@0.00</strong></span>
+          </div>
+          <!-- Mini Progress Bar -->
+          <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+            <div id="barBtts" class="bg-emerald-500 h-full rounded-full" style="width: 0%"></div>
+          </div>
         </div>
 
-        <!-- 3. TOP 3 MARCADORES CORRECTOS -->
-        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="trophy" class="w-4 h-4 text-emerald-400"></i>
-                    <h2 class="font-extrabold text-sm text-white">Top 3 Marcadores Correctos</h2>
-                </div>
-                <span class="text-[10px] font-bold text-slate-400">Más Probables</span>
-            </div>
+      </div>
 
-            <div class="space-y-2" id="topScoresContainer">
-                <!-- Dinámico via JS -->
-            </div>
+      <!-- Top 3 Marcadores Exactos -->
+      <div class="glass-card rounded-2xl p-4 mb-4">
+        <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center">
+          <i class="fa-solid fa-trophy text-amber-400 mr-2"></i> Top 3 Marcadores Exactos
+        </h3>
+        <div class="grid grid-cols-3 gap-2" id="topScoresContainer">
+          <!-- Dinámico -->
         </div>
+      </div>
 
-        <!-- 4. MERCADO 1X2 (VICTORIA LOCAL / EMPATE / VISITANTE) -->
-        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i>
-                    <h2 class="font-extrabold text-sm text-white">Mercado 1X2 Principal</h2>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase truncate" id="name1x2Home">Local</p>
-                    <p class="text-lg font-black text-emerald-400 my-0.5" id="pct1x2Home">42.1%</p>
-                    <p class="text-[10px] font-bold text-gold-400" id="odds1x2Home">@2.38</p>
-                </div>
-                <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase">Empate (X)</p>
-                    <p class="text-lg font-black text-slate-200 my-0.5" id="pct1x2Draw">26.5%</p>
-                    <p class="text-[10px] font-bold text-slate-300" id="odds1x2Draw">@3.77</p>
-                </div>
-                <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase truncate" id="name1x2Away">Visitante</p>
-                    <p class="text-lg font-black text-rose-400 my-0.5" id="pct1x2Away">31.4%</p>
-                    <p class="text-[10px] font-bold text-gold-400" id="odds1x2Away">@3.18</p>
-                </div>
-            </div>
+      <!-- Probabilidades 1X2 -->
+      <div class="glass-card rounded-2xl p-4 mb-4">
+        <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-3 flex items-center">
+          <i class="fa-solid fa-scale-balanced text-purple-400 mr-2"></i> Mercado 1X2 (Cuotas Justas)
+        </h3>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-gray-400 font-bold block mb-1">1 (Local)</span>
+            <span id="prob1" class="text-sm font-extrabold text-blue-400 block">0%</span>
+            <span id="fair1" class="text-[10px] text-gray-400 font-medium">@0.00</span>
+          </div>
+          <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-gray-400 font-bold block mb-1">X (Empate)</span>
+            <span id="probX" class="text-sm font-extrabold text-gray-300 block">0%</span>
+            <span id="fairX" class="text-[10px] text-gray-400 font-medium">@0.00</span>
+          </div>
+          <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+            <span class="text-[10px] text-gray-400 font-bold block mb-1">2 (Visita)</span>
+            <span id="prob2" class="text-sm font-extrabold text-amber-400 block">0%</span>
+            <span id="fair2" class="text-[10px] text-gray-400 font-medium">@0.00</span>
+          </div>
         </div>
+      </div>
 
-        <!-- MATRIZ DE MARCADORES INTERACTIVA (DESPLEGABLE / TABLA) -->
-        <details class="bg-cardBg rounded-2xl border border-slate-800 overflow-hidden group">
-            <summary class="p-4 cursor-pointer flex items-center justify-between font-extrabold text-sm text-white select-none">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="grid" class="w-4 h-4 text-emerald-400"></i>
-                    <span>Matriz de Marcadores Exactos (0 - 5)</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
-            </summary>
-            <div class="p-4 pt-0 overflow-x-auto">
-                <p class="text-[10px] text-slate-400 mb-2">Filas: Goles Local | Columnas: Goles Visitante</p>
-                <div class="min-w-[300px]">
-                    <table class="w-full text-[11px] text-center border-collapse">
-                        <thead>
-                            <tr id="matrixHeader" class="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
-                                <th class="p-1">L \ V</th>
-                                <th class="p-1">0</th>
-                                <th class="p-1">1</th>
-                                <th class="p-1">2</th>
-                                <th class="p-1">3</th>
-                                <th class="p-1">4</th>
-                                <th class="p-1">5+</th>
-                            </tr>
-                        </thead>
-                        <tbody id="matrixBody" class="divide-y divide-slate-800/50">
-                            <!-- JS Inject -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </details>
-
-        <!-- GRÁFICO DISTRIBUCIÓN DE GOLES DE CADA EQUIPO -->
-        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-400"></i>
-                    <h2 class="font-extrabold text-sm text-white">Probabilidad de Goles Exactos</h2>
-                </div>
-            </div>
-            <div class="h-48 w-full">
-                <canvas id="goalsChart"></canvas>
-            </div>
+      <!-- Gráficos -->
+      <div class="glass-card rounded-2xl p-4 mb-6">
+        <h3 class="text-xs font-bold text-gray-300 uppercase tracking-wider mb-2 flex items-center">
+          <i class="fa-solid fa-chart-simple text-blue-400 mr-2"></i> Matriz Goles Esperados
+        </h3>
+        <div class="h-44 w-full">
+          <canvas id="poissonChart"></canvas>
         </div>
+      </div>
 
-    </main>
+    </div>
 
-    <!-- Footer -->
-    <footer class="max-w-md mx-auto w-full text-center py-4 px-4 border-t border-slate-800/60 text-slate-500 text-[11px] space-y-1">
-        <p class="font-semibold text-slate-400">Poisson Betting Pro - Herramienta Estadísticas de Fútbol</p>
-        <p>Las cuotas justas son referencias probabilísticas teóricas (sin margen de casas de apuestas).</p>
-    </footer>
+  </div>
 
-    <!-- LÓGICA JAVASCRIPT DE POISSON -->
-    <script>
-        // Inicializar Iconos de Lucide
-        lucide.createIcons();
+  <script>
+    // Factorial
+    function factorial(n) {
+      if (n === 0 || n === 1) return 1;
+      let res = 1;
+      for (let i = 2; i <= n; i++) res *= i;
+      return res;
+    }
 
-        let currentMode = 'xg';
-        let chartInstance = null;
+    // Fórmula Poisson
+    function poisson(k, lambda) {
+      return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+    }
 
-        // Función matemática para Factorial
-        function factorial(n) {
-            if (n === 0 || n === 1) return 1;
-            let res = 1;
-            for (let i = 2; i <= n; i++) res *= i;
-            return res;
+    let chartInstance = null;
+
+    function clearFields() {
+      document.getElementById('homeName').value = '';
+      document.getElementById('homeXgFavor').value = '';
+      document.getElementById('homeXgContra').value = '';
+      document.getElementById('awayName').value = '';
+      document.getElementById('awayXgFavor').value = '';
+      document.getElementById('awayXgContra').value = '';
+      calculatePoisson();
+    }
+
+    function loadPreset(hName, hGF, hGC, aName, aGF, aGC) {
+      document.getElementById('homeName').value = hName;
+      document.getElementById('homeXgFavor').value = hGF;
+      document.getElementById('homeXgContra').value = hGC;
+      document.getElementById('awayName').value = aName;
+      document.getElementById('awayXgFavor').value = aGF;
+      document.getElementById('awayXgContra').value = aGC;
+      calculatePoisson();
+    }
+
+    function calculatePoisson() {
+      const hGF = parseFloat(document.getElementById('homeXgFavor').value) || 0;
+      const hGC = parseFloat(document.getElementById('homeXgContra').value) || 0;
+      const aGF = parseFloat(document.getElementById('awayXgFavor').value) || 0;
+      const aGC = parseFloat(document.getElementById('awayXgContra').value) || 0;
+
+      // Expectativa de goles
+      const lambdaHome = (hGF + aGC) / 2;
+      const lambdaAway = (aGF + hGC) / 2;
+
+      document.getElementById('expGolesHome').innerText = lambdaHome.toFixed(2);
+      document.getElementById('expGolesAway').innerText = lambdaAway.toFixed(2);
+      document.getElementById('expGolesTotal').innerText = (lambdaHome + lambdaAway).toFixed(2);
+
+      let pOver25 = 0;
+      let pBtts = 0;
+      let p1 = 0, pX = 0, p2 = 0;
+      let scoresMatrix = [];
+
+      for (let h = 0; h <= 6; h++) {
+        let pH = poisson(h, lambdaHome);
+        for (let a = 0; a <= 6; a++) {
+          let pA = poisson(a, lambdaAway);
+          let pProb = pH * pA;
+
+          scoresMatrix.push({ score: `${h} - ${a}`, prob: pProb, h, a });
+
+          if (h + a > 2.5) pOver25 += pProb;
+          if (h > 0 && a > 0) pBtts += pProb;
+
+          if (h > a) p1 += pProb;
+          else if (h === a) pX += pProb;
+          else p2 += pProb;
         }
+      }
 
-        // Función Distribución de Poisson: P(k; lambda) = (lambda^k * e^-lambda) / k!
-        function poissonProbability(k, lambda) {
-            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+      // Ordenar Marcadores por probabilidad
+      scoresMatrix.sort((a, b) => b.prob - a.prob);
+
+      // Render Over 2.5
+      document.getElementById('probOver25').innerText = (pOver25 * 100).toFixed(1) + '%';
+      document.getElementById('fairOver25').innerText = '@' + (pOver25 > 0 ? (1 / pOver25).toFixed(2) : '0.00');
+      document.getElementById('barOver25').style.width = (pOver25 * 100) + '%';
+
+      // Render BTTS
+      document.getElementById('probBtts').innerText = (pBtts * 100).toFixed(1) + '%';
+      document.getElementById('fairBtts').innerText = '@' + (pBtts > 0 ? (1 / pBtts).toFixed(2) : '0.00');
+      document.getElementById('barBtts').style.width = (pBtts * 100) + '%';
+
+      // Render 1X2
+      document.getElementById('prob1').innerText = (p1 * 100).toFixed(1) + '%';
+      document.getElementById('fair1').innerText = '@' + (p1 > 0 ? (1 / p1).toFixed(2) : '0.00');
+      document.getElementById('probX').innerText = (pX * 100).toFixed(1) + '%';
+      document.getElementById('fairX').innerText = '@' + (pX > 0 ? (1 / pX).toFixed(2) : '0.00');
+      document.getElementById('prob2').innerText = (p2 * 100).toFixed(1) + '%';
+      document.getElementById('fair2').innerText = '@' + (p2 > 0 ? (1 / p2).toFixed(2) : '0.00');
+
+      // Top 3 Marcadores
+      const topContainer = document.getElementById('topScoresContainer');
+      topContainer.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        let item = scoresMatrix[i];
+        let pct = (item.prob * 100).toFixed(1);
+        let odds = (1 / item.prob).toFixed(2);
+        topContainer.innerHTML += `
+          <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+            <span class="text-xs font-black text-amber-400 block">${item.score}</span>
+            <span class="text-[11px] font-bold text-white block">${pct}%</span>
+            <span class="text-[9px] text-gray-400">@${odds}</span>
+          </div>
+        `;
+      }
+
+      renderChart(lambdaHome, lambdaAway);
+    }
+
+    function renderChart(lH, lA) {
+      const ctx = document.getElementById('poissonChart').getContext('2d');
+      const labels = ['0 Goles', '1 Gol', '2 Goles', '3 Goles', '4+ Goles'];
+      
+      const dataH = [0,1,2,3,4].map(k => (poisson(k, lH) * 100).toFixed(1));
+      const dataA = [0,1,2,3,4].map(k => (poisson(k, lA) * 100).toFixed(1));
+
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Local', data: dataH, backgroundColor: '#3b82f6', borderRadius: 6 },
+            { label: 'Visita', data: dataA, backgroundColor: '#f59e0b', borderRadius: 6 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#9ca3af', font: { size: 10 } } }
+          },
+          scales: {
+            x: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#6b7280', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
         }
+      });
+    }
 
-        // Formatear Cuota Justa
-        function formatOdds(probability) {
-            if (probability <= 0) return '@999.00';
-            const odds = 1 / probability;
-            return '@' + odds.toFixed(2);
-        }
-
-        // Formatear Porcentaje
-        function formatPct(prob) {
-            return (prob * 100).toFixed(1) + '%';
-        }
-
-        // Cambiar Modo de Entrada
-        function switchMode(mode) {
-            currentMode = mode;
-            const btnXg = document.getElementById('btnModeXg');
-            const btnDirect = document.getElementById('btnModeDirect');
-            const sectionXg = document.getElementById('modeXgSection');
-            const sectionDirect = document.getElementById('modeDirectSection');
-
-            if (mode === 'xg') {
-                btnXg.className = "flex-1 py-2 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-bold shadow-md";
-                btnDirect.className = "flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
-                sectionXg.classList.remove('hidden');
-                sectionDirect.classList.add('hidden');
-            } else {
-                btnDirect.className = "flex-1 py-2 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-bold shadow-md";
-                btnXg.className = "flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
-                sectionDirect.classList.remove('hidden');
-                sectionXg.classList.add('hidden');
-            }
-            calculatePoisson();
-        }
-
-        // Cálculo Principal
-        function calculatePoisson() {
-            const homeName = document.getElementById('homeName').value || 'Local';
-            const awayName = document.getElementById('awayName').value || 'Visitante';
-
-            let homeLambda = 0;
-            let awayLambda = 0;
-
-            if (currentMode === 'xg') {
-                const homeXgFor = parseFloat(document.getElementById('homeXgFor').value) || 0;
-                const homeXgAgainst = parseFloat(document.getElementById('homeXgAgainst').value) || 0;
-                const awayXgFor = parseFloat(document.getElementById('awayXgFor').value) || 0;
-                const awayXgAgainst = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
-
-                // Fórmula de goles esperados combinando fuerza ofensiva/defensiva
-                homeLambda = (homeXgFor + awayXgAgainst) / 2;
-                awayLambda = (awayXgFor + homeXgAgainst) / 2;
-            } else {
-                homeLambda = parseFloat(document.getElementById('directHomeXg').value) || 0;
-                awayLambda = parseFloat(document.getElementById('directAwayXg').value) || 0;
-            }
-
-            // Actualizar etiquetas de goles esperados
-            document.getElementById('labelHomeLambda').innerText = `Exp. Goles ${homeName}`;
-            document.getElementById('labelAwayLambda').innerText = `Exp. Goles ${awayName}`;
-            document.getElementById('valHomeLambda').innerText = homeLambda.toFixed(3);
-            document.getElementById('valAwayLambda').innerText = awayLambda.toFixed(3);
-
-            // Calcular Probabilidades de Goles (0 a 5)
-            const maxGoals = 5;
-            const homeProbs = [];
-            const awayProbs = [];
-
-            let sumHome = 0;
-            let sumAway = 0;
-
-            for (let i = 0; i < maxGoals; i++) {
-                const pHome = poissonProbability(i, homeLambda);
-                const pAway = poissonProbability(i, awayLambda);
-                homeProbs.push(pHome);
-                awayProbs.push(pAway);
-                sumHome += pHome;
-                sumAway += pAway;
-            }
-
-            // El índice 5 representa "5 o más goles"
-            homeProbs.push(Math.max(0, 1 - sumHome));
-            awayProbs.push(Math.max(0, 1 - sumAway));
-
-            // Generar Matriz de Marcadores Correctos
-            const matrix = [];
-            let probHomeWin = 0;
-            let probDraw = 0;
-            let probAwayWin = 0;
-
-            let probOver25 = 0;
-            let probUnder25 = 0;
-
-            let probBttsYes = 0;
-            let probBttsNo = 0;
-
-            const allScores = [];
-
-            for (let h = 0; h <= 5; h++) {
-                matrix[h] = [];
-                for (let a = 0; a <= 5; a++) {
-                    const prob = homeProbs[h] * awayProbs[a];
-                    matrix[h][a] = prob;
-
-                    // 1X2
-                    if (h > a) probHomeWin += prob;
-                    else if (h === a) probDraw += prob;
-                    else probAwayWin += prob;
-
-                    // Over / Under 2.5
-                    if (h + a > 2.5) probOver25 += prob;
-                    else probUnder25 += prob;
-
-                    // BTTS
-                    if (h > 0 && a > 0) probBttsYes += prob;
-                    else probBttsNo += prob;
-
-                    allScores.push({
-                        score: `${h} - ${a}`,
-                        prob: prob
-                    });
-                }
-            }
-
-            // Ordenar marcadores más probables
-            allScores.sort((a, b) => b.prob - a.prob);
-            const top3Scores = allScores.slice(0, 3);
-
-            // Actualizar UI Over 2.5 / Under 2.5
-            document.getElementById('pctOver25').innerText = formatPct(probOver25);
-            document.getElementById('oddsOver25').innerText = formatOdds(probOver25);
-            document.getElementById('barOver25').style.width = (probOver25 * 100) + '%';
-
-            document.getElementById('pctUnder25').innerText = formatPct(probUnder25);
-            document.getElementById('oddsUnder25').innerText = formatOdds(probUnder25);
-            document.getElementById('barUnder25').style.width = (probUnder25 * 100) + '%';
-
-            // Actualizar UI BTTS
-            document.getElementById('pctBttsYes').innerText = formatPct(probBttsYes);
-            document.getElementById('oddsBttsYes').innerText = formatOdds(probBttsYes);
-            document.getElementById('barBttsYes').style.width = (probBttsYes * 100) + '%';
-
-            document.getElementById('pctBttsNo').innerText = formatPct(probBttsNo);
-            document.getElementById('oddsBttsNo').innerText = formatOdds(probBttsNo);
-            document.getElementById('barBttsNo').style.width = (probBttsNo * 100) + '%';
-
-            // Actualizar TOP 3 Marcadores
-            const topContainer = document.getElementById('topScoresContainer');
-            topContainer.innerHTML = '';
-
-            top3Scores.forEach((item, index) => {
-                const rankColors = [
-                    'from-amber-500/20 to-amber-900/10 border-amber-500/40 text-amber-400',
-                    'from-slate-400/20 to-slate-800/10 border-slate-400/40 text-slate-300',
-                    'from-amber-700/20 to-stone-900/10 border-amber-800/40 text-amber-600'
-                ];
-                const badgeColors = ['bg-amber-500 text-slate-950', 'bg-slate-400 text-slate-950', 'bg-amber-700 text-white'];
-
-                const scoreEl = document.createElement('div');
-                scoreEl.className = `flex items-center justify-between p-2.5 rounded-xl border bg-gradient-to-r ${rankColors[index]}`;
-                scoreEl.innerHTML = `
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-5 h-5 rounded-full ${badgeColors[index]} text-[10px] font-black flex items-center justify-center">#${index + 1}</span>
-                        <span class="text-base font-black tracking-widest text-white">${item.score}</span>
-                    </div>
-                    <div class="text-right flex items-center gap-3">
-                        <div>
-                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Probabilidad</span>
-                            <span class="text-sm font-black text-white">${formatPct(item.prob)}</span>
-                        </div>
-                        <div class="pl-2 border-l border-slate-700">
-                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
-                            <span class="text-sm font-black text-gold-400">${formatOdds(item.prob)}</span>
-                        </div>
-                    </div>
-                `;
-                topContainer.appendChild(scoreEl);
-            });
-
-            // Actualizar 1X2
-            document.getElementById('name1x2Home').innerText = homeName;
-            document.getElementById('pct1x2Home').innerText = formatPct(probHomeWin);
-            document.getElementById('odds1x2Home').innerText = formatOdds(probHomeWin);
-
-            document.getElementById('pct1x2Draw').innerText = formatPct(probDraw);
-            document.getElementById('odds1x2Draw').innerText = formatOdds(probDraw);
-
-            document.getElementById('name1x2Away').innerText = awayName;
-            document.getElementById('pct1x2Away').innerText = formatPct(probAwayWin);
-            document.getElementById('odds1x2Away').innerText = formatOdds(probAwayWin);
-
-            // Renderizar Matriz HTML
-            renderMatrix(matrix);
-
-            // Renderizar Gráfica Chart.js
-            renderChart(homeName, awayName, homeProbs, awayProbs);
-        }
-
-        // Renderizar Tabla de Matriz de Marcadores
-        function renderMatrix(matrix) {
-            const body = document.getElementById('matrixBody');
-            body.innerHTML = '';
-
-            for (let h = 0; h <= 5; h++) {
-                const tr = document.createElement('tr');
-                let rowHtml = `<td class="p-1.5 font-bold text-slate-400 bg-slate-900">${h === 5 ? '5+' : h}</td>`;
-                
-                for (let a = 0; a <= 5; a++) {
-                    const val = matrix[h][a];
-                    const pct = (val * 100).toFixed(1);
-                    
-                    // Colorear ligeramente celdas de alta probabilidad
-                    let bgStyle = 'bg-slate-900/40 text-slate-300';
-                    if (val > 0.10) bgStyle = 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40';
-                    else if (val > 0.05) bgStyle = 'bg-emerald-950/40 text-emerald-400';
-
-                    rowHtml += `<td class="p-1.5 ${bgStyle}">${pct}%</td>`;
-                }
-                tr.innerHTML = rowHtml;
-                body.appendChild(tr);
-            }
-        }
-
-        // Renderizar Gráfica
-        function renderChart(homeName, awayName, homeProbs, awayProbs) {
-            const ctx = document.getElementById('goalsChart').getContext('2d');
-
-            const labels = ['0 Goles', '1 Gol', '2 Goles', '3 Goles', '4 Goles', '5+ Goles'];
-
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: homeName,
-                            data: homeProbs.map(p => (p * 100).toFixed(1)),
-                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
-                            borderColor: '#10b981',
-                            borderWidth: 1,
-                            borderRadius: 6,
-                        },
-                        {
-                            label: awayName,
-                            data: awayProbs.map(p => (p * 100).toFixed(1)),
-                            backgroundColor: 'rgba(245, 158, 11, 0.85)',
-                            borderColor: '#f59e0b',
-                            borderWidth: 1,
-                            borderRadius: 6,
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#94a3b8',
-                                font: { family: 'Inter', size: 10, weight: 'bold' }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw}%`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: '#64748b', font: { size: 9 } },
-                            grid: { display: false }
-                        },
-                        y: {
-                            ticks: { 
-                                color: '#64748b', 
-                                font: { size: 9 },
-                                callback: function(value) { return value + '%'; }
-                            },
-                            grid: { color: '#1e293b' }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Ejecutar cálculo automático al cargar
-        window.addEventListener('DOMContentLoaded', () => {
-            calculatePoisson();
-        });
-    </script>
+    // Inicializar al cargar
+    window.onload = calculatePoisson;
+  </script>
 </body>
 </html>
