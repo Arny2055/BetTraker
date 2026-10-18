@@ -325,11 +325,11 @@
             <div class="space-y-3 text-sm">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre de la Liga</label>
-                    <input type="text" id="inputNombreLiga" placeholder="Ej. La Liga España..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    <input type="text" id="inputNombreLiga" placeholder="Ej. Brasileirao..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos</label>
-                    <textarea id="inputDatosLiga" rows="8" placeholder="Equipo xG xGA GF GA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Soporta formato xG For / Against o Overall)</label>
+                    <textarea id="inputDatosLiga" rows="8" placeholder="Pega aquí tus datos de xG, xGA, GF y GA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
@@ -416,7 +416,7 @@
         let misPicks = [];
 
         function inicializarApp() {
-            const savedLigas = localStorage.getItem('poisson_ligas_db_v5');
+            const savedLigas = localStorage.getItem('poisson_ligas_db_v6');
             if (savedLigas) {
                 try { ligasDB = JSON.parse(savedLigas); } catch(e) {}
             }
@@ -735,7 +735,7 @@
                 probGf: parseFloat(document.getElementById('pickProbGf').value),
                 cuota: parseFloat(document.getElementById('inputCuotaBookie').value) || 1.80,
                 stake: parseFloat(document.getElementById('inputStakePick').value) || 10.00,
-                resultado: 'pendiente' // pendiente, ganada, perdida
+                resultado: 'pendiente'
             };
 
             misPicks.unshift(nuevaApuesta);
@@ -788,10 +788,7 @@
             let countPerdidas = 0;
             let countSettled = 0;
 
-            // Racha actual
             let rachaTexto = "-";
-            let rachaTipo = null;
-            let rachaCount = 0;
 
             misPicks.forEach((p, idx) => {
                 let profitPick = 0;
@@ -805,8 +802,6 @@
                     countGanadas++;
                     sumaCuotasGanadas += p.cuota;
                     countSettled++;
-
-                    if (rachaTipo === 'G' || rachaTipo === null) { rachaTipo = 'G'; rachaCount++; }
                 } else if (p.resultado === 'perdida') {
                     profitPick = -p.stake;
                     totalProfit -= p.stake;
@@ -814,14 +809,8 @@
                     countPerdidas++;
                     sumaCuotasPerdidas += p.cuota;
                     countSettled++;
-
-                    if (rachaTipo === 'P' || rachaTipo === null) { rachaTipo = 'P'; rachaCount++; }
                 } else {
                     pendientes++;
-                }
-
-                if (rachaTypeCheckFirst(idx, p.resultado)) {
-                    // Control de racha en orden cronológico inverso
                 }
 
                 let badgeRes = "";
@@ -852,14 +841,12 @@
                 tbody.appendChild(tr);
             });
 
-            // Cálculo de Estadísticas del Dashboard
             const roi = totalInvertido > 0 ? (totalProfit / totalInvertido) * 100 : 0;
             const porcentajeAcierto = countSettled > 0 ? (ganadas / countSettled) * 100 : 0;
             const cuotaMedia = misPicks.length > 0 ? sumaCuotasGlobal / misPicks.length : 0;
             const cuotaGanadora = countGanadas > 0 ? sumaCuotasGanadas / countGanadas : 0;
             const cuotaPerdidora = countPerdidas > 0 ? sumaCuotasPerdidas / countPerdidas : 0;
 
-            // Racha cálculo simple
             if (misPicks.length > 0 && misPicks[0].resultado !== 'pendiente') {
                 let tipoRacha = misPicks[0].resultado;
                 let cRacha = 0;
@@ -870,7 +857,6 @@
                 rachaTexto = `${cRacha} ${tipoRacha === 'ganada' ? 'Win(s)' : 'Loss(s)'}`;
             }
 
-            // Pintar tarjetas
             document.getElementById('statProfit').innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
             document.getElementById('statProfit').className = `text-2xl font-bold mt-1 ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
             document.getElementById('statRoi').innerText = `${roi.toFixed(2)}%`;
@@ -883,8 +869,6 @@
             document.getElementById('statRacha').innerText = rachaTexto;
         }
 
-        function rachaTypeCheckFirst(idx, res) { return idx === 0 && res !== 'pendiente'; }
-
         function eliminarLigaActiva() {
             const liga = ligasDB[ligaActualKey];
             if (!liga || liga.esBase || ligaActualKey === "liga_mx") {
@@ -893,7 +877,7 @@
             }
             if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
                 delete ligasDB[ligaActualKey];
-                localStorage.setItem('poisson_ligas_db_v5', JSON.stringify(ligasDB));
+                localStorage.setItem('poisson_ligas_db_v6', JSON.stringify(ligasDB));
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -904,71 +888,125 @@
         function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
         function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
 
+        // ================= PARSER INTELIGENTE MEJORADO PARA TABLAS MULTI-COLUMNA =================
         function guardarNuevaLiga() {
             const nombre = document.getElementById('inputNombreLiga').value.trim();
             const rawData = document.getElementById('inputDatosLiga').value.trim();
             if (!nombre || !rawData) { alert("Ingresa nombre y datos."); return; }
 
             const lineas = rawData.split('\n');
-            let equipos = [];
-            let idxTeam = -1, idxXG = -1, idxXGA = -1, idxGF = -1, idxGA = -1;
+            let equiposMap = {};
 
             lineas.forEach((lineaRaw) => {
                 let linea = lineaRaw.trim();
-                if (!linea || linea.toLowerCase().includes("tabla de referencia") || linea.toLowerCase().includes("liga")) return;
+                if (!linea || linea.toLowerCase().includes("home") || linea.toLowerCase().includes("away") || linea.toLowerCase().includes("overall") || linea.toLowerCase().includes("g s txg")) return;
 
                 let partes = linea.split(/\t|,|\s{2,}/).map(p => p.trim()).filter(p => p !== "");
                 if (partes.length < 3) partes = linea.split(/\s+/).map(p => p.trim()).filter(p => p !== "");
 
-                const lineaLower = linea.toLowerCase();
-                if (lineaLower.includes("equipo") || lineaLower.includes("team") || lineaLower.includes("xg") || lineaLower.includes("gf")) {
-                    partes.forEach((p, i) => {
-                        const pl = p.toLowerCase();
-                        if (pl.includes("equipo") || pl.includes("team")) idxTeam = i;
-                        else if (pl === "xg") idxXG = i;
-                        else if (pl === "xga") idxXGA = i;
-                        else if (pl.includes("gf") || pl.includes("favor")) idxGF = i;
-                        else if (pl.includes("ga") || pl.includes("contra")) idxGA = i;
-                    });
-                    return;
-                }
-
                 if (partes.length >= 2) {
-                    let nameCandidate = "";
-                    if (idxTeam !== -1 && partes[idxTeam]) nameCandidate = partes[idxTeam];
-                    else {
-                        let idxNombre = partes.findIndex((p, i) => isNaN(p) || (p.length > 2 && isNaN(parseFloat(p))));
-                        nameCandidate = idxNombre !== -1 ? partes[idxNombre] : (partes[1] || partes[0]);
+                    // Detectar si el primer elemento es un número de posición o similar
+                    let startIdx = 0;
+                    if (!isNaN(partes[0]) && parseInt(partes[0]) <= 30 && partes.length > 3 && isNaN(partes[1])) {
+                        startIdx = 1;
                     }
 
-                    const parseVal = (idx) => (idx !== -1 && partes[idx] && !isNaN(parseFloat(partes[idx]))) ? parseFloat(partes[idx]) : null;
-                    let valXg = parseVal(idxXG), valXga = parseVal(idxXGA), valGf = parseVal(idxGF), valGa = parseVal(idxGA);
+                    // Buscar el nombre del equipo (primer token no numérico o texto largo)
+                    let nameCandidate = "";
+                    let tokenOffset = 0;
 
-                    let numeros = partes.map(p => parseFloat(p)).filter(v => !isNaN(v));
-                    if (numeros.length > 0 && Number.isInteger(numeros[0]) && numeros[0] <= 30) numeros.shift();
+                    for (let i = startIdx; i < Math.min(partes.length, 3); i++) {
+                        if (isNaN(partes[i]) || partes[i].length > 3) {
+                            nameCandidate = partes[i];
+                            tokenOffset = i;
+                            break;
+                        }
+                    }
 
-                    let xgCandidate = valXg !== null ? valXg : (numeros[0] !== undefined ? numeros[0] : 1.40);
-                    let xgaCandidate = valXga !== null ? valXga : (numeros[1] !== undefined ? numeros[1] : 1.40);
-                    let gfCandidate = valGf !== null ? valGf : (numeros[2] !== undefined ? numeros[2] : xgCandidate);
-                    let gaCandidate = valGa !== null ? valGa : (numeros[3] !== undefined ? numeros[3] : xgaCandidate);
+                    if (!nameCandidate) nameCandidate = partes[startIdx];
 
+                    // Limpiar nombre
                     nameCandidate = nameCandidate.replace(/^\d+[\s\.\-]+/, '').trim();
-                    if (nameCandidate && nameCandidate !== "#") {
-                        equipos.push({ id: equipos.length + 1, name: nameCandidate, xG: xgCandidate, xGA: xgaCandidate, GF: gfCandidate, GA: gaCandidate });
+                    if (!nameCandidate || nameCandidate.toLowerCase() === "team" || nameCandidate === "#") return;
+
+                    // Extraer todos los valores numéricos de la línea después del nombre
+                    let nums = [];
+                    for (let i = tokenOffset + 1; i < partes.length; i++) {
+                        let val = parseFloat(partes[i]);
+                        if (!isNaN(val)) nums.push(val);
+                    }
+
+                    if (nums.length > 0) {
+                        if (!equiposMap[nameCandidate]) {
+                            equiposMap[nameCandidate] = { name: nameCandidate, xG_vals: [], xGA_vals: [], GF_vals: [], GA_vals: [] };
+                        }
+
+                        // Asignación heurística inteligente basada en los patrones de las tablas que subiste
+                        // En xG For (G S TxG xG) o Overall (G S TxG xG)
+                        let posiblesDecimales = nums.filter(v => v > 0 && v < 5.0);
+                        let posiblesGoles = nums.filter(v => Number.isInteger(v) || v >= 5);
+
+                        if (posiblesDecimales.length > 0) {
+                            // El último decimal suele ser el xG o xGA por partido
+                            let valRate = posiblesDecimales[posiblesDecimales.length - 1];
+                            if (nums.length <= 4 && !linea.toLowerCase().includes("against")) {
+                                equiposMap[nameCandidate].xG_vals.push(valRate);
+                            } else if (nums.length <= 4 && linea.toLowerCase().includes("against")) {
+                                equiposMap[nameCandidate].xGA_vals.push(valRate);
+                            } else {
+                                // Si es la tabla Overall combinada
+                                equiposMap[nameCandidate].xG_vals.push(valRate);
+                            }
+                        }
+
+                        if (posiblesGoles.length > 0) {
+                            let valGoles = posiblesGoles[0];
+                            if (!linea.toLowerCase().includes("against")) {
+                                equiposMap[nameCandidate].GF_vals.push(valGoles > 10 ? valGoles / 15 : valGoles);
+                            } else {
+                                equiposMap[nameCandidate].GA_vals.push(valGoles > 10 ? valGoles / 15 : valGoles);
+                            }
+                        }
                     }
                 }
             });
 
-            if (equipos.length === 0) { alert("No se pudieron extraer los equipos."); return; }
+            let equipos = [];
+            let idCounter = 1;
+
+            for (let eqName in equiposMap) {
+                let data = equiposMap[eqName];
+                let xG = data.xG_vals.length > 0 ? data.xG_vals[data.xG_vals.length - 1] : 1.40;
+                let xGA = data.xGA_vals.length > 0 ? data.xGA_vals[data.xGA_vals.length - 1] : 1.40;
+                let GF = data.GF_vals.length > 0 ? data.GF_vals[0] : xG;
+                let GA = data.GA_vals.length > 0 ? data.GA_vals[0] : xGA;
+
+                equipos.push({
+                    id: idCounter++,
+                    name: eqName,
+                    xG: Number(xG),
+                    xGA: Number(xGA),
+                    GF: Number(GF),
+                    GA: Number(GA)
+                });
+            }
+
+            if (equipos.length === 0) {
+                alert("No se pudieron extraer los equipos. Asegúrate de copiar las filas completas de la tabla.");
+                return;
+            }
 
             const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
             ligasDB[key] = { nombre, esBase: false, equipos };
-            localStorage.setItem('poisson_ligas_db_v5', JSON.stringify(ligasDB));
+            localStorage.setItem('poisson_ligas_db_v6', JSON.stringify(ligasDB));
 
             ligaActualKey = key;
             poblarSelectorLigas();
             cargarLigaSeleccionada();
             cerrarModalLiga();
+            document.getElementById('inputNombreLiga').value = "";
+            document.getElementById('inputDatosLiga').value = "";
+            alert(`¡Liga "${nombre}" guardada con éxito (${equipos.length} equipos cargados)!`);
         }
 
         window.onload = inicializarApp;
