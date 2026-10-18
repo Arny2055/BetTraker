@@ -273,7 +273,7 @@
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
                     <p class="text-[10px] text-slate-400 uppercase">Cuota Media Perdedora</p>
-                    <p id="statCuotaPerdedora" class="text-lg font-mono font-bold text-rose-400 mt-0.5">0.00</p>
+                    <p id="statCuotaPerdidora" class="text-lg font-mono font-bold text-rose-400 mt-0.5">0.00</p>
                 </div>
                 <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
                     <p class="text-[10px] text-slate-400 uppercase">Stake Promedio ($)</p>
@@ -328,8 +328,8 @@
                     <input type="text" id="inputNombreLiga" placeholder="Ej. Brasileirao..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Soporta formato xG For / Against o Overall)</label>
-                    <textarea id="inputDatosLiga" rows="8" placeholder="Pega aquí tus datos de xG, xGA, GF y GA..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Pega tus tablas xG For y Against juntas)</label>
+                    <textarea id="inputDatosLiga" rows="8" placeholder="Pega aquí tus datos..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
@@ -416,7 +416,7 @@
         let misPicks = [];
 
         function inicializarApp() {
-            const savedLigas = localStorage.getItem('poisson_ligas_db_v6');
+            const savedLigas = localStorage.getItem('poisson_ligas_db_v7');
             if (savedLigas) {
                 try { ligasDB = JSON.parse(savedLigas); } catch(e) {}
             }
@@ -877,7 +877,7 @@
             }
             if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
                 delete ligasDB[ligaActualKey];
-                localStorage.setItem('poisson_ligas_db_v6', JSON.stringify(ligasDB));
+                localStorage.setItem('poisson_ligas_db_v7', JSON.stringify(ligasDB));
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -888,7 +888,7 @@
         function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
         function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
 
-        // ================= PARSER INTELIGENTE MEJORADO PARA TABLAS MULTI-COLUMNA =================
+        // ================= PARSER DUAL MEJORADO (FOR & AGAINST) =================
         function guardarNuevaLiga() {
             const nombre = document.getElementById('inputNombreLiga').value.trim();
             const rawData = document.getElementById('inputDatosLiga').value.trim();
@@ -896,22 +896,32 @@
 
             const lineas = rawData.split('\n');
             let equiposMap = {};
+            let modoActual = "FOR"; // Detecta si estamos leyendo la tabla FOR o AGAINST
 
             lineas.forEach((lineaRaw) => {
                 let linea = lineaRaw.trim();
-                if (!linea || linea.toLowerCase().includes("home") || linea.toLowerCase().includes("away") || linea.toLowerCase().includes("overall") || linea.toLowerCase().includes("g s txg")) return;
+                if (!linea) return;
+
+                const lineaLower = linea.toLowerCase();
+                if (lineaLower.includes("against")) {
+                    modoActual = "AGAINST";
+                    return;
+                } else if (lineaLower.includes("for") || lineaLower.includes("g s txg")) {
+                    modoActual = "FOR";
+                    return;
+                }
+
+                if (lineaLower.includes("home") || lineaLower.includes("away") || lineaLower.includes("overall")) return;
 
                 let partes = linea.split(/\t|,|\s{2,}/).map(p => p.trim()).filter(p => p !== "");
                 if (partes.length < 3) partes = linea.split(/\s+/).map(p => p.trim()).filter(p => p !== "");
 
                 if (partes.length >= 2) {
-                    // Detectar si el primer elemento es un número de posición o similar
                     let startIdx = 0;
                     if (!isNaN(partes[0]) && parseInt(partes[0]) <= 30 && partes.length > 3 && isNaN(partes[1])) {
                         startIdx = 1;
                     }
 
-                    // Buscar el nombre del equipo (primer token no numérico o texto largo)
                     let nameCandidate = "";
                     let tokenOffset = 0;
 
@@ -924,12 +934,9 @@
                     }
 
                     if (!nameCandidate) nameCandidate = partes[startIdx];
-
-                    // Limpiar nombre
                     nameCandidate = nameCandidate.replace(/^\d+[\s\.\-]+/, '').trim();
                     if (!nameCandidate || nameCandidate.toLowerCase() === "team" || nameCandidate === "#") return;
 
-                    // Extraer todos los valores numéricos de la línea después del nombre
                     let nums = [];
                     for (let i = tokenOffset + 1; i < partes.length; i++) {
                         let val = parseFloat(partes[i]);
@@ -938,33 +945,27 @@
 
                     if (nums.length > 0) {
                         if (!equiposMap[nameCandidate]) {
-                            equiposMap[nameCandidate] = { name: nameCandidate, xG_vals: [], xGA_vals: [], GF_vals: [], GA_vals: [] };
+                            equiposMap[nameCandidate] = { name: nameCandidate, xG: 1.40, xGA: 1.40, GF: 1.40, GA: 1.40 };
                         }
 
-                        // Asignación heurística inteligente basada en los patrones de las tablas que subiste
-                        // En xG For (G S TxG xG) o Overall (G S TxG xG)
-                        let posiblesDecimales = nums.filter(v => v > 0 && v < 5.0);
-                        let posiblesGoles = nums.filter(v => Number.isInteger(v) || v >= 5);
+                        let decimales = nums.filter(v => v > 0 && v < 5.0);
+                        let enteros = nums.filter(v => Number.isInteger(v) || v >= 5);
 
-                        if (posiblesDecimales.length > 0) {
-                            // El último decimal suele ser el xG o xGA por partido
-                            let valRate = posiblesDecimales[posiblesDecimales.length - 1];
-                            if (nums.length <= 4 && !linea.toLowerCase().includes("against")) {
-                                equiposMap[nameCandidate].xG_vals.push(valRate);
-                            } else if (nums.length <= 4 && linea.toLowerCase().includes("against")) {
-                                equiposMap[nameCandidate].xGA_vals.push(valRate);
-                            } else {
-                                // Si es la tabla Overall combinada
-                                equiposMap[nameCandidate].xG_vals.push(valRate);
+                        if (modoActual === "FOR") {
+                            if (decimales.length > 0) {
+                                equiposMap[nameCandidate].xG = decimales[decimales.length - 1];
                             }
-                        }
-
-                        if (posiblesGoles.length > 0) {
-                            let valGoles = posiblesGoles[0];
-                            if (!linea.toLowerCase().includes("against")) {
-                                equiposMap[nameCandidate].GF_vals.push(valGoles > 10 ? valGoles / 15 : valGoles);
-                            } else {
-                                equiposMap[nameCandidate].GA_vals.push(valGoles > 10 ? valGoles / 15 : valGoles);
+                            if (enteros.length > 0) {
+                                let gVal = enteros[0];
+                                equiposMap[nameCandidate].GF = gVal > 10 ? gVal / 15 : gVal;
+                            }
+                        } else {
+                            if (decimales.length > 0) {
+                                equiposMap[nameCandidate].xGA = decimales[decimales.length - 1];
+                            }
+                            if (enteros.length > 0) {
+                                let cVal = enteros[0];
+                                equiposMap[nameCandidate].GA = cVal > 10 ? cVal / 15 : cVal;
                             }
                         }
                     }
@@ -976,29 +977,24 @@
 
             for (let eqName in equiposMap) {
                 let data = equiposMap[eqName];
-                let xG = data.xG_vals.length > 0 ? data.xG_vals[data.xG_vals.length - 1] : 1.40;
-                let xGA = data.xGA_vals.length > 0 ? data.xGA_vals[data.xGA_vals.length - 1] : 1.40;
-                let GF = data.GF_vals.length > 0 ? data.GF_vals[0] : xG;
-                let GA = data.GA_vals.length > 0 ? data.GA_vals[0] : xGA;
-
                 equipos.push({
                     id: idCounter++,
                     name: eqName,
-                    xG: Number(xG),
-                    xGA: Number(xGA),
-                    GF: Number(GF),
-                    GA: Number(GA)
+                    xG: Number(data.xG),
+                    xGA: Number(data.xGA),
+                    GF: Number(data.GF),
+                    GA: Number(data.GA)
                 });
             }
 
             if (equipos.length === 0) {
-                alert("No se pudieron extraer los equipos. Asegúrate de copiar las filas completas de la tabla.");
+                alert("No se pudieron extraer los equipos. Asegúrate de copiar las filas correctamente.");
                 return;
             }
 
             const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
             ligasDB[key] = { nombre, esBase: false, equipos };
-            localStorage.setItem('poisson_ligas_db_v6', JSON.stringify(ligasDB));
+            localStorage.setItem('poisson_ligas_db_v7', JSON.stringify(ligasDB));
 
             ligaActualKey = key;
             poblarSelectorLigas();
@@ -1006,7 +1002,7 @@
             cerrarModalLiga();
             document.getElementById('inputNombreLiga').value = "";
             document.getElementById('inputDatosLiga').value = "";
-            alert(`¡Liga "${nombre}" guardada con éxito (${equipos.length} equipos cargados)!`);
+            alert(`¡Liga "${nombre}" guardada con éxito (${equipos.length} equipos sincronizados con xG For y Against)!`);
         }
 
         window.onload = inicializarApp;
