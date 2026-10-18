@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Cuantitativo Poisson Multi-Liga (xG vs GF/GA)</title>
+    <title>Analizador Cuantitativo Poisson (Local / Visitante) - Multi-Liga</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -25,9 +25,9 @@
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                    ⚽ Analizador Poisson <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
+                    ⚽ Analizador Poisson <span class="text-xs bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded uppercase tracking-wider font-mono">Local / Visitante</span> <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
                 </h1>
-                <p class="text-sm text-slate-400 mt-1">Comparativa simultánea: Modelo xG vs Modelo Tradicional (GF / GA).</p>
+                <p class="text-sm text-slate-400 mt-1">Cálculo Poisson estricto usando rendimiento Home para Local y Away para Visitante.</p>
             </div>
             <div class="flex items-center gap-3">
                 <button onclick="cambiarVista('analizador')" id="btnNavAnalizador" class="bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">🔍 Analizador</button>
@@ -52,7 +52,7 @@
                 </div>
                 <div class="w-full md:w-auto flex items-end gap-2">
                     <button onclick="abrirModalLiga()" class="w-full md:w-auto bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
-                        ➕ Añadir Liga
+                        ➕ Añadir Liga (Local / Visitante)
                     </button>
                     <button id="btnEliminarLiga" onclick="eliminarLigaActiva()" class="w-full md:w-auto bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
                         🗑️ Eliminar
@@ -63,38 +63,44 @@
             <!-- Panel de Configuración del Partido -->
             <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
                 <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                    ⚙️ Configuración del Enfrentamiento
+                    ⚙️ Configuración del Enfrentamiento (Home vs Away)
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <!-- Local -->
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Local</label>
+                        <label class="block text-xs font-medium text-emerald-400 uppercase tracking-wider mb-2">🏠 Equipo Local (Métricas HOME)</label>
                         <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                             <!-- Opciones cargadas por JS -->
                         </select>
-                        <p id="infoLocal" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoLocalGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
+                        <p id="infoLocal" class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            xG/xGA Home: <span class="font-semibold text-white">0.00 / 0.00</span><br>
+                            GF/GA Home: <span class="font-semibold text-slate-300">0.00 / 0.00</span>
+                        </p>
                     </div>
 
                     <!-- Visitante -->
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Equipo Visitante</label>
+                        <label class="block text-xs font-medium text-blue-400 uppercase tracking-wider mb-2">✈️ Equipo Visitante (Métricas AWAY)</label>
                         <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
                             <!-- Opciones cargadas por JS -->
                         </select>
-                        <p id="infoVisitante" class="text-xs text-slate-400 mt-1">xG/xGA: <span class="font-semibold text-white">0.00 / 0.00</span><br>GF/GA: <span id="infoVisitanteGoles" class="font-semibold text-slate-300">0.00 / 0.00</span></p>
+                        <p id="infoVisitante" class="text-xs text-slate-400 mt-2 leading-relaxed">
+                            xG/xGA Away: <span class="font-semibold text-white">0.00 / 0.00</span><br>
+                            GF/GA Away: <span class="font-semibold text-slate-300">0.00 / 0.00</span>
+                        </p>
                     </div>
 
                     <!-- Factor HT -->
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2" title="Proporción del total de goles esperados que ocurren en el 1er tiempo">Factor Goles HT (Defecto: 0.5)</label>
+                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2" title="Proporción del total de goles esperados en el 1er tiempo">Factor Goles HT (Defecto: 0.50)</label>
                         <input type="number" id="inputFactorHT" value="0.50" step="0.01" min="0.30" max="0.70" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-mono">
-                        <p class="text-xs text-slate-400 mt-1">Ajuste exclusivo para mercados HT.</p>
+                        <p class="text-xs text-slate-400 mt-2">Ajuste de peso para 1er Tiempo.</p>
                     </div>
 
                     <!-- Botón de Análisis -->
                     <div class="flex items-end">
-                        <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md">
-                            Calcular Modelos (xG vs GF)
+                        <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2">
+                            <span>🔥 Calcular Poisson Local/Vis</span>
                         </button>
                     </div>
                 </div>
@@ -108,16 +114,16 @@
                     <!-- Modelo xG -->
                     <div class="bg-slate-800 border border-brand-600/50 p-5 rounded-xl space-y-3 shadow-lg">
                         <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                            <h3 class="text-sm font-bold text-brand-400 uppercase tracking-wider">📊 Modelo 1: Basado en xG / xGA</h3>
+                            <h3 class="text-sm font-bold text-brand-400 uppercase tracking-wider">📊 Modelo xG (Local/Visitante)</h3>
                             <span class="text-xs text-slate-400">Predicción Subyacente</span>
                         </div>
                         <div class="grid grid-cols-3 gap-3 text-center">
                             <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Local</p>
+                                <p class="text-[10px] text-slate-400 uppercase">λ Local (Home)</p>
                                 <p id="resXgLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
                             </div>
                             <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante</p>
+                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante (Away)</p>
                                 <p id="resXgLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
                             </div>
                             <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
@@ -134,16 +140,16 @@
                     <!-- Modelo GF / GA -->
                     <div class="bg-slate-800 border border-blue-600/50 p-5 rounded-xl space-y-3 shadow-lg">
                         <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">📊 Modelo 2: Basado en GF / GA (Goles Reales)</h3>
-                            <span class="text-xs text-slate-400">Predicción Histórica Real</span>
+                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">📊 Modelo GF / GA (Local/Visitante)</h3>
+                            <span class="text-xs text-slate-400">Predicción Goles Reales</span>
                         </div>
                         <div class="grid grid-cols-3 gap-3 text-center">
                             <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Local</p>
+                                <p class="text-[10px] text-slate-400 uppercase">λ Local (Home)</p>
                                 <p id="resGfLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
                             </div>
                             <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante</p>
+                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante (Away)</p>
                                 <p id="resGfLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
                             </div>
                             <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
@@ -172,8 +178,8 @@
                 <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
                     <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <h2 class="text-lg font-semibold text-white">📊 Comparativa de Mercados y Probabilidades (xG vs GF/GA)</h2>
-                            <p class="text-xs text-slate-400 mt-1">Selecciona el mercado y envíalo directamente a tu panel de control de apuestas.</p>
+                            <h2 class="text-lg font-semibold text-white">📊 Comparativa de Mercados (Filtro Local / Visitante)</h2>
+                            <p class="text-xs text-slate-400 mt-1">Sugerencia calculada directamente con la fuerza de ataque/defensa según condición.</p>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -195,34 +201,33 @@
                     </div>
                 </section>
 
-                <!-- Interpretación -->
-                <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-4">
-                    <h2 class="text-lg font-semibold text-white">📝 Análisis de Desviación</h2>
-                    <div id="textoInterpretacion" class="text-sm text-slate-300 space-y-2 leading-relaxed">
-                        <!-- Dinámico -->
-                    </div>
-                </section>
-
             </div>
 
             <!-- Tabla de Datos Oficiales -->
             <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia Liga MX</h2>
+                    <div>
+                        <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia (Home / Away Desglosado)</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Los cálculos utilizan la columna HOME para locales y AWAY para visitantes.</p>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-sm">
+                    <table class="w-full text-left border-collapse text-xs">
                         <thead>
-                            <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
-                                <th class="py-3 px-4">#</th>
-                                <th class="py-3 px-4">Equipo</th>
-                                <th class="py-3 px-4 text-brand-400">xG</th>
-                                <th class="py-3 px-4 text-brand-400">xGA</th>
-                                <th class="py-3 px-4 text-blue-400">GF</th>
-                                <th class="py-3 px-4 text-blue-400">GA</th>
+                            <tr class="bg-slate-900/80 text-slate-400 uppercase tracking-wider border-b border-slate-700 font-mono">
+                                <th class="py-3 px-3">#</th>
+                                <th class="py-3 px-3">Equipo</th>
+                                <th class="py-3 px-3 text-emerald-400 border-l border-slate-700">xG Home</th>
+                                <th class="py-3 px-3 text-emerald-400">xGA Home</th>
+                                <th class="py-3 px-3 text-emerald-300">GF Home</th>
+                                <th class="py-3 px-3 text-emerald-300">GA Home</th>
+                                <th class="py-3 px-3 text-blue-400 border-l border-slate-700">xG Away</th>
+                                <th class="py-3 px-3 text-blue-400">xGA Away</th>
+                                <th class="py-3 px-3 text-blue-300">GF Away</th>
+                                <th class="py-3 px-3 text-blue-300">GA Away</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaEquiposBody" class="divide-y divide-slate-700">
+                        <tbody id="tablaEquiposBody" class="divide-y divide-slate-700/60 font-mono">
                             <!-- Inyectado por JS -->
                         </tbody>
                     </table>
@@ -319,21 +324,21 @@
     <div id="modalLiga" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-                <h3 class="text-lg font-bold text-white">➕ Añadir Nueva Liga (xG For / Against Separados)</h3>
+                <h3 class="text-lg font-bold text-white">➕ Añadir Nueva Liga (Home vs Away)</h3>
                 <button onclick="cerrarModalLiga()" class="text-slate-400 hover:text-white font-bold">✕</button>
             </div>
             <div class="space-y-4 text-sm">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre de la Liga</label>
-                    <input type="text" id="inputNombreLiga" placeholder="Ej. Brasileirao..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
+                    <input type="text" id="inputNombreLiga" placeholder="Ej. Premier League, Brasileirao..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-brand-400 uppercase mb-1">Tabla xG For (Ataque / Home - Away - Overall)</label>
+                        <label class="block text-xs font-medium text-brand-400 uppercase mb-1">Tabla xG For (Home / Away / Overall)</label>
                         <textarea id="inputDatosFor" rows="6" placeholder="Pega aquí la tabla xG For..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-blue-400 uppercase mb-1">Tabla xG Against (Defensa / Home - Away - Overall)</label>
+                        <label class="block text-xs font-medium text-blue-400 uppercase mb-1">Tabla xG Against (Home / Away / Overall)</label>
                         <textarea id="inputDatosAgainst" rows="6" placeholder="Pega aquí la tabla xG Against..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
                     </div>
                 </div>
@@ -386,34 +391,35 @@
 
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
-        Analizador Cuantitativo Poisson Multi-Liga — BetTracker Integrado.
+        Analizador Cuantitativo Poisson (Local/Visitante) — BetTracker Integrado.
     </footer>
 
     <!-- Script Principal -->
     <script>
+        // Estructura de datos desglosada por condición (Home / Away)
         let ligasDB = {
             "liga_mx": {
                 nombre: "Liga MX",
                 esBase: true,
                 equipos: [
-                    { id: 1, name: "América", xG: 2.14, xGA: 1.16, GF: 1.95, GA: 1.00 },
-                    { id: 2, name: "Toluca", xG: 1.88, xGA: 1.76, GF: 2.05, GA: 1.60 },
-                    { id: 3, name: "Querétaro", xG: 1.39, xGA: 0.91, GF: 1.10, GA: 0.95 },
-                    { id: 4, name: "Guadalajara", xG: 1.71, xGA: 0.93, GF: 1.50, GA: 0.85 },
-                    { id: 5, name: "León", xG: 1.51, xGA: 0.94, GF: 1.40, GA: 1.10 },
-                    { id: 6, name: "Atlas", xG: 1.38, xGA: 1.80, GF: 1.20, GA: 1.75 },
-                    { id: 7, name: "Cruz Azul", xG: 2.16, xGA: 1.75, GF: 2.20, GA: 1.50 },
-                    { id: 8, name: "Tijuana", xG: 1.31, xGA: 1.59, GF: 1.25, GA: 1.65 },
-                    { id: 9, name: "Puebla", xG: 1.43, xGA: 0.84, GF: 1.30, GA: 0.90 },
-                    { id: 10, name: "Monterrey", xG: 1.87, xGA: 1.33, GF: 1.75, GA: 1.20 },
-                    { id: 11, name: "Pachuca", xG: 1.69, xGA: 1.22, GF: 1.60, GA: 1.30 },
-                    { id: 12, name: "Tigres UANL", xG: 1.75, xGA: 0.80, GF: 1.80, GA: 0.75 },
-                    { id: 13, name: "Pumas UNAM", xG: 1.39, xGA: 1.88, GF: 1.35, GA: 1.70 },
-                    { id: 14, name: "Santos Laguna", xG: 1.57, xGA: 0.98, GF: 1.45, GA: 1.05 },
-                    { id: 15, name: "Atlético San Luis", xG: 1.34, xGA: 1.84, GF: 1.40, GA: 1.90 },
-                    { id: 16, name: "Atlante", xG: 1.58, xGA: 1.06, GF: 1.50, GA: 1.00 },
-                    { id: 17, name: "Necaxa", xG: 1.56, xGA: 1.89, GF: 1.45, GA: 1.80 },
-                    { id: 18, name: "Juárez", xG: 1.03, xGA: 2.06, GF: 0.95, GA: 2.15 }
+                    { id: 1, name: "América", xG_Home: 2.25, xGA_Home: 0.95, GF_Home: 2.10, GA_Home: 0.85, xG_Away: 1.95, xGA_Away: 1.35, GF_Away: 1.80, GA_Away: 1.15 },
+                    { id: 2, name: "Toluca", xG_Home: 2.10, xGA_Home: 1.45, GF_Home: 2.30, GA_Home: 1.30, xG_Away: 1.65, xGA_Away: 2.05, GF_Away: 1.80, GA_Away: 1.90 },
+                    { id: 3, name: "Querétaro", xG_Home: 1.45, xGA_Home: 0.85, GF_Home: 1.20, GA_Home: 0.80, xG_Away: 1.30, xGA_Away: 0.98, GF_Away: 1.00, GA_Away: 1.10 },
+                    { id: 4, name: "Guadalajara", xG_Home: 1.85, xGA_Home: 0.80, GF_Home: 1.65, GA_Home: 0.70, xG_Away: 1.55, xGA_Away: 1.05, GF_Away: 1.35, GA_Away: 1.00 },
+                    { id: 5, name: "León", xG_Home: 1.60, xGA_Home: 0.85, GF_Home: 1.50, GA_Home: 0.95, xG_Away: 1.42, xGA_Away: 1.05, GF_Away: 1.30, GA_Away: 1.25 },
+                    { id: 6, name: "Atlas", xG_Home: 1.48, xGA_Home: 1.65, GF_Home: 1.30, GA_Home: 1.55, xG_Away: 1.28, xGA_Away: 1.95, GF_Away: 1.10, GA_Away: 1.95 },
+                    { id: 7, name: "Cruz Azul", xG_Home: 2.30, xGA_Home: 1.50, GF_Home: 2.40, GA_Home: 1.30, xG_Away: 2.02, xGA_Away: 2.00, GF_Away: 2.00, GA_Away: 1.70 },
+                    { id: 8, name: "Tijuana", xG_Home: 1.45, xGA_Home: 1.40, GF_Home: 1.40, GA_Home: 1.45, xG_Away: 1.17, xGA_Away: 1.78, GF_Away: 1.10, GA_Away: 1.85 },
+                    { id: 9, name: "Puebla", xG_Home: 1.55, xGA_Home: 0.75, GF_Home: 1.45, GA_Home: 0.80, xG_Away: 1.31, xGA_Away: 0.93, GF_Away: 1.15, GA_Away: 1.00 },
+                    { id: 10, name: "Monterrey", xG_Home: 2.00, xGA_Home: 1.15, GF_Home: 1.90, GA_Home: 1.00, xG_Away: 1.74, xGA_Away: 1.51, GF_Away: 1.60, GA_Away: 1.40 },
+                    { id: 11, name: "Pachuca", xG_Home: 1.80, xGA_Home: 1.10, GF_Home: 1.75, GA_Home: 1.15, xG_Away: 1.58, xGA_Away: 1.34, GF_Away: 1.45, GA_Away: 1.45 },
+                    { id: 12, name: "Tigres UANL", xG_Home: 1.90, xGA_Home: 0.65, GF_Home: 2.00, GA_Home: 0.60, xG_Away: 1.60, xGA_Away: 0.95, GF_Away: 1.60, GA_Away: 0.90 },
+                    { id: 13, name: "Pumas UNAM", xG_Home: 1.50, xGA_Home: 1.70, GF_Home: 1.45, GA_Home: 1.50, xG_Away: 1.28, xGA_Away: 2.06, GF_Away: 1.25, GA_Away: 1.90 },
+                    { id: 14, name: "Santos Laguna", xG_Home: 1.70, xGA_Home: 0.85, GF_Home: 1.60, GA_Home: 0.90, xG_Away: 1.44, xGA_Away: 1.11, GF_Away: 1.30, GA_Away: 1.20 },
+                    { id: 15, name: "Atlético San Luis", xG_Home: 1.45, xGA_Home: 1.65, GF_Home: 1.55, GA_Home: 1.70, xG_Away: 1.23, xGA_Away: 2.03, GF_Away: 1.25, GA_Away: 2.10 },
+                    { id: 16, name: "Atlante", xG_Home: 1.70, xGA_Home: 0.95, GF_Home: 1.65, GA_Home: 0.85, xG_Away: 1.46, xGA_Away: 1.17, GF_Away: 1.35, GA_Away: 1.15 },
+                    { id: 17, name: "Necaxa", xG_Home: 1.68, xGA_Home: 1.70, GF_Home: 1.60, GA_Home: 1.60, xG_Away: 1.44, xGA_Away: 2.08, GF_Away: 1.30, GA_Away: 2.00 },
+                    { id: 18, name: "Juárez", xG_Home: 1.15, xGA_Home: 1.85, GF_Home: 1.05, GA_Home: 1.90, xG_Away: 0.91, xGA_Away: 2.27, GF_Away: 0.85, GA_Away: 2.40 }
                 ]
             }
         };
@@ -422,7 +428,7 @@
         let misPicks = [];
 
         function inicializarApp() {
-            const savedLigas = localStorage.getItem('poisson_ligas_db_v9');
+            const savedLigas = localStorage.getItem('poisson_ligas_db_v10');
             if (savedLigas) {
                 try { ligasDB = JSON.parse(savedLigas); } catch(e) {}
             }
@@ -479,7 +485,7 @@
             ligaActualKey = liga ? ligaActualKey : "liga_mx";
             
             document.getElementById('badgeLigaActiva').innerText = liga.nombre;
-            document.getElementById('tituloTablaEquipos').innerText = `📋 Tabla de Referencia ${liga.nombre}`;
+            document.getElementById('tituloTablaEquipos').innerText = `📋 Tabla de Referencia Local / Visitante — ${liga.nombre}`;
 
             const btnEliminar = document.getElementById('btnEliminarLiga');
             if (liga.esBase || ligaActualKey === "liga_mx") {
@@ -510,12 +516,16 @@
                 let tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-700/50 transition";
                 tr.innerHTML = `
-                    <td class="py-2.5 px-4 text-slate-400">${eq.id || (index+1)}</td>
-                    <td class="py-2.5 px-4 font-medium text-white">${eq.name}</td>
-                    <td class="py-2.5 px-4 text-brand-400 font-semibold">${Number(eq.xG || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-4 text-brand-400 font-semibold">${Number(eq.xGA || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-4 text-blue-400 font-semibold">${Number(eq.GF || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-4 text-blue-400 font-semibold">${Number(eq.GA || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-slate-400">${eq.id || (index+1)}</td>
+                    <td class="py-2.5 px-3 font-medium text-white">${eq.name}</td>
+                    <td class="py-2.5 px-3 text-emerald-400 font-semibold border-l border-slate-700">${Number(eq.xG_Home || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-emerald-400 font-semibold">${Number(eq.xGA_Home || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-emerald-300">${Number(eq.GF_Home || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-emerald-300">${Number(eq.GA_Home || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-blue-400 font-semibold border-l border-slate-700">${Number(eq.xG_Away || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-blue-400 font-semibold">${Number(eq.xGA_Away || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-blue-300">${Number(eq.GF_Away || 1.4).toFixed(2)}</td>
+                    <td class="py-2.5 px-3 text-blue-300">${Number(eq.GA_Away || 1.4).toFixed(2)}</td>
                 `;
                 tablaEquiposBody.appendChild(tr);
             });
@@ -532,11 +542,17 @@
             const idxV = document.getElementById('selectVisitante').value;
             if(liga && liga.equipos[idxL]) {
                 const eqL = liga.equipos[idxL];
-                document.getElementById('infoLocal').innerHTML = `xG/xGA: <span class="font-semibold text-white">${Number(eqL.xG||1.4).toFixed(2)} / ${Number(eqL.xGA||1.4).toFixed(2)}</span><br>GF/GA: <span class="font-semibold text-slate-300">${Number(eqL.GF||1.4).toFixed(2)} / ${Number(eqL.GA||1.4).toFixed(2)}</span>`;
+                document.getElementById('infoLocal').innerHTML = `
+                    xG/xGA Home: <span class="font-semibold text-white">${Number(eqL.xG_Home||1.4).toFixed(2)} / ${Number(eqL.xGA_Home||1.4).toFixed(2)}</span><br>
+                    GF/GA Home: <span class="font-semibold text-slate-300">${Number(eqL.GF_Home||1.4).toFixed(2)} / ${Number(eqL.GA_Home||1.4).toFixed(2)}</span>
+                `;
             }
             if(liga && liga.equipos[idxV]) {
                 const eqV = liga.equipos[idxV];
-                document.getElementById('infoVisitante').innerHTML = `xG/xGA: <span class="font-semibold text-white">${Number(eqV.xG||1.4).toFixed(2)} / ${Number(eqV.xGA||1.4).toFixed(2)}</span><br>GF/GA: <span class="font-semibold text-slate-300">${Number(eqV.GF||1.4).toFixed(2)} / ${Number(eqV.GA||1.4).toFixed(2)}</span>`;
+                document.getElementById('infoVisitante').innerHTML = `
+                    xG/xGA Away: <span class="font-semibold text-white">${Number(eqV.xG_Away||1.4).toFixed(2)} / ${Number(eqV.xGA_Away||1.4).toFixed(2)}</span><br>
+                    GF/GA Away: <span class="font-semibold text-slate-300">${Number(eqV.GF_Away||1.4).toFixed(2)} / ${Number(eqV.GA_Away||1.4).toFixed(2)}</span>
+                `;
             }
         }
 
@@ -590,24 +606,38 @@
                 return;
             }
 
-            const avgXG = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG) || 1.4), 0) / liga.equipos.length;
-            const avgXGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA) || 1.4), 0) / liga.equipos.length;
-            const avgGF = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF) || 1.4), 0) / liga.equipos.length;
-            const avgGA = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA) || 1.4), 0) / liga.equipos.length;
+            // Promedios globales de la liga por condición Home y Away
+            const avgXG_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG_Home) || 1.4), 0) / liga.equipos.length;
+            const avgXGA_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA_Home) || 1.4), 0) / liga.equipos.length;
+            const avgGF_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF_Home) || 1.4), 0) / liga.equipos.length;
+            const avgGA_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA_Home) || 1.4), 0) / liga.equipos.length;
 
-            const faL_xg = (parseFloat(eqL.xG) || 1.4) / avgXG;
-            const fdV_xg = (parseFloat(eqV.xGA) || 1.4) / avgXGA;
-            const faV_xg = (parseFloat(eqV.xG) || 1.4) / avgXG;
-            const fdL_xg = (parseFloat(eqL.xGA) || 1.4) / avgXGA;
+            const avgXG_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG_Away) || 1.4), 0) / liga.equipos.length;
+            const avgXGA_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA_Away) || 1.4), 0) / liga.equipos.length;
+            const avgGF_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF_Away) || 1.4), 0) / liga.equipos.length;
+            const avgGA_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA_Away) || 1.4), 0) / liga.equipos.length;
 
-            const resXg = calcularModeloPoisson(faL_xg * fdV_xg * avgXG, faV_xg * fdL_xg * avgXG);
+            // MODELO 1: xG (Usa xG Home para Local vs xGA Away para Visitante)
+            const faL_xg = (parseFloat(eqL.xG_Home) || 1.4) / avgXG_Home;
+            const fdV_xg = (parseFloat(eqV.xGA_Away) || 1.4) / avgXGA_Away;
+            const lambdaL_xg = faL_xg * fdV_xg * avgGF_Home;
 
-            const faL_gf = (parseFloat(eqL.GF) || 1.4) / avgGF;
-            const fdV_ga = (parseFloat(eqV.GA) || 1.4) / avgGA;
-            const faV_gf = (parseFloat(eqV.GF) || 1.4) / avgGF;
-            const fdL_ga = (parseFloat(eqL.GA) || 1.4) / avgGA;
+            const faV_xg = (parseFloat(eqV.xG_Away) || 1.4) / avgXG_Away;
+            const fdL_xg = (parseFloat(eqL.xGA_Home) || 1.4) / avgXGA_Home;
+            const lambdaV_xg = faV_xg * fdL_xg * avgGF_Away;
 
-            const resGf = calcularModeloPoisson(faL_gf * fdV_ga * avgGF, faV_gf * fdL_ga * avgGF);
+            const resXg = calcularModeloPoisson(lambdaL_xg, lambdaV_xg);
+
+            // MODELO 2: GF / GA (Usa GF Home para Local vs GA Away para Visitante)
+            const faL_gf = (parseFloat(eqL.GF_Home) || 1.4) / avgGF_Home;
+            const fdV_ga = (parseFloat(eqV.GA_Away) || 1.4) / avgGA_Away;
+            const lambdaL_gf = faL_gf * fdV_ga * avgGF_Home;
+
+            const faV_gf = (parseFloat(eqV.GF_Away) || 1.4) / avgGF_Away;
+            const fdL_ga = (parseFloat(eqL.GA_Home) || 1.4) / avgGA_Home;
+            const lambdaV_gf = faV_gf * fdL_ga * avgGF_Away;
+
+            const resGf = calcularModeloPoisson(lambdaL_gf, lambdaV_gf);
 
             datosUltimoAnalisis = {
                 liga: liga.nombre,
@@ -883,7 +913,7 @@
             }
             if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
                 delete ligasDB[ligaActualKey];
-                localStorage.setItem('poisson_ligas_db_v9', JSON.stringify(ligasDB));
+                localStorage.setItem('poisson_ligas_db_v10', JSON.stringify(ligasDB));
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -894,8 +924,8 @@
         function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
         function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
 
-        // ================= PARSER SEPARADO: xG For & xG Against =================
-        function procesarBloqueTexto(textoRaw, esAgainst = false) {
+        // PARSER LOCAL / VISITANTE
+        function procesarBloqueTexto(textoRaw) {
             let resultado = {};
             const lineas = textoRaw.split('\n');
 
@@ -905,7 +935,6 @@
 
                 const lLower = linea.toLowerCase();
                 if (lLower.includes("home") && lLower.includes("away") && lLower.includes("overall")) return;
-                if (lLower.includes("g") && lLower.includes("s") && lLower.includes("txg")) return;
 
                 let partes = linea.split(/\t+|\s{2,}/).map(p => p.trim()).filter(p => p !== "");
                 if (partes.length < 4) {
@@ -918,43 +947,23 @@
                         let token = partes[i];
                         if (isNaN(token) && token.length > 1 && token !== "Home" && token !== "Away" && token !== "Overall") {
                             let eqName = token.replace(/^\d+[\s\.\-]+/, '').trim();
-                            if (i + 4 < partes.length && !isNaN(partes[i+1]) && !isNaN(partes[i+2]) && !isNaN(partes[i+3]) && !isNaN(partes[i+4])) {
-                                let g = parseFloat(partes[i+1]);
-                                let s_or_c = parseFloat(partes[i+2]);
-                                let xg_per_game = parseFloat(partes[i+4]);
-
-                                if (!resultado[eqName]) {
-                                    resultado[eqName] = { xg_list: [], goles_list: [] };
+                            
+                            // Si se detectan 3 bloques numéricos (Home, Away, Overall)
+                            if (i + 3 <= partes.length) {
+                                let nums = partes.slice(i + 1).map(p => parseFloat(p)).filter(v => !isNaN(v));
+                                if (nums.length >= 3) {
+                                    let homeVal = nums[0];
+                                    let awayVal = nums[1];
+                                    
+                                    resultado[eqName] = { home: homeVal, away: awayVal };
+                                    break;
                                 }
-                                resultado[eqName].xg_list.push(xg_per_game);
-                                resultado[eqName].goles_list.push(s_or_c / (g > 0 ? g : 1));
-
-                                i += 5;
-                                continue;
                             }
                         }
                         i++;
                     }
                 }
             });
-
-            // Respaldo de lectura vertical simple si el formato de bloques horizontales falla
-            if (Object.keys(resultado).length === 0) {
-                lineas.forEach(lineaRaw => {
-                    let linea = lineaRaw.trim();
-                    if (!linea || linea.toLowerCase().includes("home") || linea.toLowerCase().includes("g")) return;
-                    let partes = linea.split(/\t+|\s{2,}/).map(p => p.trim()).filter(p => p !== "");
-                    if (partes.length >= 2) {
-                        let name = partes[0].replace(/^\d+[\s\.\-]+/, '').trim();
-                        let nums = partes.slice(1).map(p => parseFloat(p)).filter(v => !isNaN(v));
-                        if (name && nums.length > 0) {
-                            let val = nums[nums.length - 1] || 1.4;
-                            let golVal = nums[0] || 1.4;
-                            resultado[name] = { xg_list: [val], goles_list: [golVal] };
-                        }
-                    }
-                });
-            }
 
             return resultado;
         }
@@ -965,46 +974,43 @@
             const rawAgainst = document.getElementById('inputDatosAgainst').value.trim();
 
             if (!nombre || (!rawFor && !rawAgainst)) { 
-                alert("Por favor ingresa el nombre de la liga y al menos una tabla (For o Against)."); 
+                alert("Por favor ingresa el nombre de la liga y al menos una tabla."); 
                 return; 
             }
 
-            let datosFor = rawFor ? procesarBloqueTexto(rawFor, false) : {};
-            let datosAgainst = rawAgainst ? procesarBloqueTexto(rawAgainst, true) : {};
+            let datosFor = rawFor ? procesarBloqueTexto(rawFor) : {};
+            let datosAgainst = rawAgainst ? procesarBloqueTexto(rawAgainst) : {};
 
-            // Unir todos los nombres de equipos encontrados en ambas tablas
             let equiposNombres = new Set([...Object.keys(datosFor), ...Object.keys(datosAgainst)]);
             let equipos = [];
             let idCounter = 1;
 
             equiposNombres.forEach(eqName => {
-                let fData = datosFor[eqName] || { xg_list: [1.4], goles_list: [1.4] };
-                let aData = datosAgainst[eqName] || { xg_list: [1.4], goles_list: [1.4] };
-
-                let xG = fData.xg_list.length > 0 ? fData.xg_list[fData.xg_list.length - 1] : 1.40;
-                let GF = fData.goles_list.length > 0 ? fData.goles_list[fData.goles_list.length - 1] : 1.40;
-
-                let xGA = aData.xg_list.length > 0 ? aData.xg_list[aData.xg_list.length - 1] : 1.40;
-                let GA = aData.goles_list.length > 0 ? aData.goles_list[aData.goles_list.length - 1] : 1.40;
+                let fData = datosFor[eqName] || { home: 1.4, away: 1.4 };
+                let aData = datosAgainst[eqName] || { home: 1.4, away: 1.4 };
 
                 equipos.push({
                     id: idCounter++,
                     name: eqName,
-                    xG: Number(xG),
-                    xGA: Number(xGA),
-                    GF: Number(GF),
-                    GA: Number(GA)
+                    xG_Home: Number(fData.home || 1.4),
+                    xG_Away: Number(fData.away || 1.4),
+                    xGA_Home: Number(aData.home || 1.4),
+                    xGA_Away: Number(aData.away || 1.4),
+                    GF_Home: Number(fData.home || 1.4),
+                    GF_Away: Number(fData.away || 1.4),
+                    GA_Home: Number(aData.home || 1.4),
+                    GA_Away: Number(aData.away || 1.4)
                 });
             });
 
             if (equipos.length === 0) {
-                alert("No se pudieron extraer equipos. Verifica que los datos pegados tengan el formato correcto.");
+                alert("No se pudieron extraer equipos. Verifica la estructura de los datos copiados.");
                 return;
             }
 
             const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
             ligasDB[key] = { nombre, esBase: false, equipos };
-            localStorage.setItem('poisson_ligas_db_v9', JSON.stringify(ligasDB));
+            localStorage.setItem('poisson_ligas_db_v10', JSON.stringify(ligasDB));
 
             ligaActualKey = key;
             poblarSelectorLigas();
@@ -1015,7 +1021,7 @@
             document.getElementById('inputDatosFor').value = "";
             document.getElementById('inputDatosAgainst').value = "";
             
-            alert(`¡Liga "${nombre}" guardada con éxito (${equipos.length} equipos sincronizados)!`);
+            alert(`¡Liga "${nombre}" guardada exitosamente (${equipos.length} equipos sincronizados en Home/Away)!`);
         }
 
         window.onload = inicializarApp;
