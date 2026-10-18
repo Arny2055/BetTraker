@@ -317,19 +317,25 @@
 
     <!-- Modal para Añadir Liga -->
     <div id="modalLiga" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-                <h3 class="text-lg font-bold text-white">➕ Añadir Nueva Liga</h3>
+                <h3 class="text-lg font-bold text-white">➕ Añadir Nueva Liga (xG For / Against Separados)</h3>
                 <button onclick="cerrarModalLiga()" class="text-slate-400 hover:text-white font-bold">✕</button>
             </div>
-            <div class="space-y-3 text-sm">
+            <div class="space-y-4 text-sm">
                 <div>
                     <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre de la Liga</label>
                     <input type="text" id="inputNombreLiga" placeholder="Ej. Brasileirao..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Datos de Equipos (Pega tus bloques Home/Away/Overall de For y Against)</label>
-                    <textarea id="inputDatosLiga" rows="8" placeholder="Pega aquí tus tablas..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-brand-400 uppercase mb-1">Tabla xG For (Ataque / Home - Away - Overall)</label>
+                        <textarea id="inputDatosFor" rows="6" placeholder="Pega aquí la tabla xG For..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-blue-400 uppercase mb-1">Tabla xG Against (Defensa / Home - Away - Overall)</label>
+                        <textarea id="inputDatosAgainst" rows="6" placeholder="Pega aquí la tabla xG Against..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
+                    </div>
                 </div>
             </div>
             <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
@@ -416,7 +422,7 @@
         let misPicks = [];
 
         function inicializarApp() {
-            const savedLigas = localStorage.getItem('poisson_ligas_db_v8');
+            const savedLigas = localStorage.getItem('poisson_ligas_db_v9');
             if (savedLigas) {
                 try { ligasDB = JSON.parse(savedLigas); } catch(e) {}
             }
@@ -877,7 +883,7 @@
             }
             if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
                 delete ligasDB[ligaActualKey];
-                localStorage.setItem('poisson_ligas_db_v8', JSON.stringify(ligasDB));
+                localStorage.setItem('poisson_ligas_db_v9', JSON.stringify(ligasDB));
                 ligaActualKey = "liga_mx";
                 poblarSelectorLigas();
                 cargarLigaSeleccionada();
@@ -888,61 +894,41 @@
         function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
         function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
 
-        // ================= PARSER OPTIMIZADO PARA BLOQUES HOME / AWAY / OVERALL (G, S/C, TxG, xG) =================
-        function guardarNuevaLiga() {
-            const nombre = document.getElementById('inputNombreLiga').value.trim();
-            const rawData = document.getElementById('inputDatosLiga').value.trim();
-            if (!nombre || !rawData) { alert("Ingresa nombre y datos."); return; }
+        // ================= PARSER SEPARADO: xG For & xG Against =================
+        function procesarBloqueTexto(textoRaw, esAgainst = false) {
+            let resultado = {};
+            const lineas = textoRaw.split('\n');
 
-            const lineas = rawData.split('\n');
-            let equiposMap = {};
-
-            lineas.forEach((lineaRaw) => {
+            lineas.forEach(lineaRaw => {
                 let linea = lineaRaw.trim();
                 if (!linea) return;
 
                 const lLower = linea.toLowerCase();
-                // Omitir cabeceras de columnas o títulos
                 if (lLower.includes("home") && lLower.includes("away") && lLower.includes("overall")) return;
                 if (lLower.includes("g") && lLower.includes("s") && lLower.includes("txg")) return;
 
-                // Separar por tabulaciones o múltiples espacios (formato típico al copiar tablas web)
                 let partes = linea.split(/\t+|\s{2,}/).map(p => p.trim()).filter(p => p !== "");
                 if (partes.length < 4) {
                     partes = linea.split(/\s+/).map(p => p.trim()).filter(p => p !== "");
                 }
 
                 if (partes.length >= 4) {
-                    // Cada bloque horizontal de 4 columnas contiene: [NombreEquipo, G, S, TxG, xG] o repetido para Away y Overall
-                    // Analizamos los tokens buscando nombres de equipos y secuencias numéricas de 4 en 4
                     let i = 0;
                     while (i < partes.length) {
                         let token = partes[i];
-                        
-                        // Si el token es texto (no número), asumimos que es un nombre de equipo
                         if (isNaN(token) && token.length > 1 && token !== "Home" && token !== "Away" && token !== "Overall") {
                             let eqName = token.replace(/^\d+[\s\.\-]+/, '').trim();
-                            
-                            // Verificar si los siguientes 4 tokens son números (G, S/C, TxG, xG)
                             if (i + 4 < partes.length && !isNaN(partes[i+1]) && !isNaN(partes[i+2]) && !isNaN(partes[i+3]) && !isNaN(partes[i+4])) {
                                 let g = parseFloat(partes[i+1]);
                                 let s_or_c = parseFloat(partes[i+2]);
-                                let txg = parseFloat(partes[i+3]);
                                 let xg_per_game = parseFloat(partes[i+4]);
 
-                                if (!equiposMap[eqName]) {
-                                    equiposMap[eqName] = { name: eqName, xG_list: [], xGA_list: [], GF_list: [], GA_list: [] };
+                                if (!resultado[eqName]) {
+                                    resultado[eqName] = { xg_list: [], goles_list: [] };
                                 }
+                                resultado[eqName].xg_list.push(xg_per_game);
+                                resultado[eqName].goles_list.push(s_or_c / (g > 0 ? g : 1));
 
-                                // Determinamos si esta línea/bloque es de Goles/xG (For) o Goles Concedidos/xGA (Against)
-                                // Por defecto, si el texto anterior o la línea contiene "against", se va a contra
-                                if (lLower.includes("against") || lLower.includes("c") && !lLower.includes("s")) {
-                                    equiposMap[eqName].xGA_list.push(xg_per_game);
-                                    equiposMap[eqName].GA_list.push(s_or_c / (g > 0 ? g : 1));
-                                } else {
-                                    equiposMap[eqName].xG_list.push(xg_per_game);
-                                    equiposMap[eqName].GF_list.push(s_or_c / (g > 0 ? g : 1));
-                                }
                                 i += 5;
                                 continue;
                             }
@@ -952,8 +938,8 @@
                 }
             });
 
-            // Si el parser por bloques horizontales complejos no halló suficientes, intentamos lectura por filas verticales estándar
-            if (Object.keys(equiposMap).length === 0) {
+            // Respaldo de lectura vertical simple si el formato de bloques horizontales falla
+            if (Object.keys(resultado).length === 0) {
                 lineas.forEach(lineaRaw => {
                     let linea = lineaRaw.trim();
                     if (!linea || linea.toLowerCase().includes("home") || linea.toLowerCase().includes("g")) return;
@@ -962,49 +948,74 @@
                         let name = partes[0].replace(/^\d+[\s\.\-]+/, '').trim();
                         let nums = partes.slice(1).map(p => parseFloat(p)).filter(v => !isNaN(v));
                         if (name && nums.length > 0) {
-                            if (!equiposMap[name]) equiposMap[name] = { name, xG_list: [nums[nums.length-1] || 1.4], xGA_list: [1.4], GF_list: [nums[0] || 1.4], GA_list: [1.4] };
+                            let val = nums[nums.length - 1] || 1.4;
+                            let golVal = nums[0] || 1.4;
+                            resultado[name] = { xg_list: [val], goles_list: [golVal] };
                         }
                     }
                 });
             }
 
+            return resultado;
+        }
+
+        function guardarNuevaLiga() {
+            const nombre = document.getElementById('inputNombreLiga').value.trim();
+            const rawFor = document.getElementById('inputDatosFor').value.trim();
+            const rawAgainst = document.getElementById('inputDatosAgainst').value.trim();
+
+            if (!nombre || (!rawFor && !rawAgainst)) { 
+                alert("Por favor ingresa el nombre de la liga y al menos una tabla (For o Against)."); 
+                return; 
+            }
+
+            let datosFor = rawFor ? procesarBloqueTexto(rawFor, false) : {};
+            let datosAgainst = rawAgainst ? procesarBloqueTexto(rawAgainst, true) : {};
+
+            // Unir todos los nombres de equipos encontrados en ambas tablas
+            let equiposNombres = new Set([...Object.keys(datosFor), ...Object.keys(datosAgainst)]);
             let equipos = [];
             let idCounter = 1;
 
-            for (let eqName in equiposMap) {
-                let d = equiposMap[eqName];
-                // Tomar preferentemente el valor de Overall (que suele ser el último o el promedio de las listas)
-                let finalXG = d.xG_list.length > 0 ? d.xG_list[d.xG_list.length - 1] : 1.40;
-                let finalXGA = d.xGA_list.length > 0 ? d.xGA_list[d.xGA_list.length - 1] : 1.40;
-                let finalGF = d.GF_list.length > 0 ? d.GF_list[d.GF_list.length - 1] : finalXG;
-                let finalGA = d.GA_list.length > 0 ? d.GA_list[d.GA_list.length - 1] : finalXGA;
+            equiposNombres.forEach(eqName => {
+                let fData = datosFor[eqName] || { xg_list: [1.4], goles_list: [1.4] };
+                let aData = datosAgainst[eqName] || { xg_list: [1.4], goles_list: [1.4] };
+
+                let xG = fData.xg_list.length > 0 ? fData.xg_list[fData.xg_list.length - 1] : 1.40;
+                let GF = fData.goles_list.length > 0 ? fData.goles_list[fData.goles_list.length - 1] : 1.40;
+
+                let xGA = aData.xg_list.length > 0 ? aData.xg_list[aData.xg_list.length - 1] : 1.40;
+                let GA = aData.goles_list.length > 0 ? aData.goles_list[aData.goles_list.length - 1] : 1.40;
 
                 equipos.push({
                     id: idCounter++,
                     name: eqName,
-                    xG: Number(finalXG),
-                    xGA: Number(finalXGA),
-                    GF: Number(finalGF),
-                    GA: Number(finalGA)
+                    xG: Number(xG),
+                    xGA: Number(xGA),
+                    GF: Number(GF),
+                    GA: Number(GA)
                 });
-            }
+            });
 
             if (equipos.length === 0) {
-                alert("No se pudieron extraer los equipos. Verifica el formato de tus datos.");
+                alert("No se pudieron extraer equipos. Verifica que los datos pegados tengan el formato correcto.");
                 return;
             }
 
             const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
             ligasDB[key] = { nombre, esBase: false, equipos };
-            localStorage.setItem('poisson_ligas_db_v8', JSON.stringify(ligasDB));
+            localStorage.setItem('poisson_ligas_db_v9', JSON.stringify(ligasDB));
 
             ligaActualKey = key;
             poblarSelectorLigas();
             cargarLigaSeleccionada();
             cerrarModalLiga();
+            
             document.getElementById('inputNombreLiga').value = "";
-            document.getElementById('inputDatosLiga').value = "";
-            alert(`¡Liga "${nombre}" guardada con éxito (${equipos.length} equipos cargados con sus métricas xG y Goles)!`);
+            document.getElementById('inputDatosFor').value = "";
+            document.getElementById('inputDatosAgainst').value = "";
+            
+            alert(`¡Liga "${nombre}" guardada con éxito (${equipos.length} equipos sincronizados)!`);
         }
 
         window.onload = inicializarApp;
