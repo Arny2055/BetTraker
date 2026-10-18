@@ -1,557 +1,431 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Cuantitativo Poisson (Local / Visitante) - Multi-Liga</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Poisson Betting Pro - Predictor de Fútbol</title>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para visualización -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 900: '#14532d' }
+                        emerald: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            900: '#064e3b',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                        },
+                        darkBg: '#0b0f19',
+                        cardBg: '#151c2c',
+                        inputBg: '#1e293b',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased">
 
-    <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 py-6 px-4 sm:px-8 shadow-md">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                    ⚽ Analizador Poisson <span class="text-xs bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded uppercase tracking-wider font-mono">Local / Visitante</span> <span id="badgeLigaActiva" class="text-xs bg-brand-600 text-white px-2 py-1 rounded-full uppercase tracking-wider">Liga MX</span>
-                </h1>
-                <p class="text-sm text-slate-400 mt-1">Cálculo Poisson estricto usando xG Home para el Local y xG Away para el Visitante.</p>
+    <style>
+        /* Estilos personalizados para sensación nativa de iOS en iPhone 14 */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0b0f19;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Ocultar flechas en inputs numéricos */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none;
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+
+        /* Resplandor Neón VIP */
+        .neon-glow-emerald {
+            box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.4);
+        }
+        .neon-glow-gold {
+            box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.3);
+        }
+        .gradient-border {
+            border: 1px solid transparent;
+            background-image: linear-gradient(#151c2c, #151c2c), linear-gradient(135deg, #10b981, #f59e0b);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between antialiased selection:bg-emerald-500 selection:text-white">
+
+    <!-- Encabezado Pro / VIP Header -->
+    <header class="sticky top-0 z-50 bg-[#0b0f19]/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 pt-safe">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="p-2 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="calculator" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">
+                        POISSON BETTING PRO
+                    </h1>
+                    <p class="text-[10px] text-emerald-400 font-semibold tracking-wider uppercase">Modelador Predictivo VIP</p>
+                </div>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="cambiarVista('analizador')" id="btnNavAnalizador" class="bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">🔍 Analizador</button>
-                <button onclick="cambiarVista('tracker')" id="btnNavTracker" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">📊 Mis Picks & Dashboard</button>
+            <div class="flex items-center gap-1.5 bg-emerald-950/80 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[11px] font-bold text-emerald-300">v2.5 FT</span>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+    <!-- Contenido Principal Opciones e Inputs -->
+    <main class="max-w-md mx-auto w-full px-4 py-4 space-y-4">
 
-        <!-- ================= VISTA 1: ANALIZADOR ================= -->
-        <div id="vistaAnalizador" class="space-y-8">
-
-            <!-- Selector de Liga y Gestión -->
-            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="w-full md:w-1/2">
-                    <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Seleccionar Liga Activa</label>
-                    <select id="selectLiga" onchange="cambiarLiga()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-semibold">
-                        <!-- Dinámico por JS -->
-                    </select>
-                </div>
-                <div class="w-full md:w-auto flex items-end gap-2">
-                    <button onclick="abrirModalLiga()" class="w-full md:w-auto bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
-                        ➕ Añadir Liga (Local / Visitante)
-                    </button>
-                    <button id="btnEliminarLiga" onclick="eliminarLigaActiva()" class="w-full md:w-auto bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700/50 font-semibold py-2.5 px-4 rounded-lg transition duration-200 text-sm flex items-center justify-center gap-2">
-                        🗑️ Eliminar
-                    </button>
-                </div>
-            </section>
-
-            <!-- Panel de Configuración del Partido -->
-            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg space-y-6">
-                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                    ⚙️ Configuración del Enfrentamiento (Home vs Away)
-                </h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <!-- Local -->
-                    <div>
-                        <label class="block text-xs font-medium text-emerald-400 uppercase tracking-wider mb-2">🏠 Equipo Local (Bloque HOME)</label>
-                        <select id="selectLocal" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
-                            <!-- Opciones cargadas por JS -->
-                        </select>
-                        <p id="infoLocal" class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            xG/xGA Home: <span class="font-semibold text-white">0.00 / 0.00</span><br>
-                            GF/GA Home: <span class="font-semibold text-slate-300">0.00 / 0.00</span>
-                        </p>
-                    </div>
-
-                    <!-- Visitante -->
-                    <div>
-                        <label class="block text-xs font-medium text-blue-400 uppercase tracking-wider mb-2">✈️ Equipo Visitante (Bloque AWAY)</label>
-                        <select id="selectVisitante" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500">
-                            <!-- Opciones cargadas por JS -->
-                        </select>
-                        <p id="infoVisitante" class="text-xs text-slate-400 mt-2 leading-relaxed">
-                            xG/xGA Away: <span class="font-semibold text-white">0.00 / 0.00</span><br>
-                            GF/GA Away: <span class="font-semibold text-slate-300">0.00 / 0.00</span>
-                        </p>
-                    </div>
-
-                    <!-- Factor HT -->
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2" title="Proporción del total de goles esperados en el 1er tiempo">Factor Goles HT (Defecto: 0.50)</label>
-                        <input type="number" id="inputFactorHT" value="0.50" step="0.01" min="0.30" max="0.70" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-slate-100 focus:outline-none focus:border-brand-500 font-mono">
-                        <p class="text-xs text-slate-400 mt-2">Ajuste de peso para 1er Tiempo.</p>
-                    </div>
-
-                    <!-- Botón de Análisis -->
-                    <div class="flex items-end">
-                        <button onclick="ejecutarAnalisis()" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-4 rounded-lg transition duration-200 shadow-md flex items-center justify-center gap-2">
-                            <span>🔥 Calcular Poisson Local/Vis</span>
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Resultados y Resumen Comparativo de Parámetros -->
-            <div id="seccionResultados" class="space-y-8 hidden">
-                
-                <!-- Comparativa de Lambdas -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Modelo xG -->
-                    <div class="bg-slate-800 border border-brand-600/50 p-5 rounded-xl space-y-3 shadow-lg">
-                        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                            <h3 class="text-sm font-bold text-brand-400 uppercase tracking-wider">📊 Modelo xG (Local/Visitante)</h3>
-                            <span class="text-xs text-slate-400">Predicción Subyacente</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-3 text-center">
-                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Local (Home xG)</p>
-                                <p id="resXgLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                            </div>
-                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante (Away xG)</p>
-                                <p id="resXgLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                            </div>
-                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
-                                <p id="resXgLambdaTotal" class="text-lg font-bold text-brand-400 mt-0.5">0.00</p>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (xG)</h4>
-                            <div id="gridMarcadoresXg" class="grid grid-cols-3 gap-2"></div>
-                        </div>
-                    </div>
-
-                    <!-- Modelo GF / GA -->
-                    <div class="bg-slate-800 border border-blue-600/50 p-5 rounded-xl space-y-3 shadow-lg">
-                        <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-                            <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider">📊 Modelo GF / GA (Local/Visitante)</h3>
-                            <span class="text-xs text-slate-400">Predicción Goles Reales</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-3 text-center">
-                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Local (Home GF)</p>
-                                <p id="resGfLambdaLocal" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                            </div>
-                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">λ Visitante (Away GF)</p>
-                                <p id="resGfLambdaVisitante" class="text-lg font-bold text-white mt-0.5">0.00</p>
-                            </div>
-                            <div class="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-                                <p class="text-[10px] text-slate-400 uppercase">Total FT</p>
-                                <p id="resGfLambdaTotal" class="text-lg font-bold text-blue-400 mt-0.5">0.00</p>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-semibold text-slate-300 mb-2">🎯 Top 3 Marcadores Exactos (GF/GA)</h4>
-                            <div id="gridMarcadoresGf" class="grid grid-cols-3 gap-2"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Panel de Sugerencia de Apuesta Inteligente -->
-                <section class="bg-gradient-to-r from-emerald-950/80 to-slate-800 border border-brand-600/60 rounded-xl p-6 shadow-xl space-y-4">
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        💡 Sugerencia de Mercado y Cuota Óptima (EV+)
-                    </h2>
-                    <div id="panelSugerenciaApuesta" class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                        <!-- Dinámico por JS -->
-                    </div>
-                </section>
-
-                <!-- Tabla Comparativa Principal de Mercados -->
-                <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
-                    <div class="p-6 border-b border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h2 class="text-lg font-semibold text-white">📊 Comparativa de Mercados (Local / Visitante)</h2>
-                            <p class="text-xs text-slate-400 mt-1">Sugerencia calculada directamente con la fuerza de ataque/defensa según condición.</p>
-                        </div>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
-                                    <th class="py-3 px-4">Mercado</th>
-                                    <th class="py-3 px-4 text-brand-400">Prob. Modelo xG</th>
-                                    <th class="py-3 px-4 text-brand-400">Cuota Justa (xG)</th>
-                                    <th class="py-3 px-4 text-blue-400">Prob. Modelo GF/GA</th>
-                                    <th class="py-3 px-4 text-blue-400">Cuota Justa (GF/GA)</th>
-                                    <th class="py-3 px-4">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tablaMercadosBody" class="divide-y divide-slate-700 text-sm">
-                                <!-- Inyectado por JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-            </div>
-
-            <!-- Tabla de Datos Oficiales -->
-            <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-lg">
-                <div class="flex justify-between items-center mb-4">
-                    <div>
-                        <h2 id="tituloTablaEquipos" class="text-lg font-semibold text-white">📋 Tabla de Referencia (Home / Away Desglosado)</h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Cálculos con Bloque 1 para Local y Bloque 2 para Visitante.</p>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-900/80 text-slate-400 uppercase tracking-wider border-b border-slate-700 font-mono">
-                                <th class="py-3 px-3">#</th>
-                                <th class="py-3 px-3">Equipo</th>
-                                <th class="py-3 px-3 text-emerald-400 border-l border-slate-700">xG Home</th>
-                                <th class="py-3 px-3 text-emerald-400">xGA Home</th>
-                                <th class="py-3 px-3 text-emerald-300">GF Home</th>
-                                <th class="py-3 px-3 text-emerald-300">GA Home</th>
-                                <th class="py-3 px-3 text-blue-400 border-l border-slate-700">xG Away</th>
-                                <th class="py-3 px-3 text-blue-400">xGA Away</th>
-                                <th class="py-3 px-3 text-blue-300">GF Away</th>
-                                <th class="py-3 px-3 text-blue-300">GA Away</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tablaEquiposBody" class="divide-y divide-slate-700/60 font-mono">
-                            <!-- Inyectado por JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
+        <!-- Selector de Modo de Entrada (Pestañas) -->
+        <div class="bg-cardBg p-1 rounded-xl border border-slate-800 flex text-xs font-semibold">
+            <button id="btnModeXg" onclick="switchMode('xg')" class="flex-1 py-2 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-bold shadow-md">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 inline mr-1 -mt-0.5"></i> Vía xG Favor/Contra
+            </button>
+            <button id="btnModeDirect" onclick="switchMode('direct')" class="flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                <i data-lucide="target" class="w-3.5 h-3.5 inline mr-1 -mt-0.5"></i> xG Directo
+            </button>
         </div>
 
-        <!-- ================= VISTA 2: BETTRACKER & DASHBOARD ================= -->
-        <div id="vistaTracker" class="space-y-8 hidden">
-            <div class="flex justify-between items-center">
+        <!-- Formulario de Entrada de Datos -->
+        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800/80 shadow-xl space-y-4">
+            
+            <!-- Nombres de Equipos -->
+            <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <h2 class="text-2xl font-bold text-white">📊 Dashboard de Apuestas & Picks</h2>
-                    <p class="text-sm text-slate-400">Control analítico de rendimiento, profit y efectividad de tus picks.</p>
+                    <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Local</label>
+                    <div class="relative">
+                        <input type="text" id="homeName" value="Real Madrid" class="w-full bg-inputBg border border-slate-700/70 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                    </div>
                 </div>
-                <button onclick="limpiarTracker()" class="bg-rose-900/40 hover:bg-rose-800/60 text-rose-300 border border-rose-700 text-xs font-semibold px-4 py-2 rounded-lg transition">🗑️ Borrar Historial</button>
-            </div>
-
-            <!-- Tarjetas de Estadísticas Principales -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
-                    <p class="text-xs text-slate-400 uppercase">Profit Total</p>
-                    <p id="statProfit" class="text-2xl font-bold text-white mt-1">$0.00</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
-                    <p class="text-xs text-slate-400 uppercase">ROI (%)</p>
-                    <p id="statRoi" class="text-2xl font-bold text-brand-500 mt-1">0.00%</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
-                    <p class="text-xs text-slate-400 uppercase">% de Acierto</p>
-                    <p id="statAcierto" class="text-2xl font-bold text-blue-400 mt-1">0.0%</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow">
-                    <p class="text-xs text-slate-400 uppercase">Total Picks (G/P/Pdt)</p>
-                    <p id="statTotalPicks" class="text-2xl font-bold text-slate-300 mt-1">0 (0/0/0)</p>
+                <div>
+                    <label class="block text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Visitante</label>
+                    <div class="relative">
+                        <input type="text" id="awayName" value="Barcelona" class="w-full bg-inputBg border border-slate-700/70 rounded-xl px-3 py-2 text-sm font-semibold text-white focus:outline-none focus:border-emerald-500 transition-colors">
+                    </div>
                 </div>
             </div>
 
-            <!-- Segunda Fila de Métricas Avanzadas -->
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
-                    <p class="text-[10px] text-slate-400 uppercase">Cuota Media Global</p>
-                    <p id="statCuotaMedia" class="text-lg font-mono font-bold text-white mt-0.5">0.00</p>
+            <hr class="border-slate-800">
+
+            <!-- MODO 1: xG Favor / Contra -->
+            <div id="modeXgSection" class="space-y-3">
+                <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                    <i data-lucide="info" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    Introduce xG promedio acumulado o de los últimos partidos
                 </div>
-                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
-                    <p class="text-[10px] text-slate-400 uppercase">Cuota Media Ganadora</p>
-                    <p id="statCuotaGanadora" class="text-lg font-mono font-bold text-emerald-400 mt-0.5">0.00</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
-                    <p class="text-[10px] text-slate-400 uppercase">Cuota Media Perdedora</p>
-                    <p id="statCuotaPerdidora" class="text-lg font-mono font-bold text-rose-400 mt-0.5">0.00</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
-                    <p class="text-[10px] text-slate-400 uppercase">Stake Promedio ($)</p>
-                    <p id="statStakePromedio" class="text-lg font-mono font-bold text-yellow-400 mt-0.5">$10.00</p>
-                </div>
-                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl shadow text-center">
-                    <p class="text-[10px] text-slate-400 uppercase">Racha Actual</p>
-                    <p id="statRacha" class="text-lg font-bold text-white mt-0.5">-</p>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Local Stats -->
+                    <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <span class="text-xs font-bold text-emerald-400 block border-b border-slate-800 pb-1">Local (A)</span>
+                        <div>
+                            <label class="block text-[10px] text-slate-400">xG Favor (Ataque)</label>
+                            <input type="number" id="homeXgFor" value="1.85" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-emerald-300 text-center focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400">xG Contra (Defensa)</label>
+                            <input type="number" id="homeXgAgainst" value="0.95" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-rose-300 text-center focus:outline-none focus:border-rose-500">
+                        </div>
+                    </div>
+
+                    <!-- Away Stats -->
+                    <div class="space-y-2 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <span class="text-xs font-bold text-emerald-400 block border-b border-slate-800 pb-1">Visitante (B)</span>
+                        <div>
+                            <label class="block text-[10px] text-slate-400">xG Favor (Ataque)</label>
+                            <input type="number" id="awayXgFor" value="1.60" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-emerald-300 text-center focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400">xG Contra (Defensa)</label>
+                            <input type="number" id="awayXgAgainst" value="1.20" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-1.5 text-sm font-bold text-rose-300 text-center focus:outline-none focus:border-rose-500">
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Tabla de Historial de Picks -->
-            <section class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
-                <div class="p-6 border-b border-slate-700">
-                    <h3 class="text-lg font-semibold text-white">📋 Historial de Picks Registrados</h3>
+            <!-- MODO 2: Direct Expected Goals -->
+            <div id="modeDirectSection" class="hidden space-y-3">
+                <div class="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                    <i data-lucide="target" class="w-3.5 h-3.5 text-gold-400"></i>
+                    Goles Esperados Calculados Directos
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-sm">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <label class="block text-[11px] font-bold text-slate-300 mb-1">xG Final Local</label>
+                        <input type="number" id="directHomeXg" value="1.525" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-2 text-base font-extrabold text-emerald-400 text-center focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                        <label class="block text-[11px] font-bold text-slate-300 mb-1">xG Final Visitante</label>
+                        <input type="number" id="directAwayXg" value="1.275" step="0.05" min="0" class="w-full bg-inputBg border border-slate-700/60 rounded-lg px-2.5 py-2 text-base font-extrabold text-emerald-400 text-center focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón de Calcular -->
+            <button onclick="calculatePoisson()" class="w-full py-3 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4 fill-slate-950"></i> CALCULAR PROBABILIDADES
+            </button>
+        </div>
+
+        <!-- MUESTRA DE GOLES ESPERADOS (LAMBDAS) -->
+        <div class="bg-gradient-to-r from-slate-900 via-cardBg to-slate-900 rounded-xl p-3 border border-slate-800 flex items-center justify-between">
+            <div class="text-center flex-1">
+                <p class="text-[10px] uppercase font-bold text-slate-400" id="labelHomeLambda">Exp. Goles Local</p>
+                <p class="text-lg font-black text-emerald-400" id="valHomeLambda">1.525</p>
+            </div>
+            <div class="h-8 w-px bg-slate-800"></div>
+            <div class="text-center flex-1">
+                <p class="text-[10px] uppercase font-bold text-slate-400" id="labelAwayLambda">Exp. Goles Visitante</p>
+                <p class="text-lg font-black text-emerald-400" id="valAwayLambda">1.275</p>
+            </div>
+        </div>
+
+        <!-- RESULTADOS DESTACADOS GANADORES -->
+        
+        <!-- 1. OVER / UNDER 2.5 GOLES -->
+        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="flame" class="w-4 h-4 text-emerald-400"></i>
+                    <h2 class="font-extrabold text-sm text-white">Mercado Total de Goles (Over / Under 2.5)</h2>
+                </div>
+                <span class="text-[10px] font-bold bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Clave</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Over 2.5 -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-emerald-500/30 neon-glow-emerald">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-black text-white">OVER 2.5 FT</span>
+                        <span class="text-[10px] text-slate-400">Goles &gt; 2.5</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-2xl font-black text-emerald-400" id="pctOver25">55.4%</span>
+                        <div class="text-right">
+                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
+                            <span class="text-xs font-black text-gold-400" id="oddsOver25">@1.80</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="barOver25" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 55.4%"></div>
+                    </div>
+                </div>
+
+                <!-- Under 2.5 -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-black text-slate-300">UNDER 2.5 FT</span>
+                        <span class="text-[10px] text-slate-400">Goles &lt; 2.5</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-2xl font-black text-slate-300" id="pctUnder25">44.6%</span>
+                        <div class="text-right">
+                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
+                            <span class="text-xs font-black text-slate-300" id="oddsUnder25">@2.24</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="barUnder25" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 44.6%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. BTTS (AMBOS EQUIPOS ANOTAN) -->
+        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="arrow-left-right" class="w-4 h-4 text-gold-400"></i>
+                    <h2 class="font-extrabold text-sm text-white">Ambos Equipos Anotan (BTTS)</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <!-- BTTS YES -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-gold-500/30 neon-glow-gold">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-black text-white">BTTS SÍ</span>
+                        <span class="text-[10px] text-slate-400">Ambos marcan</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-2xl font-black text-gold-400" id="pctBttsYes">56.2%</span>
+                        <div class="text-right">
+                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
+                            <span class="text-xs font-black text-gold-400" id="oddsBttsYes">@1.78</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="barBttsYes" class="bg-gold-400 h-full rounded-full transition-all duration-500" style="width: 56.2%"></div>
+                    </div>
+                </div>
+
+                <!-- BTTS NO -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-black text-slate-300">BTTS NO</span>
+                        <span class="text-[10px] text-slate-400">Al menos 0-0</span>
+                    </div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-2xl font-black text-slate-300" id="pctBttsNo">43.8%</span>
+                        <div class="text-right">
+                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
+                            <span class="text-xs font-black text-slate-300" id="oddsBttsNo">@2.28</span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div id="barBttsNo" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 43.8%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. TOP 3 MARCADORES CORRECTOS -->
+        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-4 h-4 text-emerald-400"></i>
+                    <h2 class="font-extrabold text-sm text-white">Top 3 Marcadores Correctos</h2>
+                </div>
+                <span class="text-[10px] font-bold text-slate-400">Más Probables</span>
+            </div>
+
+            <div class="space-y-2" id="topScoresContainer">
+                <!-- Dinámico via JS -->
+            </div>
+        </div>
+
+        <!-- 4. MERCADO 1X2 (VICTORIA LOCAL / EMPATE / VISITANTE) -->
+        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-4 h-4 text-blue-400"></i>
+                    <h2 class="font-extrabold text-sm text-white">Mercado 1X2 Principal</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase truncate" id="name1x2Home">Local</p>
+                    <p class="text-lg font-black text-emerald-400 my-0.5" id="pct1x2Home">42.1%</p>
+                    <p class="text-[10px] font-bold text-gold-400" id="odds1x2Home">@2.38</p>
+                </div>
+                <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Empate (X)</p>
+                    <p class="text-lg font-black text-slate-200 my-0.5" id="pct1x2Draw">26.5%</p>
+                    <p class="text-[10px] font-bold text-slate-300" id="odds1x2Draw">@3.77</p>
+                </div>
+                <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase truncate" id="name1x2Away">Visitante</p>
+                    <p class="text-lg font-black text-rose-400 my-0.5" id="pct1x2Away">31.4%</p>
+                    <p class="text-[10px] font-bold text-gold-400" id="odds1x2Away">@3.18</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MATRIZ DE MARCADORES INTERACTIVA (DESPLEGABLE / TABLA) -->
+        <details class="bg-cardBg rounded-2xl border border-slate-800 overflow-hidden group">
+            <summary class="p-4 cursor-pointer flex items-center justify-between font-extrabold text-sm text-white select-none">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="grid" class="w-4 h-4 text-emerald-400"></i>
+                    <span>Matriz de Marcadores Exactos (0 - 5)</span>
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 transition-transform group-open:rotate-180"></i>
+            </summary>
+            <div class="p-4 pt-0 overflow-x-auto">
+                <p class="text-[10px] text-slate-400 mb-2">Filas: Goles Local | Columnas: Goles Visitante</p>
+                <div class="min-w-[300px]">
+                    <table class="w-full text-[11px] text-center border-collapse">
                         <thead>
-                            <tr class="bg-slate-900/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-700">
-                                <th class="py-3 px-4">Liga</th>
-                                <th class="py-3 px-4">Enfrentamiento</th>
-                                <th class="py-3 px-4">Mercado / Pick</th>
-                                <th class="py-3 px-4">Prob. (xG / GF)</th>
-                                <th class="py-3 px-4">Cuota Bookie</th>
-                                <th class="py-3 px-4">Stake</th>
-                                <th class="py-3 px-4">Resultado</th>
-                                <th class="py-3 px-4">Profit ($)</th>
-                                <th class="py-3 px-4 text-center">Acciones</th>
+                            <tr id="matrixHeader" class="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
+                                <th class="p-1">L \ V</th>
+                                <th class="p-1">0</th>
+                                <th class="p-1">1</th>
+                                <th class="p-1">2</th>
+                                <th class="p-1">3</th>
+                                <th class="p-1">4</th>
+                                <th class="p-1">5+</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaTrackerBody" class="divide-y divide-slate-700">
-                            <!-- Inyectado por JS -->
+                        <tbody id="matrixBody" class="divide-y divide-slate-800/50">
+                            <!-- JS Inject -->
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </div>
+        </details>
+
+        <!-- GRÁFICO DISTRIBUCIÓN DE GOLES DE CADA EQUIPO -->
+        <div class="bg-cardBg rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-emerald-400"></i>
+                    <h2 class="font-extrabold text-sm text-white">Probabilidad de Goles Exactos</h2>
+                </div>
+            </div>
+            <div class="h-48 w-full">
+                <canvas id="goalsChart"></canvas>
+            </div>
         </div>
 
     </main>
 
-    <!-- Modal para Añadir Liga -->
-    <div id="modalLiga" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-                <h3 class="text-lg font-bold text-white">➕ Añadir Nueva Liga (Home vs Away vs Overall)</h3>
-                <button onclick="cerrarModalLiga()" class="text-slate-400 hover:text-white font-bold">✕</button>
-            </div>
-            <div class="space-y-4 text-sm">
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Nombre de la Liga</label>
-                    <input type="text" id="inputNombreLiga" placeholder="Ej. Serie A Brasil, Premier League..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-brand-400 uppercase mb-1">Tabla xG For (3 Bloques: Home / Away / Overall)</label>
-                        <textarea id="inputDatosFor" rows="8" placeholder="Pega aquí el texto completo con Home, Away y Overall..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-blue-400 uppercase mb-1">Tabla xG Against (3 Bloques: Home / Away / Overall)</label>
-                        <textarea id="inputDatosAgainst" rows="8" placeholder="Pega aquí el texto completo con Home, Away y Overall..." class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-brand-500"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
-                <button onclick="cerrarModalLiga()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm text-white">Cancelar</button>
-                <button onclick="guardarNuevaLiga()" class="bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-lg text-sm text-white font-semibold">Guardar Liga</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para Enviar Pick -->
-    <div id="modalPick" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-                <h3 class="text-lg font-bold text-white">📥 Enviar Pick al Tracker</h3>
-                <button onclick="cerrarModalPick()" class="text-slate-400 hover:text-white font-bold">✕</button>
-            </div>
-            <div class="space-y-3 text-sm">
-                <input type="hidden" id="pickLiga">
-                <input type="hidden" id="pickLocal">
-                <input type="hidden" id="pickVisitante">
-                <input type="hidden" id="pickMercado">
-                <input type="hidden" id="pickProbXg">
-                <input type="hidden" id="pickProbGf">
-
-                <div>
-                    <p class="text-xs text-slate-400 uppercase">Enfrentamiento</p>
-                    <p id="pickLabelPartido" class="font-bold text-white text-base"></p>
-                </div>
-                <div>
-                    <p class="text-xs text-slate-400 uppercase">Mercado Seleccionado</p>
-                    <p id="pickLabelMercado" class="font-bold text-brand-400 text-sm"></p>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Cuota de la Bookie</label>
-                    <input type="number" id="inputCuotaBookie" step="0.01" min="1.01" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-brand-500">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 uppercase mb-1">Stake / Cantidad apostada ($)</label>
-                    <input type="number" id="inputStakePick" value="10.00" step="1" min="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:outline-none focus:border-brand-500">
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 pt-3 border-t border-slate-700">
-                <button onclick="cerrarModalPick()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm text-white">Cancelar</button>
-                <button onclick="confirmarEnviarPick()" class="bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-lg text-sm text-white font-semibold">Guardar en Mis Picks</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Footer -->
-    <footer class="text-center py-6 text-xs text-slate-500 border-t border-slate-800 mt-12">
-        Analizador Cuantitativo Poisson (Local/Visitante) — BetTracker Integrado.
+    <footer class="max-w-md mx-auto w-full text-center py-4 px-4 border-t border-slate-800/60 text-slate-500 text-[11px] space-y-1">
+        <p class="font-semibold text-slate-400">Poisson Betting Pro - Herramienta Estadísticas de Fútbol</p>
+        <p>Las cuotas justas son referencias probabilísticas teóricas (sin margen de casas de apuestas).</p>
     </footer>
 
-    <!-- Script Principal -->
+    <!-- LÓGICA JAVASCRIPT DE POISSON -->
     <script>
-        let ligasDB = {
-            "liga_mx": {
-                nombre: "Liga MX",
-                esBase: true,
-                equipos: [
-                    { id: 1, name: "Vasco", xG_Home: 2.05, xGA_Home: 1.65, GF_Home: 1.55, GA_Home: 1.70, xG_Away: 1.10, xGA_Away: 2.03, GF_Away: 1.25, GA_Away: 2.10 },
-                    { id: 2, name: "Flamengo", xG_Home: 1.75, xGA_Home: 0.85, GF_Home: 1.90, GA_Home: 0.80, xG_Away: 1.49, xGA_Away: 0.98, GF_Away: 1.50, GA_Away: 1.10 },
-                    { id: 3, name: "Athletico-PR", xG_Home: 1.79, xGA_Home: 1.45, GF_Home: 2.30, GA_Home: 1.30, xG_Away: 1.08, xGA_Away: 2.05, GF_Away: 1.80, GA_Away: 1.90 },
-                    { id: 4, name: "Bahia", xG_Home: 1.64, xGA_Home: 1.65, GF_Home: 1.30, GA_Home: 1.55, xG_Away: 1.49, xGA_Away: 1.95, GF_Away: 1.10, GA_Away: 1.95 },
-                    { id: 5, name: "Cruzeiro", xG_Home: 1.64, xGA_Home: 1.50, GF_Home: 2.40, GA_Home: 1.30, xG_Away: 1.32, xGA_Away: 2.00, GF_Away: 2.00, GA_Away: 1.70 },
-                    { id: 6, name: "Fluminense", xG_Home: 1.71, xGA_Home: 0.80, GF_Home: 1.65, GA_Home: 0.70, xG_Away: 1.09, xGA_Away: 1.05, GF_Away: 1.35, GA_Away: 1.00 },
-                    { id: 7, name: "Bragantino", xG_Home: 1.64, xGA_Home: 0.85, GF_Home: 1.50, GA_Home: 0.95, xG_Away: 1.31, xGA_Away: 1.05, GF_Away: 1.30, GA_Away: 1.25 },
-                    { id: 8, name: "Santos", xG_Home: 1.40, xGA_Home: 1.70, GF_Home: 1.45, GA_Home: 1.50, xG_Away: 1.29, xGA_Away: 2.06, GF_Away: 1.25, GA_Away: 1.90 },
-                    { id: 9, name: "Atletico-MG", xG_Home: 1.46, xGA_Home: 0.65, GF_Home: 2.00, GA_Home: 0.60, xG_Away: 1.15, xGA_Away: 0.95, GF_Away: 1.60, GA_Away: 0.90 },
-                    { id: 10, name: "Mirassol", xG_Home: 1.32, xGA_Home: 0.85, GF_Home: 1.60, GA_Home: 0.90, xG_Away: 1.13, xGA_Away: 1.11, GF_Away: 1.30, GA_Away: 1.20 },
-                    { id: 11, name: "Sao Paulo", xG_Home: 1.55, xGA_Home: 0.75, GF_Home: 1.45, GA_Home: 0.80, xG_Away: 1.08, xGA_Away: 0.93, GF_Away: 1.15, GA_Away: 1.00 },
-                    { id: 12, name: "Internacional", xG_Home: 1.63, xGA_Home: 1.40, GF_Home: 1.40, GA_Home: 1.45, xG_Away: 1.08, xGA_Away: 1.78, GF_Away: 1.10, GA_Away: 1.85 },
-                    { id: 13, name: "Coritiba", xG_Home: 0.97, xGA_Home: 1.30, GF_Home: 1.10, GA_Home: 1.20, xG_Away: 1.01, xGA_Away: 1.80, GF_Away: 1.00, GA_Away: 1.70 },
-                    { id: 14, name: "Palmeiras", xG_Home: 1.49, xGA_Home: 1.10, GF_Home: 1.75, GA_Home: 1.15, xG_Away: 0.99, xGA_Away: 1.34, GF_Away: 1.45, GA_Away: 1.45 },
-                    { id: 15, name: "Botafogo RJ", xG_Home: 1.51, xGA_Home: 1.15, GF_Home: 1.90, GA_Home: 1.00, xG_Away: 0.95, xGA_Away: 1.51, GF_Away: 1.60, GA_Away: 1.40 }
-                ]
-            }
-        };
+        // Inicializar Iconos de Lucide
+        lucide.createIcons();
 
-        let ligaActualKey = "liga_mx";
-        let misPicks = [];
+        let currentMode = 'xg';
+        let chartInstance = null;
 
-        function inicializarApp() {
-            const savedLigas = localStorage.getItem('poisson_ligas_db_v13');
-            if (savedLigas) {
-                try { ligasDB = JSON.parse(savedLigas); } catch(e) {}
-            }
-            const savedPicks = localStorage.getItem('poisson_mis_picks_v1');
-            if (savedPicks) {
-                try { misPicks = JSON.parse(savedPicks); } catch(e) {}
-            }
-            poblarSelectorLigas();
-            cargarLigaSeleccionada();
-            actualizarDashboardTracker();
-        }
-
-        function cambiarVista(vista) {
-            const vAnalizador = document.getElementById('vistaAnalizador');
-            const vTracker = document.getElementById('vistaTracker');
-            const btnAnalizador = document.getElementById('btnNavAnalizador');
-            const btnTracker = document.getElementById('btnNavTracker');
-
-            if (vista === 'analizador') {
-                vAnalizador.classList.remove('hidden');
-                vTracker.classList.add('hidden');
-                btnAnalizador.className = "bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
-                btnTracker.className = "bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
-            } else {
-                vAnalizador.classList.add('hidden');
-                vTracker.classList.remove('hidden');
-                btnTracker.className = "bg-brand-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
-                btnAnalizador.className = "bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold px-4 py-2 rounded-lg transition";
-                actualizarDashboardTracker();
-            }
-        }
-
-        function poblarSelectorLigas() {
-            const select = document.getElementById('selectLiga');
-            select.innerHTML = "";
-            for (let key in ligasDB) {
-                let opt = document.createElement('option');
-                opt.value = key;
-                opt.text = ligasDB[key].nombre;
-                if (key === ligaActualKey) opt.selected = true;
-                select.appendChild(opt);
-            }
-        }
-
-        function cambiarLiga() {
-            const select = document.getElementById('selectLiga');
-            ligaActualKey = select.value;
-            cargarLigaSeleccionada();
-            document.getElementById('seccionResultados').classList.add('hidden');
-        }
-
-        function cargarLigaSeleccionada() {
-            const liga = ligasDB[ligaActualKey] || ligasDB["liga_mx"];
-            ligaActualKey = liga ? ligaActualKey : "liga_mx";
-            
-            document.getElementById('badgeLigaActiva').innerText = liga.nombre;
-            document.getElementById('tituloTablaEquipos').innerText = `📋 Tabla de Referencia Home / Away — ${liga.nombre}`;
-
-            const btnEliminar = document.getElementById('btnEliminarLiga');
-            if (liga.esBase || ligaActualKey === "liga_mx") {
-                btnEliminar.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                btnEliminar.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-
-            const selectLocal = document.getElementById('selectLocal');
-            const selectVisitante = document.getElementById('selectVisitante');
-            const tablaEquiposBody = document.getElementById('tablaEquiposBody');
-
-            selectLocal.innerHTML = "";
-            selectVisitante.innerHTML = "";
-            tablaEquiposBody.innerHTML = "";
-
-            liga.equipos.forEach((eq, index) => {
-                let optL = document.createElement('option');
-                optL.value = index;
-                optL.text = eq.name;
-                selectLocal.appendChild(optL);
-
-                let optV = document.createElement('option');
-                optV.value = index;
-                optV.text = eq.name;
-                selectVisitante.appendChild(optV);
-
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-700/50 transition";
-                tr.innerHTML = `
-                    <td class="py-2.5 px-3 text-slate-400">${eq.id || (index+1)}</td>
-                    <td class="py-2.5 px-3 font-medium text-white">${eq.name}</td>
-                    <td class="py-2.5 px-3 text-emerald-400 font-semibold border-l border-slate-700">${Number(eq.xG_Home || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-3 text-emerald-400 font-semibold">${Number(eq.xGA_Home || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-3 text-emerald-300">${Number(eq.GF_Home || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-3 text-emerald-300">${Number(eq.GA_Home || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-3 text-blue-400 font-semibold border-l border-slate-700">${Number(eq.xG_Away || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-3 text-blue-400 font-semibold">${Number(eq.xGA_Away || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-3 text-blue-300">${Number(eq.GF_Away || 1.4).toFixed(2)}</td>
-                    <td class="py-2.5 px-3 text-blue-300">${Number(eq.GA_Away || 1.4).toFixed(2)}</td>
-                `;
-                tablaEquiposBody.appendChild(tr);
-            });
-
-            if(liga.equipos.length > 1) selectVisitante.selectedIndex = 1;
-            actualizarInfoSelects();
-            selectLocal.onchange = actualizarInfoSelects;
-            selectVisitante.onchange = actualizarInfoSelects;
-        }
-
-        function actualizarInfoSelects() {
-            const liga = ligasDB[ligaActualKey];
-            const idxL = document.getElementById('selectLocal').value;
-            const idxV = document.getElementById('selectVisitante').value;
-            if(liga && liga.equipos[idxL]) {
-                const eqL = liga.equipos[idxL];
-                document.getElementById('infoLocal').innerHTML = `
-                    xG/xGA Home: <span class="font-semibold text-white">${Number(eqL.xG_Home||1.4).toFixed(2)} / ${Number(eqL.xGA_Home||1.4).toFixed(2)}</span><br>
-                    GF/GA Home: <span class="font-semibold text-slate-300">${Number(eqL.GF_Home||1.4).toFixed(2)} / ${Number(eqL.GA_Home||1.4).toFixed(2)}</span>
-                `;
-            }
-            if(liga && liga.equipos[idxV]) {
-                const eqV = liga.equipos[idxV];
-                document.getElementById('infoVisitante').innerHTML = `
-                    xG/xGA Away: <span class="font-semibold text-white">${Number(eqV.xG_Away||1.4).toFixed(2)} / ${Number(eqV.xGA_Away||1.4).toFixed(2)}</span><br>
-                    GF/GA Away: <span class="font-semibold text-slate-300">${Number(eqV.GF_Away||1.4).toFixed(2)} / ${Number(eqV.GA_Away||1.4).toFixed(2)}</span>
-                `;
-            }
-        }
-
+        // Función matemática para Factorial
         function factorial(n) {
             if (n === 0 || n === 1) return 1;
             let res = 1;
@@ -559,456 +433,306 @@
             return res;
         }
 
-        function poissonPMF(k, lambda) {
+        // Función Distribución de Poisson: P(k; lambda) = (lambda^k * e^-lambda) / k!
+        function poissonProbability(k, lambda) {
             return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
         }
 
-        function calcularModeloPoisson(lambdaL, lambdaV) {
-            let pO25 = 0, pU25 = 0;
-            let pBttsYes = 0, pBttsNo = 0;
-            let marcadores = [];
+        // Formatear Cuota Justa
+        function formatOdds(probability) {
+            if (probability <= 0) return '@999.00';
+            const odds = 1 / probability;
+            return '@' + odds.toFixed(2);
+        }
 
-            for (let x = 0; x <= 8; x++) {
-                for (let y = 0; y <= 8; y++) {
-                    let pFinal = poissonPMF(x, lambdaL) * poissonPMF(y, lambdaV);
-                    marcadores.push({ marcador: `${x} - ${y}`, prob: pFinal });
-                    if ((x + y) > 2.5) pO25 += pFinal; else pU25 += pFinal;
-                    if (x > 0 && y > 0) pBttsYes += pFinal; else pBttsNo += pFinal;
+        // Formatear Porcentaje
+        function formatPct(prob) {
+            return (prob * 100).toFixed(1) + '%';
+        }
+
+        // Cambiar Modo de Entrada
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnXg = document.getElementById('btnModeXg');
+            const btnDirect = document.getElementById('btnModeDirect');
+            const sectionXg = document.getElementById('modeXgSection');
+            const sectionDirect = document.getElementById('modeDirectSection');
+
+            if (mode === 'xg') {
+                btnXg.className = "flex-1 py-2 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-bold shadow-md";
+                btnDirect.className = "flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
+                sectionXg.classList.remove('hidden');
+                sectionDirect.classList.add('hidden');
+            } else {
+                btnDirect.className = "flex-1 py-2 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-bold shadow-md";
+                btnXg.className = "flex-1 py-2 rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
+                sectionDirect.classList.remove('hidden');
+                sectionXg.classList.add('hidden');
+            }
+            calculatePoisson();
+        }
+
+        // Cálculo Principal
+        function calculatePoisson() {
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
+
+            let homeLambda = 0;
+            let awayLambda = 0;
+
+            if (currentMode === 'xg') {
+                const homeXgFor = parseFloat(document.getElementById('homeXgFor').value) || 0;
+                const homeXgAgainst = parseFloat(document.getElementById('homeXgAgainst').value) || 0;
+                const awayXgFor = parseFloat(document.getElementById('awayXgFor').value) || 0;
+                const awayXgAgainst = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
+
+                // Fórmula de goles esperados combinando fuerza ofensiva/defensiva
+                homeLambda = (homeXgFor + awayXgAgainst) / 2;
+                awayLambda = (awayXgFor + homeXgAgainst) / 2;
+            } else {
+                homeLambda = parseFloat(document.getElementById('directHomeXg').value) || 0;
+                awayLambda = parseFloat(document.getElementById('directAwayXg').value) || 0;
+            }
+
+            // Actualizar etiquetas de goles esperados
+            document.getElementById('labelHomeLambda').innerText = `Exp. Goles ${homeName}`;
+            document.getElementById('labelAwayLambda').innerText = `Exp. Goles ${awayName}`;
+            document.getElementById('valHomeLambda').innerText = homeLambda.toFixed(3);
+            document.getElementById('valAwayLambda').innerText = awayLambda.toFixed(3);
+
+            // Calcular Probabilidades de Goles (0 a 5)
+            const maxGoals = 5;
+            const homeProbs = [];
+            const awayProbs = [];
+
+            let sumHome = 0;
+            let sumAway = 0;
+
+            for (let i = 0; i < maxGoals; i++) {
+                const pHome = poissonProbability(i, homeLambda);
+                const pAway = poissonProbability(i, awayLambda);
+                homeProbs.push(pHome);
+                awayProbs.push(pAway);
+                sumHome += pHome;
+                sumAway += pAway;
+            }
+
+            // El índice 5 representa "5 o más goles"
+            homeProbs.push(Math.max(0, 1 - sumHome));
+            awayProbs.push(Math.max(0, 1 - sumAway));
+
+            // Generar Matriz de Marcadores Correctos
+            const matrix = [];
+            let probHomeWin = 0;
+            let probDraw = 0;
+            let probAwayWin = 0;
+
+            let probOver25 = 0;
+            let probUnder25 = 0;
+
+            let probBttsYes = 0;
+            let probBttsNo = 0;
+
+            const allScores = [];
+
+            for (let h = 0; h <= 5; h++) {
+                matrix[h] = [];
+                for (let a = 0; a <= 5; a++) {
+                    const prob = homeProbs[h] * awayProbs[a];
+                    matrix[h][a] = prob;
+
+                    // 1X2
+                    if (h > a) probHomeWin += prob;
+                    else if (h === a) probDraw += prob;
+                    else probAwayWin += prob;
+
+                    // Over / Under 2.5
+                    if (h + a > 2.5) probOver25 += prob;
+                    else probUnder25 += prob;
+
+                    // BTTS
+                    if (h > 0 && a > 0) probBttsYes += prob;
+                    else probBttsNo += prob;
+
+                    allScores.push({
+                        score: `${h} - ${a}`,
+                        prob: prob
+                    });
                 }
             }
 
-            marcadores.sort((a, b) => b.prob - a.prob);
-            let sumFT = pO25 + pU25; pO25 /= sumFT; pU25 /= sumFT;
-            let sumBTTS = pBttsYes + pBttsNo; pBttsYes /= sumBTTS; pBttsNo /= sumBTTS;
+            // Ordenar marcadores más probables
+            allScores.sort((a, b) => b.prob - a.prob);
+            const top3Scores = allScores.slice(0, 3);
 
-            return {
-                lambdaL, lambdaV, lambdaTotal: lambdaL + lambdaV,
-                topMarcadores: marcadores.slice(0, 3),
-                mercados: { O25: pO25, U25: pU25, BTTS_YES: pBttsYes, BTTS_NO: pBttsNo }
-            };
-        }
+            // Actualizar UI Over 2.5 / Under 2.5
+            document.getElementById('pctOver25').innerText = formatPct(probOver25);
+            document.getElementById('oddsOver25').innerText = formatOdds(probOver25);
+            document.getElementById('barOver25').style.width = (probOver25 * 100) + '%';
 
-        let datosUltimoAnalisis = null;
+            document.getElementById('pctUnder25').innerText = formatPct(probUnder25);
+            document.getElementById('oddsUnder25').innerText = formatOdds(probUnder25);
+            document.getElementById('barUnder25').style.width = (probUnder25 * 100) + '%';
 
-        function ejecutarAnalisis() {
-            const liga = ligasDB[ligaActualKey];
-            const idxL = document.getElementById('selectLocal').value;
-            const idxV = document.getElementById('selectVisitante').value;
-            const eqL = liga.equipos[idxL];
-            const eqV = liga.equipos[idxV];
+            // Actualizar UI BTTS
+            document.getElementById('pctBttsYes').innerText = formatPct(probBttsYes);
+            document.getElementById('oddsBttsYes').innerText = formatOdds(probBttsYes);
+            document.getElementById('barBttsYes').style.width = (probBttsYes * 100) + '%';
 
-            if (idxL === idxV) {
-                alert("El equipo local y visitante no pueden ser el mismo.");
-                return;
-            }
+            document.getElementById('pctBttsNo').innerText = formatPct(probBttsNo);
+            document.getElementById('oddsBttsNo').innerText = formatOdds(probBttsNo);
+            document.getElementById('barBttsNo').style.width = (probBttsNo * 100) + '%';
 
-            // Promedios de la liga por condición
-            const avgXG_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG_Home) || 1.4), 0) / liga.equipos.length;
-            const avgXGA_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA_Home) || 1.4), 0) / liga.equipos.length;
-            const avgXG_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xG_Away) || 1.4), 0) / liga.equipos.length;
-            const avgXGA_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.xGA_Away) || 1.4), 0) / liga.equipos.length;
+            // Actualizar TOP 3 Marcadores
+            const topContainer = document.getElementById('topScoresContainer');
+            topContainer.innerHTML = '';
 
-            const avgGF_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF_Home) || 1.4), 0) / liga.equipos.length;
-            const avgGA_Home = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA_Home) || 1.4), 0) / liga.equipos.length;
-            const avgGF_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GF_Away) || 1.4), 0) / liga.equipos.length;
-            const avgGA_Away = liga.equipos.reduce((acc, eq) => acc + (parseFloat(eq.GA_Away) || 1.4), 0) / liga.equipos.length;
+            top3Scores.forEach((item, index) => {
+                const rankColors = [
+                    'from-amber-500/20 to-amber-900/10 border-amber-500/40 text-amber-400',
+                    'from-slate-400/20 to-slate-800/10 border-slate-400/40 text-slate-300',
+                    'from-amber-700/20 to-stone-900/10 border-amber-800/40 text-amber-600'
+                ];
+                const badgeColors = ['bg-amber-500 text-slate-950', 'bg-slate-400 text-slate-950', 'bg-amber-700 text-white'];
 
-            // MODELO xG (Local Home xG vs Visitante Away xGA)
-            const faL_xg = (parseFloat(eqL.xG_Home) || 1.4) / avgXG_Home;
-            const fdV_xg = (parseFloat(eqV.xGA_Away) || 1.4) / avgXGA_Away;
-            const lambdaL_xg = faL_xg * fdV_xg * avgXG_Home;
-
-            const faV_xg = (parseFloat(eqV.xG_Away) || 1.4) / avgXG_Away;
-            const fdL_xg = (parseFloat(eqL.xGA_Home) || 1.4) / avgXGA_Home;
-            const lambdaV_xg = faV_xg * fdL_xg * avgXG_Away;
-
-            const resXg = calcularModeloPoisson(lambdaL_xg, lambdaV_xg);
-
-            // MODELO GF / GA
-            const faL_gf = (parseFloat(eqL.GF_Home) || 1.4) / avgGF_Home;
-            const fdV_ga = (parseFloat(eqV.GA_Away) || 1.4) / avgGA_Away;
-            const lambdaL_gf = faL_gf * fdV_ga * avgGF_Home;
-
-            const faV_gf = (parseFloat(eqV.GF_Away) || 1.4) / avgGF_Away;
-            const fdL_ga = (parseFloat(eqL.GA_Home) || 1.4) / avgGA_Home;
-            const lambdaV_gf = faV_gf * fdL_ga * avgGF_Away;
-
-            const resGf = calcularModeloPoisson(lambdaL_gf, lambdaV_gf);
-
-            datosUltimoAnalisis = {
-                liga: liga.nombre,
-                local: eqL.name,
-                visitante: eqV.name,
-                resXg, resGf
-            };
-
-            document.getElementById('resXgLambdaLocal').innerText = resXg.lambdaL.toFixed(2);
-            document.getElementById('resXgLambdaVisitante').innerText = resXg.lambdaV.toFixed(2);
-            document.getElementById('resXgLambdaTotal').innerText = resXg.lambdaTotal.toFixed(2);
-
-            document.getElementById('resGfLambdaLocal').innerText = resGf.lambdaL.toFixed(2);
-            document.getElementById('resGfLambdaVisitante').innerText = resGf.lambdaV.toFixed(2);
-            document.getElementById('resGfLambdaTotal').innerText = resGf.lambdaTotal.toFixed(2);
-
-            const gridXg = document.getElementById('gridMarcadoresXg');
-            gridXg.innerHTML = "";
-            resXg.topMarcadores.forEach(m => {
-                let div = document.createElement('div');
-                div.className = "bg-slate-900/80 border border-slate-700 p-2 rounded text-center";
-                div.innerHTML = `<p class="text-[10px] text-slate-400 font-mono">${m.marcador}</p><p class="text-xs font-bold text-brand-400">${(m.prob * 100).toFixed(1)}%</p>`;
-                gridXg.appendChild(div);
-            });
-
-            const gridGf = document.getElementById('gridMarcadoresGf');
-            gridGf.innerHTML = "";
-            resGf.topMarcadores.forEach(m => {
-                let div = document.createElement('div');
-                div.className = "bg-slate-900/80 border border-slate-700 p-2 rounded text-center";
-                div.innerHTML = `<p class="text-[10px] text-slate-400 font-mono">${m.marcador}</p><p class="text-xs font-bold text-blue-400">${(m.prob * 100).toFixed(1)}%</p>`;
-                gridGf.appendChild(div);
-            });
-
-            evaluarSugerenciaApuesta(resXg, resGf);
-
-            const mercadosDef = [
-                { id: "O25", nombre: "Over 2.5 Goles FT" },
-                { id: "U25", nombre: "Under 2.5 Goles FT" },
-                { id: "BTTS_YES", nombre: "BTTS Sí (Ambos Anotan)" },
-                { id: "BTTS_NO", nombre: "BTTS No (Ambos Anotan)" }
-            ];
-
-            const tbody = document.getElementById('tablaMercadosBody');
-            tbody.innerHTML = "";
-
-            mercadosDef.forEach(md => {
-                const pXg = resXg.mercados[md.id] * 100;
-                const cXg = (1 / resXg.mercados[md.id]).toFixed(2);
-                const pGf = resGf.mercados[md.id] * 100;
-                const cGf = (1 / resGf.mercados[md.id]).toFixed(2);
-
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-700/50 transition";
-                tr.innerHTML = `
-                    <td class="py-3 px-4 font-medium text-white">${md.nombre}</td>
-                    <td class="py-3 px-4 text-brand-400 font-bold">${pXg.toFixed(2)}%</td>
-                    <td class="py-3 px-4 text-slate-300 font-mono">${cXg}</td>
-                    <td class="py-3 px-4 text-blue-400 font-bold">${pGf.toFixed(2)}%</td>
-                    <td class="py-3 px-4 text-slate-300 font-mono">${cGf}</td>
-                    <td class="py-3 px-4">
-                        <button onclick="abrirModalPick('${md.nombre}', ${resXg.mercados[md.id]}, ${resGf.mercados[md.id]}, ${cXg})" class="bg-brand-600 hover:bg-brand-700 text-white text-xs px-3 py-1.5 rounded-lg transition font-semibold flex items-center gap-1">
-                            ➕ Enviar Pick
-                        </button>
-                    </td>
+                const scoreEl = document.createElement('div');
+                scoreEl.className = `flex items-center justify-between p-2.5 rounded-xl border bg-gradient-to-r ${rankColors[index]}`;
+                scoreEl.innerHTML = `
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-5 h-5 rounded-full ${badgeColors[index]} text-[10px] font-black flex items-center justify-center">#${index + 1}</span>
+                        <span class="text-base font-black tracking-widest text-white">${item.score}</span>
+                    </div>
+                    <div class="text-right flex items-center gap-3">
+                        <div>
+                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Probabilidad</span>
+                            <span class="text-sm font-black text-white">${formatPct(item.prob)}</span>
+                        </div>
+                        <div class="pl-2 border-l border-slate-700">
+                            <span class="block text-[9px] text-slate-400 uppercase font-semibold">Cuota Justa</span>
+                            <span class="text-sm font-black text-gold-400">${formatOdds(item.prob)}</span>
+                        </div>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                topContainer.appendChild(scoreEl);
             });
 
-            document.getElementById('seccionResultados').classList.remove('hidden');
+            // Actualizar 1X2
+            document.getElementById('name1x2Home').innerText = homeName;
+            document.getElementById('pct1x2Home').innerText = formatPct(probHomeWin);
+            document.getElementById('odds1x2Home').innerText = formatOdds(probHomeWin);
+
+            document.getElementById('pct1x2Draw').innerText = formatPct(probDraw);
+            document.getElementById('odds1x2Draw').innerText = formatOdds(probDraw);
+
+            document.getElementById('name1x2Away').innerText = awayName;
+            document.getElementById('pct1x2Away').innerText = formatPct(probAwayWin);
+            document.getElementById('odds1x2Away').innerText = formatOdds(probAwayWin);
+
+            // Renderizar Matriz HTML
+            renderMatrix(matrix);
+
+            // Renderizar Gráfica Chart.js
+            renderChart(homeName, awayName, homeProbs, awayProbs);
         }
 
-        function evaluarSugerenciaApuesta(resXg, resGf) {
-            let opciones = [
-                { nombre: "Over 2.5 Goles FT", prob: Math.max(resXg.mercados.O25, resGf.mercados.O25), probXg: resXg.mercados.O25, probGf: resGf.mercados.O25 },
-                { nombre: "BTTS Sí (Ambos Anotan)", prob: Math.max(resXg.mercados.BTTS_YES, resGf.mercados.BTTS_YES), probXg: resXg.mercados.BTTS_YES, probGf: resGf.mercados.BTTS_YES }
-            ];
-            let mejor = opciones.reduce((prev, curr) => (curr.prob > prev.prob) ? curr : prev);
-            let probConservadora = Math.min(mejor.probXg, mejor.probGf);
-            let cuotaJusta = (1 / probConservadora).toFixed(2);
-            let cuotaMinima = (parseFloat(cuotaJusta) * 1.05).toFixed(2);
+        // Renderizar Tabla de Matriz de Marcadores
+        function renderMatrix(matrix) {
+            const body = document.getElementById('matrixBody');
+            body.innerHTML = '';
 
-            document.getElementById('panelSugerenciaApuesta').innerHTML = `
-                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400 uppercase font-semibold">🎯 Mercado Sugerido</p>
-                    <p class="text-base font-bold text-white mt-1">${mejor.nombre}</p>
-                    <p class="text-xs text-brand-400 mt-1">Probabilidad combinada: ${(mejor.prob * 100).toFixed(1)}%</p>
-                </div>
-                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700">
-                    <p class="text-xs text-slate-400 uppercase font-semibold">💵 Cuota Justa / Mínima (EV+)</p>
-                    <p class="text-xl font-mono font-bold text-yellow-400 mt-1">${cuotaJusta} <span class="text-xs text-slate-400 font-normal">(Mín. ${cuotaMinima})</span></p>
-                    <p class="text-xs text-slate-300 mt-1">Entrar si la bookie paga por encima de la mínima.</p>
-                </div>
-                <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
-                    <button onclick="abrirModalPick('${mejor.nombre}', ${mejor.probXg}, ${mejor.probGf}, ${cuotaJusta})" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 px-3 rounded-lg text-xs transition">
-                        📥 Enviar este Pick al Tracker
-                    </button>
-                </div>
-            `;
-        }
+            for (let h = 0; h <= 5; h++) {
+                const tr = document.createElement('tr');
+                let rowHtml = `<td class="p-1.5 font-bold text-slate-400 bg-slate-900">${h === 5 ? '5+' : h}</td>`;
+                
+                for (let a = 0; a <= 5; a++) {
+                    const val = matrix[h][a];
+                    const pct = (val * 100).toFixed(1);
+                    
+                    // Colorear ligeramente celdas de alta probabilidad
+                    let bgStyle = 'bg-slate-900/40 text-slate-300';
+                    if (val > 0.10) bgStyle = 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40';
+                    else if (val > 0.05) bgStyle = 'bg-emerald-950/40 text-emerald-400';
 
-        // ================= GESTIÓN BETTRACKER =================
-        function abrirModalPick(mercado, probXg, probGf, cuotaSugerida) {
-            if (!datosUltimoAnalisis) return;
-            document.getElementById('pickLiga').value = datosUltimoAnalisis.liga;
-            document.getElementById('pickLocal').value = datosUltimoAnalisis.local;
-            document.getElementById('pickVisitante').value = datosUltimoAnalisis.visitante;
-            document.getElementById('pickMercado').value = mercado;
-            document.getElementById('pickProbXg').value = probXg;
-            document.getElementById('pickProbGf').value = probGf;
-
-            document.getElementById('pickLabelPartido').innerText = `${datosUltimoAnalisis.local} vs ${datosUltimoAnalisis.visitante}`;
-            document.getElementById('pickLabelMercado').innerText = mercado;
-            document.getElementById('inputCuotaBookie').value = cuotaSugerida;
-
-            document.getElementById('modalPick').classList.remove('hidden');
-        }
-
-        function cerrarModalPick() { document.getElementById('modalPick').classList.add('hidden'); }
-
-        function confirmarEnviarPick() {
-            const nuevaApuesta = {
-                id: Date.now(),
-                liga: document.getElementById('pickLiga').value,
-                local: document.getElementById('pickLocal').value,
-                visitante: document.getElementById('pickVisitante').value,
-                mercado: document.getElementById('pickMercado').value,
-                probXg: parseFloat(document.getElementById('pickProbXg').value),
-                probGf: parseFloat(document.getElementById('pickProbGf').value),
-                cuota: parseFloat(document.getElementById('inputCuotaBookie').value) || 1.80,
-                stake: parseFloat(document.getElementById('inputStakePick').value) || 10.00,
-                resultado: 'pendiente'
-            };
-
-            misPicks.unshift(nuevaApuesta);
-            guardarPicksStorage();
-            cerrarModalPick();
-            alert("¡Pick guardado correctamente en tu Tracker!");
-        }
-
-        function guardarPicksStorage() { localStorage.setItem('poisson_mis_picks_v1', JSON.stringify(misPicks)); }
-
-        function actualizarEstadoPick(id, nuevoResultado) {
-            const pick = misPicks.find(p => p.id === id);
-            if (pick) {
-                pick.resultado = nuevoResultado;
-                guardarPicksStorage();
-                actualizarDashboardTracker();
-            }
-        }
-
-        function eliminarPick(id) {
-            misPicks = misPicks.filter(p => p.id !== id);
-            guardarPicksStorage();
-            actualizarDashboardTracker();
-        }
-
-        function limpiarTracker() {
-            if (confirm("¿Estás seguro de vaciar todo el historial de picks?")) {
-                misPicks = [];
-                guardarPicksStorage();
-                actualizarDashboardTracker();
-            }
-        }
-
-        function actualizarDashboardTracker() {
-            const tbody = document.getElementById('tablaTrackerBody');
-            tbody.innerHTML = "";
-
-            let totalProfit = 0, totalInvertido = 0, ganadas = 0, perdidas = 0, pendientes = 0;
-            let sumaCuotasGlobal = 0, sumaCuotasGanadas = 0, sumaCuotasPerdidas = 0;
-            let countGanadas = 0, countPerdidas = 0, countSettled = 0;
-            let rachaTexto = "-";
-
-            misPicks.forEach((p) => {
-                let profitPick = 0;
-                totalInvertido += p.stake;
-                sumaCuotasGlobal += p.cuota;
-
-                if (p.resultado === 'ganada') {
-                    profitPick = (p.cuota - 1) * p.stake;
-                    totalProfit += profitPick;
-                    ganadas++; countGanadas++;
-                    sumaCuotasGanadas += p.cuota;
-                    countSettled++;
-                } else if (p.resultado === 'perdida') {
-                    profitPick = -p.stake;
-                    totalProfit -= p.stake;
-                    perdidas++; countPerdidas++;
-                    sumaCuotasPerdidas += p.cuota;
-                    countSettled++;
-                } else {
-                    pendientes++;
+                    rowHtml += `<td class="p-1.5 ${bgStyle}">${pct}%</td>`;
                 }
-
-                let badgeRes = p.resultado === 'ganada' 
-                    ? `<span class="bg-emerald-950 text-emerald-400 border border-emerald-700 px-2.5 py-1 rounded-md text-xs font-bold">Ganada</span>`
-                    : (p.resultado === 'perdida' 
-                        ? `<span class="bg-rose-950 text-rose-400 border border-rose-700 px-2.5 py-1 rounded-md text-xs font-bold">Perdida</span>`
-                        : `<span class="bg-amber-950 text-amber-400 border border-amber-700 px-2.5 py-1 rounded-md text-xs font-bold">Pendiente</span>`);
-
-                let tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-700/50 transition";
-                tr.innerHTML = `
-                    <td class="py-3 px-4 text-xs text-slate-400 font-semibold">${p.liga}</td>
-                    <td class="py-3 px-4 font-medium text-white">${p.local} vs ${p.visitante}</td>
-                    <td class="py-3 px-4 text-brand-400 font-semibold">${p.mercado}</td>
-                    <td class="py-3 px-4 text-xs text-slate-300">xG: ${(p.probXg*100).toFixed(0)}%<br>GF: ${(p.probGf*100).toFixed(0)}%</td>
-                    <td class="py-3 px-4 font-mono text-white">${p.cuota.toFixed(2)}</td>
-                    <td class="py-3 px-4 font-mono text-slate-300">$${p.stake.toFixed(2)}</td>
-                    <td class="py-3 px-4">${badgeRes}</td>
-                    <td class="py-3 px-4 font-mono font-bold ${profitPick > 0 ? 'text-emerald-400' : (profitPick < 0 ? 'text-rose-400' : 'text-slate-400')}">${profitPick >= 0 ? '+' : ''}$${profitPick.toFixed(2)}</td>
-                    <td class="py-3 px-4 text-center space-x-1">
-                        <select onchange="actualizarEstadoPick(${p.id}, this.value)" class="bg-slate-900 border border-slate-700 text-xs rounded px-2 py-1 text-white">
-                            <option value="pendiente" ${p.resultado==='pendiente'?'selected':''}>Pdt</option>
-                            <option value="ganada" ${p.resultado==='ganada'?'selected':''}>Win</option>
-                            <option value="perdida" ${p.resultado==='perdida'?'selected':''}>Loss</option>
-                        </select>
-                        <button onclick="eliminarPick(${p.id})" class="text-rose-400 hover:text-rose-300 text-xs px-1">🗑️</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            const roi = totalInvertido > 0 ? (totalProfit / totalInvertido) * 100 : 0;
-            const porcentajeAcierto = countSettled > 0 ? (ganadas / countSettled) * 100 : 0;
-            const cuotaMedia = misPicks.length > 0 ? sumaCuotasGlobal / misPicks.length : 0;
-            const cuotaGanadora = countGanadas > 0 ? sumaCuotasGanadas / countGanadas : 0;
-            const cuotaPerdidora = countPerdidas > 0 ? sumaCuotasPerdidas / countPerdidas : 0;
-
-            if (misPicks.length > 0 && misPicks[0].resultado !== 'pendiente') {
-                let tipoRacha = misPicks[0].resultado;
-                let cRacha = 0;
-                for (let pick of misPicks) {
-                    if (pick.resultado === tipoRacha) cRacha++;
-                    else break;
-                }
-                rachaTexto = `${cRacha} ${tipoRacha === 'ganada' ? 'Win(s)' : 'Loss(s)'}`;
-            }
-
-            document.getElementById('statProfit').innerText = `${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}`;
-            document.getElementById('statProfit').className = `text-2xl font-bold mt-1 ${totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            document.getElementById('statRoi').innerText = `${roi.toFixed(2)}%`;
-            document.getElementById('statRoi').className = `text-2xl font-bold mt-1 ${roi >= 0 ? 'text-brand-500' : 'text-rose-400'}`;
-            document.getElementById('statAcierto').innerText = `${porcentajeAcierto.toFixed(1)}%`;
-            document.getElementById('statTotalPicks').innerText = `${misPicks.length} (${ganadas}/${perdidas}/${pendientes})`;
-            document.getElementById('statCuotaMedia').innerText = cuotaMedia.toFixed(2);
-            document.getElementById('statCuotaGanadora').innerText = cuotaGanadora.toFixed(2);
-            document.getElementById('statCuotaPerdidora').innerText = cuotaPerdidora.toFixed(2);
-            document.getElementById('statRacha').innerText = rachaTexto;
-        }
-
-        function eliminarLigaActiva() {
-            const liga = ligasDB[ligaActualKey];
-            if (!liga || liga.esBase || ligaActualKey === "liga_mx") {
-                alert("La Liga MX principal no puede ser eliminada.");
-                return;
-            }
-            if (confirm(`¿Eliminar la liga "${liga.nombre}"?`)) {
-                delete ligasDB[ligaActualKey];
-                localStorage.setItem('poisson_ligas_db_v13', JSON.stringify(ligasDB));
-                ligaActualKey = "liga_mx";
-                poblarSelectorLigas();
-                cargarLigaSeleccionada();
-                document.getElementById('seccionResultados').classList.add('hidden');
+                tr.innerHTML = rowHtml;
+                body.appendChild(tr);
             }
         }
 
-        function abrirModalLiga() { document.getElementById('modalLiga').classList.remove('hidden'); }
-        function cerrarModalLiga() { document.getElementById('modalLiga').classList.add('hidden'); }
+        // Renderizar Gráfica
+        function renderChart(homeName, awayName, homeProbs, awayProbs) {
+            const ctx = document.getElementById('goalsChart').getContext('2d');
 
-        // PARSER MÁS PRECISO PARA ESTRUCTURAS DE 3 BLOQUES (HOME - AWAY - OVERALL)
-        function procesarBloqueTexto(textoRaw) {
-            let resultado = {};
-            const lineas = textoRaw.split('\n');
+            const labels = ['0 Goles', '1 Gol', '2 Goles', '3 Goles', '4 Goles', '5+ Goles'];
 
-            lineas.forEach(lineaRaw => {
-                let linea = lineaRaw.trim();
-                if (!linea) return;
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
 
-                const lLower = linea.toLowerCase();
-                if (lLower.includes("home") || lLower.includes("away") || lLower.includes("overall")) return;
-                if (lLower.startsWith("g") || lLower.startsWith("txg") || lLower.startsWith("c") || lLower.startsWith("s")) return;
-
-                // Extraer tokens respetando el nombre del equipo y los bloques numéricos
-                let partes = linea.split(/\t+|\s{2,}/).map(p => p.trim()).filter(p => p !== "");
-                if (partes.length < 3) {
-                    partes = linea.split(/\s+/).map(p => p.trim()).filter(p => p !== "");
-                }
-
-                // Parsear patrones con nombres de equipos y métricas numéricas
-                let nums = [];
-                let eqName = "";
-
-                for (let i = 0; i < partes.length; i++) {
-                    let val = parseFloat(partes[i]);
-                    if (isNaN(val)) {
-                        if (!eqName) eqName = partes[i].replace(/^\d+[\s\.\-]+/, '').trim();
-                    } else {
-                        nums.push(val);
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: homeName,
+                            data: homeProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                        },
+                        {
+                            label: awayName,
+                            data: awayProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: 'rgba(245, 158, 11, 0.85)',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            borderRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#94a3b8',
+                                font: { family: 'Inter', size: 10, weight: 'bold' }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#64748b', font: { size: 9 } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            ticks: { 
+                                color: '#64748b', 
+                                font: { size: 9 },
+                                callback: function(value) { return value + '%'; }
+                            },
+                            grid: { color: '#1e293b' }
+                        }
                     }
                 }
-
-                if (eqName && nums.length >= 4) {
-                    // Bloque 1 (Home xG): Columna 4 (index 3)
-                    let homeVal = nums[3];
-                    // Bloque 2 (Away xG): Columna 8 (index 7) o fallback
-                    let awayVal = nums.length >= 8 ? nums[7] : homeVal;
-
-                    if (!resultado[eqName]) resultado[eqName] = {};
-                    resultado[eqName].home = homeVal;
-                    resultado[eqName].away = awayVal;
-                }
             });
-
-            return resultado;
         }
 
-        function guardarNuevaLiga() {
-            const nombre = document.getElementById('inputNombreLiga').value.trim();
-            const rawFor = document.getElementById('inputDatosFor').value.trim();
-            const rawAgainst = document.getElementById('inputDatosAgainst').value.trim();
-
-            if (!nombre || (!rawFor && !rawAgainst)) { 
-                alert("Por favor ingresa el nombre de la liga y al menos una tabla."); 
-                return; 
-            }
-
-            let datosFor = rawFor ? procesarBloqueTexto(rawFor) : {};
-            let datosAgainst = rawAgainst ? procesarBloqueTexto(rawAgainst) : {};
-
-            let equiposNombres = new Set([...Object.keys(datosFor), ...Object.keys(datosAgainst)]);
-            let equipos = [];
-            let idCounter = 1;
-
-            equiposNombres.forEach(eqName => {
-                let fData = datosFor[eqName] || { home: 1.4, away: 1.4 };
-                let aData = datosAgainst[eqName] || { home: 1.4, away: 1.4 };
-
-                equipos.push({
-                    id: idCounter++,
-                    name: eqName,
-                    xG_Home: Number(fData.home || 1.4),
-                    xG_Away: Number(fData.away || 1.4),
-                    xGA_Home: Number(aData.home || 1.4),
-                    xGA_Away: Number(aData.away || 1.4),
-                    GF_Home: Number(fData.home || 1.4),
-                    GF_Away: Number(fData.away || 1.4),
-                    GA_Home: Number(aData.home || 1.4),
-                    GA_Away: Number(aData.away || 1.4)
-                });
-            });
-
-            if (equipos.length === 0) {
-                alert("No se pudieron extraer equipos. Verifica la estructura del texto pegado.");
-                return;
-            }
-
-            const key = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_');
-            ligasDB[key] = { nombre, esBase: false, equipos };
-            localStorage.setItem('poisson_ligas_db_v13', JSON.stringify(ligasDB));
-
-            ligaActualKey = key;
-            poblarSelectorLigas();
-            cargarLigaSeleccionada();
-            cerrarModalLiga();
-            
-            document.getElementById('inputNombreLiga').value = "";
-            document.getElementById('inputDatosFor').value = "";
-            document.getElementById('inputDatosAgainst').value = "";
-            
-            alert(`¡Liga "${nombre}" guardada exitosamente (${equipos.length} equipos sincronizados en Home/Away)!`);
-        }
-
-        window.onload = inicializarApp;
+        // Ejecutar cálculo automático al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            calculatePoisson();
+        });
     </script>
 </body>
 </html>
