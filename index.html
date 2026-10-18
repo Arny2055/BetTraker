@@ -542,7 +542,7 @@
                 <!-- MÉTRICAS PRINCIPALES DE EVALUACIÓN -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Brier Score (1X2 Promedio)</span>
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Brier Score Binario (Por Selección)</span>
                         <span class="text-xl font-black text-indigo-400 block" id="valBrierScore">0.0000</span>
                         <span class="text-[9px] text-slate-500 block">Menor es mejor (Ideal: 0.0)</span>
                     </div>
@@ -562,15 +562,15 @@
                 <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1.5">
                     <p class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i> ¿Qué miden estas métricas?</p>
                     <p class="text-[11px] text-slate-400">
-                        El <b>Brier Score</b> evalúa la precisión cuadrática de las probabilidades pronosticadas frente a los resultados reales (0 o 1). El <b>Log Loss</b> penaliza fuertemente las predicciones con alta probabilidad que resultaron erróneas. Ambas se calculan automáticamente con el historial de apuestas liquidadas (Ganadas/Perdidas).
+                        El <b>Brier Score Binario</b> evalúa la precisión cuadrática en selecciones individuales (rango 0 a 1). El <b>Log Loss</b> penaliza fuertemente las predicciones con alta probabilidad erróneas. El diagrama de confiabilidad agrupa tus apuestas por rangos de probabilidad frente a su tasa real de acierto.
                     </p>
                 </div>
 
                 <!-- GRÁFICA DE CALIBRACIÓN (RELIABILITY DIAGRAM) -->
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-300">Diagrama de Confiabilidad / Calibración</span>
-                        <span class="text-[10px] text-indigo-400 font-bold">Probabilidad Pronosticada vs Real</span>
+                        <span class="text-xs font-bold text-slate-300">Diagrama de Confiabilidad (Reliability Diagram)</span>
+                        <span class="text-[10px] text-indigo-400 font-bold">Prob. Pronosticada vs Frecuencia Real</span>
                     </div>
                     <div class="h-48 w-full">
                         <canvas id="calibrationChart"></canvas>
@@ -1324,7 +1324,7 @@
             });
         }
 
-        // LÓGICA DE CALIBRACIÓN Y PRECISIÓN (BRIER SCORE & LOG LOSS)
+        // LÓGICA DE CALIBRACIÓN Y DIAGRAMA DE CONFIABILIDAD (RELIABILITY DIAGRAM)
         function toggleCalibrationModal(show) {
             const modal = document.getElementById('calibrationModal');
             if (show) {
@@ -1336,7 +1336,7 @@
         }
 
         function calculateCalibrationMetrics() {
-            // Filtrar apuestas que ya tienen resultado liquidado (WON o LOST)
+            // Filtrar apuestas liquidadas (WON o LOST)
             const settledBets = betLogData.filter(b => b.status === 'WON' || b.status === 'LOST');
             
             const countEl = document.getElementById('valEvaluatedCount');
@@ -1349,23 +1349,29 @@
             if (settledBets.length === 0) {
                 brierEl.innerText = "0.0000";
                 logLossEl.innerText = "0.0000";
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas (Ganadas o Perdidas) para calcular Brier Score y Log Loss. Cambia el estado de alguna apuesta en la bitácora.</td></tr>`;
-                renderCalibrationChart([], [], []);
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas (Ganadas o Perdidas) para calcular calibración. Cambia el estado de alguna apuesta en la bitácora.</td></tr>`;
+                renderReliabilityDiagram([], [], []);
                 return;
             }
 
             let totalBrier = 0;
             let totalLogLoss = 0;
             let tableHtml = '';
-            let chartLabels = [];
-            let chartPredicted = [];
-            let chartActual = [];
 
-            settledBets.forEach((bet, idx) => {
+            // Definir Bins (Rangos de probabilidad para el Reliability Diagram)
+            const bins = [
+                { min: 0.0, max: 0.2, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.2, max: 0.4, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.4, max: 0.6, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.6, max: 0.8, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.8, max: 1.0, predSum: 0, actualSum: 0, count: 0 }
+            ];
+
+            settledBets.forEach(bet => {
                 const p = parseFloat(bet.prob) / 100; // Probabilidad pronosticada (0 a 1)
                 const o = bet.status === 'WON' ? 1 : 0; // Resultado real (1 o 0)
 
-                // Brier Score individual = (p - o)^2
+                // Brier Score individual binario = (p - o)^2
                 const brierInd = Math.pow(p - o, 2);
                 totalBrier += brierInd;
 
@@ -1375,9 +1381,13 @@
                 const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
                 totalLogLoss += logLossInd;
 
-                chartLabels.push(`#${idx + 1} (${bet.match.substring(0, 15)}...)`);
-                chartPredicted.push((p * 100).toFixed(1));
-                chartActual.push(o * 100);
+                // Asignar al bin correspondiente
+                const bin = bins.find(b => p >= b.min && (p < b.max || (p === 1.0 && b.max === 1.0)));
+                if (bin) {
+                    bin.predSum += p;
+                    bin.actualSum += o;
+                    bin.count++;
+                }
 
                 tableHtml += `
                     <tr>
@@ -1397,10 +1407,15 @@
             logLossEl.innerText = avgLogLoss.toFixed(4);
             tableBody.innerHTML = tableHtml;
 
-            renderCalibrationChart(chartLabels, chartPredicted, chartActual);
+            // Extraer datos para el Diagrama de Confiabilidad
+            const binLabels = bins.map(b => `${(b.min * 100).toFixed(0)}% - ${(b.max * 100).toFixed(0)}%`);
+            const binPredicted = bins.map(b => b.count > 0 ? ((b.predSum / b.count) * 100).toFixed(1) : 0);
+            const binActual = bins.map(b => b.count > 0 ? ((b.actualSum / b.count) * 100).toFixed(1) : 0);
+
+            renderReliabilityDiagram(binLabels, binPredicted, binActual);
         }
 
-        function renderCalibrationChart(labels, predicted, actual) {
+        function renderReliabilityDiagram(labels, predicted, actual) {
             const ctx = document.getElementById('calibrationChart').getContext('2d');
             if (calibrationChartInstance) calibrationChartInstance.destroy();
 
@@ -1410,13 +1425,13 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Prob. Pronosticada (%)',
+                            label: 'Probabilidad Promedio Pronosticada (%)',
                             data: predicted,
                             backgroundColor: '#6366f1',
                             borderRadius: 4
                         },
                         {
-                            label: 'Resultado Real (100% o 0%)',
+                            label: 'Frecuencia Real de Acierto (%)',
                             data: actual,
                             backgroundColor: '#10b981',
                             borderRadius: 4
