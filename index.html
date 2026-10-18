@@ -126,6 +126,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-1.5">
+                <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all active:scale-95">
+                    <i class="fa-solid fa-bullseye"></i> Calibración
+                </button>
                 <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
                 </button>
@@ -516,6 +519,100 @@
 
     </div>
 
+    <!-- MODAL DE CALIBRACIÓN Y PRECISIÓN (BRIER SCORE & LOG LOSS) -->
+    <div id="calibrationModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-4xl max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Header Modal Calibración -->
+            <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-indigo-400 text-base"></i>
+                    <h3 class="font-black text-sm text-white">Calibración y Medición de Precisión del Modelo</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleCalibrationModal(false)" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body Calibración -->
+            <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
+                
+                <!-- MÉTRICAS PRINCIPALES DE EVALUACIÓN -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Brier Score (1X2 Promedio)</span>
+                        <span class="text-xl font-black text-indigo-400 block" id="valBrierScore">0.0000</span>
+                        <span class="text-[9px] text-slate-500 block">Menor es mejor (Ideal: 0.0)</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Log Loss (Pérdida Logarítmica)</span>
+                        <span class="text-xl font-black text-emerald-400 block" id="valLogLoss">0.0000</span>
+                        <span class="text-[9px] text-slate-500 block">Menor es mejor (Penaliza errores graves)</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Apuestas Liquidadas Evaluadas</span>
+                        <span class="text-xl font-black text-white block" id="valEvaluatedCount">0</span>
+                        <span class="text-[9px] text-slate-500 block">Con resultado Ganada / Perdida</span>
+                    </div>
+                </div>
+
+                <!-- DESCRIPCIÓN Y FORMULAS DE REFERENCIA -->
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1.5">
+                    <p class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i> ¿Qué miden estas métricas?</p>
+                    <p class="text-[11px] text-slate-400">
+                        El <b>Brier Score</b> evalúa la precisión cuadrática de las probabilidades pronosticadas frente a los resultados reales (0 o 1). El <b>Log Loss</b> penaliza fuertemente las predicciones con alta probabilidad que resultaron erróneas. Ambas se calculan automáticamente con el historial de apuestas liquidadas (Ganadas/Perdidas).
+                    </p>
+                </div>
+
+                <!-- GRÁFICA DE CALIBRACIÓN (RELIABILITY DIAGRAM) -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-slate-300">Diagrama de Confiabilidad / Calibración</span>
+                        <span class="text-[10px] text-indigo-400 font-bold">Probabilidad Pronosticada vs Real</span>
+                    </div>
+                    <div class="h-48 w-full">
+                        <canvas id="calibrationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- TABLA DE EVALUACIÓN DETALLADA -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-extrabold text-slate-200">Desglose de Calibración por Apuesta</span>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 max-h-56">
+                        <table class="w-full text-[10px] text-left border-collapse excel-table">
+                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
+                                <tr>
+                                    <th class="p-1.5">Partido / Selección</th>
+                                    <th class="p-1.5 text-center">Prob. Modelo (%)</th>
+                                    <th class="p-1.5 text-center">Resultado Real</th>
+                                    <th class="p-1.5 text-center">Brier Score Individual</th>
+                                    <th class="p-1.5 text-center">Log Loss Individual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="calibrationTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                <!-- Filas de calibración cargadas por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal Calibración -->
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
+                <button onclick="toggleCalibrationModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+
     <!-- MODAL DE GESTIÓN DE REGISTRO DE APUESTAS (BET TRACKER DASHBOARD) -->
     <div id="trackerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-4xl max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
@@ -838,6 +935,7 @@
         let currentMode = 'xg';
         let chartInstance = null;
         let pnlChartInstance = null;
+        let calibrationChartInstance = null;
         let leaguesData = {};
         let betLogData = [];
         let currentCalculatedProbs = {};
@@ -1226,6 +1324,122 @@
             });
         }
 
+        // LÓGICA DE CALIBRACIÓN Y PRECISIÓN (BRIER SCORE & LOG LOSS)
+        function toggleCalibrationModal(show) {
+            const modal = document.getElementById('calibrationModal');
+            if (show) {
+                calculateCalibrationMetrics();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function calculateCalibrationMetrics() {
+            // Filtrar apuestas que ya tienen resultado liquidado (WON o LOST)
+            const settledBets = betLogData.filter(b => b.status === 'WON' || b.status === 'LOST');
+            
+            const countEl = document.getElementById('valEvaluatedCount');
+            const brierEl = document.getElementById('valBrierScore');
+            const logLossEl = document.getElementById('valLogLoss');
+            const tableBody = document.getElementById('calibrationTableBody');
+
+            countEl.innerText = settledBets.length;
+
+            if (settledBets.length === 0) {
+                brierEl.innerText = "0.0000";
+                logLossEl.innerText = "0.0000";
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas (Ganadas o Perdidas) para calcular Brier Score y Log Loss. Cambia el estado de alguna apuesta en la bitácora.</td></tr>`;
+                renderCalibrationChart([], [], []);
+                return;
+            }
+
+            let totalBrier = 0;
+            let totalLogLoss = 0;
+            let tableHtml = '';
+            let chartLabels = [];
+            let chartPredicted = [];
+            let chartActual = [];
+
+            settledBets.forEach((bet, idx) => {
+                const p = parseFloat(bet.prob) / 100; // Probabilidad pronosticada (0 a 1)
+                const o = bet.status === 'WON' ? 1 : 0; // Resultado real (1 o 0)
+
+                // Brier Score individual = (p - o)^2
+                const brierInd = Math.pow(p - o, 2);
+                totalBrier += brierInd;
+
+                // Log Loss individual = - [ o * ln(p) + (1 - o) * ln(1 - p) ]
+                const eps = 1e-15;
+                const pSafe = Math.max(eps, Math.min(1 - eps, p));
+                const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
+                totalLogLoss += logLossInd;
+
+                chartLabels.push(`#${idx + 1} (${bet.match.substring(0, 15)}...)`);
+                chartPredicted.push((p * 100).toFixed(1));
+                chartActual.push(o * 100);
+
+                tableHtml += `
+                    <tr>
+                        <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.market}</span>${bet.match}</td>
+                        <td class="p-1.5 text-center font-bold text-indigo-400">${bet.prob}%</td>
+                        <td class="p-1.5 text-center font-black ${o === 1 ? 'text-emerald-400' : 'text-rose-400'}">${o === 1 ? 'Ganada (1)' : 'Perdida (0)'}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-200">${brierInd.toFixed(4)}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-200">${logLossInd.toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+
+            const avgBrier = totalBrier / settledBets.length;
+            const avgLogLoss = totalLogLoss / settledBets.length;
+
+            brierEl.innerText = avgBrier.toFixed(4);
+            logLossEl.innerText = avgLogLoss.toFixed(4);
+            tableBody.innerHTML = tableHtml;
+
+            renderCalibrationChart(chartLabels, chartPredicted, chartActual);
+        }
+
+        function renderCalibrationChart(labels, predicted, actual) {
+            const ctx = document.getElementById('calibrationChart').getContext('2d');
+            if (calibrationChartInstance) calibrationChartInstance.destroy();
+
+            calibrationChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Prob. Pronosticada (%)',
+                            data: predicted,
+                            backgroundColor: '#6366f1',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Resultado Real (100% o 0%)',
+                            data: actual,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { 
+                            ticks: { color: '#64748b', font: { size: 9 } }, 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
         function exportBetsCSV() {
             if (betLogData.length === 0) {
                 showToast("No hay datos para exportar.");
@@ -1430,19 +1644,19 @@
             currentMode = mode;
             const btnXg = document.getElementById('btnModeXg');
             const btnDirect = document.getElementById('btnModeDirect');
-            const sectionXg = document.getElementById('modeXgSection');
-            const sectionDirect = document.getElementById('modeDirectSection');
+            const secXg = document.getElementById('modeXgSection');
+            const secDirect = document.getElementById('modeDirectSection');
 
             if (mode === 'xg') {
                 btnXg.className = "flex-1 py-1.5 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-black shadow-md";
                 btnDirect.className = "flex-1 py-1.5 rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
-                sectionXg.classList.remove('hidden');
-                sectionDirect.classList.add('hidden');
+                secXg.classList.remove('hidden');
+                secDirect.classList.add('hidden');
             } else {
                 btnDirect.className = "flex-1 py-1.5 rounded-lg transition-all duration-200 bg-emerald-500 text-slate-950 font-black shadow-md";
                 btnXg.className = "flex-1 py-1.5 rounded-lg transition-all duration-200 text-slate-400 hover:text-white";
-                sectionDirect.classList.remove('hidden');
-                sectionXg.classList.add('hidden');
+                secDirect.classList.remove('hidden');
+                secXg.classList.add('hidden');
             }
             calculatePoisson();
         }
@@ -1458,13 +1672,10 @@
             document.getElementById('directAwayXg').value = '';
             document.getElementById('selectHomeTeam').value = '';
             document.getElementById('selectAwayTeam').value = '';
-            calculatePoisson();
+            showToast("Datos de entrada limpiados.");
         }
 
         function calculatePoisson() {
-            const homeName = document.getElementById('homeName').value.trim() || 'Local';
-            const awayName = document.getElementById('awayName').value.trim() || 'Visitante';
-
             let homeLambda = 0;
             let awayLambda = 0;
 
@@ -1481,46 +1692,49 @@
                 awayLambda = parseFloat(document.getElementById('directAwayXg').value) || 0;
             }
 
-            document.getElementById('labelHomeLambda').innerText = `Exp. Goles ${homeName}`;
-            document.getElementById('labelAwayLambda').innerText = `Exp. Goles ${awayName}`;
             document.getElementById('valHomeLambda').innerText = homeLambda.toFixed(3);
             document.getElementById('valAwayLambda').innerText = awayLambda.toFixed(3);
 
-            const maxGoals = 7;
+            const maxGoals = 6;
+            const matrix = [];
             const homeProbs = [];
             const awayProbs = [];
 
-            for (let i = 0; i < maxGoals; i++) {
+            for (let i = 0; i <= maxGoals; i++) {
                 homeProbs.push(poissonProbability(i, homeLambda));
                 awayProbs.push(poissonProbability(i, awayLambda));
             }
 
-            let probHomeWin = 0, probDraw = 0, probAwayWin = 0;
-            let probOver25 = 0, probUnder25 = 0;
-            let probBttsYes = 0, probBttsNo = 0;
+            let probHomeWin = 0;
+            let probDraw = 0;
+            let probAwayWin = 0;
+            let probOver25 = 0;
+            let probUnder25 = 0;
+            let probBttsYes = 0;
+            let probBttsNo = 0;
 
-            const matrix = [];
-            const allScores = [];
+            const scoresList = [];
 
-            for (let h = 0; h < maxGoals; h++) {
+            for (let h = 0; h <= maxGoals; h++) {
                 matrix[h] = [];
-                for (let a = 0; a < maxGoals; a++) {
-                    const prob = homeProbs[h] * awayProbs[a];
-                    matrix[h][a] = prob;
+                for (let a = 0; a <= maxGoals; a++) {
+                    const p = homeProbs[h] * awayProbs[a];
+                    matrix[h][a] = p;
 
-                    if (h > a) probHomeWin += prob;
-                    else if (h === a) probDraw += prob;
-                    else probAwayWin += prob;
+                    if (h > a) probHomeWin += p;
+                    else if (h === a) probDraw += p;
+                    else probAwayWin += p;
 
-                    if (h + a > 2.5) probOver25 += prob;
-                    else probUnder25 += prob;
+                    if (h + a > 2.5) probOver25 += p;
+                    else probUnder25 += p;
 
-                    if (h > 0 && a > 0) probBttsYes += prob;
-                    else probBttsNo += prob;
+                    if (h > 0 && a > 0) probBttsYes += p;
 
-                    allScores.push({ score: `${h} - ${a}`, prob: prob });
+                    scoresList.push({ score: `${h} - ${a}`, prob: p });
                 }
             }
+
+            probBttsNo = 1 - probBttsYes;
 
             currentCalculatedProbs = {
                 probHomeWin, probDraw, probAwayWin,
@@ -1528,104 +1742,120 @@
                 probBttsYes, probBttsNo
             };
 
-            // UI Updates 1X2
-            document.getElementById('name1x2Home').innerText = homeName;
-            document.getElementById('name1x2Away').innerText = awayName;
-            document.getElementById('pct1x2Home').innerText = formatPct(probHomeWin);
-            document.getElementById('odds1x2Home').innerText = formatOdds(probHomeWin);
-            document.getElementById('pct1x2Draw').innerText = formatPct(probDraw);
-            document.getElementById('odds1x2Draw').innerText = formatOdds(probDraw);
-            document.getElementById('pct1x2Away').innerText = formatPct(probAwayWin);
-            document.getElementById('odds1x2Away').innerText = formatOdds(probAwayWin);
-
-            // Over/Under
+            // Mercado Over / Under 2.5
             document.getElementById('pctOver25').innerText = formatPct(probOver25);
             document.getElementById('oddsOver25').innerText = formatOdds(probOver25);
-            document.getElementById('barOver25').style.width = formatPct(probOver25);
+            document.getElementById('barOver25').style.width = (probOver25 * 100) + '%';
 
             document.getElementById('pctUnder25').innerText = formatPct(probUnder25);
             document.getElementById('oddsUnder25').innerText = formatOdds(probUnder25);
-            document.getElementById('barUnder25').style.width = formatPct(probUnder25);
+            document.getElementById('barUnder25').style.width = (probUnder25 * 100) + '%';
 
-            // BTTS
+            // Mercado BTTS
             document.getElementById('pctBttsYes').innerText = formatPct(probBttsYes);
             document.getElementById('oddsBttsYes').innerText = formatOdds(probBttsYes);
-            document.getElementById('barBttsYes').style.width = formatPct(probBttsYes);
+            document.getElementById('barBttsYes').style.width = (probBttsYes * 100) + '%';
 
             document.getElementById('pctBttsNo').innerText = formatPct(probBttsNo);
             document.getElementById('oddsBttsNo').innerText = formatOdds(probBttsNo);
-            document.getElementById('barBttsNo').style.width = formatPct(probBttsNo);
+            document.getElementById('barBttsNo').style.width = (probBttsNo * 100) + '%';
 
-            // Top Scores
-            allScores.sort((a, b) => b.prob - a.prob);
-            const top3 = allScores.slice(0, 3);
-            const topScoresContainer = document.getElementById('topScoresContainer');
-            topScoresContainer.innerHTML = '';
+            // Mercado 1X2
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
 
-            top3.forEach((item, index) => {
-                const ranks = ['1º', '2º', '3º'];
-                const badges = ['bg-gold-500/20 text-gold-400 border-gold-500/30', 'bg-slate-700/40 text-slate-300 border-slate-600/30', 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'];
-                
-                topScoresContainer.innerHTML += `
-                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex items-center justify-between">
+            document.getElementById('name1x2Home').innerText = homeName;
+            document.getElementById('name1x2Away').innerText = awayName;
+
+            document.getElementById('pct1x2Home').innerText = formatPct(probHomeWin);
+            document.getElementById('odds1x2Home').innerText = formatOdds(probHomeWin);
+
+            document.getElementById('pct1x2Draw').innerText = formatPct(probDraw);
+            document.getElementById('odds1x2Draw').innerText = formatOdds(probDraw);
+
+            document.getElementById('pct1x2Away').innerText = formatPct(probAwayWin);
+            document.getElementById('odds1x2Away').innerText = formatOdds(probAwayWin);
+
+            // Top Marcadores
+            scoresList.sort((a, b) => b.prob - a.prob);
+            const top3 = scoresList.slice(0, 3);
+            let topScoresHtml = '';
+
+            top3.forEach((item, idx) => {
+                topScoresHtml += `
+                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-black px-2 py-0.5 rounded-md border ${badges[index]}">${ranks[index]}</span>
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black text-[10px] flex items-center justify-center">${idx + 1}</span>
                             <span class="text-sm font-black text-white">${item.score}</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <div class="text-right">
-                                <span class="text-xs font-black text-emerald-400 mr-1">${formatPct(item.prob)}</span>
-                                <span class="text-xs font-black text-gold-400">${formatOdds(item.prob)}</span>
-                            </div>
-                            <button onclick="openLogBetModal('Marcador Correcto', 'Marcador ${item.score}', ${item.prob})" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 p-1 px-2 text-[10px] font-bold rounded-lg border border-emerald-500/20">
-                                + Registrar
+                            <span class="text-xs font-black text-emerald-400">${formatPct(item.prob)}</span>
+                            <span class="text-xs font-black text-gold-400">${formatOdds(item.prob)}</span>
+                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-lg font-bold">
+                                +
                             </button>
                         </div>
                     </div>
                 `;
             });
+            document.getElementById('topScoresContainer').innerHTML = topScoresHtml;
 
+            // Render Matriz
             renderMatrix(matrix);
-            updateGoalsChart(homeName, awayName, homeProbs.slice(0, 5), awayProbs.slice(0, 5));
+
+            // Render Chart
+            renderGoalsChart(homeProbs, awayProbs, homeName, awayName);
         }
 
         function renderMatrix(matrix) {
-            const matrixBody = document.getElementById('matrixBody');
-            matrixBody.innerHTML = '';
+            const tbody = document.getElementById('matrixBody');
+            let html = '';
 
-            for (let h = 0; h <= 5; h++) {
-                let rowHtml = `<tr class="border-b border-slate-800/40"><td class="p-1 font-bold text-emerald-400 bg-slate-900/60">${h}</td>`;
-                for (let a = 0; a <= 5; a++) {
+            for (let h = 0; h <= 6; h++) {
+                html += `<tr class="hover:bg-slate-800/40"><td class="p-1 font-bold text-slate-400 border-r border-slate-800">${h}</td>`;
+                for (let a = 0; a <= 6; a++) {
                     const prob = matrix[h][a];
                     const pct = (prob * 100).toFixed(1);
-                    let bg = 'bg-slate-900/20';
-                    if (prob > 0.12) bg = 'bg-emerald-500/30 text-emerald-300 font-black';
-                    else if (prob > 0.07) bg = 'bg-emerald-500/15 text-slate-200 font-bold';
-
-                    rowHtml += `<td class="p-1.5 ${bg}">${pct}%</td>`;
+                    const bgAlpha = Math.min(prob * 4, 0.6);
+                    html += `<td class="p-1 font-semibold text-slate-200" style="background-color: rgba(16, 185, 129, ${bgAlpha})">${pct}%</td>`;
                 }
-                rowHtml += '</tr>';
-                matrixBody.innerHTML += rowHtml;
+                html += '</tr>';
             }
+
+            tbody.innerHTML = html;
         }
 
-        function updateGoalsChart(homeName, awayName, homeProbs, awayProbs) {
+        function renderGoalsChart(homeProbs, awayProbs, homeName, awayName) {
             const ctx = document.getElementById('goalsChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
 
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['0 Goles', '1 Gol', '2 Goles', '3 Goles', '4+ Goles'],
+                    labels: ['0', '1', '2', '3', '4', '5', '6+'],
                     datasets: [
-                        { label: homeName, data: homeProbs.map(p => (p * 100).toFixed(1)), backgroundColor: '#10b981', borderRadius: 6 },
-                        { label: awayName, data: awayProbs.map(p => (p * 100).toFixed(1)), backgroundColor: '#f59e0b', borderRadius: 6 }
+                        {
+                            label: homeName || 'Local',
+                            data: homeProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        },
+                        {
+                            label: awayName || 'Visitante',
+                            data: awayProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4
+                        }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } }
+                        }
+                    },
                     scales: {
                         x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
                         y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
