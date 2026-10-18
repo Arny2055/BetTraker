@@ -122,12 +122,12 @@
                     <h1 class="font-black text-sm tracking-tight bg-gradient-to-r from-white via-slate-200 to-emerald-400 bg-clip-text text-transparent">
                         POISSON VIP PRO
                     </h1>
-                    <p class="text-[9px] font-bold text-emerald-400 tracking-wider uppercase">Predictor & Bet Tracker</p>
+                    <p class="text-[9px] font-bold text-emerald-400 tracking-wider uppercase">Calibración Dinámica Avanzada</p>
                 </div>
             </div>
             <div class="flex items-center gap-1.5">
                 <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all active:scale-95">
-                    <i class="fa-solid fa-bullseye"></i> Calibración
+                    <i class="fa-solid fa-sliders"></i> Calibración Dinámica
                 </button>
                 <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
@@ -514,20 +514,20 @@
         <!-- FOOTER VIP -->
         <footer class="text-center py-2 text-slate-500 text-[10px] space-y-0.5">
             <p class="font-bold text-slate-400">Poisson VIP Pro - Modelador & Bet Tracker</p>
-            <p>Cuotas justas calculadas sin margen comercial.</p>
+            <p>Cuotas justas calculadas con calibración dinámica por mercado y liga.</p>
         </footer>
 
     </div>
 
-    <!-- MODAL DE CALIBRACIÓN Y PRECISIÓN (BRIER SCORE & LOG LOSS) -->
+    <!-- MODAL DE CALIBRACIÓN DINÁMICA POR MERCADOS, RANGOS Y LIGAS -->
     <div id="calibrationModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-4xl max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
             
-            <!-- Header Modal Calibración -->
+            <!-- Header Modal Calibración Dinámica -->
             <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-bullseye text-indigo-400 text-base"></i>
-                    <h3 class="font-black text-sm text-white">Calibración y Medición de Precisión del Modelo</h3>
+                    <i class="fa-solid fa-sliders text-indigo-400 text-base"></i>
+                    <h3 class="font-black text-sm text-white">Configuración de Calibración Dinámica</h3>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="toggleCalibrationModal(false)" class="text-slate-400 hover:text-white p-1">
@@ -536,77 +536,98 @@
                 </div>
             </div>
 
-            <!-- Modal Body Calibración -->
+            <!-- Modal Body Calibración Dinámica -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
                 
-                <!-- MÉTRICAS PRINCIPALES DE EVALUACIÓN -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Brier Score (1X2 Promedio)</span>
-                        <span class="text-xl font-black text-indigo-400 block" id="valBrierScore">0.0000</span>
-                        <span class="text-[9px] text-slate-500 block">Menor es mejor (Ideal: 0.0)</span>
-                    </div>
-                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Log Loss (Pérdida Logarítmica)</span>
-                        <span class="text-xl font-black text-emerald-400 block" id="valLogLoss">0.0000</span>
-                        <span class="text-[9px] text-slate-500 block">Menor es mejor (Penaliza errores graves)</span>
-                    </div>
-                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
-                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Apuestas Liquidadas Evaluadas</span>
-                        <span class="text-xl font-black text-white block" id="valEvaluatedCount">0</span>
-                        <span class="text-[9px] text-slate-500 block">Con resultado Ganada / Perdida</span>
-                    </div>
-                </div>
-
-                <!-- DESCRIPCIÓN Y FORMULAS DE REFERENCIA -->
-                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1.5">
-                    <p class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i> ¿Qué miden estas métricas?</p>
+                <div class="bg-indigo-950/40 p-3 rounded-xl border border-indigo-500/30 text-xs text-slate-300 space-y-1">
+                    <p class="font-bold text-indigo-300 flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles"></i> Calibración por Mercado, Ligas y Rangos Poisson</p>
                     <p class="text-[11px] text-slate-400">
-                        El <b>Brier Score</b> evalúa la precisión cuadrática de las probabilidades pronosticadas frente a los resultados reales (0 o 1). El <b>Log Loss</b> penaliza fuertemente las predicciones con alta probabilidad que resultaron erróneas. Ambas se calculan automáticamente con el historial de apuestas liquidadas (Ganadas/Perdidas).
+                        Ajusta factores multiplicativos específicos para corregir desviaciones estadísticas (sesgos defensivos/ofensivos) según la liga seleccionada, el rango de goles predicho y el tipo de mercado (1X2, Over/Under, BTTS).
                     </p>
                 </div>
 
-                <!-- GRÁFICA DE CALIBRACIÓN (RELIABILITY DIAGRAM) -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-300">Diagrama de Confiabilidad / Calibración</span>
-                        <span class="text-[10px] text-indigo-400 font-bold">Probabilidad Pronosticada vs Real</span>
+                <!-- CONTROLES DE CALIBRACIÓN DINÁMICA -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    
+                    <!-- Calibración por Liga Activa -->
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2.5">
+                        <span class="text-xs font-black text-emerald-400 block border-b border-slate-800 pb-1.5"><i class="fa-solid fa-trophy mr-1"></i> Factor de Liga Seleccionada</span>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 font-bold mb-1">Liga Activa a Calibrar</label>
+                            <input type="text" id="calibLeagueName" readonly class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white font-bold">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] text-slate-400 font-bold mb-1">Multiplicador Goles Local</label>
+                                <input type="number" id="calibLeagueHomeFactor" value="1.00" step="0.01" min="0.5" max="1.5" class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1 text-xs text-emerald-400 font-bold text-center">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400 font-bold mb-1">Multiplicador Goles Visitante</label>
+                                <input type="number" id="calibLeagueAwayFactor" value="1.00" step="0.01" min="0.5" max="1.5" class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1 text-xs text-emerald-400 font-bold text-center">
+                            </div>
+                        </div>
                     </div>
-                    <div class="h-48 w-full">
-                        <canvas id="calibrationChart"></canvas>
+
+                    <!-- Calibración por Rango de Probabilidad Poisson (Lambda) -->
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2.5">
+                        <span class="text-xs font-black text-gold-400 block border-b border-slate-800 pb-1.5"><i class="fa-solid fa-chart-line mr-1"></i> Corrección por Rango de Goles (Poisson)</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[9px] text-slate-400 font-bold mb-1">Umbral Bajos Goles (&lt; 1.2 xG)</label>
+                                <input type="number" id="calibLowLambdaAdj" value="0.98" step="0.01" class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1 text-xs text-gold-400 font-bold text-center">
+                            </div>
+                            <div>
+                                <label class="block text-[9px] text-slate-400 font-bold mb-1">Umbral Altos Goles (&gt; 2.2 xG)</label>
+                                <input type="number" id="calibHighLambdaAdj" value="1.02" step="0.01" class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1 text-xs text-gold-400 font-bold text-center">
+                            </div>
+                        </div>
+                        <p class="text-[9px] text-slate-500">Ajusta automáticamente la dispersión de Poisson para partidos muy abiertos o cerrados.</p>
+                    </div>
+
+                </div>
+
+                <!-- Calibración Específica por Mercado -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2.5">
+                    <span class="text-xs font-black text-indigo-400 block border-b border-slate-800 pb-1.5"><i class="fa-solid fa-bullseye mr-1"></i> Sesgo de Probabilidad por Mercado (%)</span>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <div>
+                            <label class="block text-[9px] text-slate-400 font-bold mb-1">Ajuste Mercado 1X2</label>
+                            <input type="number" id="calibMarket1x2" value="0.0" step="0.5" class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1 text-xs text-indigo-400 font-bold text-center" placeholder="%">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-slate-400 font-bold mb-1">Ajuste Over / Under</label>
+                            <input type="number" id="calibMarketOu" value="0.0" step="0.5" class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1 text-xs text-indigo-400 font-bold text-center" placeholder="%">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] text-slate-400 font-bold mb-1">Ajuste BTTS (Ambos Anotan)</label>
+                            <input type="number" id="calibMarketBtts" value="0.0" step="0.5" class="w-full bg-inputBg border border-slate-700 rounded-lg px-2 py-1 text-xs text-indigo-400 font-bold text-center" placeholder="%">
+                        </div>
                     </div>
                 </div>
 
-                <!-- TABLA DE EVALUACIÓN DETALLADA -->
-                <div class="space-y-1.5">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-extrabold text-slate-200">Desglose de Calibración por Apuesta</span>
+                <!-- MÉTRICAS DE EVALUACIÓN HISTÓRICA (BRIER SCORE & LOG LOSS) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-slate-800">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Brier Score (1X2)</span>
+                        <span class="text-lg font-black text-indigo-400 block" id="valBrierScore">0.0000</span>
                     </div>
-
-                    <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 max-h-56">
-                        <table class="w-full text-[10px] text-left border-collapse excel-table">
-                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
-                                <tr>
-                                    <th class="p-1.5">Partido / Selección</th>
-                                    <th class="p-1.5 text-center">Prob. Modelo (%)</th>
-                                    <th class="p-1.5 text-center">Resultado Real</th>
-                                    <th class="p-1.5 text-center">Brier Score Individual</th>
-                                    <th class="p-1.5 text-center">Log Loss Individual</th>
-                                </tr>
-                            </thead>
-                            <tbody id="calibrationTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
-                                <!-- Filas de calibración cargadas por JS -->
-                            </tbody>
-                        </table>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Log Loss</span>
+                        <span class="text-lg font-black text-emerald-400 block" id="valLogLoss">0.0000</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center space-y-1">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Apuestas Evaluadas</span>
+                        <span class="text-lg font-black text-white block" id="valEvaluatedCount">0</span>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Footer Modal Calibración -->
-            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
-                <button onclick="toggleCalibrationModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
-                    Cerrar
+            <!-- Footer Modal Calibración Dinámica -->
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-between items-center">
+                <button onclick="resetDynamicCalibration()" class="text-xs text-slate-400 hover:text-white font-bold">Restaurar Valores</button>
+                <button onclick="applyAndCloseCalibration()" class="bg-indigo-500 hover:bg-indigo-600 text-slate-950 font-black text-xs px-4 py-1.5 rounded-xl transition-all shadow-md">
+                    Guardar y Recalcular
                 </button>
             </div>
 
@@ -935,8 +956,8 @@
         let currentMode = 'xg';
         let chartInstance = null;
         let pnlChartInstance = null;
-        let calibrationChartInstance = null;
         let leaguesData = {};
+        let leagueCalibrationSettings = {}; // Almacena factores dinámicos por liga
         let betLogData = [];
         let currentCalculatedProbs = {};
 
@@ -1020,6 +1041,11 @@
             if (stored) {
                 try { leaguesData = JSON.parse(stored); } catch(e) { leaguesData = {}; }
             }
+            const storedCalib = localStorage.getItem('poisson_vip_league_calib');
+            if (storedCalib) {
+                try { leagueCalibrationSettings = JSON.parse(storedCalib); } catch(e) { leagueCalibrationSettings = {}; }
+            }
+
             if (Object.keys(leaguesData).length === 0) {
                 const defaultTeams = parseRawLeagueData(DEFAULT_RAW_DATA);
                 leaguesData[DEFAULT_LEAGUE_NAME] = defaultTeams;
@@ -1029,6 +1055,7 @@
 
         function saveLeaguesToStorage() {
             localStorage.setItem('poisson_vip_leagues', JSON.stringify(leaguesData));
+            localStorage.setItem('poisson_vip_league_calib', JSON.stringify(leagueCalibrationSettings));
         }
 
         function loadBetLogFromStorage() {
@@ -1324,10 +1351,11 @@
             });
         }
 
-        // LÓGICA DE CALIBRACIÓN Y PRECISIÓN (BRIER SCORE & LOG LOSS)
+        // LÓGICA DE CALIBRACIÓN DINÁMICA (MERCADOS, RANGOS POISSON, LIGAS)
         function toggleCalibrationModal(show) {
             const modal = document.getElementById('calibrationModal');
             if (show) {
+                populateCalibrationModalData();
                 calculateCalibrationMetrics();
                 modal.classList.remove('hidden');
             } else {
@@ -1335,109 +1363,96 @@
             }
         }
 
-        function calculateCalibrationMetrics() {
-            // Filtrar apuestas que ya tienen resultado liquidado (WON o LOST)
-            const settledBets = betLogData.filter(b => b.status === 'WON' || b.status === 'LOST');
+        function populateCalibrationModalData() {
+            const activeLeague = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
+            document.getElementById('calibLeagueName').value = activeLeague;
+
+            if (!leagueCalibrationSettings[activeLeague]) {
+                leagueCalibrationSettings[activeLeague] = {
+                    homeFactor: 1.00,
+                    awayFactor: 1.00,
+                    lowLambdaAdj: 0.98,
+                    highLambdaAdj: 1.02,
+                    market1x2: 0.0,
+                    marketOu: 0.0,
+                    marketBtts: 0.0
+                };
+            }
+
+            const cfg = leagueCalibrationSettings[activeLeague];
+            document.getElementById('calibLeagueHomeFactor').value = cfg.homeFactor;
+            document.getElementById('calibLeagueAwayFactor').value = cfg.awayFactor;
+            document.getElementById('calibLowLambdaAdj').value = cfg.lowLambdaAdj;
+            document.getElementById('calibHighLambdaAdj').value = cfg.highLambdaAdj;
+            document.getElementById('calibMarket1x2').value = cfg.market1x2;
+            document.getElementById('calibMarketOu').value = cfg.marketOu;
+            document.getElementById('calibMarketBtts').value = cfg.marketBtts;
+        }
+
+        function applyAndCloseCalibration() {
+            const activeLeague = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
             
+            leagueCalibrationSettings[activeLeague] = {
+                homeFactor: parseFloat(document.getElementById('calibLeagueHomeFactor').value) || 1.00,
+                awayFactor: parseFloat(document.getElementById('calibLeagueAwayFactor').value) || 1.00,
+                lowLambdaAdj: parseFloat(document.getElementById('calibLowLambdaAdj').value) || 0.98,
+                highLambdaAdj: parseFloat(document.getElementById('calibHighLambdaAdj').value) || 1.02,
+                market1x2: parseFloat(document.getElementById('calibMarket1x2').value) || 0.0,
+                marketOu: parseFloat(document.getElementById('calibMarketOu').value) || 0.0,
+                marketBtts: parseFloat(document.getElementById('calibMarketBtts').value) || 0.0
+            };
+
+            saveLeaguesToStorage();
+            toggleCalibrationModal(false);
+            calculatePoisson();
+            showToast("¡Calibración dinámica aplicada correctamente!");
+        }
+
+        function resetDynamicCalibration() {
+            const activeLeague = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
+            leagueCalibrationSettings[activeLeague] = {
+                homeFactor: 1.00,
+                awayFactor: 1.00,
+                lowLambdaAdj: 0.98,
+                highLambdaAdj: 1.02,
+                market1x2: 0.0,
+                marketOu: 0.0,
+                marketBtts: 0.0
+            };
+            populateCalibrationModalData();
+            showToast("Valores restablecidos a por defecto.");
+        }
+
+        function calculateCalibrationMetrics() {
+            const settledBets = betLogData.filter(b => b.status === 'WON' || b.status === 'LOST');
             const countEl = document.getElementById('valEvaluatedCount');
             const brierEl = document.getElementById('valBrierScore');
             const logLossEl = document.getElementById('valLogLoss');
-            const tableBody = document.getElementById('calibrationTableBody');
 
             countEl.innerText = settledBets.length;
-
             if (settledBets.length === 0) {
                 brierEl.innerText = "0.0000";
                 logLossEl.innerText = "0.0000";
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas (Ganadas o Perdidas) para calcular Brier Score y Log Loss. Cambia el estado de alguna apuesta en la bitácora.</td></tr>`;
-                renderCalibrationChart([], [], []);
                 return;
             }
 
             let totalBrier = 0;
             let totalLogLoss = 0;
-            let tableHtml = '';
-            let chartLabels = [];
-            let chartPredicted = [];
-            let chartActual = [];
 
-            settledBets.forEach((bet, idx) => {
-                const p = parseFloat(bet.prob) / 100; // Probabilidad pronosticada (0 a 1)
-                const o = bet.status === 'WON' ? 1 : 0; // Resultado real (1 o 0)
-
-                // Brier Score individual = (p - o)^2
+            settledBets.forEach(bet => {
+                const p = parseFloat(bet.prob) / 100;
+                const o = bet.status === 'WON' ? 1 : 0;
                 const brierInd = Math.pow(p - o, 2);
                 totalBrier += brierInd;
 
-                // Log Loss individual = - [ o * ln(p) + (1 - o) * ln(1 - p) ]
                 const eps = 1e-15;
                 const pSafe = Math.max(eps, Math.min(1 - eps, p));
                 const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
                 totalLogLoss += logLossInd;
-
-                chartLabels.push(`#${idx + 1} (${bet.match.substring(0, 15)}...)`);
-                chartPredicted.push((p * 100).toFixed(1));
-                chartActual.push(o * 100);
-
-                tableHtml += `
-                    <tr>
-                        <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.market}</span>${bet.match}</td>
-                        <td class="p-1.5 text-center font-bold text-indigo-400">${bet.prob}%</td>
-                        <td class="p-1.5 text-center font-black ${o === 1 ? 'text-emerald-400' : 'text-rose-400'}">${o === 1 ? 'Ganada (1)' : 'Perdida (0)'}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-200">${brierInd.toFixed(4)}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-200">${logLossInd.toFixed(4)}</td>
-                    </tr>
-                `;
             });
 
-            const avgBrier = totalBrier / settledBets.length;
-            const avgLogLoss = totalLogLoss / settledBets.length;
-
-            brierEl.innerText = avgBrier.toFixed(4);
-            logLossEl.innerText = avgLogLoss.toFixed(4);
-            tableBody.innerHTML = tableHtml;
-
-            renderCalibrationChart(chartLabels, chartPredicted, chartActual);
-        }
-
-        function renderCalibrationChart(labels, predicted, actual) {
-            const ctx = document.getElementById('calibrationChart').getContext('2d');
-            if (calibrationChartInstance) calibrationChartInstance.destroy();
-
-            calibrationChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Prob. Pronosticada (%)',
-                            data: predicted,
-                            backgroundColor: '#6366f1',
-                            borderRadius: 4
-                        },
-                        {
-                            label: 'Resultado Real (100% o 0%)',
-                            data: actual,
-                            backgroundColor: '#10b981',
-                            borderRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } },
-                    scales: {
-                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
-                        y: { 
-                            ticks: { color: '#64748b', font: { size: 9 } }, 
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            min: 0,
-                            max: 100
-                        }
-                    }
-                }
-            });
+            brierEl.innerText = (totalBrier / settledBets.length).toFixed(4);
+            logLossEl.innerText = (totalLogLoss / settledBets.length).toFixed(4);
         }
 
         function exportBetsCSV() {
@@ -1508,6 +1523,7 @@
             if (!leagueName || Object.keys(leaguesData).length <= 1) return;
 
             delete leaguesData[leagueName];
+            delete leagueCalibrationSettings[leagueName];
             saveLeaguesToStorage();
             populateLeagueDropdowns();
             renderModalLeagueTable();
@@ -1530,6 +1546,7 @@
             const selected = document.getElementById('activeLeagueSelect').value;
             document.getElementById('modalLeagueSelect').value = selected;
             updateTeamSelectors();
+            calculatePoisson();
         }
 
         function updateTeamSelectors() {
@@ -1617,7 +1634,7 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // MODELO MATEMÁTICO POISSON
+        // MODELO MATEMÁTICO POISSON CON CALIBRACIÓN DINÁMICA
         function factorial(n) {
             if (n === 0 || n === 1) return 1;
             let res = 1;
@@ -1692,6 +1709,24 @@
                 awayLambda = parseFloat(document.getElementById('directAwayXg').value) || 0;
             }
 
+            // APLICAR CALIBRACIÓN DINÁMICA POR LIGA Y RANGOS POISSON
+            const activeLeague = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
+            const cfg = leagueCalibrationSettings[activeLeague] || {
+                homeFactor: 1.00, awayFactor: 1.00, lowLambdaAdj: 0.98, highLambdaAdj: 1.02, market1x2: 0.0, marketOu: 0.0, marketBtts: 0.0
+            };
+
+            homeLambda *= cfg.homeFactor;
+            awayLambda *= cfg.awayFactor;
+
+            // Ajuste por rango de probabilidad (Lambda bajo o alto)
+            if ((homeLambda + awayLambda) < 1.8) {
+                homeLambda *= cfg.lowLambdaAdj;
+                awayLambda *= cfg.lowLambdaAdj;
+            } else if ((homeLambda + awayLambda) > 3.0) {
+                homeLambda *= cfg.highLambdaAdj;
+                awayLambda *= cfg.highLambdaAdj;
+            }
+
             document.getElementById('valHomeLambda').innerText = homeLambda.toFixed(3);
             document.getElementById('valAwayLambda').innerText = awayLambda.toFixed(3);
 
@@ -1734,6 +1769,15 @@
                 }
             }
 
+            // Aplicar sesgos específicos de calibración por mercado
+            probHomeWin = Math.max(0.01, Math.min(0.99, probHomeWin + (cfg.market1x2 / 100)));
+            probDraw = Math.max(0.01, Math.min(0.99, probDraw));
+            probAwayWin = Math.max(0.01, Math.min(0.99, probAwayWin - (cfg.market1x2 / 100)));
+            
+            probOver25 = Math.max(0.01, Math.min(0.99, probOver25 + (cfg.marketOu / 100)));
+            probUnder25 = 1 - probOver25;
+
+            probBttsYes = Math.max(0.01, Math.min(0.99, probBttsYes + (cfg.marketBtts / 100)));
             probBttsNo = 1 - probBttsYes;
 
             currentCalculatedProbs = {
