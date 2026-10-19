@@ -299,6 +299,20 @@
                 </div>
             </div>
 
+            <!-- AJUSTE DIXON-COLES (NUEVA MEJORA DE VALOR) -->
+            <div class="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/30 space-y-1.5">
+                <div class="flex justify-between items-center text-[10px] font-bold">
+                    <span class="text-indigo-400 flex items-center gap-1">
+                        <i class="fa-solid fa-calculator"></i> Ajuste Dixon-Coles (&rho;)
+                    </span>
+                    <span id="rhoValueDisplay" class="text-white font-black">-0.05</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="range" id="dixonRhoRange" min="-0.15" max="0.00" step="0.01" value="-0.05" oninput="updateRhoDisplay()" class="w-full accent-indigo-500 cursor-pointer">
+                </div>
+                <p class="text-[8px] text-slate-400">Corrige la interdependencia en marcador bajo (0-0, 1-0, 0-1, 1-1). Usa 0.00 para Poisson Estándar.</p>
+            </div>
+
             <!-- BOTONES DE ACCIÓN -->
             <div class="grid grid-cols-3 gap-2 pt-1">
                 <button onclick="clearAllData()" title="Limpiar los datos" class="col-span-1 py-2.5 bg-rose-950/60 hover:bg-rose-900/80 border border-rose-700/40 text-rose-300 font-bold text-xs rounded-xl active:scale-[0.97] transition-all flex items-center justify-center gap-1.5">
@@ -983,6 +997,7 @@
             populateLeagueDropdowns();
             updateTeamSelectors();
             updateWeightLabels();
+            updateRhoDisplay();
             calculatePoisson();
             updateTrackerMetrics();
         };
@@ -995,6 +1010,13 @@
             document.getElementById('weightAttackVal').innerText = `${wAtk}% xG / ${100 - wAtk}% GF`;
             document.getElementById('weightDefenseVal').innerText = `${wDef}% xGA / ${100 - wDef}% GC`;
             
+            calculatePoisson();
+        }
+
+        // ACTUALIZAR MOSTRADOR DE RHO DIXON-COLES
+        function updateRhoDisplay() {
+            const rho = parseFloat(document.getElementById('dixonRhoRange').value);
+            document.getElementById('rhoValueDisplay').innerText = rho.toFixed(2);
             calculatePoisson();
         }
 
@@ -1136,7 +1158,7 @@
             if (recommendedStake < 1) recommendedStake = 1;
 
             document.getElementById('logStake').value = recommendedStake;
-            showToast(`Stake calculado con Kelly 1/4: $${recommendedStake}`);
+            showToast(`Stake calculated con Kelly 1/4: $${recommendedStake}`);
         }
 
         // BET LOG LOGIC
@@ -1722,7 +1744,7 @@
             setTimeout(() => toast.remove(), 3000);
         }
 
-        // MODELO MATEMÁTICO POISSON
+        // MODELO MATEMÁTICO POISSON CON CORRECCIÓN DIXON-COLES
         function factorial(n) {
             if (n === 0 || n === 1) return 1;
             let res = 1;
@@ -1733,6 +1755,23 @@
         function poissonProbability(k, lambda) {
             if (lambda <= 0) return k === 0 ? 1 : 0;
             return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+        }
+
+        // CORRECCIÓN DE DIXON-COLES PARA MARCADORES BAJOS (0-0, 1-0, 0-1, 1-1)
+        function dixonColesTau(h, a, lambda, mu, rho) {
+            if (rho === 0) return 1.0;
+            
+            if (h === 0 && a === 0) {
+                return 1.0 - (lambda * mu * rho);
+            } else if (h === 1 && a === 0) {
+                return 1.0 + (mu * rho);
+            } else if (h === 0 && a === 1) {
+                return 1.0 + (lambda * rho);
+            } else if (h === 1 && a === 1) {
+                return 1.0 - rho;
+            }
+            
+            return 1.0;
         }
 
         function formatOdds(prob) {
@@ -1818,6 +1857,7 @@
             document.getElementById('valHomeLambda').innerText = homeLambda.toFixed(3);
             document.getElementById('valAwayLambda').innerText = awayLambda.toFixed(3);
 
+            const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0.0;
             const maxGoals = 6;
             const matrix = [];
             const homeProbs = [];
@@ -1841,7 +1881,10 @@
             for (let h = 0; h <= maxGoals; h++) {
                 matrix[h] = [];
                 for (let a = 0; a <= maxGoals; a++) {
-                    const p = homeProbs[h] * awayProbs[a];
+                    const baseProb = homeProbs[h] * awayProbs[a];
+                    const tau = dixonColesTau(h, a, homeLambda, awayLambda, rho);
+                    const p = Math.max(0, baseProb * tau);
+                    
                     matrix[h][a] = p;
 
                     if (h > a) probHomeWin += p;
@@ -1855,6 +1898,17 @@
 
                     scoresList.push({ score: `${h} - ${a}`, prob: p });
                 }
+            }
+
+            // Normalización defensiva para asegurar que la suma de probabilidades sea exacta
+            const totalMatrixSum = probHomeWin + probDraw + probAwayWin;
+            if (totalMatrixSum > 0 && Math.abs(totalMatrixSum - 1.0) > 0.0001) {
+                probHomeWin /= totalMatrixSum;
+                probDraw /= totalMatrixSum;
+                probAwayWin /= totalMatrixSum;
+                probOver25 /= totalMatrixSum;
+                probUnder25 /= totalMatrixSum;
+                probBttsYes /= totalMatrixSum;
             }
 
             probBttsNo = 1 - probBttsYes;
