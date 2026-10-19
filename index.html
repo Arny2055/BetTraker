@@ -670,7 +670,7 @@
                 <!-- METRICAS DE RENDIMIENTO -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Bankroll Actual ($)</span>
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Bankroll Inicial</span>
                         <input type="number" id="initialBankrollInput" value="1000" onchange="updateTrackerMetrics()" class="w-full bg-inputBg border border-slate-700 rounded text-center text-xs font-black text-white py-0.5 mt-0.5">
                     </div>
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
@@ -754,14 +754,14 @@
         </div>
     </div>
 
-    <!-- MODAL DE FORMULARIO REGISTRAR APUESTA + CRITERIO DE KELLY -->
+    <!-- MODAL DE FORMULARIO REGISTRAR APUESTA -->
     <div id="logBetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-md rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
             
             <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-calculator text-gold-400 text-base"></i>
-                    <h3 class="font-black text-sm text-white" id="logBetModalTitle">Registrar Apuesta & Criterio de Kelly</h3>
+                    <i class="fa-solid fa-plus-circle text-emerald-400 text-base"></i>
+                    <h3 class="font-black text-sm text-white" id="logBetModalTitle">Registrar Nueva Apuesta</h3>
                 </div>
                 <button onclick="toggleLogBetModal(false)" class="text-slate-400 hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -796,62 +796,49 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">Prob. Poisson (%)</label>
-                        <input type="number" step="0.1" id="logProb" oninput="calculateLogEvAndKelly()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold text-center">
+                        <input type="number" step="0.1" id="logProb" oninput="calculateLogEv()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold text-center">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Justa</label>
                         <input type="number" step="0.01" id="logFairOdds" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-gold-400 font-bold text-center">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Casa</label>
-                        <input type="number" step="0.01" id="logBookieOdds" oninput="calculateLogEvAndKelly()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-300 font-bold text-center">
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Casa Bookie</label>
+                        <input type="number" step="0.01" id="logBookieOdds" oninput="calculateLogEv()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-300 font-bold text-center">
                     </div>
                 </div>
 
-                <!-- MÓDULO DE CRITERIO DE KELLY INTEGRADO -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-gold-500/30 space-y-2">
-                    <div class="flex justify-between items-center text-[10px] font-extrabold text-gold-400 border-b border-slate-800 pb-1">
-                        <span><i class="fa-solid fa-coins"></i> Criterio de Kelly (Gestión Óptima)</span>
-                        <select id="kellyFraction" onchange="calculateLogEvAndKelly()" class="bg-inputBg border border-slate-700 text-white rounded px-1.5 py-0.5 text-[9px] font-bold">
-                            <option value="0.25">1/4 Kelly (Conservador)</option>
-                            <option value="0.5" selected>1/2 Kelly (Recomendado)</option>
-                            <option value="1.0">Kelly Completo (Agresivo)</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-center pt-0.5">
-                        <div>
-                            <span class="block text-[8px] uppercase font-bold text-slate-400">Valor Esperado (EV+)</span>
-                            <span id="logEvDisplay" class="text-xs font-black text-emerald-400">+0.0%</span>
-                        </div>
-                        <div>
-                            <span class="block text-[8px] uppercase font-bold text-slate-400">Stake Sugerido (Kelly)</span>
-                            <span id="kellyStakeDisplay" class="text-xs font-black text-gold-400">$0.00 (0%)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="col-span-1">
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Stake ($)</label>
-                        <input type="number" step="1" id="logStake" value="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white font-bold text-center">
+                <div class="grid grid-cols-2 gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Valor Esperado (EV+)</label>
+                        <span id="logEvDisplay" class="text-sm font-black text-emerald-400 block">+0.0%</span>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Casa Bookie</label>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Stake / Apuesta ($)</label>
+                        <input type="number" step="1" id="logStake" value="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1 text-xs text-white font-bold text-center">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Casa de Apuestas</label>
                         <select id="logBookmaker" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-200 font-bold">
                             <option value="Bet365">Bet365</option>
                             <option value="Caliente">Caliente</option>
                             <option value="1xBet">1xBet</option>
                             <option value="Codere">Codere</option>
-                            <option value="Otra">Otra</option>
+                            <option value="Otra">Otra Casa</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Estado</label>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Estado de Apuesta</label>
                         <select id="logStatus" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-200 font-bold">
                             <option value="PENDING">Pendiente</option>
                             <option value="WON">Ganada</option>
                             <option value="LOST">Perdida</option>
-                            <option value="VOID">Nula</option>
+                            <option value="VOID">Nula / Devuelta</option>
+                            <option value="HALF_WON">Mitad Ganada</option>
+                            <option value="HALF_LOST">Mitad Perdida</option>
                         </select>
                     </div>
                 </div>
@@ -1103,14 +1090,14 @@
             localStorage.setItem('poisson_vip_bankroll', document.getElementById('initialBankrollInput').value);
         }
 
-        // BET LOG LOGIC & KELLY
+        // BET LOG LOGIC
         function openLogBetModal(market = '', selection = '', prob = 0) {
             const homeName = document.getElementById('homeName').value.trim() || 'Local';
             const awayName = document.getElementById('awayName').value.trim() || 'Visitante';
             const activeLeague = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
 
             document.getElementById('editBetIndex').value = "-1";
-            document.getElementById('logBetModalTitle').innerText = "Registrar Apuesta & Criterio de Kelly";
+            document.getElementById('logBetModalTitle').innerText = "Registrar Nueva Apuesta";
             document.getElementById('logLeague').value = activeLeague;
             document.getElementById('logMatch').value = `${homeName} vs ${awayName}`;
             document.getElementById('logMarket').value = market || 'Ganador Partido';
@@ -1127,7 +1114,7 @@
             document.getElementById('logBookmaker').value = "Bet365";
             document.getElementById('logStatus').value = "PENDING";
 
-            calculateLogEvAndKelly();
+            calculateLogEv();
             toggleLogBetModal(true);
         }
 
@@ -1148,49 +1135,24 @@
             document.getElementById('logBookmaker').value = item.bookmaker || "Bet365";
             document.getElementById('logStatus').value = item.status;
 
-            calculateLogEvAndKelly();
+            calculateLogEv();
             toggleLogBetModal(true);
         }
 
-        function calculateLogEvAndKelly() {
+        function calculateLogEv() {
             const prob = parseFloat(document.getElementById('logProb').value) / 100 || 0;
             const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
-            const bankroll = parseFloat(document.getElementById('initialBankrollInput').value) || 1000;
-            const kellyFrac = parseFloat(document.getElementById('kellyFraction').value) || 0.5;
             
             if (prob > 0) {
                 document.getElementById('logFairOdds').value = (1 / prob).toFixed(2);
             }
 
-            // EV+ Calculation
             const ev = (prob * bookieOdds) - 1;
             const evPct = (ev * 100).toFixed(1);
             
             const evEl = document.getElementById('logEvDisplay');
             evEl.innerText = (ev >= 0 ? '+' : '') + evPct + '%';
-            evEl.className = ev >= 0 ? 'text-xs font-black text-emerald-400' : 'text-xs font-black text-rose-400';
-
-            // Kelly Criterion Calculation: f* = (p * b - q) / b  donde b = odds - 1, q = 1 - p
-            let kellyStake = 0;
-            let kellyPct = 0;
-            if (bookieOdds > 1 && prob > 0) {
-                const b = bookieOdds - 1;
-                const q = 1 - prob;
-                const fullKelly = ((prob * b) - q) / b;
-                
-                if (fullKelly > 0) {
-                    kellyPct = fullKelly * kellyFrac * 100;
-                    kellyStake = bankroll * (fullKelly * kellyFrac);
-                }
-            }
-
-            const kellyEl = document.getElementById('kellyStakeDisplay');
-            kellyEl.innerText = `$${kellyStake.toFixed(2)} (${kellyPct.toFixed(1)}%)`;
-
-            // Opcional: auto-sugerir en el input de Stake
-            if (kellyStake > 0 && document.getElementById('editBetIndex').value === "-1") {
-                document.getElementById('logStake').value = Math.max(5, Math.round(kellyStake));
-            }
+            evEl.className = ev >= 0 ? 'text-sm font-black text-emerald-400 block' : 'text-sm font-black text-rose-400 block';
         }
 
         function saveBetToLog() {
@@ -1224,7 +1186,7 @@
             saveBetLogToStorage();
             updateTrackerMetrics();
             toggleLogBetModal(false);
-            showToast("¡Apuesta guardada con éxito!");
+            showToast("¡Apuesta guardada en la bitácora!");
         }
 
         function deleteBetFromLog(index) {
@@ -1272,6 +1234,16 @@
                 } else if (bet.status === 'LOST') {
                     pnl = -stake;
                     lostCount++;
+                    totalSettled++;
+                    totalStaked += stake;
+                } else if (bet.status === 'HALF_WON') {
+                    pnl = (stake / 2) * (odds - 1);
+                    wonCount += 0.5;
+                    totalSettled++;
+                    totalStaked += stake;
+                } else if (bet.status === 'HALF_LOST') {
+                    pnl = -(stake / 2);
+                    lostCount += 0.5;
                     totalSettled++;
                     totalStaked += stake;
                 } else if (bet.status === 'VOID') {
@@ -1324,6 +1296,8 @@
 
                 if (bet.status === 'WON') pnl = stake * (odds - 1);
                 else if (bet.status === 'LOST') pnl = -stake;
+                else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
+                else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
 
                 const evVal = parseFloat(bet.ev) || 0;
 
@@ -1343,6 +1317,8 @@
                                 <option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>Ganada</option>
                                 <option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>Perdida</option>
                                 <option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>Nula</option>
+                                <option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>1/2 Ganada</option>
+                                <option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>1/2 Perdida</option>
                             </select>
                         </td>
                         <td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">
@@ -1391,39 +1367,150 @@
             });
         }
 
-        // CALIBRACIÓN Y MODALES
+        // LÓGICA DE CALIBRACIÓN Y DIAGRAMA DE CONFIABILIDAD (RELIABILITY DIAGRAM)
         function toggleCalibrationModal(show) {
             const modal = document.getElementById('calibrationModal');
-            if (show) { calculateCalibrationMetrics(); modal.classList.remove('hidden'); }
-            else modal.classList.add('hidden');
+            if (show) {
+                calculateCalibrationMetrics();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
         }
 
         function calculateCalibrationMetrics() {
             const settledBets = betLogData.filter(b => b.status === 'WON' || b.status === 'LOST');
-            document.getElementById('valEvaluatedCount').innerText = settledBets.length;
+            
+            const countEl = document.getElementById('valEvaluatedCount');
+            const brierEl = document.getElementById('valBrierScore');
+            const logLossEl = document.getElementById('valLogLoss');
+            const tableBody = document.getElementById('calibrationTableBody');
+
+            countEl.innerText = settledBets.length;
+
             if (settledBets.length === 0) {
-                document.getElementById('valBrierScore').innerText = "0.0000";
-                document.getElementById('valLogLoss').innerText = "0.0000";
-                document.getElementById('calibrationTableBody').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas aún.</td></tr>`;
+                brierEl.innerText = "0.0000";
+                logLossEl.innerText = "0.0000";
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas (Ganadas o Perdidas) para calcular calibración. Cambia el estado de alguna apuesta en la bitácora.</td></tr>`;
+                renderReliabilityDiagram([], [], []);
                 return;
             }
-            // Cálculos simulados para evitar extensión excesiva, manteniendo la estructura limpia
-            document.getElementById('valBrierScore').innerText = "0.1842";
-            document.getElementById('valLogLoss').innerText = "0.5210";
+
+            let totalBrier = 0;
+            let totalLogLoss = 0;
+            let tableHtml = '';
+
+            const bins = [
+                { min: 0.0, max: 0.2, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.2, max: 0.4, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.4, max: 0.6, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.6, max: 0.8, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.8, max: 1.0, predSum: 0, actualSum: 0, count: 0 }
+            ];
+
+            settledBets.forEach(bet => {
+                const p = parseFloat(bet.prob) / 100;
+                const o = bet.status === 'WON' ? 1 : 0;
+
+                const brierInd = Math.pow(p - o, 2);
+                totalBrier += brierInd;
+
+                const eps = 1e-15;
+                const pSafe = Math.max(eps, Math.min(1 - eps, p));
+                const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
+                totalLogLoss += logLossInd;
+
+                const bin = bins.find(b => p >= b.min && (p < b.max || (p === 1.0 && b.max === 1.0)));
+                if (bin) {
+                    bin.predSum += p;
+                    bin.actualSum += o;
+                    bin.count++;
+                }
+
+                tableHtml += `
+                    <tr>
+                        <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.market}</span>${bet.match}</td>
+                        <td class="p-1.5 text-center font-bold text-indigo-400">${bet.prob}%</td>
+                        <td class="p-1.5 text-center font-black ${o === 1 ? 'text-emerald-400' : 'text-rose-400'}">${o === 1 ? 'Ganada (1)' : 'Perdida (0)'}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-200">${brierInd.toFixed(4)}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-200">${logLossInd.toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+
+            const avgBrier = totalBrier / settledBets.length;
+            const avgLogLoss = totalLogLoss / settledBets.length;
+
+            brierEl.innerText = avgBrier.toFixed(4);
+            logLossEl.innerText = avgLogLoss.toFixed(4);
+            tableBody.innerHTML = tableHtml;
+
+            const binLabels = bins.map(b => `${(b.min * 100).toFixed(0)}% - ${(b.max * 100).toFixed(0)}%`);
+            const binPredicted = bins.map(b => b.count > 0 ? ((b.predSum / b.count) * 100).toFixed(1) : 0);
+            const binActual = bins.map(b => b.count > 0 ? ((b.actualSum / b.count) * 100).toFixed(1) : 0);
+
+            renderReliabilityDiagram(binLabels, binPredicted, binActual);
+        }
+
+        function renderReliabilityDiagram(labels, predicted, actual) {
+            const ctx = document.getElementById('calibrationChart').getContext('2d');
+            if (calibrationChartInstance) calibrationChartInstance.destroy();
+
+            calibrationChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Probabilidad Promedio Pronosticada (%)',
+                            data: predicted,
+                            backgroundColor: '#6366f1',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Frecuencia Real de Acierto (%)',
+                            data: actual,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { 
+                            ticks: { color: '#64748b', font: { size: 9 } }, 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
         }
 
         function exportBetsCSV() {
-            if (betLogData.length === 0) { showToast("No hay datos."); return; }
-            let csv = "Fecha,Liga,Partido,Mercado,Seleccion,Prob,CuotaJusta,CuotaCasa,EV,Stake,Estado\n";
+            if (betLogData.length === 0) {
+                showToast("No hay datos para exportar.");
+                return;
+            }
+
+            let csv = "Fecha,Liga,Partido,Mercado,Seleccion,Prob_Poisson_Pct,Cuota_Justa,Cuota_Casa,EV_Pct,Stake,Casa,Estado\n";
             betLogData.forEach(b => {
-                csv += `"${b.date}","${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.ev},${b.stake},"${b.status}"\n`;
+                csv += `"${b.date}","${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.ev},${b.stake},"${b.bookmaker}","${b.status}"\n`;
             });
+
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", "bet_tracker.csv");
+            link.setAttribute("download", `poisson_bet_log_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
         }
 
         function toggleTrackerModal(show) {
@@ -1438,44 +1525,155 @@
             else modal.classList.add('hidden');
         }
 
+        // ACCIONES DE LIGAS
         function parseAndSaveLeague() {
             const raw = document.getElementById('rawInput').value;
             const name = document.getElementById('leagueNameInput').value.trim();
-            if (!raw || !name) { showToast("Completa los campos."); return; }
+
+            if (!raw || !name) {
+                showToast("Completa los datos de la liga.");
+                return;
+            }
+
             const parsedTeams = parseRawLeagueData(raw);
+            if (parsedTeams.length === 0) {
+                showToast("No se pudieron parsear equipos.");
+                return;
+            }
+
             leaguesData[name] = parsedTeams;
             saveLeaguesToStorage();
             populateLeagueDropdowns();
+            document.getElementById('modalLeagueSelect').value = name;
+            document.getElementById('activeLeagueSelect').value = name;
+            renderModalLeagueTable();
+            updateTeamSelectors();
+
+            document.getElementById('rawInput').value = '';
+            document.getElementById('leagueNameInput').value = '';
             showToast(`¡Liga "${name}" guardada!`);
         }
 
-        function parseRawLeagueData(rawText) {
-            return []; // Simplificado para brevedad del script integrado
+        function deleteCurrentLeague() {
+            const select = document.getElementById('modalLeagueSelect');
+            const leagueName = select.value;
+            if (!leagueName || Object.keys(leaguesData).length <= 1) return;
+
+            delete leaguesData[leagueName];
+            saveLeaguesToStorage();
+            populateLeagueDropdowns();
+            renderModalLeagueTable();
+            updateTeamSelectors();
+            showToast(`Liga "${leagueName}" eliminada.`);
         }
 
-        function loadLeaguesFromStorage() { leaguesData = {}; }
-        function saveLeaguesToStorage() {}
         function populateLeagueDropdowns() {
             const activeSelect = document.getElementById('activeLeagueSelect');
-            activeSelect.innerHTML = `<option value="${DEFAULT_LEAGUE_NAME}">${DEFAULT_LEAGUE_NAME}</option>`;
+            const modalSelect = document.getElementById('modalLeagueSelect');
+            const keys = Object.keys(leaguesData);
+
+            let optionsHtml = '';
+            keys.forEach(k => { optionsHtml += `<option value="${k}">${k}</option>`; });
+            activeSelect.innerHTML = optionsHtml;
+            modalSelect.innerHTML = optionsHtml;
         }
-        function onLeagueSelectChange() {}
-        function updateTeamSelectors() {}
-        function autoFillTeamData() {}
-        function renderModalLeagueTable() {}
+
+        function onLeagueSelectChange() {
+            const selected = document.getElementById('activeLeagueSelect').value;
+            document.getElementById('modalLeagueSelect').value = selected;
+            updateTeamSelectors();
+        }
+
+        function updateTeamSelectors() {
+            const leagueName = document.getElementById('activeLeagueSelect').value;
+            const teams = leaguesData[leagueName] || [];
+
+            const homeSelect = document.getElementById('selectHomeTeam');
+            const awaySelect = document.getElementById('selectAwayTeam');
+
+            let options = '<option value="">-- Seleccionar --</option>';
+            teams.forEach(t => {
+                options += `<option value="${t.name}">${t.pos}. ${t.name} (xG: ${t.xg} | GF: ${t.gf})</option>`;
+            });
+
+            homeSelect.innerHTML = options;
+            awaySelect.innerHTML = options;
+        }
+
+        function autoFillTeamData(type) {
+            const leagueName = document.getElementById('activeLeagueSelect').value;
+            const teams = leaguesData[leagueName] || [];
+
+            if (type === 'home') {
+                const teamName = document.getElementById('selectHomeTeam').value;
+                const team = teams.find(t => t.name === teamName);
+                if (team) {
+                    document.getElementById('homeName').value = team.name;
+                    document.getElementById('homeXgFor').value = team.xg;
+                    document.getElementById('homeGf').value = team.gf;
+                    document.getElementById('homeXgAgainst').value = team.xga;
+                    document.getElementById('homeGc').value = team.ga;
+                }
+            } else {
+                const teamName = document.getElementById('selectAwayTeam').value;
+                const team = teams.find(t => t.name === teamName);
+                if (team) {
+                    document.getElementById('awayName').value = team.name;
+                    document.getElementById('awayXgFor').value = team.xg;
+                    document.getElementById('awayGf').value = team.gf;
+                    document.getElementById('awayXgAgainst').value = team.xga;
+                    document.getElementById('awayGc').value = team.ga;
+                }
+            }
+            calculatePoisson();
+        }
+
+        function renderModalLeagueTable() {
+            const selectedLeague = document.getElementById('modalLeagueSelect').value;
+            const teams = leaguesData[selectedLeague] || [];
+
+            document.getElementById('teamCountBadge').innerText = `${teams.length} equipos`;
+            const tbody = document.getElementById('excelTableBody');
+            
+            if (teams.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500">No hay equipos en esta liga.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            teams.forEach(t => {
+                html += `
+                    <tr>
+                        <td class="p-1.5 text-center font-bold text-slate-400">${t.pos}</td>
+                        <td class="p-1.5 font-bold text-white">${t.name}</td>
+                        <td class="p-1.5 text-center">${t.mp}</td>
+                        <td class="p-1.5 text-center font-black text-emerald-400 bg-emerald-950/20">${t.xg.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-black text-rose-300 bg-rose-950/20">${t.xga.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-bold ${parseFloat(t.xgd) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.xgd}</td>
+                        <td class="p-1.5 text-center font-black text-amber-300 bg-amber-950/20">${t.gf.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-black text-purple-300 bg-purple-950/20">${t.ga.toFixed(2)}</td>
+                        <td class="p-1.5 text-center text-slate-400">${t.vsActual}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
         function toggleLeagueModal(show) {
             const modal = document.getElementById('leagueModal');
-            if (show) modal.classList.remove('hidden'); else modal.classList.add('hidden');
+            if (show) { renderModalLeagueTable(); modal.classList.remove('hidden'); }
+            else modal.classList.add('hidden');
         }
 
         function showToast(message) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-black shadow-2xl z-50';
+            toast.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 px-4 py-2 rounded-xl text-xs font-black shadow-2xl z-50 transition-all duration-300';
             toast.innerText = message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
 
+        // MODELO MATEMÁTICO POISSON
         function factorial(n) {
             if (n === 0 || n === 1) return 1;
             let res = 1;
@@ -1488,8 +1686,15 @@
             return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
         }
 
-        function formatOdds(prob) { return !prob || prob <= 0 ? '@999.00' : '@' + (1 / prob).toFixed(2); }
-        function formatPct(prob) { return !prob && prob !== 0 ? '0.0%' : (prob * 100).toFixed(1) + '%'; }
+        function formatOdds(prob) {
+            if (!prob || prob <= 0) return '@999.00';
+            return '@' + (1 / prob).toFixed(2);
+        }
+
+        function formatPct(prob) {
+            if (!prob && prob !== 0) return '0.0%';
+            return (prob * 100).toFixed(1) + '%';
+        }
 
         function switchMode(mode) {
             currentMode = mode;
@@ -1515,21 +1720,52 @@
         function clearAllData() {
             document.getElementById('homeName').value = '';
             document.getElementById('awayName').value = '';
-            showToast("Datos limpiados.");
+            document.getElementById('homeXgFor').value = '';
+            document.getElementById('homeGf').value = '';
+            document.getElementById('homeXgAgainst').value = '';
+            document.getElementById('homeGc').value = '';
+            document.getElementById('awayXgFor').value = '';
+            document.getElementById('awayGf').value = '';
+            document.getElementById('awayXgAgainst').value = '';
+            document.getElementById('awayGc').value = '';
+            document.getElementById('directHomeXg').value = '';
+            document.getElementById('directAwayXg').value = '';
+            document.getElementById('selectHomeTeam').value = '';
+            document.getElementById('selectAwayTeam').value = '';
+            showToast("Datos de entrada limpiados.");
         }
 
         function calculatePoisson() {
-            let homeLambda = 1.835;
-            let awayLambda = 1.390;
+            let homeLambda = 0;
+            let awayLambda = 0;
 
             if (currentMode === 'xg') {
-                const homeXgFor = parseFloat(document.getElementById('homeXgFor').value) || 1.83;
-                const awayXgAgainst = parseFloat(document.getElementById('awayXgAgainst').value) || 1.38;
-                const awayXgFor = parseFloat(document.getElementById('awayXgFor').value) || 1.39;
-                const homeXgAgainst = parseFloat(document.getElementById('homeXgAgainst').value) || 0.95;
+                // Obtener pesos de los sliders (0 a 100 convertidos a fracción 0 a 1)
+                const wAtk = parseFloat(document.getElementById('weightAttackRange').value) / 100;
+                const wDef = parseFloat(document.getElementById('weightDefenseRange').value) / 100;
 
-                homeLambda = (homeXgFor + awayXgAgainst) / 2;
-                awayLambda = (awayXgFor + homeXgAgainst) / 2;
+                const homeXgFor = parseFloat(document.getElementById('homeXgFor').value) || 0;
+                const homeGf = parseFloat(document.getElementById('homeGf').value) || 0;
+                const homeXgAgainst = parseFloat(document.getElementById('homeXgAgainst').value) || 0;
+                const homeGc = parseFloat(document.getElementById('homeGc').value) || 0;
+
+                const awayXgFor = parseFloat(document.getElementById('awayXgFor').value) || 0;
+                const awayGf = parseFloat(document.getElementById('awayGf').value) || 0;
+                const awayXgAgainst = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
+                const awayGc = parseFloat(document.getElementById('awayGc').value) || 0;
+
+                // Cálculo híbrido ponderado de Ataque y Defensa
+                const homeAttack = (homeXgFor * wAtk) + (homeGf * (1 - wAtk));
+                const awayDefense = (awayXgAgainst * wDef) + (awayGc * (1 - wDef));
+
+                const awayAttack = (awayXgFor * wAtk) + (awayGf * (1 - wAtk));
+                const homeDefense = (homeXgAgainst * wDef) + (homeGc * (1 - wDef));
+
+                homeLambda = (homeAttack + awayDefense) / 2;
+                awayLambda = (awayAttack + homeDefense) / 2;
+            } else {
+                homeLambda = parseFloat(document.getElementById('directHomeXg').value) || 0;
+                awayLambda = parseFloat(document.getElementById('directAwayXg').value) || 0;
             }
 
             document.getElementById('valHomeLambda').innerText = homeLambda.toFixed(3);
@@ -1545,7 +1781,14 @@
                 awayProbs.push(poissonProbability(i, awayLambda));
             }
 
-            let probHomeWin = 0, probDraw = 0, probAwayWin = 0, probOver25 = 0, probUnder25 = 0, probBttsYes = 0;
+            let probHomeWin = 0;
+            let probDraw = 0;
+            let probAwayWin = 0;
+            let probOver25 = 0;
+            let probUnder25 = 0;
+            let probBttsYes = 0;
+            let probBttsNo = 0;
+
             const scoresList = [];
 
             for (let h = 0; h <= maxGoals; h++) {
@@ -1567,9 +1810,15 @@
                 }
             }
 
-            const probBttsNo = 1 - probBttsYes;
-            currentCalculatedProbs = { probHomeWin, probDraw, probAwayWin, probOver25, probUnder25, probBttsYes, probBttsNo };
+            probBttsNo = 1 - probBttsYes;
 
+            currentCalculatedProbs = {
+                probHomeWin, probDraw, probAwayWin,
+                probOver25, probUnder25,
+                probBttsYes, probBttsNo
+            };
+
+            // Mercado Over / Under 2.5
             document.getElementById('pctOver25').innerText = formatPct(probOver25);
             document.getElementById('oddsOver25').innerText = formatOdds(probOver25);
             document.getElementById('barOver25').style.width = (probOver25 * 100) + '%';
@@ -1578,6 +1827,7 @@
             document.getElementById('oddsUnder25').innerText = formatOdds(probUnder25);
             document.getElementById('barUnder25').style.width = (probUnder25 * 100) + '%';
 
+            // Mercado BTTS
             document.getElementById('pctBttsYes').innerText = formatPct(probBttsYes);
             document.getElementById('oddsBttsYes').innerText = formatOdds(probBttsYes);
             document.getElementById('barBttsYes').style.width = (probBttsYes * 100) + '%';
@@ -1586,16 +1836,28 @@
             document.getElementById('oddsBttsNo').innerText = formatOdds(probBttsNo);
             document.getElementById('barBttsNo').style.width = (probBttsNo * 100) + '%';
 
+            // Mercado 1X2
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
+
+            document.getElementById('name1x2Home').innerText = homeName;
+            document.getElementById('name1x2Away').innerText = awayName;
+
             document.getElementById('pct1x2Home').innerText = formatPct(probHomeWin);
             document.getElementById('odds1x2Home').innerText = formatOdds(probHomeWin);
+
             document.getElementById('pct1x2Draw').innerText = formatPct(probDraw);
             document.getElementById('odds1x2Draw').innerText = formatOdds(probDraw);
+
             document.getElementById('pct1x2Away').innerText = formatPct(probAwayWin);
             document.getElementById('odds1x2Away').innerText = formatOdds(probAwayWin);
 
+            // Top Marcadores
             scoresList.sort((a, b) => b.prob - a.prob);
+            const top3 = scoresList.slice(0, 3);
             let topScoresHtml = '';
-            scoresList.slice(0, 3).forEach((item, idx) => {
+
+            top3.forEach((item, idx) => {
                 topScoresHtml += `
                     <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -1605,43 +1867,76 @@
                         <div class="flex items-center gap-3">
                             <span class="text-xs font-black text-emerald-400">${formatPct(item.prob)}</span>
                             <span class="text-xs font-black text-gold-400">${formatOdds(item.prob)}</span>
-                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-lg font-bold">+</button>
+                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] px-2 py-1 rounded-lg font-bold">
+                                +
+                            </button>
                         </div>
                     </div>
                 `;
             });
             document.getElementById('topScoresContainer').innerHTML = topScoresHtml;
+
+            // Render Matriz
             renderMatrix(matrix);
-            renderGoalsChart(homeProbs, awayProbs);
+
+            // Render Chart
+            renderGoalsChart(homeProbs, awayProbs, homeName, awayName);
         }
 
         function renderMatrix(matrix) {
+            const tbody = document.getElementById('matrixBody');
             let html = '';
+
             for (let h = 0; h <= 6; h++) {
-                html += `<tr><td class="p-1 font-bold text-slate-400 border-r border-slate-800">${h}</td>`;
+                html += `<tr class="hover:bg-slate-800/40"><td class="p-1 font-bold text-slate-400 border-r border-slate-800">${h}</td>`;
                 for (let a = 0; a <= 6; a++) {
                     const prob = matrix[h][a];
+                    const pct = (prob * 100).toFixed(1);
                     const bgAlpha = Math.min(prob * 4, 0.6);
-                    html += `<td class="p-1 text-slate-200" style="background-color: rgba(16, 185, 129, ${bgAlpha})">${(prob * 100).toFixed(1)}%</td>`;
+                    html += `<td class="p-1 font-semibold text-slate-200" style="background-color: rgba(16, 185, 129, ${bgAlpha})">${pct}%</td>`;
                 }
                 html += '</tr>';
             }
-            document.getElementById('matrixBody').innerHTML = html;
+
+            tbody.innerHTML = html;
         }
 
-        function renderGoalsChart(homeProbs, awayProbs) {
+        function renderGoalsChart(homeProbs, awayProbs, homeName, awayName) {
             const ctx = document.getElementById('goalsChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
+
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['0', '1', '2', '3', '4', '5', '6+'],
                     datasets: [
-                        { label: 'Local', data: homeProbs.map(p => (p * 100).toFixed(1)), backgroundColor: '#10b981', borderRadius: 4 },
-                        { label: 'Visitante', data: awayProbs.map(p => (p * 100).toFixed(1)), backgroundColor: '#f43f5e', borderRadius: 4 }
+                        {
+                            label: homeName || 'Local',
+                            data: homeProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        },
+                        {
+                            label: awayName || 'Visitante',
+                            data: awayProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4
+                        }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
             });
         }
     </script>
