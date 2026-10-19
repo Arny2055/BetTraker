@@ -814,7 +814,12 @@
                         <span id="logEvDisplay" class="text-sm font-black text-emerald-400 block">+0.0%</span>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Stake / Apuesta ($)</label>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-[10px] font-bold text-slate-400">Stake / Apuesta ($)</label>
+                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
+                                <i class="fa-solid fa-calculator"></i> Kelly 1/4
+                            </button>
+                        </div>
                         <input type="number" step="1" id="logStake" value="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1 text-xs text-white font-bold text-center">
                     </div>
                 </div>
@@ -1088,6 +1093,50 @@
         function saveBetLogToStorage() {
             localStorage.setItem('poisson_vip_betlog', JSON.stringify(betLogData));
             localStorage.setItem('poisson_vip_bankroll', document.getElementById('initialBankrollInput').value);
+        }
+
+        // CRITERIO DE KELLY 1/4 (QUARTER KELLY)
+        function applyKellyQuarter() {
+            const prob = parseFloat(document.getElementById('logProb').value) / 100 || 0;
+            const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
+
+            if (prob <= 0 || bookieOdds <= 1) {
+                showToast("Ingresa una probabilidad y cuota de casa válidas para calcular Kelly.");
+                return;
+            }
+
+            // Calcular el Bankroll Actual
+            let initialBank = parseFloat(document.getElementById('initialBankrollInput').value) || 1000;
+            let totalProfit = 0;
+            betLogData.forEach(bet => {
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'WON') totalProfit += stake * (odds - 1);
+                else if (bet.status === 'LOST') totalProfit -= stake;
+                else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
+                else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
+            });
+            const currentBankroll = Math.max(10, initialBank + totalProfit);
+
+            // Fórmula Kelly Completa: f* = (p * b - q) / b
+            // Donde b = odds - 1, q = 1 - p
+            const b = bookieOdds - 1;
+            const q = 1 - prob;
+            const fullKelly = (prob * b - q) / b;
+
+            if (fullKelly <= 0) {
+                showToast("Apuesta con EV negativo o nulo. Kelly sugiere no arriesgar.");
+                document.getElementById('logStake').value = "0";
+                return;
+            }
+
+            // Criterio de Kelly 1/4 (Quarter Kelly)
+            const quarterKellyFraction = fullKelly * 0.25;
+            let recommendedStake = Math.round(currentBankroll * quarterKellyFraction);
+            if (recommendedStake < 1) recommendedStake = 1;
+
+            document.getElementById('logStake').value = recommendedStake;
+            showToast(`Stake calculado con Kelly 1/4: $${recommendedStake}`);
         }
 
         // BET LOG LOGIC
@@ -1740,7 +1789,6 @@
             let awayLambda = 0;
 
             if (currentMode === 'xg') {
-                // Obtener pesos de los sliders (0 a 100 convertidos a fracción 0 a 1)
                 const wAtk = parseFloat(document.getElementById('weightAttackRange').value) / 100;
                 const wDef = parseFloat(document.getElementById('weightDefenseRange').value) / 100;
 
@@ -1754,7 +1802,6 @@
                 const awayXgAgainst = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
                 const awayGc = parseFloat(document.getElementById('awayGc').value) || 0;
 
-                // Cálculo híbrido ponderado de Ataque y Defensa
                 const homeAttack = (homeXgFor * wAtk) + (homeGf * (1 - wAtk));
                 const awayDefense = (awayXgAgainst * wDef) + (awayGc * (1 - wDef));
 
@@ -1876,10 +1923,7 @@
             });
             document.getElementById('topScoresContainer').innerHTML = topScoresHtml;
 
-            // Render Matriz
             renderMatrix(matrix);
-
-            // Render Chart
             renderGoalsChart(homeProbs, awayProbs, homeName, awayName);
         }
 
