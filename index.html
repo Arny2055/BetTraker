@@ -141,33 +141,43 @@
             </div>
         </header>
 
-        <!-- CONFIGURACIÓN DE GESTIÓN DE STAKE DINÁMICO (BANKROLL + PROFIT) -->
+        <!-- CONFIGURACIÓN DE GESTIÓN DE STAKE DINÁMICO & MÚLTIPLES BANKROLLS -->
         <section class="glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900">
             <div class="flex justify-between items-center border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-1.5">
-                    <i class="fa-solid fa-sliders text-emerald-400 text-xs"></i>
-                    <span class="text-xs font-black text-white uppercase">Estrategia de Stake Dinámico (Bankroll + Profit)</span>
+                    <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
+                    <span class="text-xs font-black text-white uppercase">Gestión de Bankroll Activo</span>
                 </div>
-                <span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Mitigador de Rachas</span>
+                <button onclick="toggleBankrollManagerModal(true)" class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+                    <i class="fa-solid fa-gear"></i> Administrar Cajas
+                </button>
             </div>
-            <div class="grid grid-cols-3 gap-2 text-center pt-1">
+
+            <!-- Selector de Bankroll y Resumen -->
+            <div class="grid grid-cols-3 gap-2 text-center pt-1 items-center">
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 text-left px-2.5">
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Caja / Bankroll</span>
+                    <select id="activeBankrollSelect" onchange="switchActiveBankroll()" class="w-full bg-inputBg border border-slate-700 rounded text-[11px] font-black text-white py-0.5 mt-0.5 focus:outline-none focus:border-emerald-500 truncate">
+                        <!-- Opciones cargadas por JS -->
+                    </select>
+                </div>
                 <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Bankroll Base</span>
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Saldo Actual</span>
                     <span class="text-xs font-black text-white" id="summaryBankroll">$1,000.00</span>
                 </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Profit Neto</span>
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-emerald-500/40">
+                    <span class="block text-[8px] uppercase text-emerald-400 font-bold">Profit Neto</span>
                     <span class="text-xs font-black text-emerald-400" id="summaryProfit">$0.00</span>
                 </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-emerald-500/40">
-                    <span class="block text-[8px] uppercase text-emerald-400 font-bold">% Stake Actual</span>
-                    <div class="flex items-center justify-center gap-1 mt-0.5">
-                        <input type="number" id="globalStakePct" value="2.0" step="0.1" min="0.1" max="20" onchange="updateTrackerMetrics()" class="w-12 bg-inputBg border border-emerald-500/50 rounded text-center text-xs font-black text-emerald-400 py-0.5">
-                        <span class="text-[10px] text-emerald-400 font-bold">%</span>
-                    </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 px-1 text-[10px] text-slate-400">
+                <span>Porcentaje de Stake Actual:</span>
+                <div class="flex items-center gap-1">
+                    <input type="number" id="globalStakePct" value="2.0" step="0.1" min="0.1" max="20" onchange="updateTrackerMetrics()" class="w-12 bg-inputBg border border-emerald-500/50 rounded text-center text-xs font-black text-emerald-400 py-0.5">
+                    <span class="text-emerald-400 font-bold">%</span>
                 </div>
             </div>
-            <p class="text-[9px] text-slate-400 text-center italic">El stake sugerido se calcula multiplicando este porcentaje por la suma del Bankroll Inicial y tu Beneficio Neto acumulado.</p>
         </section>
 
         <!-- BARRA DE SELECCIÓN DE LIGA ACTIVA Y EQUIPOS -->
@@ -581,6 +591,55 @@
 
     </div>
 
+    <!-- MODAL DE ADMINISTRACIÓN DE MÚLTIPLES BANKROLLS -->
+    <div id="bankrollManagerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-lg rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-wallet text-emerald-400 text-base"></i>
+                    <h3 class="font-black text-sm text-white">Gestor de Múltiples Cajas / Bankrolls</h3>
+                </div>
+                <button onclick="toggleBankrollManagerModal(false)" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-4 overflow-y-auto max-h-[75vh]">
+                <!-- Formulario para Añadir Nuevo Bankroll -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <span class="text-xs font-bold text-emerald-400 block"><i class="fa-solid fa-plus-circle"></i> Crear Nuevo Bankroll</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Nombre de la Caja</label>
+                            <input type="text" id="newBankrollName" placeholder="Ej. Bet365 VIP" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Bankroll Inicial ($)</label>
+                            <input type="number" id="newBankrollAmount" value="1000" step="10" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold text-center">
+                        </div>
+                    </div>
+                    <button onclick="createNewBankroll()" class="w-full mt-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs py-2 rounded-xl transition-all shadow-md">
+                        Crear Bankroll
+                    </button>
+                </div>
+
+                <!-- Lista de Bankrolls Existentes -->
+                <div class="space-y-2">
+                    <span class="text-xs font-extrabold text-slate-200 block">Bankrolls Registrados</span>
+                    <div id="bankrollsListContainer" class="space-y-2">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
+                <button onclick="toggleBankrollManagerModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE CALIBRACIÓN Y PRECISIÓN (BRIER SCORE & LOG LOSS) -->
     <div id="calibrationModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-4xl max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
@@ -699,10 +758,10 @@
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
                 
                 <!-- METRICAS DE RENDIMIENTO PRINCIPALES -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Bankroll Inicial</span>
-                        <input type="number" id="initialBankrollInput" value="1000" onchange="updateTrackerMetrics()" class="w-full bg-inputBg border border-slate-700 rounded text-center text-xs font-black text-white py-0.5 mt-0.5">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Bankroll Activo</span>
+                        <span class="text-sm font-black text-white block mt-1" id="dashActiveBankName">Principal</span>
                     </div>
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Beneficio Neto</span>
@@ -719,10 +778,6 @@
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Win Rate</span>
                         <span class="text-sm font-black text-emerald-400 block mt-1" id="dashWinRate">0.0%</span>
-                    </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
-                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Registradas</span>
-                        <span class="text-sm font-black text-slate-200 block mt-1" id="dashTotalBets">0</span>
                     </div>
                 </div>
 
@@ -757,7 +812,7 @@
                         </div>
 
                         <button onclick="clearBetLogHistory()" class="text-[10px] text-rose-400 hover:underline flex items-center gap-1">
-                            <i class="fa-solid fa-trash-can"></i> Limpiar Todo
+                            <i class="fa-solid fa-trash-can"></i> Limpiar Caja Actual
                         </button>
                     </div>
 
@@ -1061,6 +1116,8 @@
         let pnlChartInstance = null;
         let calibrationChartInstance = null;
         let leaguesData = {};
+        let bankrollsData = [];
+        let activeBankrollId = 'default_bankroll';
         let betLogData = [];
         let currentCalculatedProbs = {};
         let activeBetTab = 'pending'; // 'pending', 'closed', 'all'
@@ -1068,8 +1125,10 @@
         // INICIALIZACIÓN
         window.onload = function() {
             loadLeaguesFromStorage();
+            loadBankrollsFromStorage();
             loadBetLogFromStorage();
             populateLeagueDropdowns();
+            populateBankrollDropdowns();
             updateTeamSelectors();
             updateWeightLabels();
             updateRhoDisplay();
@@ -1224,7 +1283,7 @@
             return teams;
         }
 
-        // STORAGE MANAGEMENT
+        // STORAGE MANAGEMENT (LIGAS Y BANKROLLS)
         function loadLeaguesFromStorage() {
             const stored = localStorage.getItem('poisson_vip_leagues');
             if (stored) {
@@ -1241,14 +1300,34 @@
             localStorage.setItem('poisson_vip_leagues', JSON.stringify(leaguesData));
         }
 
+        function loadBankrollsFromStorage() {
+            const stored = localStorage.getItem('poisson_vip_bankrolls');
+            if (stored) {
+                try { bankrollsData = JSON.parse(stored); } catch(e) { bankrollsData = []; }
+            }
+            if (bankrollsData.length === 0) {
+                bankrollsData = [
+                    { id: 'default_bankroll', name: 'Bankroll Principal', initial: 1000 }
+                ];
+                saveBankrollsToStorage();
+            }
+            const storedActive = localStorage.getItem('poisson_vip_active_bankroll');
+            if (storedActive && bankrollsData.some(b => b.id === storedActive)) {
+                activeBankrollId = storedActive;
+            } else {
+                activeBankrollId = bankrollsData[0].id;
+            }
+        }
+
+        function saveBankrollsToStorage() {
+            localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
+            localStorage.setItem('poisson_vip_active_bankroll', activeBankrollId);
+        }
+
         function loadBetLogFromStorage() {
             const stored = localStorage.getItem('poisson_vip_betlog');
             if (stored) {
                 try { betLogData = JSON.parse(stored); } catch(e) { betLogData = []; }
-            }
-            const storedBankroll = localStorage.getItem('poisson_vip_bankroll');
-            if (storedBankroll) {
-                document.getElementById('initialBankrollInput').value = storedBankroll;
             }
             const storedStakePct = localStorage.getItem('poisson_vip_stakepct');
             if (storedStakePct) {
@@ -1258,7 +1337,6 @@
 
         function saveBetLogToStorage() {
             localStorage.setItem('poisson_vip_betlog', JSON.stringify(betLogData));
-            localStorage.setItem('poisson_vip_bankroll', document.getElementById('initialBankrollInput').value);
             localStorage.setItem('poisson_vip_stakepct', document.getElementById('globalStakePct').value);
         }
 
@@ -1278,6 +1356,105 @@
                 selectActive.value = Object.keys(leaguesData)[0];
                 selectModal.value = Object.keys(leaguesData)[0];
             }
+        }
+
+        function populateBankrollDropdowns() {
+            const select = document.getElementById('activeBankrollSelect');
+            select.innerHTML = '';
+            bankrollsData.forEach(b => {
+                const opt = new Option(b.name, b.id);
+                if (b.id === activeBankrollId) opt.selected = true;
+                select.add(opt);
+            });
+            renderBankrollManagerList();
+        }
+
+        function switchActiveBankroll() {
+            const select = document.getElementById('activeBankrollSelect');
+            activeBankrollId = select.value;
+            saveBankrollsToStorage();
+            updateTrackerMetrics();
+            showToast("Caja activa cambiada.");
+        }
+
+        function toggleBankrollManagerModal(show) {
+            const modal = document.getElementById('bankrollManagerModal');
+            if (show) {
+                renderBankrollManagerList();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function createNewBankroll() {
+            const nameInput = document.getElementById('newBankrollName');
+            const amountInput = document.getElementById('newBankrollAmount');
+            const name = nameInput.value.trim();
+            const initial = parseFloat(amountInput.value);
+
+            if (!name) {
+                showToast("Introduce un nombre para la caja.");
+                return;
+            }
+            if (isNaN(initial) || initial <= 0) {
+                showToast("Introduce un monto inicial válido.");
+                return;
+            }
+
+            const newId = 'bankroll_' + Date.now();
+            bankrollsData.push({ id: newId, name, initial });
+            activeBankrollId = newId;
+
+            saveBankrollsToStorage();
+            populateBankrollDropdowns();
+            updateTrackerMetrics();
+
+            nameInput.value = '';
+            amountInput.value = '1000';
+            showToast(`¡Caja "${name}" creada con éxito!`);
+        }
+
+        function deleteBankroll(id) {
+            if (bankrollsData.length <= 1) {
+                showToast("Debes conservar al menos un Bankroll.");
+                return;
+            }
+            if (confirm("¿Estás seguro de eliminar este Bankroll y sus apuestas asociadas?")) {
+                bankrollsData = bankrollsData.filter(b => b.id !== id);
+                betLogData = betLogData.filter(b => b.bankrollId !== id);
+                if (activeBankrollId === id) {
+                    activeBankrollId = bankrollsData[0].id;
+                }
+                saveBankrollsToStorage();
+                saveBetLogToStorage();
+                populateBankrollDropdowns();
+                updateTrackerMetrics();
+                showToast("Bankroll eliminado.");
+            }
+        }
+
+        function renderBankrollManagerList() {
+            const container = document.getElementById('bankrollsListContainer');
+            if (!container) return;
+
+            let html = '';
+            bankrollsData.forEach(b => {
+                const isCurrent = b.id === activeBankrollId;
+                html += `
+                    <div class="bg-slate-900/70 p-2.5 rounded-xl border ${isCurrent ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-800'} flex items-center justify-between text-xs">
+                        <div>
+                            <span class="font-bold text-white block">${b.name} ${isCurrent ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded ml-1">Activo</span>' : ''}</span>
+                            <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                            <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
 
         function onLeagueSelectChange() {
@@ -1357,9 +1534,11 @@
                 return;
             }
 
-            let initialBank = parseFloat(document.getElementById('initialBankrollInput').value) || 1000;
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            let initialBank = activeBankObj.initial;
             let totalProfit = 0;
-            betLogData.forEach(bet => {
+            
+            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
                 const stake = parseFloat(bet.stake) || 0;
                 const odds = parseFloat(bet.bookieOdds) || 1;
                 if (bet.status === 'WON') totalProfit += stake * (odds - 1);
@@ -1407,10 +1586,11 @@
             document.getElementById('logFairOdds').value = fairOdds;
             document.getElementById('logBookieOdds').value = fairOdds;
             
-            // CÁLCULO AUTOMÁTICO DE STAKE BASADO EN BANKROLL + PROFIT NETO
-            let initialBank = parseFloat(document.getElementById('initialBankrollInput').value) || 1000;
+            // CÁLCULO AUTOMÁTICO DE STAKE BASADO EN BANKROLL ACTIVO + PROFIT NETO
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            let initialBank = activeBankObj.initial;
             let totalProfit = 0;
-            betLogData.forEach(bet => {
+            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
                 const s = parseFloat(bet.stake) || 0;
                 const o = parseFloat(bet.bookieOdds) || 1;
                 if (bet.status === 'WON') totalProfit += s * (o - 1);
@@ -1475,6 +1655,7 @@
 
             const betRecord = {
                 id: index >= 0 ? betLogData[index].id : Date.now(),
+                bankrollId: index >= 0 ? (betLogData[index].bankrollId || bankrollsData[0].id) : activeBankrollId,
                 date: index >= 0 ? betLogData[index].date : new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' }),
                 league: document.getElementById('logLeague').value,
                 match: document.getElementById('logMatch').value,
@@ -1509,11 +1690,11 @@
         }
 
         function clearBetLogHistory() {
-            if (confirm("¿Estás seguro de borrar todo el historial de apuestas?")) {
-                betLogData = [];
+            if (confirm("¿Estás seguro de borrar el historial de apuestas de este Bankroll activo?")) {
+                betLogData = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) !== activeBankrollId);
                 saveBetLogToStorage();
                 updateTrackerMetrics();
-                showToast("Historial vaciado.");
+                showToast("Historial de la caja vaciado.");
             }
         }
 
@@ -1526,7 +1707,8 @@
 
         // RENDIMIENTO Y SEPARACIÓN DE CERRADAS / PENDIENTES
         function updateTrackerMetrics() {
-            const initialBank = parseFloat(document.getElementById('initialBankrollInput').value) || 1000;
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            const initialBank = activeBankObj.initial;
             
             let totalProfitClosed = 0;
             let totalStakedClosed = 0;
@@ -1537,8 +1719,9 @@
 
             const currentBankrollArr = [initialBank];
 
-            // Orden cronológico inverso para gráfica
-            const cronoBets = betLogData.slice().reverse();
+            // Filtrar apuestas del bankroll activo
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            const cronoBets = currentBankBets.slice().reverse();
 
             cronoBets.forEach(bet => {
                 const stake = parseFloat(bet.stake) || 0;
@@ -1585,12 +1768,12 @@
             sumProfitEl.className = totalProfitClosed >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
 
             // Actualizar Métricas Modal Dashboard
+            document.getElementById('dashActiveBankName').innerText = activeBankObj.name;
             document.getElementById('dashNetProfit').innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
             document.getElementById('dashNetProfit').className = totalProfitClosed >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
             document.getElementById('dashPendingRisk').innerText = `$${totalRiskPending.toFixed(2)}`;
             document.getElementById('dashYield').innerText = yieldVal.toFixed(1) + '%';
             document.getElementById('dashWinRate').innerText = winRateVal.toFixed(1) + '%';
-            document.getElementById('dashTotalBets').innerText = betLogData.length;
 
             document.getElementById('badgePendingCount').innerText = countPending;
             document.getElementById('badgeClosedCount').innerText = countClosed;
@@ -1598,20 +1781,21 @@
             document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
             document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
 
-            renderSeparatedBetsTables();
+            renderSeparatedBetsTables(currentBankBets);
             renderPnlChart(currentBankrollArr);
             saveBetLogToStorage();
         }
 
         // RENDERIZAR TABLAS SEPARADAS: PENDIENTES Y CERRADAS
-        function renderSeparatedBetsTables() {
+        function renderSeparatedBetsTables(bankBets) {
             const pendingTbody = document.getElementById('pendingBetsTableBody');
             const closedTbody = document.getElementById('closedBetsTableBody');
 
             const pendingBets = [];
             const closedBets = [];
 
-            betLogData.forEach((bet, originalIdx) => {
+            bankBets.forEach((bet) => {
+                const originalIdx = betLogData.findIndex(b => b.id === bet.id);
                 const betWithIndex = { ...bet, originalIdx };
                 if (bet.status === 'PENDING') {
                     pendingBets.push(betWithIndex);
@@ -1622,7 +1806,7 @@
 
             // Render Tablas Pendientes
             if (pendingBets.length === 0) {
-                pendingTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas pendientes en curso.</td></tr>`;
+                pendingTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas pendientes en curso en este Bankroll.</td></tr>`;
             } else {
                 let htmlP = '';
                 pendingBets.forEach(bet => {
@@ -1663,7 +1847,7 @@
 
             // Render Tablas Cerradas
             if (closedBets.length === 0) {
-                closedTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas liquidadas en el historial.</td></tr>`;
+                closedTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas liquidadas en este Bankroll.</td></tr>`;
             } else {
                 let htmlC = '';
                 closedBets.forEach(bet => {
@@ -1755,7 +1939,8 @@
         }
 
         function calculateCalibrationMetrics() {
-            const settledBets = betLogData.filter(b => b.status === 'WON' || b.status === 'LOST');
+            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            const settledBets = activeBankBets.filter(b => b.status === 'WON' || b.status === 'LOST');
             
             const countEl = document.getElementById('valEvaluatedCount');
             const brierEl = document.getElementById('valBrierScore');
@@ -1767,7 +1952,7 @@
             if (settledBets.length === 0) {
                 brierEl.innerText = "0.0000";
                 logLossEl.innerText = "0.0000";
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas (Ganadas o Perdidas) para calcular calibración. Cambia el estado de alguna apuesta en la bitácora.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas en este Bankroll para calibración.</td></tr>`;
                 renderReliabilityDiagram([], [], []);
                 return;
             }
@@ -1869,13 +2054,14 @@
         }
 
         function exportBetsCSV() {
-            if (betLogData.length === 0) {
-                showToast("No hay datos para exportar.");
+            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            if (activeBankBets.length === 0) {
+                showToast("No hay datos en este Bankroll para exportar.");
                 return;
             }
 
             let csv = "Fecha,Liga,Partido,Mercado,Seleccion,Prob_Poisson_Pct,Cuota_Justa,Cuota_Casa,EV_Pct,Stake,Casa,Estado\n";
-            betLogData.forEach(b => {
+            activeBankBets.forEach(b => {
                 csv += `"${b.date}","${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.ev},${b.stake},"${b.bookmaker}","${b.status}"\n`;
             });
 
@@ -1883,7 +2069,7 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", `poisson_bet_log_${new Date().toISOString().slice(0,10)}.csv`);
+            link.setAttribute("download", `poisson_bankroll_${activeBankrollId}_${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -2095,7 +2281,7 @@
             document.getElementById('oddsUnder25').innerText = '@' + (1 / Math.max(0.001, probUnder25)).toFixed(2);
             document.getElementById('barUnder25').style.width = (probUnder25 * 100).toFixed(1) + '%';
 
-            // CÁLKULO Y RENDERIZADO DEL APARTADO DINÁMICO DE LÍNEAS O/U (0.5 a 4.5)
+            // RENDERIZADO DEL APARTADO DINÁMICO O/U
             renderDynamicOverUnder(matrix);
 
             // BTTS
@@ -2149,14 +2335,10 @@
                 `;
             });
 
-            // RENDER MATRIZ
             renderMatrix(matrix);
-
-            // RENDER GRÁFICA GOLES
             renderGoalsChart(homeProbs, awayProbs);
         }
 
-        // RENDERIZADO DINÁMICO DE LÍNEAS OVER / UNDER ADICIONALES (0.5, 1.5, 3.5, 4.5)
         function renderDynamicOverUnder(matrix) {
             const lines = [0.5, 1.5, 3.5, 4.5];
             const container = document.getElementById('dynamicOuContainer');
