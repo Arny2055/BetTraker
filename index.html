@@ -466,7 +466,7 @@
                         <button onclick="openLogBetModal('Ambos Anotan', 'BTTS Sí', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Ambos Anotan', 'BTTS Sí', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Ambos Anotan', 'BTTS Sí', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
@@ -860,30 +860,35 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN Y VISTA DE CALENDARIO DIARIO -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-3">
-                    <div class="flex justify-between items-center">
+                <!-- SECCIÓN Y VISTA DE CALENDARIO DIARIO (DESPLEGABLE) -->
+                <details class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden group">
+                    <summary class="p-3 cursor-pointer flex items-center justify-between font-bold text-xs text-white select-none">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-calendar-days text-emerald-400 text-xs"></i>
-                            <span class="text-xs font-bold text-white">Calendario Diario de Resultados</span>
+                            <span>Calendario Diario de Resultados</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeCalendarMonth(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs"><i class="fa-solid fa-chevron-left"></i></button>
-                            <span id="calendarMonthTitle" class="text-xs font-black text-emerald-400 uppercase w-28 text-center">Mes Año</span>
-                            <button onclick="changeCalendarMonth(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs"><i class="fa-solid fa-chevron-right"></i></button>
+                        <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-3 pt-0 space-y-3">
+                        <div class="flex justify-end items-center">
+                            <div class="flex items-center gap-2">
+                                <button onclick="changeCalendarMonth(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs"><i class="fa-solid fa-chevron-left"></i></button>
+                                <span id="calendarMonthTitle" class="text-xs font-black text-emerald-400 uppercase w-28 text-center">Mes Año</span>
+                                <button onclick="changeCalendarMonth(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Días de la semana -->
+                        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 border-b border-slate-800 pb-1">
+                            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
+                        </div>
+
+                        <!-- Cuadrícula del Calendario -->
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
+                            <!-- Generado por JS -->
                         </div>
                     </div>
-
-                    <!-- Días de la semana -->
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 border-b border-slate-800 pb-1">
-                        <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
-                    </div>
-
-                    <!-- Cuadrícula del Calendario -->
-                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
-                        <!-- Generado por JS -->
-                    </div>
-                </div>
+                </details>
 
                 <!-- SECCIÓN Y TABLAS: SEPARACIÓN APUESTAS PENDIENTES VS CERRADAS -->
                 <div class="space-y-2">
