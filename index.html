@@ -859,15 +859,22 @@
             <!-- Modal Body Tracker -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
                 
-                <!-- FILTRO DE MERCADO NUEVA MEJORA -->
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <i class="fa-solid fa-filter text-emerald-400 text-xs"></i>
-                        <span class="text-xs font-black text-white uppercase">Vista de Bitácora:</span>
+                <!-- FILTRO DE MERCADO Y SELECCIÓN ESPECÍFICA (MEJORA APLICADA) -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/30 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1">
+                            <i class="fa-solid fa-filter text-emerald-400"></i> Filtrar por Mercado:
+                        </label>
+                        <select id="marketFilterSelect" onchange="onMarketFilterChange()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-extrabold text-emerald-400 focus:outline-none focus:border-emerald-500">
+                            <option value="ALL">🌐 Todos los Mercados</option>
+                        </select>
                     </div>
-                    <div class="w-full sm:w-72">
-                        <select id="marketFilterSelect" onchange="updateTrackerMetrics()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-extrabold text-emerald-400 focus:outline-none focus:border-emerald-500">
-                            <option value="ALL">🌐 Todos los Mercados (Total Global)</option>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1">
+                            <i class="fa-solid fa-bullseye text-gold-400"></i> Filtrar por Selección Elegida:
+                        </label>
+                        <select id="selectionFilterSelect" onchange="updateTrackerMetrics()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-extrabold text-gold-400 focus:outline-none focus:border-gold-500">
+                            <option value="ALL">⭐ Todas las Selecciones</option>
                         </select>
                     </div>
                 </div>
@@ -2119,10 +2126,10 @@
         }
 
         function updateMarketFilterDropdown() {
-            const select = document.getElementById('marketFilterSelect');
-            if (!select) return;
+            const marketSelect = document.getElementById('marketFilterSelect');
+            if (!marketSelect) return;
 
-            const currentVal = select.value;
+            const currentMarketVal = marketSelect.value;
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             
             const marketsSet = new Set();
@@ -2130,11 +2137,42 @@
                 if (b.market) marketsSet.add(b.market);
             });
 
-            select.innerHTML = '<option value="ALL">🌐 Todos los Mercados (Total Global)</option>';
+            marketSelect.innerHTML = '<option value="ALL">🌐 Todos los Mercados</option>';
             marketsSet.forEach(market => {
                 const opt = new Option(market, market);
-                if (market === currentVal) opt.selected = true;
-                select.add(opt);
+                if (market === currentMarketVal) opt.selected = true;
+                marketSelect.add(opt);
+            });
+
+            updateSelectionFilterDropdown();
+        }
+
+        function onMarketFilterChange() {
+            updateSelectionFilterDropdown();
+            updateTrackerMetrics();
+        }
+
+        function updateSelectionFilterDropdown() {
+            const marketSelect = document.getElementById('marketFilterSelect');
+            const selectionSelect = document.getElementById('selectionFilterSelect');
+            if (!selectionSelect) return;
+
+            const currentSelectionVal = selectionSelect.value;
+            const selectedMarket = marketSelect ? marketSelect.value : 'ALL';
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+
+            const selectionsSet = new Set();
+            currentBankBets.forEach(b => {
+                if (selectedMarket === 'ALL' || b.market === selectedMarket) {
+                    if (b.selection) selectionsSet.add(b.selection);
+                }
+            });
+
+            selectionSelect.innerHTML = '<option value="ALL">⭐ Todas las Selecciones</option>';
+            selectionsSet.forEach(sel => {
+                const opt = new Option(sel, sel);
+                if (sel === currentSelectionVal) opt.selected = true;
+                selectionSelect.add(opt);
             });
         }
 
@@ -2144,6 +2182,7 @@
             const totalWithdrawn = activeBankObj.totalWithdrawn || 0;
             
             const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
+            const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
 
             let totalProfitClosed = 0;
             let totalStakedClosed = 0;
@@ -2156,8 +2195,9 @@
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             
             const filteredBets = currentBankBets.filter(b => {
-                if (selectedMarketFilter === 'ALL') return true;
-                return b.market === selectedMarketFilter;
+                const matchMarket = (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter);
+                const matchSelection = (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter);
+                return matchMarket && matchSelection;
             });
 
             const cronoBets = filteredBets.slice().reverse();
@@ -2222,7 +2262,11 @@
             sumProfitEl.innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
             sumProfitEl.className = totalProfitClosed >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
 
-            document.getElementById('dashActiveBankName').innerText = activeBankObj.name + (selectedMarketFilter !== 'ALL' ? ` [${selectedMarketFilter}]` : '');
+            let filterLabelSuffix = '';
+            if (selectedMarketFilter !== 'ALL') filterLabelSuffix += ` [${selectedMarketFilter}]`;
+            if (selectedSelectionFilter !== 'ALL') filterLabelSuffix += ` (${selectedSelectionFilter})`;
+
+            document.getElementById('dashActiveBankName').innerText = activeBankObj.name + filterLabelSuffix;
             document.getElementById('dashNetProfit').innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
             document.getElementById('dashNetProfit').className = totalProfitClosed >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
             document.getElementById('dashPendingRisk').innerText = `$${totalRiskPending.toFixed(2)}`;
@@ -2360,8 +2404,9 @@
 
         function openDayBetsModal(dateStr) {
             const selectedMarketFilter = document.getElementById('marketFilterSelect').value;
+            const selectedSelectionFilter = document.getElementById('selectionFilterSelect').value;
             const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const dayBets = activeBankBets.filter(b => b.date === dateStr && (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter));
+            const dayBets = activeBankBets.filter(b => b.date === dateStr && (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter) && (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter));
 
             document.getElementById('dayBetsModalTitle').innerText = `Apuestas del ${dateStr}`;
             const contentContainer = document.getElementById('dayBetsModalContent');
