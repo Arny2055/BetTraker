@@ -497,10 +497,10 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Ambos Anotan', 'BTTS Sí', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Ambos Anotan', 'BTTS Sí', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
@@ -525,10 +525,10 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Ambos Anotan', 'BTTS No', currentCalculatedProbs.probBttsNo)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan No', currentCalculatedProbs.probBttsNo)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Ambos Anotan', 'BTTS No', currentCalculatedProbs.probBttsNo)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Ambos Anotan', 'Ambos Anotan No', currentCalculatedProbs.probBttsNo)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
@@ -1919,7 +1919,7 @@
             const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
 
             if (prob <= 0 || bookieOdds <= 1) {
-                showToast("Ingresa probabilidad y cuota de casa válidas.");
+                showToast("Introduce probabilidad y cuota de casa válidas.");
                 return;
             }
 
@@ -2960,7 +2960,7 @@
         }
 
         function renderDynamicOverUnder(matrix) {
-            const lines = [0.5, 1.5, 3.5, 4.5];
+            const lines = [0.5, 1.5, 2.5, 3.5, 4.5];
             const container = document.getElementById('dynamicOuContainer');
             container.innerHTML = '';
 
