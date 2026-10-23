@@ -379,10 +379,10 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Over 2.5 Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Over 2.5 Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
@@ -407,10 +407,10 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Under 2.5 Goles', 'Under 2.5', currentCalculatedProbs.probUnder25)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Over / Under Goles', 'Under 2.5', currentCalculatedProbs.probUnder25)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Under 2.5 Goles', 'Under 2.5', currentCalculatedProbs.probUnder25)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Under 2.5', currentCalculatedProbs.probUnder25)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
@@ -825,6 +825,19 @@
             <!-- Modal Body Tracker -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
                 
+                <!-- FILTRO DE MERCADO NUEVA MEJORA -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/30 flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <i class="fa-solid fa-filter text-emerald-400 text-xs"></i>
+                        <span class="text-xs font-black text-white uppercase">Vista de Bitácora:</span>
+                    </div>
+                    <div class="w-full sm:w-72">
+                        <select id="marketFilterSelect" onchange="updateTrackerMetrics()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-extrabold text-emerald-400 focus:outline-none focus:border-emerald-500">
+                            <option value="ALL">🌐 Todos los Mercados (Total Global)</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- METRICAS DE RENDIMIENTO PRINCIPALES -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
@@ -1262,6 +1275,7 @@
             updateWeightLabels();
             updateRhoDisplay();
             calculatePoisson();
+            updateMarketFilterDropdown();
             updateTrackerMetrics();
             renderParlayBuilder();
         };
@@ -1619,6 +1633,7 @@
             const select = document.getElementById('activeBankrollSelect');
             activeBankrollId = select.value;
             saveBankrollsToStorage();
+            updateMarketFilterDropdown();
             updateTrackerMetrics();
             showToast("Caja activa cambiada.");
         }
@@ -1654,6 +1669,7 @@
 
             saveBankrollsToStorage();
             populateBankrollDropdowns();
+            updateMarketFilterDropdown();
             updateTrackerMetrics();
 
             nameInput.value = '';
@@ -1675,6 +1691,7 @@
                 saveBankrollsToStorage();
                 saveBetLogToStorage();
                 populateBankrollDropdowns();
+                updateMarketFilterDropdown();
                 updateTrackerMetrics();
                 showToast("Bankroll eliminado.");
             }
@@ -1694,7 +1711,7 @@
                             <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)}</span>
                         </div>
                         <div class="flex items-center gap-1.5">
-                            ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                            ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
                             <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
@@ -1930,6 +1947,7 @@
             }
 
             saveBetLogToStorage();
+            updateMarketFilterDropdown();
             updateTrackerMetrics();
             toggleLogBetModal(false);
             showToast("¡Apuesta guardada en la bitácora!");
@@ -1938,6 +1956,7 @@
         function deleteBetFromLog(index) {
             betLogData.splice(index, 1);
             saveBetLogToStorage();
+            updateMarketFilterDropdown();
             updateTrackerMetrics();
             showToast("Apuesta eliminada.");
         }
@@ -1946,6 +1965,7 @@
             if (confirm("¿Estás seguro de borrar el historial de apuestas de este Bankroll activo?")) {
                 betLogData = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) !== activeBankrollId);
                 saveBetLogToStorage();
+                updateMarketFilterDropdown();
                 updateTrackerMetrics();
                 showToast("Historial de la caja vaciado.");
             }
@@ -1954,14 +1974,37 @@
         function updateBetStatusDirect(index, newStatus) {
             betLogData[index].status = newStatus;
             saveBetLogToStorage();
+            updateMarketFilterDropdown();
             updateTrackerMetrics();
             showToast("Estado actualizado.");
+        }
+
+        function updateMarketFilterDropdown() {
+            const select = document.getElementById('marketFilterSelect');
+            if (!select) return;
+
+            const currentVal = select.value;
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            
+            const marketsSet = new Set();
+            currentBankBets.forEach(b => {
+                if (b.market) marketsSet.add(b.market);
+            });
+
+            select.innerHTML = '<option value="ALL">🌐 Todos los Mercados (Total Global)</option>';
+            marketsSet.forEach(market => {
+                const opt = new Option(market, market);
+                if (market === currentVal) opt.selected = true;
+                select.add(opt);
+            });
         }
 
         function updateTrackerMetrics() {
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             const initialBank = activeBankObj.initial;
             
+            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
+
             let totalProfitClosed = 0;
             let totalStakedClosed = 0;
             let totalRiskPending = 0;
@@ -1971,7 +2014,14 @@
 
             const currentBankrollArr = [initialBank];
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const cronoBets = currentBankBets.slice().reverse();
+            
+            // Filtrar por mercado si está seleccionado
+            const filteredBets = currentBankBets.filter(b => {
+                if (selectedMarketFilter === 'ALL') return true;
+                return b.market === selectedMarketFilter;
+            });
+
+            const cronoBets = filteredBets.slice().reverse();
 
             cronoBets.forEach(bet => {
                 const stake = parseFloat(bet.stake) || 0;
@@ -2016,7 +2066,7 @@
             sumProfitEl.innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
             sumProfitEl.className = totalProfitClosed >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
 
-            document.getElementById('dashActiveBankName').innerText = activeBankObj.name;
+            document.getElementById('dashActiveBankName').innerText = activeBankObj.name + (selectedMarketFilter !== 'ALL' ? ` [${selectedMarketFilter}]` : '');
             document.getElementById('dashNetProfit').innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
             document.getElementById('dashNetProfit').className = totalProfitClosed >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
             document.getElementById('dashPendingRisk').innerText = `$${totalRiskPending.toFixed(2)}`;
@@ -2029,8 +2079,8 @@
             document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
             document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
 
-            renderSeparatedBetsTables(currentBankBets);
-            renderCalendarView(currentBankBets);
+            renderSeparatedBetsTables(filteredBets);
+            renderCalendarView(filteredBets);
             renderPnlChart(currentBankrollArr);
             saveBetLogToStorage();
         }
@@ -2117,14 +2167,15 @@
         }
 
         function openDayBetsModal(dateStr) {
+            const selectedMarketFilter = document.getElementById('marketFilterSelect').value;
             const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const dayBets = activeBankBets.filter(b => b.date === dateStr);
+            const dayBets = activeBankBets.filter(b => b.date === dateStr && (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter));
 
             document.getElementById('dayBetsModalTitle').innerText = `Apuestas del ${dateStr}`;
             const contentContainer = document.getElementById('dayBetsModalContent');
 
             if (dayBets.length === 0) {
-                contentContainer.innerHTML = `<p class="text-center text-slate-500 text-xs py-4">No hay apuestas registradas en esta fecha.</p>`;
+                contentContainer.innerHTML = `<p class="text-center text-slate-500 text-xs py-4">No hay apuestas registradas en esta fecha con el filtro actual.</p>`;
             } else {
                 let html = '';
                 dayBets.forEach(bet => {
@@ -2187,7 +2238,7 @@
             });
 
             if (pendingBets.length === 0) {
-                pendingTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas pendientes en curso en este Bankroll.</td></tr>`;
+                pendingTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas pendientes en curso con el filtro actual.</td></tr>`;
             } else {
                 let htmlP = '';
                 pendingBets.forEach(bet => {
@@ -2228,7 +2279,7 @@
             }
 
             if (closedBets.length === 0) {
-                closedTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas liquidadas en este Bankroll.</td></tr>`;
+                closedTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas liquidadas con el filtro actual.</td></tr>`;
             } else {
                 let htmlC = '';
                 closedBets.forEach(bet => {
@@ -2701,7 +2752,7 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-black text-emerald-400">${pct}%</span>
                             <span class="text-xs font-black text-gold-400">@${odds}</span>
-                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
+                            <button onclick="openLogLogModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
                                 Sencilla
                             </button>
                             <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/20" title="Parlay">
