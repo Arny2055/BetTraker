@@ -162,7 +162,7 @@
                     </select>
                 </div>
                 <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Saldo Actual</span>
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Saldo Disponible</span>
                     <span class="text-xs font-black text-white" id="summaryBankroll">$1,000.00</span>
                 </div>
                 <div class="bg-slate-900/90 p-2 rounded-xl border border-emerald-500/40">
@@ -1397,15 +1397,19 @@
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             let initialBank = activeBankObj.initial;
             let totalProfit = 0;
+            let pendingRiskCalc = 0;
+
             betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
                 const s = parseFloat(bet.stake) || 0;
                 const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'WON') totalProfit += s * (o - 1);
+                if (bet.status === 'PENDING') {
+                    pendingRiskCalc += s;
+                } else if (bet.status === 'WON') totalProfit += s * (o - 1);
                 else if (bet.status === 'LOST') totalProfit -= s;
                 else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
                 else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
             });
-            const dynamicBankroll = initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0);
+            const dynamicBankroll = initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc;
             const stakePct = parseFloat(document.getElementById('globalStakePct').value) || 2.0;
             let calculatedStake = Math.max(1, Math.round(Math.max(0, dynamicBankroll) * (stakePct / 100)));
 
@@ -1701,12 +1705,10 @@
             }
         }
 
-        // FUNCIONALIDAD DE RETIRO DEL 50% DE UTILIDAD AL LADO DE CADA CAJA
         function withdrawHalfProfit(bankId) {
             const bankObj = bankrollsData.find(b => b.id === bankId);
             if (!bankObj) return;
 
-            // Calcular profit neto actual de este bankroll
             let totalProfit = 0;
             betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === bankId).forEach(bet => {
                 const stake = parseFloat(bet.stake) || 0;
@@ -1717,7 +1719,6 @@
                 else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
             });
 
-            // Utilidad neta disponible para retiro descontando retiros previos
             const netProfitAvailable = totalProfit - (bankObj.totalWithdrawn || 0);
 
             if (netProfitAvailable <= 0) {
@@ -1749,7 +1750,6 @@
             bankrollsData.forEach(b => {
                 const isCurrent = b.id === activeBankrollId;
 
-                // Calcular profit neto para mostrar
                 let totalProfit = 0;
                 betLogData.filter(bt => (bt.bankrollId || bankrollsData[0].id) === b.id).forEach(bet => {
                     const stake = parseFloat(bet.stake) || 0;
@@ -1785,7 +1785,6 @@
                             </div>
                         </div>
 
-                        <!-- BOTÓN DE RETIRO 50% DE UTILIDAD AL LADO DE CADA CAJA -->
                         <div class="flex items-center justify-between bg-slate-900/90 p-2 rounded-lg border border-emerald-500/30">
                             <div>
                                 <span class="block text-[8px] uppercase font-bold text-slate-400">Retirar 50% de Utilidad</span>
@@ -1881,16 +1880,18 @@
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             let initialBank = activeBankObj.initial;
             let totalProfit = 0;
+            let pendingRiskCalc = 0;
             
             betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
                 const stake = parseFloat(bet.stake) || 0;
                 const odds = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'WON') totalProfit += stake * (odds - 1);
+                if (bet.status === 'PENDING') pendingRiskCalc += stake;
+                else if (bet.status === 'WON') totalProfit += stake * (odds - 1);
                 else if (bet.status === 'LOST') totalProfit -= stake;
                 else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
                 else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
             });
-            const currentBankroll = Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0));
+            const currentBankroll = Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc);
 
             const b = bookieOdds - 1;
             const q = 1 - prob;
@@ -1934,15 +1935,17 @@
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             let initialBank = activeBankObj.initial;
             let totalProfit = 0;
+            let pendingRiskCalc = 0;
             betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
                 const s = parseFloat(bet.stake) || 0;
                 const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'WON') totalProfit += s * (o - 1);
+                if (bet.status === 'PENDING') pendingRiskCalc += s;
+                else if (bet.status === 'WON') totalProfit += s * (o - 1);
                 else if (bet.status === 'LOST') totalProfit -= s;
                 else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
                 else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
             });
-            const dynamicBankroll = initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0);
+            const dynamicBankroll = initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc;
             const stakePct = parseFloat(document.getElementById('globalStakePct').value) || 2.0;
             let calculatedStake = Math.max(1, Math.round(Math.max(0, dynamicBankroll) * (stakePct / 100)));
 
@@ -2139,8 +2142,8 @@
                 }
             });
 
-            // Restamos los retiros acumulados al saldo actual
-            const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn;
+            // SALDO DISPONIBLE = Bankroll Inicial + Profit Cerrado - Retiros - Riesgo Pendiente en curso
+            const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn - totalRiskPending;
             const yieldVal = totalStakedClosed > 0 ? (totalProfitClosed / totalStakedClosed) * 100 : 0;
             const winRateVal = countClosed > 0 ? (wonCount / countClosed) * 100 : 0;
 
