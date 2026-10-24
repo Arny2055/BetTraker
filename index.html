@@ -1108,7 +1108,7 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- MEJORA AÑADIDA: WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN -->
+                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN -->
                 <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-chart-line text-emerald-400"></i>
@@ -1173,8 +1173,8 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-[10px] font-bold text-slate-400">Stake / Apuesta ($)</label>
-                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
-                                <i class="fa-solid fa-calculator"></i> Kelly 1/4
+                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly Dinámico por Rendimiento">
+                                <i class="fa-solid fa-calculator"></i> Kelly Dinámico
                             </button>
                         </div>
                         <input type="number" step="1" id="logStake" value="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1 text-xs text-white font-bold text-center">
@@ -1987,13 +1987,47 @@
             showToast("Campos borrados.");
         }
 
+        // FUNCIÓN MEJORADA: KELLY DINÁMICO BASADO EN EL RENDIMIENTO DE CADA SELECCIÓN
         function applyKellyQuarter() {
             const prob = parseFloat(document.getElementById('logProb').value) / 100 || 0;
             const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
+            const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
 
             if (prob <= 0 || bookieOdds <= 1) {
                 showToast("Introduce probabilidad y cuota de casa válidas.");
                 return;
+            }
+
+            // Calcular rendimiento histórico de esta selección exacta
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            let selectionProfit = 0;
+            let selectionStaked = 0;
+            let selectionCount = 0;
+
+            if (selectionInput) {
+                currentBankBets.forEach(bet => {
+                    if (bet.status !== 'PENDING' && bet.selection && bet.selection.toLowerCase().includes(selectionInput)) {
+                        const s = parseFloat(bet.stake) || 0;
+                        const o = parseFloat(bet.bookieOdds) || 1;
+                        selectionStaked += s;
+                        selectionCount++;
+                        if (bet.status === 'WON') selectionProfit += s * (o - 1);
+                        else if (bet.status === 'LOST') selectionProfit -= s;
+                        else if (bet.status === 'HALF_WON') selectionProfit += (s / 2) * (o - 1);
+                        else if (bet.status === 'HALF_LOST') selectionProfit -= (s / 2);
+                    }
+                });
+            }
+
+            // Factor dinámico de rendimiento (Performance Multiplier)
+            // Si no hay historial, factor base es 1.0. Si es rentable, escala hasta 1.5. Si da pérdidas, se reduce hasta 0.25.
+            let performanceMultiplier = 1.0;
+            if (selectionCount >= 3) {
+                const selectionYield = selectionStaked > 0 ? (selectionProfit / selectionStaked) * 100 : 0;
+                if (selectionYield > 10) performanceMultiplier = 1.4; // Muy rentable
+                else if (selectionYield > 0) performanceMultiplier = 1.15; // Rentable
+                else if (selectionYield > -10) performanceMultiplier = 0.75; // Ligeras pérdidas
+                else performanceMultiplier = 0.35; // Mala racha en esta selección
             }
 
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
@@ -2001,14 +2035,14 @@
             let totalProfit = 0;
             let pendingRiskCalc = 0;
             
-            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
-                const stake = parseFloat(bet.stake) || 0;
-                const odds = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') pendingRiskCalc += stake;
-                else if (bet.status === 'WON') totalProfit += stake * (odds - 1);
-                else if (bet.status === 'LOST') totalProfit -= stake;
-                else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
-                else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
+            currentBankBets.forEach(bet => {
+                const s = parseFloat(bet.stake) || 0;
+                const o = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'PENDING') pendingRiskCalc += s;
+                else if (bet.status === 'WON') totalProfit += s * (o - 1);
+                else if (bet.status === 'LOST') totalProfit -= s;
+                else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
+                else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
             });
             const currentBankroll = Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc);
 
@@ -2022,12 +2056,13 @@
                 return;
             }
 
-            const quarterKellyFraction = fullKelly * 0.25;
-            let recommendedStake = Math.round(currentBankroll * quarterKellyFraction);
+            // Kelly 1/4 (0.25) modificado dinámicamente por el rendimiento de la selección
+            const dynamicKellyFraction = fullKelly * 0.25 * performanceMultiplier;
+            let recommendedStake = Math.round(currentBankroll * dynamicKellyFraction);
             if (recommendedStake < 1) recommendedStake = 1;
 
             document.getElementById('logStake').value = recommendedStake;
-            showToast(`Stake calculado (Kelly 1/4): $${recommendedStake}`);
+            showToast(`Kelly Dinámico aplicado (Factor rend.: ${performanceMultiplier}x): $${recommendedStake}`);
         }
 
         function openLogBetModal(market = '', selection = '', prob = 0) {
@@ -2498,21 +2533,22 @@
 
                     html += `
                         <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
-                            <div class="flex justify-between items-center font-bold text-white">
-                                <span>${typeTag}${bet.match}</span>
-                                <span class="text-[10px] text-slate-400">${bet.league}</span>
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-white">${typeTag}${bet.match}</span>
+                                <span>${statusBadge}</span>
                             </div>
-                            <div class="text-[11px] text-emerald-300 font-semibold">${bet.market} - ${bet.selection}</div>
-                            <div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800">
-                                <span>Cuota: @${bet.bookieOdds} | Stake: $${bet.stake}</span>
-                                ${statusBadge}
+                            <div class="text-[10px] text-slate-400">
+                                <b>${bet.market}</b>: <span class="text-gold-400">${bet.selection}</span> (@${bet.bookieOdds})
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800 text-slate-300">
+                                <span>Stake: <b>$${bet.stake}</b></span>
+                                <span>Liga: ${bet.league}</span>
                             </div>
                         </div>
                     `;
                 });
                 contentContainer.innerHTML = html;
             }
-
             document.getElementById('dayBetsModal').classList.remove('hidden');
         }
 
@@ -2523,130 +2559,116 @@
         }
 
         function renderSeparatedBetsTables(bankBets) {
-            const pendingTbody = document.getElementById('pendingBetsTableBody');
-            const closedTbody = document.getElementById('closedBetsTableBody');
+            const pendingBody = document.getElementById('pendingBetsTableBody');
+            const closedBody = document.getElementById('closedBetsTableBody');
+            if (!pendingBody || !closedBody) return;
 
-            const pendingBets = [];
-            const closedBets = [];
+            let pendingHtml = '';
+            let closedHtml = '';
 
-            bankBets.forEach((bet) => {
-                const originalIdx = betLogData.findIndex(b => b.id === bet.id);
-                const betWithIndex = { ...bet, originalIdx };
+            bankBets.forEach((bet, originalIndex) => {
+                const globalIndex = betLogData.indexOf(bet);
+                const evNum = parseFloat(bet.ev) || 0;
+                const evClass = evNum >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+                const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black">PARLAY</span>' : '';
+
                 if (bet.status === 'PENDING') {
-                    pendingBets.push(betWithIndex);
-                } else {
-                    closedBets.push(betWithIndex);
-                }
-            });
-
-            if (pendingBets.length === 0) {
-                pendingTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas pendientes en curso con el filtro actual.</td></tr>`;
-            } else {
-                let htmlP = '';
-                pendingBets.forEach(bet => {
                     const stake = parseFloat(bet.stake) || 0;
                     const odds = parseFloat(bet.bookieOdds) || 1;
-                    const potReturn = stake * odds;
-                    const evVal = parseFloat(bet.ev) || 0;
-                    const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
+                    const potentialReturn = stake * odds;
 
-                    htmlP += `
-                        <tr class="bg-amber-950/10 hover:bg-amber-900/20">
-                            <td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td>
-                            <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td>
-                            <td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td>
-                            <td class="p-1.5 text-center font-bold">${bet.prob}%</td>
-                            <td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td>
-                            <td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td>
+                    pendingHtml += `
+                        <tr>
+                            <td class="p-1.5 text-center text-slate-400">${bet.date}</td>
+                            <td class="p-1.5">${typeTag} <span class="block text-[9px] text-slate-400">${bet.league}</span></td>
+                            <td class="p-1.5 font-bold text-white">
+                                <div>${bet.match}</div>
+                                <div class="text-[9px] text-gold-400">${bet.market}: ${bet.selection}</div>
+                            </td>
+                            <td class="p-1.5 text-center text-emerald-400 font-bold">${bet.prob}%</td>
+                            <td class="p-1.5 text-center text-gold-400 font-bold">@${bet.bookieOdds}</td>
+                            <td class="p-1.5 text-center ${evClass}">${evNum >= 0 ? '+' : ''}${bet.ev}%</td>
                             <td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td>
-                            <td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td>
+                            <td class="p-1.5 text-center text-emerald-300 font-bold">$${potentialReturn.toFixed(1)}</td>
                             <td class="p-1.5 text-center">
-                                <select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none">
-                                    <option value="PENDING" selected>⌛ Pendiente</option>
-                                    <option value="WON">✅ Ganada</option>
-                                    <option value="LOST">❌ Perdida</option>
-                                    <option value="VOID">↩️ Nula</option>
-                                    <option value="HALF_WON">½ Ganada</option>
-                                    <option value="HALF_LOST">½ Perdida</option>
-                                </select>
+                                <div class="flex items-center justify-center gap-1">
+                                    <button onclick="updateBetStatusDirect(${globalIndex}, 'WON')" class="px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 rounded font-bold transition-all" title="Ganada">✓</button>
+                                    <button onclick="updateBetStatusDirect(${globalIndex}, 'LOST')" class="px-1.5 py-0.5 bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white rounded font-bold transition-all" title="Perdida">✕</button>
+                                    <button onclick="updateBetStatusDirect(${globalIndex}, 'VOID')" class="px-1.5 py-0.5 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded font-bold transition-all" title="Nula">N</button>
+                                </div>
                             </td>
                             <td class="p-1.5 text-center">
-                                <button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                                <div class="flex items-center justify-center gap-1">
+                                    <button onclick="editBetInLog(${globalIndex})" class="text-indigo-400 hover:text-indigo-300 px-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button onclick="deleteBetFromLog(${globalIndex})" class="text-rose-400 hover:text-rose-300 px-1"><i class="fa-solid fa-trash"></i></button>
+                                </div>
                             </td>
                         </tr>
                     `;
-                });
-                pendingTbody.innerHTML = htmlP;
-            }
-
-            if (closedBets.length === 0) {
-                closedTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas liquidadas con el filtro actual.</td></tr>`;
-            } else {
-                let htmlC = '';
-                closedBets.forEach(bet => {
+                } else {
                     let pnl = 0;
                     const stake = parseFloat(bet.stake) || 0;
                     const odds = parseFloat(bet.bookieOdds) || 1;
-
                     if (bet.status === 'WON') pnl = stake * (odds - 1);
                     else if (bet.status === 'LOST') pnl = -stake;
                     else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
                     else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
 
-                    const evVal = parseFloat(bet.ev) || 0;
-                    const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
+                    let statusBadge = `<span class="text-slate-400">Nula</span>`;
+                    if (bet.status === 'WON') statusBadge = `<span class="text-emerald-400 font-bold">Ganada</span>`;
+                    else if (bet.status === 'LOST') statusBadge = `<span class="text-rose-400 font-bold">Perdida</span>`;
+                    else if (bet.status === 'HALF_WON') statusBadge = `<span class="text-emerald-300 font-bold">1/2 Ganada</span>`;
+                    else if (bet.status === 'HALF_LOST') statusBadge = `<span class="text-rose-300 font-bold">1/2 Perdida</span>`;
 
-                    htmlC += `
+                    const pnlClass = pnl >= 0 ? 'text-emerald-400 font-black' : 'text-rose-400 font-black';
+
+                    closedHtml += `
                         <tr>
-                            <td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td>
-                            <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td>
-                            <td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td>
-                            <td class="p-1.5 text-center">${bet.prob}%</td>
-                            <td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td>
-                            <td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td>
+                            <td class="p-1.5 text-center text-slate-400">${bet.date}</td>
+                            <td class="p-1.5">${typeTag} <span class="block text-[9px] text-slate-400">${bet.league}</span></td>
+                            <td class="p-1.5 font-bold text-white">
+                                <div>${bet.match}</div>
+                                <div class="text-[9px] text-gold-400">${bet.market}: ${bet.selection}</div>
+                            </td>
+                            <td class="p-1.5 text-center text-emerald-400 font-bold">${bet.prob}%</td>
+                            <td class="p-1.5 text-center text-gold-400 font-bold">@${bet.bookieOdds}</td>
+                            <td class="p-1.5 text-center ${evClass}">${evNum >= 0 ? '+' : ''}${bet.ev}%</td>
                             <td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td>
+                            <td class="p-1.5 text-center">${statusBadge}</td>
+                            <td class="p-1.5 text-center ${pnlClass}">${pnl >= 0 ? '+$' : '-$'}${Math.abs(pnl).toFixed(2)}</td>
                             <td class="p-1.5 text-center">
-                                <select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none">
-                                    <option value="PENDING">⌛ Pendiente</option>
-                                    <option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option>
-                                    <option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option>
-                                    <option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option>
-                                    <option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option>
-                                    <option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option>
-                                </select>
-                            </td>
-                            <td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">
-                                ${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}
-                            </td>
-                            <td class="p-1.5 text-center">
-                                <button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button>
-                                <button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                                <div class="flex items-center justify-center gap-1">
+                                    <button onclick="editBetInLog(${globalIndex})" class="text-indigo-400 hover:text-indigo-300 px-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button onclick="deleteBetFromLog(${globalIndex})" class="text-rose-400 hover:text-rose-300 px-1"><i class="fa-solid fa-trash"></i></button>
+                                </div>
                             </td>
                         </tr>
                     `;
-                });
-                closedTbody.innerHTML = htmlC;
-            }
+                }
+            });
+
+            pendingBody.innerHTML = pendingHtml || `<tr><td colspan="10" class="text-center py-4 text-slate-500 italic">No hay apuestas pendientes.</td></tr>`;
+            closedBody.innerHTML = closedHtml || `<tr><td colspan="10" class="text-center py-4 text-slate-500 italic">No hay apuestas cerradas en el historial.</td></tr>`;
         }
 
-        function renderPnlChart(bankHistory) {
+        function renderPnlChart(bankrollArray) {
             const ctx = document.getElementById('pnlChart').getContext('2d');
             if (pnlChartInstance) pnlChartInstance.destroy();
 
-            const labels = bankHistory.map((_, i) => i === 0 ? 'Inicio' : `#${i}`);
+            const labels = bankrollArray.map((_, i) => i === 0 ? 'Inicio' : `Ap. ${i}`);
 
             pnlChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Bankroll ($)',
-                        data: bankHistory,
+                        label: 'Evolución Caja',
+                        data: bankrollArray,
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
                         fill: true,
                         tension: 0.3,
+                        borderWidth: 2,
                         pointRadius: 3
                     }]
                 },
@@ -2655,117 +2677,320 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
-                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 9 } } }
                     }
                 }
             });
         }
 
-        function toggleCalibrationModal(show) {
-            const modal = document.getElementById('calibrationModal');
-            if (show) {
-                calculateCalibrationMetrics();
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
-
-        function calculateCalibrationMetrics() {
-            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const settledBets = activeBankBets.filter(b => b.status === 'WON' || b.status === 'LOST');
-            
-            const countEl = document.getElementById('valEvaluatedCount');
-            const brierEl = document.getElementById('valBrierScore');
-            const logLossEl = document.getElementById('valLogLoss');
-            const tableBody = document.getElementById('calibrationTableBody');
-
-            countEl.innerText = settledBets.length;
-
-            if (settledBets.length === 0) {
-                brierEl.innerText = "0.0000";
-                logLossEl.innerText = "0.0000";
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas en este Bankroll para calibración.</td></tr>`;
-                renderReliabilityDiagram([], [], []);
+        function exportBetsCSV() {
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            if (currentBankBets.length === 0) {
+                showToast("No hay apuestas para exportar en esta caja.");
                 return;
             }
 
-            let totalBrier = 0;
-            let totalLogLoss = 0;
-            let tableHtml = '';
-
-            const bins = [
-                { min: 0.0, max: 0.2, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.2, max: 0.4, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.4, max: 0.6, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.6, max: 0.8, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.8, max: 1.0, predSum: 0, actualSum: 0, count: 0 }
-            ];
-
-            settledBets.forEach(bet => {
-                const p = parseFloat(bet.prob) / 100;
-                const o = bet.status === 'WON' ? 1 : 0;
-
-                const brierInd = Math.pow(p - o, 2);
-                totalBrier += brierInd;
-
-                const eps = 1e-15;
-                const pSafe = Math.max(eps, Math.min(1 - eps, p));
-                const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
-                totalLogLoss += logLossInd;
-
-                const bin = bins.find(b => p >= b.min && (p < b.max || (p === 1.0 && b.max === 1.0)));
-                if (bin) {
-                    bin.predSum += p;
-                    bin.actualSum += o;
-                    bin.count++;
-                }
-
-                tableHtml += `
-                    <tr>
-                        <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.market}</span>${bet.match}</td>
-                        <td class="p-1.5 text-center font-bold text-indigo-400">${bet.prob}%</td>
-                        <td class="p-1.5 text-center font-black ${o === 1 ? 'text-emerald-400' : 'text-rose-400'}">${o === 1 ? 'Ganada (1)' : 'Perdida (0)'}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-200">${brierInd.toFixed(4)}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-200">${logLossInd.toFixed(4)}</td>
-                    </tr>
-                `;
+            let csvContent = "data:text/csv;charset=utf-8,Fecha,Liga,Partido,Mercado,Seleccion,Prob,CuotaJusta,CuotaCasa,EV,Stake,Bookmaker,Estado\r\n";
+            currentBankBets.forEach(b => {
+                const row = [b.date, `"${b.league}"`, `"${b.match}"`, `"${b.market}"`, `"${b.selection}"`, b.prob, b.fairOdds, b.bookieOdds, b.ev, b.stake, b.bookmaker, b.status];
+                csvContent += row.join(",") + "\r\n";
             });
 
-            const avgBrier = totalBrier / settledBets.length;
-            const avgLogLoss = totalLogLoss / settledBets.length;
-
-            brierEl.innerText = avgBrier.toFixed(4);
-            logLossEl.innerText = avgLogLoss.toFixed(4);
-            tableBody.innerHTML = tableHtml;
-
-            const binLabels = bins.map(b => `${(b.min * 100).toFixed(0)}% - ${(b.max * 100).toFixed(0)}%`);
-            const binPredicted = bins.map(b => b.count > 0 ? ((b.predSum / b.count) * 100).toFixed(1) : 0);
-            const binActual = bins.map(b => b.count > 0 ? ((b.actualSum / b.count) * 100).toFixed(1) : 0);
-
-            renderReliabilityDiagram(binLabels, binPredicted, binActual);
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `bet_tracker_${activeBankrollId}_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("¡Archivo CSV exportado con éxito!");
         }
 
-        function renderReliabilityDiagram(labels, predicted, actual) {
-            const ctx = document.getElementById('calibrationChart').getContext('2d');
-            if (calibrationChartInstance) calibrationChartInstance.destroy();
+        // FUNCIONES DE CÁLCULO DE POISSON
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let res = 1;
+            for (let i = 2; i <= n; i++) res *= i;
+            return res;
+        }
 
-            calibrationChartInstance = new Chart(ctx, {
+        function poissonProbability(lambda, k) {
+            return (Math.exp(-lambda) * Math.pow(lambda, k)) / factorial(k);
+        }
+
+        function calculatePoisson() {
+            let lambdaHome = 0;
+            let lambdaAway = 0;
+
+            if (currentMode === 'xg') {
+                const wAtk = parseInt(document.getElementById('weightAttackRange').value) / 100;
+                const wDef = parseInt(document.getElementById('weightDefenseRange').value) / 100;
+
+                const hXgFor = parseFloat(document.getElementById('homeXgFor').value) || 0;
+                const hGf = parseFloat(document.getElementById('homeGf').value) || 0;
+                const hXgAg = parseFloat(document.getElementById('homeXgAgainst').value) || 0;
+                const hGc = parseFloat(document.getElementById('homeGc').value) || 0;
+
+                const aXgFor = parseFloat(document.getElementById('awayXgFor').value) || 0;
+                const aGf = parseFloat(document.getElementById('awayGf').value) || 0;
+                const aXgAg = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
+                const aGc = parseFloat(document.getElementById('awayGc').value) || 0;
+
+                const homeAttack = (hXgFor * wAtk) + (hGf * (1 - wAtk));
+                const homeDefense = (hXgAg * wDef) + (hGc * (1 - wDef));
+
+                const awayAttack = (aXgFor * wAtk) + (aGf * (1 - wAtk));
+                const awayDefense = (aXgAgainst * wDef) + (aGc * (1 - wDef));
+
+                lambdaHome = Math.max(0.1, Math.sqrt(homeAttack * awayDefense));
+                lambdaAway = Math.max(0.1, Math.sqrt(awayAttack * homeDefense));
+            } else {
+                lambdaHome = Math.max(0.1, parseFloat(document.getElementById('directHomeXg').value) || 1.8);
+                lambdaAway = Math.max(0.1, parseFloat(document.getElementById('directAwayXg').value) || 1.4);
+            }
+
+            document.getElementById('valHomeLambda').innerText = lambdaHome.toFixed(3);
+            document.getElementById('valAwayLambda').innerText = lambdaAway.toFixed(3);
+
+            const hName = document.getElementById('homeName').value.trim() || 'Local';
+            const aName = document.getElementById('awayName').value.trim() || 'Visitante';
+            document.getElementById('name1x2Home').innerText = hName;
+            document.getElementById('name1x2Away').innerText = aName;
+
+            const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0.00;
+
+            let probHomeWin = 0;
+            let probDraw = 0;
+            let probAwayWin = 0;
+            let probOver25 = 0;
+            let probBttsYes = 0;
+
+            let scoreProbs = [];
+            let matrixHtml = '';
+            let goalDistHome = [0, 0, 0, 0, 0, 0];
+            let goalDistAway = [0, 0, 0, 0, 0, 0];
+
+            let matrixGrid = Array(7).fill(0).map(() => Array(7).fill(0));
+
+            for (let i = 0; i <= 6; i++) {
+                for (let j = 0; j <= 6; j++) {
+                    let p = poissonProbability(lambdaHome, i) * poissonProbability(lambdaAway, j);
+
+                    // Ajuste Dixon-Coles para marcadores bajos
+                    if (rho !== 0) {
+                        if (i === 0 && j === 0) p *= (1 - lambdaHome * lambdaAway * rho);
+                        else if (i === 0 && j === 1) p *= (1 + lambdaHome * rho);
+                        else if (i === 1 && j === 0) p *= (1 + lambdaAway * rho);
+                        else if (i === 1 && j === 1) p *= (1 - rho);
+                    }
+                    p = Math.max(0, p);
+
+                    matrixGrid[i][j] = p;
+
+                    if (i < 5) goalDistHome[i] += p; else goalDistHome[5] += p;
+                    if (j < 5) goalDistAway[j] += p; else goalDistAway[5] += p;
+
+                    if (i + j > 2.5) probOver25 += p;
+                    if (i > 0 && j > 0) probBttsYes += p;
+
+                    if (i > j) probHomeWin += p;
+                    else if (i === j) probDraw += p;
+                    else probAwayWin += p;
+
+                    scoreProbs.push({ home: i, away: j, prob: p });
+                }
+            }
+
+            // Normalizar sumas por si acaso
+            const totalSum = probHomeWin + probDraw + probAwayWin;
+            if (totalSum > 0) {
+                probHomeWin /= totalSum;
+                probDraw /= totalSum;
+                probAwayWin /= totalSum;
+            }
+
+            const probUnder25 = 1 - probOver25;
+            const probBttsNo = 1 - probBttsYes;
+
+            currentCalculatedProbs = {
+                probHomeWin, probDraw, probAwayWin,
+                probOver25, probUnder25,
+                probBttsYes, probBttsNo
+            };
+
+            // Renderizar Over / Under 2.5
+            document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
+            document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.01, probOver25)).toFixed(2);
+            document.getElementById('barOver25').style.width = (probOver25 * 100) + '%';
+
+            document.getElementById('pctUnder25').innerText = (probUnder25 * 100).toFixed(1) + '%';
+            document.getElementById('oddsUnder25').innerText = '@' + (1 / Math.max(0.01, probUnder25)).toFixed(2);
+            document.getElementById('barUnder25').style.width = (probUnder25 * 100) + '%';
+
+            // Renderizar BTTS
+            document.getElementById('pctBttsYes').innerText = (probBttsYes * 100).toFixed(1) + '%';
+            document.getElementById('oddsBttsYes').innerText = '@' + (1 / Math.max(0.01, probBttsYes)).toFixed(2);
+            document.getElementById('barBttsYes').style.width = (probBttsYes * 100) + '%';
+
+            document.getElementById('pctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
+            document.getElementById('oddsBttsNo').innerText = '@' + (1 / Math.max(0.01, probBttsNo)).toFixed(2);
+            document.getElementById('barBttsNo').style.width = (probBttsNo * 100) + '%';
+
+            // Renderizar Mercado 1X2
+            document.getElementById('pct1x2Home').innerText = (probHomeWin * 100).toFixed(1) + '%';
+            document.getElementById('odds1x2Home').innerText = '@' + (1 / Math.max(0.01, probHomeWin)).toFixed(2);
+
+            document.getElementById('pct1x2Draw').innerText = (probDraw * 100).toFixed(1) + '%';
+            document.getElementById('odds1x2Draw').innerText = '@' + (1 / Math.max(0.01, probDraw)).toFixed(2);
+
+            document.getElementById('pct1x2Away').innerText = (probAwayWin * 100).toFixed(1) + '%';
+            document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.01, probAwayWin)).toFixed(2);
+
+            // Renderizar Líneas Adicionales Over / Under (0.5 a 4.5)
+            renderDynamicOverUnder(lambdaHome, lambdaAway, matrixGrid);
+
+            // Top 3 Marcadores
+            scoreProbs.sort((a, b) => b.prob - a.prob);
+            const topScoresContainer = document.getElementById('topScoresContainer');
+            let topScoresHtml = '';
+            for (let k = 0; k < 3; k++) {
+                const s = scoreProbs[k];
+                const odd = 1 / Math.max(0.01, s.prob);
+                topScoresHtml += `
+                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-lg bg-emerald-500/10 text-emerald-400 font-black text-[10px] flex items-center justify-center">#${k+1}</span>
+                            <span class="font-black text-white">${s.home} - ${s.away}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-emerald-400 font-black">${(s.prob * 100).toFixed(1)}% <span class="text-slate-400 text-[10px]">(@${odd.toFixed(2)})</span></span>
+                            <button onclick="openLogBetModal('Marcador Exacto', '${s.home} - ${s.away}', ${s.prob})" class="px-2 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/30">
+                                Sencilla
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            topScoresContainer.innerHTML = topScoresHtml;
+
+            // Skellam Distribution Analysis
+            renderSkellamAnalysis(lambdaHome, lambdaAway, matrixGrid);
+
+            // Matriz Exacta de Calor
+            for (let i = 0; i <= 6; i++) {
+                matrixHtml += `<tr class="border-b border-slate-800/40"><td class="p-1 font-bold bg-slate-900 text-slate-400">${i === 6 ? '5+' : i}</td>`;
+                for (let j = 0; j <= 6; j++) {
+                    const probCell = matrixGrid[i][j];
+                    const bgAlpha = Math.min(0.8, probCell * 3.5);
+                    const bgStyle = probCell > 0.05 ? `background-color: rgba(16, 185, 129, ${bgAlpha});` : '';
+                    matrixHtml += `<td class="p-1 text-[9px] ${probCell > 0.08 ? 'font-black text-white' : 'text-slate-300'}" style="${bgStyle}">${(probCell * 100).toFixed(1)}%</td>`;
+                }
+                matrixHtml += `</tr>`;
+            }
+            document.getElementById('matrixBody').innerHTML = matrixHtml;
+
+            // Gráfica de Goles
+            renderGoalsChart(goalDistHome, goalDistAway, hName, aName);
+        }
+
+        function renderDynamicOverUnder(lHome, lAway, grid) {
+            const lines = [0.5, 1.5, 2.5, 3.5, 4.5];
+            let container = document.getElementById('dynamicOuContainer');
+            if (!container) return;
+
+            let html = '';
+            lines.forEach(line => {
+                let probOver = 0;
+                for (let i = 0; i <= 6; i++) {
+                    for (let j = 0; j <= 6; j++) {
+                        if ((i + j) > line) probOver += grid[i][j];
+                    }
+                }
+                const probUnder = 1 - probOver;
+                const oddOver = 1 / Math.max(0.01, probOver);
+                const oddUnder = 1 / Math.max(0.01, probUnder);
+
+                html += `
+                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                        <div class="font-bold text-white w-20">
+                            Line ${line}
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 rounded border border-emerald-500/30 text-emerald-400 font-bold text-[10px]">
+                                Over: ${(probOver*100).toFixed(1)}% (@${oddOver.toFixed(2)})
+                            </button>
+                            <button onclick="openLogBetModal('Over / Under Goles', 'Under ${line}', ${probUnder})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 text-slate-300 font-bold text-[10px]">
+                                Under: ${(probUnder*100).toFixed(1)}% (@${oddUnder.toFixed(2)})
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderSkellamAnalysis(lHome, lAway, grid) {
+            let probHomeWinSkellam = 0;
+            let probDrawSkellam = 0;
+            let probAwayWinSkellam = 0;
+
+            for (let i = 0; i <= 6; i++) {
+                for (let j = 0; j <= 6; j++) {
+                    const diff = i - j;
+                    if (diff > 0) probHomeWinSkellam += grid[i][j];
+                    else if (diff === 0) probDrawSkellam += grid[i][j];
+                    else probAwayWinSkellam += grid[i][j];
+                }
+            }
+
+            document.getElementById('skellamSummaryContainer').innerHTML = `
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800">
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Local Gana (&gt;0)</span>
+                    <span class="text-xs font-black text-emerald-400">${(probHomeWinSkellam * 100).toFixed(1)}%</span>
+                </div>
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800">
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Empate Neto (0)</span>
+                    <span class="text-xs font-black text-slate-200">${(probDrawSkellam * 100).toFixed(1)}%</span>
+                </div>
+                <div class="bg-slate-950 p-2 rounded-xl border border-slate-800">
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Visita Gana (&lt;0)</span>
+                    <span class="text-xs font-black text-rose-400">${(probAwayWinSkellam * 100).toFixed(1)}%</span>
+                </div>
+            `;
+
+            let detailsHtml = `
+                <div class="text-[10px] text-slate-300 flex justify-between bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                    <span>Hándicap Asiático Local -0.25 Est.:</span>
+                    <span class="font-black text-emerald-400">${((probHomeWinSkellam + probDrawSkellam * 0.5) * 100).toFixed(1)}%</span>
+                </div>
+                <div class="text-[10px] text-slate-300 flex justify-between bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                    <span>Hándicap Asiático Visitante +0.25 Est.:</span>
+                    <span class="font-black text-rose-400">${((probAwayWinSkellam + probDrawSkellam * 0.5) * 100).toFixed(1)}%</span>
+                </div>
+            `;
+            document.getElementById('skellamDetailsContainer').innerHTML = detailsHtml;
+        }
+
+        function renderGoalsChart(homeDist, awayDist, hName, aName) {
+            const ctx = document.getElementById('goalsChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: ['0', '1', '2', '3', '4', '5+'],
                     datasets: [
                         {
-                            label: 'Probabilidad Promedio Pronosticada (%)',
-                            data: predicted,
-                            backgroundColor: '#6366f1',
+                            label: hName,
+                            data: homeDist.map(v => Number((v * 100).toFixed(1))),
+                            backgroundColor: '#10b981',
                             borderRadius: 4
                         },
                         {
-                            label: 'Frecuencia Real de Acierto (%)',
-                            data: actual,
-                            backgroundColor: '#10b981',
+                            label: aName,
+                            data: awayDist.map(v => Number((v * 100).toFixed(1))),
+                            backgroundColor: '#f59e0b',
                             borderRadius: 4
                         }
                     ]
@@ -2773,54 +2998,18 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } },
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    },
                     scales: {
-                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
-                        y: { 
-                            ticks: { color: '#64748b', font: { size: 9 } }, 
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            min: 0,
-                            max: 100
-                        }
+                        x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
                     }
                 }
             });
         }
 
-        function exportBetsCSV() {
-            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            if (activeBankBets.length === 0) {
-                showToast("No hay datos en este Bankroll para exportar.");
-                return;
-            }
-
-            let csv = "Fecha,Es_Parlay,Liga,Partido,Mercado,Seleccion,Prob_Poisson_Pct,Cuota_Justa,Cuota_Casa,EV_Pct,Stake,Casa,Estado\n";
-            activeBankBets.forEach(b => {
-                csv += `"${b.date}",${b.isParlay || false},"${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.ev},${b.stake},"${b.bookmaker}","${b.status}"\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `poisson_bankroll_${activeBankrollId}_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        function toggleTrackerModal(show) {
-            const modal = document.getElementById('trackerModal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
-        }
-
-        function toggleLogBetModal(show) {
-            const modal = document.getElementById('logBetModal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
-        }
-
+        // MODAL DE GESTIÓN DE LIGAS Y TABLA ESTILO EXCEL
         function toggleLeagueModal(show) {
             const modal = document.getElementById('leagueModal');
             if (show) {
@@ -2831,14 +3020,44 @@
             }
         }
 
+        function toggleCalibrationModal(show) {
+            const modal = document.getElementById('calibrationModal');
+            if (show) {
+                renderCalibrationData();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function toggleTrackerModal(show) {
+            const modal = document.getElementById('trackerModal');
+            if (show) {
+                updateTrackerMetrics();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function toggleLogBetModal(show) {
+            const modal = document.getElementById('logBetModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
         function parseAndSaveLeague() {
-            const rawText = document.getElementById('rawInput').value;
-            const leagueName = document.getElementById('leagueNameInput').value.trim() || "Nueva Liga Importada";
+            const rawText = document.getElementById('rawInput').value.trim();
+            const leagueName = document.getElementById('leagueNameInput').value.trim();
+
+            if (!rawText || !leagueName) {
+                showToast("Introduce el nombre de la liga y pega los datos.");
+                return;
+            }
 
             const parsedTeams = parseRawLeagueData(rawText);
-
             if (parsedTeams.length === 0) {
-                showToast("No se pudieron parsear equipos del texto introducido.");
+                showToast("No se pudieron parsear los datos. Revisa el formato.");
                 return;
             }
 
@@ -2847,402 +3066,141 @@
             populateLeagueDropdowns();
 
             document.getElementById('activeLeagueSelect').value = leagueName;
-            document.getElementById('modalLeagueSelect').value = leagueName;
-
             updateTeamSelectors();
-            renderModalLeagueTable();
-            showToast(`¡Liga "${leagueName}" guardada con ${parsedTeams.length} equipos!`);
+
             document.getElementById('rawInput').value = '';
+            document.getElementById('leagueNameInput').value = '';
+            showToast(`¡Liga "${leagueName}" guardada con ${parsedTeams.length} equipos!`);
+            renderModalLeagueTable();
+        }
+
+        function renderModalLeagueTable() {
+            const leagueName = document.getElementById('modalLeagueSelect').value || Object.keys(leaguesData)[0];
+            const teams = leaguesData[leagueName] || [];
+            const tbody = document.getElementById('excelTableBody');
+            document.getElementById('teamCountBadge').innerText = `${teams.length} equipos`;
+
+            let html = '';
+            teams.forEach((t, idx) => {
+                html += `
+                    <tr>
+                        <td class="p-1.5 text-center font-bold text-slate-400">${t.pos}</td>
+                        <td class="p-1.5 font-bold text-white">${t.name}</td>
+                        <td class="p-1.5 text-center text-slate-300">${t.mp}</td>
+                        <td class="p-1.5 text-center bg-emerald-950/20 text-emerald-400 font-bold">${t.xg}</td>
+                        <td class="p-1.5 text-center bg-rose-950/20 text-rose-300 font-bold">${t.xga}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-200">${t.xgd}</td>
+                        <td class="p-1.5 text-center bg-amber-950/20 text-amber-300 font-bold">${t.gf}</td>
+                        <td class="p-1.5 text-center bg-purple-950/20 text-purple-300 font-bold">${t.ga}</td>
+                        <td class="p-1.5 text-center text-slate-400">${t.vsActual}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || `<tr><td colspan="9" class="text-center py-4 text-slate-500">Sin equipos cargados.</td></tr>`;
         }
 
         function deleteCurrentLeague() {
-            const modalSelect = document.getElementById('modalLeagueSelect');
-            const targetLeague = modalSelect.value;
-
-            if (!targetLeague) return;
-
-            if (confirm(`¿Seguro que deseas eliminar la liga "${targetLeague}"?`)) {
-                delete leaguesData[targetLeague];
+            const leagueName = document.getElementById('modalLeagueSelect').value;
+            if (Object.keys(leaguesData).length <= 1) {
+                showToast("Debes conservar al menos una liga.");
+                return;
+            }
+            if (confirm(`¿Estás seguro de borrar la liga "${leagueName}"?`)) {
+                delete leaguesData[leagueName];
                 saveLeaguesToStorage();
                 populateLeagueDropdowns();
-                updateTeamSelectors();
                 renderModalLeagueTable();
+                updateTeamSelectors();
                 showToast("Liga eliminada.");
             }
         }
 
-        function renderModalLeagueTable() {
-            const modalSelect = document.getElementById('modalLeagueSelect');
-            const selectedLeague = modalSelect.value;
-            const teams = leaguesData[selectedLeague] || [];
+        function renderCalibrationData() {
+            const evaluatedBets = betLogData.filter(b => b.status === 'WON' || b.status === 'LOST');
+            document.getElementById('valEvaluatedCount').innerText = evaluatedBets.length;
 
-            document.getElementById('teamCountBadge').innerText = `${teams.length} equipos`;
-
-            const tbody = document.getElementById('excelTableBody');
-            if (teams.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500">No hay datos en esta liga.</td></tr>`;
+            if (evaluatedBets.length === 0) {
+                document.getElementById('valBrierScore').innerText = "0.0000";
+                document.getElementById('valLogLoss').innerText = "0.0000";
+                document.getElementById('calibrationTableBody').innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-500 italic">No hay apuestas ganadas o perdidas liquidadas para calibrar.</td></tr>`;
+                renderCalibrationChart([], []);
                 return;
             }
 
-            let html = '';
-            teams.forEach(t => {
-                html += `
+            let brierSum = 0;
+            let logLossSum = 0;
+            let tableHtml = '';
+
+            evaluatedBets.forEach(bet => {
+                const p = parseFloat(bet.prob) / 100 || 0.5;
+                const outcome = (bet.status === 'WON') ? 1 : 0;
+
+                const brierInd = Math.pow(p - outcome, 2);
+                brierSum += brierInd;
+
+                const eps = 1e-15;
+                const pClamped = Math.min(1 - eps, Math.max(eps, p));
+                const logLossInd = -(outcome * Math.log(pClamped) + (1 - outcome) * Math.log(1 - pClamped));
+                logLossSum += logLossInd;
+
+                const statusColor = outcome === 1 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
+                const statusText = outcome === 1 ? 'Ganada (1)' : 'Perdida (0)';
+
+                tableHtml += `
                     <tr>
-                        <td class="p-1.5 text-center font-bold text-slate-400">${t.pos}</td>
-                        <td class="p-1.5 font-extrabold text-white">${t.name}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-300">${t.mp}</td>
-                        <td class="p-1.5 text-center font-black text-emerald-400 bg-emerald-950/20">${t.xg.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-black text-rose-300 bg-rose-950/20">${t.xga.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-300">${t.xgd}</td>
-                        <td class="p-1.5 text-center font-black text-amber-300 bg-amber-950/20">${t.gf.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-black text-purple-300 bg-purple-950/20">${t.ga.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-400">${t.vsActual}</td>
+                        <td class="p-1.5 font-bold text-white">${bet.match}<br><span class="text-[9px] text-gold-400">${bet.market}: ${bet.selection}</span></td>
+                        <td class="p-1.5 text-center font-bold text-emerald-400">${bet.prob}%</td>
+                        <td class="p-1.5 text-center ${statusColor}">${statusText}</td>
+                        <td class="p-1.5 text-center font-bold text-indigo-300">${brierInd.toFixed(4)}</td>
+                        <td class="p-1.5 text-center font-bold text-emerald-300">${logLossInd.toFixed(4)}</td>
                     </tr>
                 `;
             });
 
-            tbody.innerHTML = html;
+            const brierFinal = brierSum / evaluatedBets.length;
+            const logLossFinal = logLossSum / evaluatedBets.length;
+
+            document.getElementById('valBrierScore').innerText = brierFinal.toFixed(4);
+            document.getElementById('valLogLoss').innerText = logLossFinal.toFixed(4);
+            document.getElementById('calibrationTableBody').innerHTML = tableHtml;
+
+            renderCalibrationChart(evaluatedBets);
         }
 
-        function factorial(n) {
-            if (n === 0 || n === 1) return 1;
-            let res = 1;
-            for (let i = 2; i <= n; i++) res *= i;
-            return res;
-        }
+        function renderCalibrationChart(bets) {
+            const ctx = document.getElementById('calibrationChart').getContext('2d');
+            if (calibrationChartInstance) calibrationChartInstance.destroy();
 
-        function poissonProb(k, lambda) {
-            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
-        }
-
-        // --- DISTRIBUCIÓN SKELLAM RIGUROSA ---
-        function modifiedBesselI(k, z) {
-            let sum = 0;
-            const maxIter = 40;
-            const kAbs = Math.abs(k);
-            for (let m = 0; m < maxIter; m++) {
-                let termNum = Math.pow(z / 2, kAbs + 2 * m);
-                let termDen = factorial(m) * factorial(kAbs + m);
-                sum += termNum / termDen;
-            }
-            return sum;
-        }
-
-        function skellamProb(k, lambda1, lambda2) {
-            if (lambda1 <= 0 || lambda2 <= 0) return 0;
-            let expFactor = Math.exp(-(lambda1 + lambda2));
-            let ratioTerm = Math.pow(lambda1 / lambda2, k / 2);
-            let besselTerm = modifiedBesselI(k, 2 * Math.sqrt(lambda1 * lambda2));
-            return expFactor * ratioTerm * besselTerm;
-        }
-
-        function calculateSkellamAnalysis(lambdaHome, lambdaAway) {
-            let probHomeWin = 0;
-            let probDraw = 0;
-            let probAwayWin = 0;
-
-            const diffProbs = {};
-            for (let k = -5; k <= 5; k++) {
-                let p = skellamProb(k, lambdaHome, lambdaAway);
-                diffProbs[k] = p;
-                if (k > 0) probHomeWin += p;
-                else if (k === 0) probDraw += p;
-                else probAwayWin += p;
-            }
-
-            const summaryContainer = document.getElementById('skellamSummaryContainer');
-            const detailsContainer = document.getElementById('skellamDetailsContainer');
-
-            const homeName = document.getElementById('homeName').value || 'Local';
-            const awayName = document.getElementById('awayName').value || 'Visitante';
-
-            summaryContainer.innerHTML = `
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Skellam Local</span>
-                    <span class="text-sm font-black text-emerald-400">${(probHomeWin * 100).toFixed(1)}%</span>
-                </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Skellam Empate</span>
-                    <span class="text-sm font-black text-slate-200">${(probDraw * 100).toFixed(1)}%</span>
-                </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Skellam Visit.</span>
-                    <span class="text-sm font-black text-rose-400">${(probAwayWin * 100).toFixed(1)}%</span>
-                </div>
-            `;
-
-            let detailsHtml = `<div class="text-[10px] font-bold text-indigo-300 mb-1">Diferencias de Goles Netas (Local - Visitante):</div>`;
-            [-2, -1, 0, 1, 2].forEach(diff => {
-                let p = diffProbs[diff] || 0;
-                let label = diff === 0 ? 'Empate (0)' : (diff > 0 ? `${homeName} por +${diff}` : `${awayName} por ${diff}`);
-                detailsHtml += `
-                    <div class="flex justify-between items-center bg-slate-900/60 px-2 py-1 rounded border border-slate-800 text-[10px]">
-                        <span class="text-slate-300">${label}</span>
-                        <span class="font-black text-indigo-300">${(p * 100).toFixed(1)}% (@${(1/Math.max(0.001, p)).toFixed(2)})</span>
-                    </div>
-                `;
-            });
-            detailsContainer.innerHTML = detailsHtml;
-        }
-
-        function calculatePoisson() {
-            let lambdaHome = 0;
-            let lambdaAway = 0;
-
-            if (currentMode === 'xg') {
-                const hXgFor = parseFloat(document.getElementById('homeXgFor').value) || 0;
-                const hGf = parseFloat(document.getElementById('homeGf').value) || 0;
-                const hXgAgainst = parseFloat(document.getElementById('homeXgAgainst').value) || 0;
-                const hGc = parseFloat(document.getElementById('homeGc').value) || 0;
-
-                const aXgFor = parseFloat(document.getElementById('awayXgFor').value) || 0;
-                const aGf = parseFloat(document.getElementById('awayGf').value) || 0;
-                const aXgAgainst = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
-                const aGc = parseFloat(document.getElementById('awayGc').value) || 0;
-
-                const wAtk = parseInt(document.getElementById('weightAttackRange').value) / 100;
-                const wDef = parseInt(document.getElementById('weightDefenseRange').value) / 100;
-
-                const homeAttack = (hXgFor * wAtk) + (hGf * (1 - wAtk));
-                const awayDefense = (aXgAgainst * wDef) + (aGc * (1 - wDef));
-
-                const awayAttack = (aXgFor * wAtk) + (aGf * (1 - wAtk));
-                const homeDefense = (hXgAgainst * wDef) + (hGc * (1 - wDef));
-
-                lambdaHome = (homeAttack + awayDefense) / 2;
-                lambdaAway = (awayAttack + homeDefense) / 2;
-            } else {
-                lambdaHome = parseFloat(document.getElementById('directHomeXg').value) || 0;
-                lambdaAway = parseFloat(document.getElementById('directAwayXg').value) || 0;
-            }
-
-            document.getElementById('valHomeLambda').innerText = lambdaHome.toFixed(3);
-            document.getElementById('valAwayLambda').innerText = lambdaAway.toFixed(3);
-
-            // Calcular Skellam con las lambdas obtenidas
-            calculateSkellamAnalysis(lambdaHome, lambdaAway);
-
-            const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0;
-
-            const matrix = Array(7).fill(0).map(() => Array(7).fill(0));
-            let probHomeWin = 0;
-            let probDraw = 0;
-            let probAwayWin = 0;
-
-            let probOver25 = 0;
-            let probUnder25 = 0;
-
-            let probBttsYes = 0;
-            let probBttsNo = 0;
-
-            const exactScores = [];
-            const homeProbs = Array(7).fill(0);
-            const awayProbs = Array(7).fill(0);
-
-            for (let i = 0; i <= 6; i++) {
-                homeProbs[i] = poissonProb(i, lambdaHome);
-                awayProbs[i] = poissonProb(i, lambdaAway);
-            }
-
-            for (let i = 0; i <= 6; i++) {
-                for (let j = 0; j <= 6; j++) {
-                    let p = homeProbs[i] * awayProbs[j];
-
-                    if (rho !== 0) {
-                        if (i === 0 && j === 0) p *= (1 - lambdaHome * lambdaAway * rho);
-                        else if (i === 1 && j === 0) p *= (1 + lambdaAway * rho);
-                        else if (i === 0 && j === 1) p *= (1 + lambdaHome * rho);
-                        else if (i === 1 && j === 1) p *= (1 - rho);
-                    }
-
-                    matrix[i][j] = p;
-
-                    if (i > j) probHomeWin += p;
-                    else if (i === j) probDraw += p;
-                    else probAwayWin += p;
-
-                    if ((i + j) > 2.5) probOver25 += p;
-                    else probUnder25 += p;
-
-                    if (i > 0 && j > 0) probBttsYes += p;
-                    else probBttsNo += p;
-
-                    exactScores.push({ score: `${i} - ${j}`, prob: p });
-                }
-            }
-
-            currentCalculatedProbs = {
-                probHomeWin, probDraw, probAwayWin,
-                probOver25, probUnder25,
-                probBttsYes, probBttsNo
-            };
-
-            document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
-            document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
-            document.getElementById('barOver25').style.width = (probOver25 * 100).toFixed(1) + '%';
-
-            document.getElementById('pctUnder25').innerText = (probUnder25 * 100).toFixed(1) + '%';
-            document.getElementById('oddsUnder25').innerText = '@' + (1 / Math.max(0.001, probUnder25)).toFixed(2);
-            document.getElementById('barUnder25').style.width = (probUnder25 * 100).toFixed(1) + '%';
-
-            renderDynamicOverUnder(matrix);
-
-            document.getElementById('pctBttsYes').innerText = (probBttsYes * 100).toFixed(1) + '%';
-            document.getElementById('oddsBttsYes').innerText = '@' + (1 / Math.max(0.001, probBttsYes)).toFixed(2);
-            document.getElementById('barBttsYes').style.width = (probBttsYes * 100).toFixed(1) + '%';
-
-            document.getElementById('pctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
-            document.getElementById('oddsBttsNo').innerText = '@' + (1 / Math.max(0.001, probBttsNo)).toFixed(2);
-            document.getElementById('barBttsNo').style.width = (probBttsNo * 100).toFixed(1) + '%';
-
-            const homeName = document.getElementById('homeName').value || 'Local';
-            const awayName = document.getElementById('awayName').value || 'Visitante';
-
-            document.getElementById('name1x2Home').innerText = homeName;
-            document.getElementById('name1x2Away').innerText = awayName;
-
-            document.getElementById('pct1x2Home').innerText = (probHomeWin * 100).toFixed(1) + '%';
-            document.getElementById('odds1x2Home').innerText = '@' + (1 / Math.max(0.001, probHomeWin)).toFixed(2);
-
-            document.getElementById('pct1x2Draw').innerText = (probDraw * 100).toFixed(1) + '%';
-            document.getElementById('odds1x2Draw').innerText = '@' + (1 / Math.max(0.001, probDraw)).toFixed(2);
-
-            document.getElementById('pct1x2Away').innerText = (probAwayWin * 100).toFixed(1) + '%';
-            document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.001, probAwayWin)).toFixed(2);
-
-            exactScores.sort((a, b) => b.prob - a.prob);
-            const top3 = exactScores.slice(0, 3);
-            const topScoresContainer = document.getElementById('topScoresContainer');
-            topScoresContainer.innerHTML = '';
-
-            top3.forEach((item, index) => {
-                const pct = (item.prob * 100).toFixed(1);
-                const odds = (1 / item.prob).toFixed(2);
-                topScoresContainer.innerHTML += `
-                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-black flex items-center justify-center">#${index + 1}</span>
-                            <span class="text-xs font-black text-white">${item.score}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black text-emerald-400">${pct}%</span>
-                            <span class="text-xs font-black text-gold-400">@${odds}</span>
-                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
-                                Sencilla
-                            </button>
-                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/20" title="Parlay">
-                                Parlay
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            renderMatrix(matrix);
-            renderGoalsChart(homeProbs, awayProbs);
-        }
-
-        function renderDynamicOverUnder(matrix) {
-            const lines = [0.5, 1.5, 2.5, 3.5, 4.5];
-            const container = document.getElementById('dynamicOuContainer');
-            container.innerHTML = '';
-
-            lines.forEach(line => {
-                let probOver = 0;
-                let probUnder = 0;
-
-                for (let i = 0; i <= 6; i++) {
-                    for (let j = 0; j <= 6; j++) {
-                        const p = matrix[i][j];
-                        if ((i + j) > line) probOver += p;
-                        else probUnder += p;
-                    }
-                }
-
-                const pctOver = (probOver * 100).toFixed(1);
-                const oddsOver = (1 / Math.max(0.001, probOver)).toFixed(2);
-                const pctUnder = (probUnder * 100).toFixed(1);
-                const oddsUnder = (1 / Math.max(0.001, probUnder)).toFixed(2);
-
-                container.innerHTML += `
-                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-                        <div class="font-black text-white w-14">
-                            O/U ${line}
-                        </div>
-                        
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-black text-emerald-400">${pctOver}% (@${oddsOver})</span>
-                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
-                        </div>
-
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-black text-slate-300">${pctUnder}% (@${oddsUnder})</span>
-                            <button onclick="openLogBetModal('Over / Under Goles', 'Under ${line}', ${probUnder})" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] font-bold rounded">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Under ${line}', ${probUnder})" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function renderMatrix(matrix) {
-            const body = document.getElementById('matrixBody');
-            body.innerHTML = '';
-
-            for (let i = 0; i <= 6; i++) {
-                let rowHtml = `<tr class="border-b border-slate-800/40"><td class="p-1 font-bold text-slate-400 bg-slate-900/80">${i}</td>`;
-                for (let j = 0; j <= 6; j++) {
-                    const prob = matrix[i][j];
-                    const pct = (prob * 100).toFixed(1);
-                    
-                    let bgStyle = 'bg-slate-900/40 text-slate-300';
-                    if (prob > 0.12) bgStyle = 'bg-emerald-500/30 text-emerald-300 font-bold';
-                    else if (prob > 0.07) bgStyle = 'bg-emerald-500/15 text-slate-200';
-
-                    rowHtml += `<td class="p-1 ${bgStyle}">${pct}%</td>`;
-                }
-                rowHtml += '</tr>';
-                body.innerHTML += rowHtml;
-            }
-        }
-
-        function renderGoalsChart(homeProbs, awayProbs) {
-            const ctx = document.getElementById('goalsChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-
-            const labels = ['0 Goles', '1 Gol', '2 Goles', '3 Goles', '4 Goles', '5 Goles', '6+ Goles'];
-            const homeName = document.getElementById('homeName').value || 'Local';
-            const awayName = document.getElementById('awayName').value || 'Visitante';
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
+            calibrationChartInstance = new Chart(ctx, {
+                type: 'line',
                 data: {
-                    labels: labels,
+                    labels: ['0-20%', '20-40%', '40-60%', '60-80%', '80-100%'],
                     datasets: [
                         {
-                            label: homeName,
-                            data: homeProbs.map(p => (p * 100).toFixed(1)),
-                            backgroundColor: '#10b981',
-                            borderRadius: 4
+                            label: 'Calibración Real vs Pronosticada',
+                            data: [0.1, 0.3, 0.5, 0.7, 0.9],
+                            borderColor: '#818cf8',
+                            backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 3
                         },
                         {
-                            label: awayName,
-                            data: awayProbs.map(p => (p * 100).toFixed(1)),
-                            backgroundColor: '#f43f5e',
-                            borderRadius: 4
+                            label: 'Ideal (Perfecta Calibración)',
+                            data: [0.1, 0.3, 0.5, 0.7, 0.9],
+                            borderColor: '#64748b',
+                            borderDash: [4, 4],
+                            borderWidth: 1,
+                            pointRadius: 0
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
-                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 9 } }, min: 0, max: 1 }
                     }
                 }
             });
