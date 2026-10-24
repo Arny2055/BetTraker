@@ -383,29 +383,6 @@
             </div>
         </div>
 
-        <!-- MÓDULO NUEVO: RANGO DE EV MÁS RENTABLE (VALUE BETTING OPTIMIZER) -->
-        <section class="glass-card rounded-2xl p-3.5 space-y-2.5 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-crosshairs text-emerald-400 text-xs"></i>
-                    <h2 class="font-extrabold text-xs text-white uppercase">Rango de EV Más Rentable (Value Finder)</h2>
-                </div>
-                <span class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Optimizador</span>
-            </div>
-            <p class="text-[10px] text-slate-300">Identifica automáticamente los mercados con valor esperado óptimo (+EV) según las probabilidades Poisson calculadas para este encuentro.</p>
-            
-            <div class="grid grid-cols-3 gap-2 text-center pt-1" id="evRangeSummaryContainer">
-                <!-- Inyectado dinámicamente por JS -->
-            </div>
-
-            <div class="space-y-1.5 pt-1">
-                <div class="text-[10px] font-black text-emerald-300 uppercase tracking-wide">Oportunidades en Franja de Alta Rentabilidad (EV &gt; +3.0%):</div>
-                <div class="space-y-1.5" id="evOpportunitiesContainer">
-                    <!-- Inyectado dinámicamente por JS -->
-                </div>
-            </div>
-        </section>
-
         <!-- MÓDULO SKELLAM DISTRIBUTION MEJORADO Y ACCIONABLE -->
         <details class="glass-card rounded-2xl border border-indigo-500/40 overflow-hidden group shadow-lg" open>
             <summary class="p-3 cursor-pointer flex items-center justify-between font-black text-xs text-indigo-300 select-none bg-indigo-950/40">
@@ -939,6 +916,23 @@
                         <select id="selectionFilterSelect" onchange="updateTrackerMetrics()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-extrabold text-gold-400 focus:outline-none focus:border-gold-500">
                             <option value="ALL">⭐ Todas las Selecciones</option>
                         </select>
+                    </div>
+                </div>
+
+                <!-- WIDGET NUEVO: RANGO DE EV MÁS RENTABLE HISTÓRICAMENTE -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-indigo-500/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-chart-pie"></i>
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Rango de EV Más Rentable Históricamente</span>
+                            <span class="text-xs font-black text-indigo-300" id="bestEvRangeDisplay">Calculando...</span>
+                        </div>
+                    </div>
+                    <div class="text-right sm:text-right w-full sm:w-auto bg-indigo-950/40 px-3 py-1.5 rounded-lg border border-indigo-500/30">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Profit del Rango / Yield</span>
+                        <span class="text-xs font-black text-emerald-400" id="bestEvRangeProfit">$0.00 (0.0% Yield)</span>
                     </div>
                 </div>
 
@@ -2368,7 +2362,7 @@
             const initialBank = activeBankObj.initial;
             const totalWithdrawn = activeBankObj.totalWithdrawn || 0;
             
-            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
+            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect'].value : 'ALL';
             const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
 
             let totalProfitClosed = 0;
@@ -2394,9 +2388,13 @@
             let peakBank = initialBank;
             let maxDrawdownVal = 0;
 
+            // --- ANÁLISIS DE RANGO DE EV MÁS RENTABLE ---
+            const evBins = {};
+
             cronoBets.forEach(bet => {
                 const stake = parseFloat(bet.stake) || 0;
                 const odds = parseFloat(bet.bookieOdds) || 1;
+                const evVal = parseFloat(bet.ev) || 0; // en porcentaje (ej. 5.2)
 
                 if (bet.status === 'PENDING') {
                     totalRiskPending += stake;
@@ -2429,6 +2427,19 @@
                     }
 
                     totalProfitClosed += pnl;
+
+                    // Agrupar por rangos de EV de 5% (ej: 0-5, 5-10, 10-15...)
+                    const binLower = Math.floor(evVal / 5) * 5;
+                    const binUpper = binLower + 5;
+                    const binKey = `${binLower}% a ${binUpper}%`;
+
+                    if (!evBins[binKey]) {
+                        evBins[binKey] = { profit: 0, staked: 0, count: 0 };
+                    }
+                    evBins[binKey].profit += pnl;
+                    evBins[binKey].staked += stake;
+                    evBins[binKey].count++;
+
                     const lastBank = currentBankrollArr[currentBankrollArr.length - 1];
                     const nextBank = lastBank + pnl;
                     currentBankrollArr.push(nextBank);
@@ -2438,6 +2449,31 @@
                     if (dd > maxDrawdownVal) maxDrawdownVal = dd;
                 }
             });
+
+            // Determinar el mejor rango de EV
+            let bestRangeName = "Sin datos suficientes";
+            let bestRangeProfit = 0;
+            let bestRangeYield = 0;
+            let maxProfitVal = -Infinity;
+
+            for (const [rangeKey, data] of Object.entries(evBins)) {
+                if (data.profit > maxProfitVal) {
+                    maxProfitVal = data.profit;
+                    bestRangeName = rangeKey;
+                    bestRangeProfit = data.profit;
+                    bestRangeYield = data.staked > 0 ? (data.profit / data.staked) * 100 : 0;
+                }
+            }
+
+            const bestEvDisplayEl = document.getElementById('bestEvRangeDisplay');
+            const bestEvProfitEl = document.getElementById('bestEvRangeProfit');
+            if (countClosed > 0 && maxProfitVal !== -Infinity) {
+                bestEvDisplayEl.innerText = `EV: ${bestRangeName}`;
+                bestEvProfitEl.innerText = `${bestRangeProfit >= 0 ? '+$' : '-$'}${Math.abs(bestRangeProfit).toFixed(2)} (${bestRangeYield.toFixed(1)}% Yield)`;
+            } else {
+                bestEvDisplayEl.innerText = "Registra apuestas cerradas";
+                bestEvProfitEl.innerText = "$0.00 (0.0% Yield)";
+            }
 
             const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn - totalRiskPending;
             const yieldVal = totalStakedClosed > 0 ? (totalProfitClosed / totalStakedClosed) * 100 : 0;
@@ -3120,76 +3156,6 @@
             detailsContainer.innerHTML = detailsHtml;
         }
 
-        // --- CÁLCULO DE RANGO DE EV MÁS RENTABLE ---
-        function calculateBestEvRange(marketCandidates) {
-            // Evaluamos candidatos de mercados principales con estimación de cuota de mercado típica (ej. asumiendo margen estándar de casa de apuestas del 5% -> cuota estimada = (1 / prob) * 0.95 aproximado o comparado con cuota justa)
-            // Analizamos el EV teórico asumiendo cuotas de mercado típicas o filtrando las mejores franjas de EV.
-            let validEvs = [];
-            marketCandidates.forEach(item => {
-                // Cuota estimada de mercado típica (ej. cuota justa con un pequeño recorte o simulada frente a rangos estándar)
-                // Para calcular el EV frente a mercado, evaluamos con cuotas de referencia estándar de bookie
-                let fairOdds = 1 / Math.max(0.001, item.prob);
-                // Simulamos cuotas de mercado habituales (ej. un 4% por encima de la cuota justa o cuota real típica)
-                // Consideramos rangos donde EV esté entre +2% y +15% (rango óptimo profesional de Value Betting)
-                let simulatedBookieOdds = fairOdds * 1.05; // 5% superior por ineficiencia de mercado detectada
-                let ev = (item.prob * simulatedBookieOdds) - 1;
-                validEvs.push({ ...item, ev, simulatedBookieOdds });
-            });
-
-            // Ordenar por EV descendente
-            validEvs.sort((a, b) => b.ev - a.ev);
-
-            const summaryContainer = document.getElementById('evRangeSummaryContainer');
-            const opportunitiesContainer = document.getElementById('evOpportunitiesContainer');
-
-            if (validEvs.length === 0) return;
-
-            let topCandidate = validEvs[0];
-            let bestMinEv = (topCandidate.ev * 100).toFixed(1);
-            let optimalRangeText = topCandidate.ev > 0.03 ? "+3.0% al +8.5%" : "+1.0% al +4.0%";
-
-            summaryContainer.innerHTML = `
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Franja Óptima EV</span>
-                    <span class="text-xs font-black text-emerald-400">${optimalRangeText}</span>
-                </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Max EV Detectado</span>
-                    <span class="text-xs font-black text-gold-400">+${bestMinEv}%</span>
-                </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Volatilidad / Riesgo</span>
-                    <span class="text-xs font-black text-indigo-300">Controlada (Kelly 1/4)</span>
-                </div>
-            `;
-
-            let oppHtml = '';
-            let filteredOpps = validEvs.filter(v => v.ev >= 0.02).slice(0, 3); // Top 3 con EV >= 2%
-
-            if (filteredOpps.length === 0) {
-                filteredOpps = validEvs.slice(0, 2); // Mostrar al menos los 2 mejores
-            }
-
-            filteredOpps.forEach(opp => {
-                let evPctStr = (opp.ev * 100).toFixed(1);
-                oppHtml += `
-                    <div class="flex justify-between items-center bg-slate-900/75 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 text-xs">
-                        <div class="pr-2 truncate">
-                            <span class="font-bold text-white block truncate">${opp.market}: <span class="text-emerald-300">${opp.selection}</span></span>
-                            <span class="text-[9px] text-slate-400">Prob. Modelo: ${(opp.prob * 100).toFixed(1)}% | Cuota Justa: @${(1/opp.prob).toFixed(2)}</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            <span class="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">+${evPctStr}% EV</span>
-                            <button onclick="openLogBetModal('${opp.market}', '${opp.selection}', ${opp.prob})" class="py-1 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/30">Sencilla</button>
-                            <button onclick="addToParlayBuilder('${opp.market}', '${opp.selection}', ${opp.prob})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/30">Parlay</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            opportunitiesContainer.innerHTML = oppHtml;
-        }
-
         function calculatePoisson() {
             let lambdaHome = 0;
             let lambdaAway = 0;
@@ -3224,7 +3190,6 @@
             document.getElementById('valHomeLambda').innerText = lambdaHome.toFixed(3);
             document.getElementById('valAwayLambda').innerText = lambdaAway.toFixed(3);
 
-            // Calcular Skellam con las lambdas obtenidas
             calculateSkellamAnalysis(lambdaHome, lambdaAway);
 
             const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0;
@@ -3282,22 +3247,6 @@
                 probBttsYes, probBttsNo
             };
 
-            const homeName = document.getElementById('homeName').value || 'Local';
-            const awayName = document.getElementById('awayName').value || 'Visitante';
-
-            // Recopilar candidatos para el optimizador de Rango de EV
-            let marketCandidates = [
-                { market: 'Resultado Final (1X2)', selection: `Gana ${homeName}`, prob: probHomeWin },
-                { market: 'Resultado Final (1X2)', selection: 'Empate (X)', prob: probDraw },
-                { market: 'Resultado Final (1X2)', selection: `Gana ${awayName}`, prob: probAwayWin },
-                { market: 'Over / Under Goles', selection: 'Over 2.5', prob: probOver25 },
-                { market: 'Over / Under Goles', selection: 'Under 2.5', prob: probUnder25 },
-                { market: 'Ambos Anotan', selection: 'Ambos Anotan Si', prob: probBttsYes },
-                { market: 'Ambos Anotan', selection: 'Ambos Anotan No', prob: probBttsNo }
-            ];
-
-            calculateBestEvRange(marketCandidates);
-
             document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
             document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
             document.getElementById('barOver25').style.width = (probOver25 * 100).toFixed(1) + '%';
@@ -3315,6 +3264,9 @@
             document.getElementById('pctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
             document.getElementById('oddsBttsNo').innerText = '@' + (1 / Math.max(0.001, probBttsNo)).toFixed(2);
             document.getElementById('barBttsNo').style.width = (probBttsNo * 100).toFixed(1) + '%';
+
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
 
             document.getElementById('name1x2Home').innerText = homeName;
             document.getElementById('name1x2Away').innerText = awayName;
