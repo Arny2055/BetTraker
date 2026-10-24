@@ -383,22 +383,27 @@
             </div>
         </div>
 
-        <!-- SKELLAM DISTRIBUTION MODULE (NUEVO) -->
-        <details class="glass-card rounded-2xl border border-indigo-500/30 overflow-hidden group">
-            <summary class="p-3 cursor-pointer flex items-center justify-between font-black text-xs text-indigo-300 select-none bg-indigo-950/20">
+        <!-- MÓDULO SKELLAM DISTRIBUTION MEJORADO Y ACCIONABLE -->
+        <details class="glass-card rounded-2xl border border-indigo-500/40 overflow-hidden group shadow-lg" open>
+            <summary class="p-3 cursor-pointer flex items-center justify-between font-black text-xs text-indigo-300 select-none bg-indigo-950/40">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-wave-square text-indigo-400"></i>
-                    <span>Análisis Avanzado de Diferencia de Goles (Distribución Skellam)</span>
+                    <span>Análisis Avanzado Skellam (Decisión de Hándicaps y Diferencial)</span>
                 </div>
                 <i class="fa-solid fa-chevron-down text-indigo-400 text-xs transition-transform group-open:rotate-180"></i>
             </summary>
-            <div class="p-3 space-y-2.5">
-                <p class="text-[9px] text-slate-400">Modela matemáticamente la <b>diferencia neta de goles</b> ($Goles_{Local} - Goles_{Visitante}$) para hándicaps y 1X2 puros.</p>
+            <div class="p-3.5 space-y-3">
+                <p class="text-[10px] text-slate-300">Modela matemáticamente la <b>diferencia neta de goles</b> ($Goles_{Local} - Goles_{Visitante}$) para decisiones de Hándicaps Asiáticos y Mercados 1X2 puros con precisión analítica superior.</p>
+                
                 <div class="grid grid-cols-3 gap-2 text-center" id="skellamSummaryContainer">
                     <!-- Generado dinámicamente -->
                 </div>
-                <div class="space-y-1.5 pt-1" id="skellamDetailsContainer">
-                    <!-- Detalle de márgenes de victoria -->
+
+                <div class="space-y-2 pt-1">
+                    <div class="text-[10px] font-black text-indigo-300 uppercase tracking-wide">Márgenes de Victoria & Hándicaps Accionables:</div>
+                    <div class="space-y-1.5" id="skellamDetailsContainer">
+                        <!-- Detalle interactivo inyectado por JS -->
+                    </div>
                 </div>
             </div>
         </details>
@@ -1108,7 +1113,7 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- MEJORA AÑADIDA: WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN -->
+                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN -->
                 <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-chart-line text-emerald-400"></i>
@@ -1159,7 +1164,7 @@
                     </div>
                 </div>
 
-                <!-- ALERTA VALUE TRAP NUEVA -->
+                <!-- ALERTA VALUE TRAP -->
                 <div id="valueTrapWarning" class="hidden text-[10px] bg-amber-950/50 border border-amber-500/40 text-amber-300 p-2 rounded-xl flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
                     <span><b>Atención:</b> Esta cuota muestra EV negativo o trampa de valor frente a la probabilidad Poisson.</span>
@@ -1375,7 +1380,7 @@
             document.getElementById('lossMitigationAlert').classList.add('hidden');
         }
 
-        // FUNCIÓN NUEVA: VERIFICAR PROFIT HISTÓRICO DE LA SELECCIÓN
+        // VERIFICAR PROFIT HISTÓRICO DE LA SELECCIÓN
         function checkSelectionHistoricalProfit() {
             const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
             const widget = document.getElementById('selectionHistoryWidget');
@@ -2024,8 +2029,6 @@
 
             const quarterKellyFraction = fullKelly * 0.25;
 
-            // ---- NUEVA LÓGICA SOLICITADA ----
-            // Calcular beneficio neto histórico exclusivo de la selección elegida actual
             const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
             let selectionNetProfit = 0;
             if (selectionInput) {
@@ -2042,7 +2045,6 @@
                 });
             }
 
-            // Factor de saldo disponible según si el beneficio neto de la selección está en negativo (< 0)
             const availableBalanceMultiplier = selectionNetProfit < 0 ? 0.80 : 1.00;
             let recommendedStake = Math.round(currentBankroll * availableBalanceMultiplier * quarterKellyFraction);
             if (recommendedStake < 1) recommendedStake = 1;
@@ -2992,14 +2994,29 @@
                 </div>
             `;
 
-            let detailsHtml = `<div class="text-[10px] font-bold text-indigo-300 mb-1">Diferencias de Goles Netas (Local - Visitante):</div>`;
-            [-2, -1, 0, 1, 2].forEach(diff => {
-                let p = diffProbs[diff] || 0;
-                let label = diff === 0 ? 'Empate (0)' : (diff > 0 ? `${homeName} por +${diff}` : `${awayName} por ${diff}`);
+            let detailsHtml = '';
+            const keyDifferentials = [
+                { diff: 2, label: `${homeName} Gana por 2+ goles (Hándicap -1.5)` },
+                { diff: 1, label: `${homeName} Gana por 1 gol exacto` },
+                { diff: 0, label: `Empate Neto (0 goles de diferencia)` },
+                { diff: -1, label: `${awayName} Gana por 1 gol exacto` },
+                { diff: -2, label: `${awayName} Gana por 2+ goles (Hándicap +1.5)` }
+            ];
+
+            keyDifferentials.forEach(item => {
+                let p = diffProbs[item.diff] || 0;
+                let odds = 1 / Math.max(0.001, p);
                 detailsHtml += `
-                    <div class="flex justify-between items-center bg-slate-900/60 px-2 py-1 rounded border border-slate-800 text-[10px]">
-                        <span class="text-slate-300">${label}</span>
-                        <span class="font-black text-indigo-300">${(p * 100).toFixed(1)}% (@${(1/Math.max(0.001, p)).toFixed(2)})</span>
+                    <div class="flex justify-between items-center bg-slate-900/70 px-2.5 py-1.5 rounded-xl border border-slate-800 text-xs">
+                        <div class="pr-2">
+                            <span class="font-bold text-white block">${item.label}</span>
+                            <span class="text-[9px] text-indigo-400 font-semibold">Probabilidad Skellam: ${(p * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="text-xs font-black text-gold-400">@${odds.toFixed(2)}</span>
+                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/30">Parlay</button>
+                        </div>
                     </div>
                 `;
             });
