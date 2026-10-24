@@ -919,23 +919,6 @@
                     </div>
                 </div>
 
-                <!-- WIDGET NUEVO: RANGO DE EV MÁS RENTABLE HISTÓRICAMENTE -->
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-indigo-500/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-chart-pie"></i>
-                        </div>
-                        <div>
-                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Rango de EV Más Rentable Históricamente</span>
-                            <span class="text-xs font-black text-indigo-300" id="bestEvRangeDisplay">Calculando...</span>
-                        </div>
-                    </div>
-                    <div class="text-right sm:text-right w-full sm:w-auto bg-indigo-950/40 px-3 py-1.5 rounded-lg border border-indigo-500/30">
-                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Profit del Rango / Yield</span>
-                        <span class="text-xs font-black text-emerald-400" id="bestEvRangeProfit">$0.00 (0.0% Yield)</span>
-                    </div>
-                </div>
-
                 <!-- METRICAS DE RENDIMIENTO PRINCIPALES -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
@@ -1406,6 +1389,7 @@
 
         // CONTROL DE CONFIRMACIÓN DE SLIDERS DE PONDERACIÓN
         function previewWeightChange(type, slider) {
+            // Actualiza visualmente el texto mientras se arrastra, pero no dispara el cálculo final hasta confirmar
             const val = slider.value;
             if (type === 'attack') {
                 document.getElementById('weightAttackVal').innerText = `${val}% xG / ${100 - val}% GF`;
@@ -2362,7 +2346,7 @@
             const initialBank = activeBankObj.initial;
             const totalWithdrawn = activeBankObj.totalWithdrawn || 0;
             
-            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect'].value : 'ALL';
+            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
             const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
 
             let totalProfitClosed = 0;
@@ -2388,13 +2372,9 @@
             let peakBank = initialBank;
             let maxDrawdownVal = 0;
 
-            // --- ANÁLISIS DE RANGO DE EV MÁS RENTABLE ---
-            const evBins = {};
-
             cronoBets.forEach(bet => {
                 const stake = parseFloat(bet.stake) || 0;
                 const odds = parseFloat(bet.bookieOdds) || 1;
-                const evVal = parseFloat(bet.ev) || 0; // en porcentaje (ej. 5.2)
 
                 if (bet.status === 'PENDING') {
                     totalRiskPending += stake;
@@ -2427,19 +2407,6 @@
                     }
 
                     totalProfitClosed += pnl;
-
-                    // Agrupar por rangos de EV de 5% (ej: 0-5, 5-10, 10-15...)
-                    const binLower = Math.floor(evVal / 5) * 5;
-                    const binUpper = binLower + 5;
-                    const binKey = `${binLower}% a ${binUpper}%`;
-
-                    if (!evBins[binKey]) {
-                        evBins[binKey] = { profit: 0, staked: 0, count: 0 };
-                    }
-                    evBins[binKey].profit += pnl;
-                    evBins[binKey].staked += stake;
-                    evBins[binKey].count++;
-
                     const lastBank = currentBankrollArr[currentBankrollArr.length - 1];
                     const nextBank = lastBank + pnl;
                     currentBankrollArr.push(nextBank);
@@ -2449,31 +2416,6 @@
                     if (dd > maxDrawdownVal) maxDrawdownVal = dd;
                 }
             });
-
-            // Determinar el mejor rango de EV
-            let bestRangeName = "Sin datos suficientes";
-            let bestRangeProfit = 0;
-            let bestRangeYield = 0;
-            let maxProfitVal = -Infinity;
-
-            for (const [rangeKey, data] of Object.entries(evBins)) {
-                if (data.profit > maxProfitVal) {
-                    maxProfitVal = data.profit;
-                    bestRangeName = rangeKey;
-                    bestRangeProfit = data.profit;
-                    bestRangeYield = data.staked > 0 ? (data.profit / data.staked) * 100 : 0;
-                }
-            }
-
-            const bestEvDisplayEl = document.getElementById('bestEvRangeDisplay');
-            const bestEvProfitEl = document.getElementById('bestEvRangeProfit');
-            if (countClosed > 0 && maxProfitVal !== -Infinity) {
-                bestEvDisplayEl.innerText = `EV: ${bestRangeName}`;
-                bestEvProfitEl.innerText = `${bestRangeProfit >= 0 ? '+$' : '-$'}${Math.abs(bestRangeProfit).toFixed(2)} (${bestRangeYield.toFixed(1)}% Yield)`;
-            } else {
-                bestEvDisplayEl.innerText = "Registra apuestas cerradas";
-                bestEvProfitEl.innerText = "$0.00 (0.0% Yield)";
-            }
 
             const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn - totalRiskPending;
             const yieldVal = totalStakedClosed > 0 ? (totalProfitClosed / totalStakedClosed) * 100 : 0;
@@ -3190,6 +3132,7 @@
             document.getElementById('valHomeLambda').innerText = lambdaHome.toFixed(3);
             document.getElementById('valAwayLambda').innerText = lambdaAway.toFixed(3);
 
+            // Calcular Skellam con las lambdas obtenidas
             calculateSkellamAnalysis(lambdaHome, lambdaAway);
 
             const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0;
