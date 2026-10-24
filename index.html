@@ -879,7 +879,7 @@
             <!-- Modal Body Tracker -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
                 
-                <!-- FILTRO DE MERCADO Y SELECCIÓN ESPECÍFICA (MEJORA APLICADA) -->
+                <!-- FILTRO DE MERCADO Y SELECCIÓN ESPECÍFICA -->
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/30 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div class="flex flex-col gap-1">
                         <label class="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1">
@@ -1108,6 +1108,15 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
+                <!-- MEJORA AÑADIDA: WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN -->
+                <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                        <span class="text-slate-300 text-[10px]">Profit histórico de esta selección:</span>
+                    </div>
+                    <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">Fecha</label>
@@ -1131,7 +1140,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">Selección Elegida</label>
-                        <input type="text" id="logSelection" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
+                        <input type="text" id="logSelection" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
                     </div>
                 </div>
 
@@ -1366,6 +1375,42 @@
             document.getElementById('lossMitigationAlert').classList.add('hidden');
         }
 
+        // FUNCIÓN NUEVA: VERIFICAR PROFIT HISTÓRICO DE LA SELECCIÓN
+        function checkSelectionHistoricalProfit() {
+            const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
+            const widget = document.getElementById('selectionHistoryWidget');
+            const profitValEl = document.getElementById('selectionHistoricalProfitVal');
+
+            if (!selectionInput) {
+                widget.classList.add('hidden');
+                return;
+            }
+
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            let historicalProfit = 0;
+            let foundCount = 0;
+
+            currentBankBets.forEach(bet => {
+                if (bet.status !== 'PENDING' && bet.selection && bet.selection.toLowerCase().includes(selectionInput)) {
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+                    if (bet.status === 'WON') historicalProfit += stake * (odds - 1);
+                    else if (bet.status === 'LOST') historicalProfit -= stake;
+                    else if (bet.status === 'HALF_WON') historicalProfit += (stake / 2) * (odds - 1);
+                    else if (bet.status === 'HALF_LOST') historicalProfit -= (stake / 2);
+                    foundCount++;
+                }
+            });
+
+            if (foundCount > 0) {
+                widget.classList.remove('hidden');
+                profitValEl.innerText = (historicalProfit >= 0 ? '+$' : '-$') + Math.abs(historicalProfit).toFixed(2);
+                profitValEl.className = historicalProfit >= 0 ? "font-black text-emerald-400 text-xs" : "font-black text-rose-400 text-xs";
+            } else {
+                widget.classList.add('hidden');
+            }
+        }
+
         // FUNCIONES DEL CONSTRUCTOR DE PARLAYS
         function addToParlayBuilder(market, selection, prob) {
             const homeName = document.getElementById('homeName').value || 'Local';
@@ -1456,6 +1501,7 @@
 
             document.getElementById('editBetIndex').value = "-1";
             document.getElementById('logIsParlay').value = "true";
+            document.getElementById('selectionHistoryWidget').classList.add('hidden');
             document.getElementById('logBetModalTitle').innerText = `Registrar Apuesta Combinada (${parlaySelections.length} picks)`;
             document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
             document.getElementById('logLeague').value = activeLeague;
@@ -2026,6 +2072,7 @@
             document.getElementById('logBookmaker').value = "Bet365";
             document.getElementById('logStatus').value = "PENDING";
 
+            checkSelectionHistoricalProfit();
             calculateLogEv();
             toggleLogBetModal(true);
         }
@@ -2049,6 +2096,7 @@
             document.getElementById('logBookmaker').value = item.bookmaker || "Bet365";
             document.getElementById('logStatus').value = item.status;
 
+            checkSelectionHistoricalProfit();
             calculateLogEv();
             toggleLogBetModal(true);
         }
