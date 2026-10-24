@@ -2023,11 +2023,32 @@
             }
 
             const quarterKellyFraction = fullKelly * 0.25;
-            let recommendedStake = Math.round(currentBankroll * quarterKellyFraction);
+
+            // ---- NUEVA LÓGICA SOLICITADA ----
+            // Calcular beneficio neto histórico exclusivo de la selección elegida actual
+            const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
+            let selectionNetProfit = 0;
+            if (selectionInput) {
+                const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+                currentBankBets.forEach(bet => {
+                    if (bet.status !== 'PENDING' && bet.selection && bet.selection.toLowerCase().includes(selectionInput)) {
+                        const s = parseFloat(bet.stake) || 0;
+                        const o = parseFloat(bet.bookieOdds) || 1;
+                        if (bet.status === 'WON') selectionNetProfit += s * (o - 1);
+                        else if (bet.status === 'LOST') selectionNetProfit -= s;
+                        else if (bet.status === 'HALF_WON') selectionNetProfit += (s / 2) * (o - 1);
+                        else if (bet.status === 'HALF_LOST') selectionNetProfit -= (s / 2);
+                    }
+                });
+            }
+
+            // Factor de saldo disponible según si el beneficio neto de la selección está en negativo (< 0)
+            const availableBalanceMultiplier = selectionNetProfit < 0 ? 0.80 : 1.00;
+            let recommendedStake = Math.round(currentBankroll * availableBalanceMultiplier * quarterKellyFraction);
             if (recommendedStake < 1) recommendedStake = 1;
 
             document.getElementById('logStake').value = recommendedStake;
-            showToast(`Stake calculado (Kelly 1/4): $${recommendedStake}`);
+            showToast(`Stake Kelly 1/4 (${selectionNetProfit < 0 ? '80% saldo por selección en negativo' : '100% saldo'}): $${recommendedStake}`);
         }
 
         function openLogBetModal(market = '', selection = '', prob = 0) {
