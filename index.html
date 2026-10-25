@@ -89,9 +89,6 @@
         .neon-gold-glow {
             box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.35);
         }
-        .neon-rose-glow {
-            box-shadow: 0 0 15px -3px rgba(244, 63, 94, 0.35);
-        }
         .glass-card {
             background: rgba(18, 24, 38, 0.85);
             backdrop-filter: blur(12px);
@@ -132,17 +129,42 @@
                 </div>
             </div>
             <div class="flex items-center gap-1.5">
-                <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-bullseye"></i> Calibración
                 </button>
-                <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleTrackerModal(true)" class="bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
                 </button>
-                <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-database"></i> Ligas
                 </button>
             </div>
         </header>
+
+        <!-- APARTADO DE ESTRATEGIAS INTELIGENTES (NUEVO) -->
+        <section class="glass-card rounded-2xl p-3.5 space-y-3 border border-emerald-500/50 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                        <i class="fa-solid fa-brain text-xs"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-black text-xs text-white uppercase tracking-wide">Estrategias Inteligentes & Valor</h2>
+                        <p class="text-[9px] text-emerald-400 font-bold">Patrones predictivos y selección automatizada de rentabilidad</p>
+                    </div>
+                </div>
+                <button onclick="generateSmartStrategies()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-xl transition-all shadow-md flex items-center gap-1 active:scale-95">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Analizar Partido
+                </button>
+            </div>
+
+            <!-- Contenedor de Recomendaciones Inteligentes -->
+            <div id="smartStrategiesContainer" class="space-y-2 pt-1">
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-center text-xs text-slate-400 italic">
+                    Haz clic en "Analizar Partido" para que la inteligencia evalúe los xG, Skellam y el histórico de tu bitácora y te recomiende los mejores patrones rentables.
+                </div>
+            </div>
+        </section>
 
         <!-- WIDGET NUEVO: MITIGACIÓN DE PÉRDIDAS & STOP-LOSS DINÁMICO -->
         <section id="lossMitigationSection" class="glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 transition-all">
@@ -415,7 +437,7 @@
                     <i class="fa-solid fa-fire text-emerald-400 text-xs"></i>
                     <h2 class="font-extrabold text-xs text-white">Mercado Over / Under 2.5 FT</h2>
                 </div>
-                <span class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Mercado Clave</span>
+                <span class="text-[9px] font-black bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Mercado Clave</span>
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
@@ -438,10 +460,10 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
@@ -484,7 +506,7 @@
                     <i class="fa-solid fa-list-check text-indigo-400 text-xs"></i>
                     <h2 class="font-extrabold text-xs text-white">Revisión Dinámica de Líneas Over / Under</h2>
                 </div>
-                <span class="text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Líneas Adicionales</span>
+                <span class="text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded border border-indigo-500/20">Líneas Adicionales</span>
             </div>
 
             <!-- Contenedor dinámico inyectado por JS -->
@@ -522,7 +544,7 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
@@ -593,7 +615,7 @@
                         <p class="text-[10px] font-black text-gold-400" id="odds1x2Home">@2.07</p>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2">
-                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20">
+                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20">
                             Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded border border-slate-700">
@@ -623,7 +645,7 @@
                         <p class="text-[10px] font-black text-gold-400" id="odds1x2Away">@3.37</p>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2">
-                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[9px] font-bold rounded border border-rose-500/20">
+                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-[9px] font-bold rounded border border-rose-500/20">
                             Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded border border-slate-700">
@@ -1320,7 +1342,7 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-[10px] font-bold text-slate-400">Stake / Apuesta ($)</label>
-                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
+                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/15 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
                                 <i class="fa-solid fa-calculator"></i> Kelly 1/4
                             </button>
                         </div>
@@ -1495,6 +1517,7 @@
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             renderParlayBuilder();
+            generateSmartStrategies();
             
             sliderAttackPrev = parseInt(document.getElementById('weightAttackRange').value);
             sliderDefensePrev = parseInt(document.getElementById('weightDefenseRange').value);
@@ -2593,7 +2616,138 @@
             saveBetLogToStorage();
         }
 
-        // --- FUNCIÓN NUEVA: ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
+        // --- APARTADO INTELIGENTE DE ESTRATEGIAS ---
+        function generateSmartStrategies() {
+            const container = document.getElementById('smartStrategiesContainer');
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
+            
+            const lambdaHome = parseFloat(document.getElementById('valHomeLambda').innerText) || 1.5;
+            const lambdaAway = parseFloat(document.getElementById('valAwayLambda').innerText) || 1.2;
+            const totalLambda = lambdaHome + lambdaAway;
+
+            const probOver25 = currentCalculatedProbs.probOver25 || 0.5;
+            const probBttsYes = currentCalculatedProbs.probBttsYes || 0.5;
+            const probHomeWin = currentCalculatedProbs.probHomeWin || 0.4;
+            const probAwayWin = currentCalculatedProbs.probAwayWin || 0.3;
+
+            // Analizar historial de bitácora para ver qué mercado ha sido más rentable
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            const marketProfitMap = {};
+            currentBankBets.forEach(bet => {
+                if (bet.status !== 'PENDING') {
+                    const m = bet.market || 'General';
+                    if (!marketProfitMap[m]) marketProfitMap[m] = { profit: 0, count: 0 };
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+                    if (bet.status === 'WON') marketProfitMap[m].profit += stake * (odds - 1);
+                    else if (bet.status === 'LOST') marketProfitMap[m].profit -= stake;
+                    marketProfitMap[m].count++;
+                }
+            });
+
+            let bestHistoricalMarket = "Over / Under Goles";
+            let maxMProfit = -Infinity;
+            Object.keys(marketProfitMap).forEach(m => {
+                if (marketProfitMap[m].profit > maxMProfit) {
+                    maxMProfit = marketProfitMap[m].profit;
+                    bestHistoricalMarket = m;
+                }
+            });
+
+            let strategies = [];
+
+            // Estrategia 1: Oportunidad de Goles / Over
+            if (totalLambda >= 2.6) {
+                strategies.push({
+                    title: "Patrón de Alta Explosividad Ofensiva",
+                    desc: `El total esperado de goles (${totalLambda.toFixed(2)}) sugiere un encuentro abierto. El Over 2.5 cuenta con ${(probOver25*100).toFixed(1)}% de probabilidad.`,
+                    market: "Over / Under Goles",
+                    selection: "Over 2.5",
+                    prob: probOver25,
+                    tag: "Alta Rentabilidad",
+                    color: "emerald"
+                });
+            } else {
+                strategies.push({
+                    title: "Patrón de Control Táctico y Bajo 2.5",
+                    desc: `Con un total combinado de ${totalLambda.toFixed(2)} goles, el mercado Under presenta solidez estadística defensiva.`,
+                    market: "Over / Under Goles",
+                    selection: "Under 2.5",
+                    prob: currentCalculatedProbs.probUnder25 || 0.5,
+                    tag: "Defensivo",
+                    color: "indigo"
+                });
+            }
+
+            // Estrategia 2: BTTS Inteligente
+            if (lambdaHome >= 1.2 && lambdaAway >= 1.0) {
+                strategies.push({
+                    title: "Patrón de Intercambio de Goles (BTTS)",
+                    desc: `Ambos equipos superan el umbral mínimo de xG. La probabilidad calculada de que ambos anoten es del ${(probBttsYes*100).toFixed(1)}%.`,
+                    market: "Ambos Anotan",
+                    selection: "Ambos Anotan Si",
+                    prob: probBttsYes,
+                    tag: "Alto Valor",
+                    color: "gold"
+                });
+            } else {
+                strategies.push({
+                    title: "Patrón de Valla Invicta / Portería a Cero",
+                    desc: `La asimetría defensiva apunta a que uno de los dos equipos dominará la posesión sin conceder oportunidades claras de gol.`,
+                    market: "Ambos Anotan",
+                    selection: "Ambos Anotan No",
+                    prob: currentCalculatedProbs.probBttsNo || 0.5,
+                    tag: "Portería a Cero",
+                    color: "slate"
+                });
+            }
+
+            // Estrategia 3: Basada en el mercado con mejor histórico en tu bitácora
+            strategies.push({
+                title: `Optimización por Histórico (${bestHistoricalMarket})`,
+                desc: `Tu bitácora indica que el mercado <b>${bestHistoricalMarket}</b> ha arrojado los mejores rendimientos en tus cajas. Aprovecha este patrón validado.`,
+                market: bestHistoricalMarket,
+                selection: bestHistoricalMarket.includes('Over') ? 'Over 2.5' : (homeName + ' o Empate'),
+                prob: probHomeWin > probAwayWin ? probHomeWin : probAwayWin,
+                tag: "Patrón Personalizado",
+                color: "emerald"
+            });
+
+            let html = '';
+            strategies.forEach(st => {
+                const fairOdds = (1 / Math.max(0.001, st.prob)).toFixed(2);
+                html += `
+                    <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-black text-white flex items-center gap-1.5">
+                                <i class="fa-solid fa-circle-check text-${st.color === 'gold' ? 'gold-400' : 'emerald-400'}"></i> ${st.title}
+                            </span>
+                            <span class="text-[9px] font-black bg-${st.color === 'gold' ? 'gold-500/20 text-gold-300 border-gold-500/30' : 'emerald-500/20 text-emerald-300 border-emerald-500/30'} px-2 py-0.5 rounded-full border">
+                                ${st.tag}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">${st.desc}</p>
+                        <div class="flex justify-between items-center pt-1 border-t border-slate-800 text-xs">
+                            <span class="text-slate-400">Selección: <b class="text-emerald-400">${st.market} — ${st.selection}</b> (${(st.prob*100).toFixed(1)}% | @${fairOdds})</span>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="openLogModFromStrategy('${st.market}', '${st.selection}', ${st.prob})" class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-black text-[10px] rounded-lg border border-emerald-500/40">
+                                    Añadir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            showToast("¡Estrategias inteligentes generadas con éxito!");
+        }
+
+        function openLogModFromStrategy(market, selection, prob) {
+            openLogBetModal(market, selection, prob);
+        }
+
         function updateLeaguePerformanceTable(bankBets) {
             const tableBody = document.getElementById('leaguePerformanceTableBody');
             const badgeEl = document.getElementById('leaguePerformanceBadge');
@@ -2642,7 +2796,6 @@
                 return;
             }
 
-            // Ordenar por beneficio neto descendente
             leaguesArray.sort((a, b) => b.profit - a.profit);
 
             let html = '';
@@ -2665,7 +2818,6 @@
             tableBody.innerHTML = html;
         }
 
-        // --- FUNCIONES DEL NUEVO SIMULADOR DE STAKE PLANO ---
         function openFlatStakeModal() {
             runFlatStakeSimulation();
             document.getElementById('flatStakeModal').classList.remove('hidden');
@@ -3483,8 +3635,8 @@
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="text-xs font-black text-gold-400">@${odds.toFixed(2)}</span>
-                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-indigo-500/30">Parlay</button>
+                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded border border-indigo-500/30">Parlay</button>
                         </div>
                     </div>
                 `;
@@ -3633,10 +3785,10 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-black text-emerald-400">${pct}%</span>
                             <span class="text-xs font-black text-gold-400">@${odds}</span>
-                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
+                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
                                 Sencilla
                             </button>
-                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/20" title="Parlay">
+                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Parlay">
                                 Parlay
                             </button>
                         </div>
@@ -3646,6 +3798,7 @@
 
             renderMatrix(matrix);
             renderGoalsChart(homeProbs, awayProbs);
+            generateSmartStrategies();
         }
 
         function renderDynamicOverUnder(matrix) {
@@ -3678,8 +3831,8 @@
                         
                         <div class="flex items-center gap-1.5">
                             <span class="font-black text-emerald-400">${pctOver}% (@${oddsOver})</span>
-                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
+                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
                         </div>
 
                         <div class="flex items-center gap-1.5">
