@@ -946,8 +946,41 @@
                     </div>
                 </div>
 
-                <!-- NUEVO MÓDULO: RENDIMIENTO POR LIGA -->
-                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
+                <!-- MÓDULO NUEVO (BITÁCORA PARALELA): SELECCIONES Y LIGAS CON RENTABILIDAD POSITIVA -->
+                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 overflow-hidden group shadow-lg" open>
+                    <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-star text-gold-400 text-xs"></i>
+                            <span class="text-xs font-black text-white uppercase">Bitácora Paralela: Selecciones con Rentabilidad Positiva</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="positiveSelectionsBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">0 rentables</span>
+                            <i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i>
+                        </div>
+                    </summary>
+                    <div class="p-3 pt-0 space-y-2">
+                        <p class="text-[10px] text-slate-300">Filtro automático de tus mercados y selecciones que arrojan **beneficio neto positivo ($ > 0)** agrupados por liga.</p>
+                        <div class="overflow-x-auto rounded-xl border border-emerald-500/30 bg-slate-900/60 max-h-52">
+                            <table class="w-full text-[10px] text-left border-collapse excel-table">
+                                <thead class="bg-emerald-950/40 text-emerald-200 sticky top-0 font-extrabold shadow-md border-b border-emerald-500/20">
+                                    <tr>
+                                        <th class="p-1.5">Liga / Competición</th>
+                                        <th class="p-1.5">Mercado / Selección</th>
+                                        <th class="p-1.5 text-center">Aciertos / Total</th>
+                                        <th class="p-1.5 text-center">Yield (%)</th>
+                                        <th class="p-1.5 text-center">Profit Neto (+)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="positiveSelectionsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                    <!-- Generado dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- MÓDULO: RENDIMIENTO POR LIGA -->
+                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group">
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
                         <div class="flex items-center gap-1.5">
                             <i class="fa-solid fa-trophy text-gold-400 text-xs"></i>
@@ -2567,6 +2600,7 @@
             document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
             document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
 
+            updatePositiveSelectionsTable(currentBankBets);
             updateLeaguePerformanceTable(filteredBets);
             updateBestEvRangeAnalysis(filteredBets);
 
@@ -2609,6 +2643,88 @@
             renderCalendarView(filteredBets);
             renderPnlChart(currentBankrollArr);
             saveBetLogToStorage();
+        }
+
+        // --- BITÁCORA PARALELA: SELECCIONES CON RENTABILIDAD POSITIVA ---
+        function updatePositiveSelectionsTable(allBankBets) {
+            const tableBody = document.getElementById('positiveSelectionsTableBody');
+            const badgeEl = document.getElementById('positiveSelectionsBadge');
+            if (!tableBody) return;
+
+            const selectionMap = {};
+
+            allBankBets.forEach(bet => {
+                if (bet.status === 'PENDING') return;
+
+                const leagueName = bet.league || 'General';
+                const marketName = bet.market || 'Mercado';
+                const selectionName = bet.selection || 'Selección';
+                const key = `${leagueName}___${marketName}___${selectionName}`;
+
+                if (!selectionMap[key]) {
+                    selectionMap[key] = {
+                        league: leagueName,
+                        market: marketName,
+                        selection: selectionName,
+                        totalCount: 0,
+                        wonCount: 0,
+                        staked: 0,
+                        profit: 0
+                    };
+                }
+
+                selectionMap[key].totalCount++;
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                let pnl = 0;
+                let isWon = false;
+
+                if (bet.status === 'WON') {
+                    pnl = stake * (odds - 1);
+                    isWon = true;
+                    selectionMap[key].wonCount++;
+                    selectionMap[key].staked += stake;
+                } else if (bet.status === 'LOST') {
+                    pnl = -stake;
+                    selectionMap[key].staked += stake;
+                } else if (bet.status === 'HALF_WON') {
+                    pnl = (stake / 2) * (odds - 1);
+                    isWon = true;
+                    selectionMap[key].wonCount += 0.5;
+                    selectionMap[key].staked += stake;
+                } else if (bet.status === 'HALF_LOST') {
+                    pnl = -(stake / 2);
+                    selectionMap[key].staked += stake;
+                }
+
+                selectionMap[key].profit += pnl;
+            });
+
+            // Filtrar SOLO las que tienen rentabilidad positiva (Profit > 0)
+            const positiveList = Object.values(selectionMap).filter(item => item.profit > 0);
+            positiveList.sort((a, b) => b.profit - a.profit);
+
+            badgeEl.innerText = `${positiveList.length} rentables`;
+
+            if (positiveList.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500 italic">Aún no hay selecciones con beneficio neto positivo ($ > 0) registradas.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            positiveList.forEach(item => {
+                const yieldVal = item.staked > 0 ? (item.profit / item.staked) * 100 : 0;
+                html += `
+                    <tr>
+                        <td class="p-1.5 font-bold text-white"><i class="fa-solid fa-trophy text-gold-400 mr-1"></i>${item.league}</td>
+                        <td class="p-1.5 font-bold text-emerald-300">${item.market}: <span class="text-white">${item.selection}</span></td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">${item.wonCount} / ${item.totalCount}</td>
+                        <td class="p-1.5 text-center font-bold text-gold-400">+${yieldVal.toFixed(1)}%</td>
+                        <td class="p-1.5 text-center font-black text-emerald-400">+$${item.profit.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
         }
 
         // --- FUNCIONES ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
