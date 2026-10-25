@@ -132,16 +132,16 @@
                 </div>
             </div>
             <div class="flex items-center gap-1.5 flex-wrap justify-end">
-                <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-bullseye"></i> Calibración
                 </button>
-                <button onclick="toggleTrackerModal(true)" class="bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
                 </button>
-                <button onclick="toggleParallelTrackerModal(true)" class="bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleParallelTrackerModal(true)" class="bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-book-bookmark"></i> Bitácora Paralela
                 </button>
-                <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-database"></i> Ligas
                 </button>
             </div>
@@ -185,7 +185,7 @@
                     <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
                     <span class="text-xs font-black text-white uppercase">Gestión de Bankroll Activo</span>
                 </div>
-                <button onclick="toggleBankrollManagerModal(true)" class="text-[9px] font-bold text-emerald-400 bg-emerald-500/15 hover:bg-emerald-500/25 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+                <button onclick="toggleBankrollManagerModal(true)" class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
                     <i class="fa-solid fa-gear"></i> Administrar Cajas
                 </button>
             </div>
@@ -418,7 +418,7 @@
                     <i class="fa-solid fa-fire text-emerald-400 text-xs"></i>
                     <h2 class="font-extrabold text-xs text-white">Mercado Over / Under 2.5 FT</h2>
                 </div>
-                <span class="text-[9px] font-black bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/25">Mercado Clave</span>
+                <span class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Mercado Clave</span>
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
@@ -441,10 +441,10 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
@@ -487,7 +487,7 @@
                     <i class="fa-solid fa-list-check text-indigo-400 text-xs"></i>
                     <h2 class="font-extrabold text-xs text-white">Revisión Dinámica de Líneas Over / Under</h2>
                 </div>
-                <span class="text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded border border-indigo-500/25">Líneas Adicionales</span>
+                <span class="text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Líneas Adicionales</span>
             </div>
 
             <!-- Contenedor dinámico inyectado por JS -->
@@ -525,7 +525,7 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
@@ -596,7 +596,7 @@
                         <p class="text-[10px] font-black text-gold-400" id="odds1x2Home">@2.07</p>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2">
-                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/25">
+                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20">
                             Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded border border-slate-700">
@@ -626,7 +626,7 @@
                         <p class="text-[10px] font-black text-gold-400" id="odds1x2Away">@3.37</p>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2">
-                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-[9px] font-bold rounded border border-rose-500/25">
+                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[9px] font-bold rounded border border-rose-500/20">
                             Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded border border-slate-700">
@@ -1171,7 +1171,7 @@
                 <div class="bg-teal-950/30 border border-teal-500/30 p-3 rounded-xl text-xs text-slate-300 space-y-1">
                     <p class="font-bold text-teal-300 flex items-center gap-1.5"><i class="fa-solid fa-circle-info"></i> ¿Qué almacena esta bitácora?</p>
                     <p class="text-[11px] text-slate-400">
-                        Aquí se acumulan de forma automática las apuestas cuyo Valor Esperado (EV+) se encuentra dentro del rango más rentable históricamente.
+                        Aquí se acumulan de forma exclusiva las apuestas seleccionadas para seguimiento especializado de rentabilidad positiva por selección, mercado y liga. Puedes enviar cualquier apuesta aquí al registrarla en el formulario principal.
                     </p>
                 </div>
 
@@ -1422,7 +1422,7 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-[10px] font-bold text-slate-400">Stake / Apuesta ($)</label>
-                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/15 px-1.5 py-0.5 rounded border border-gold-500/25" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
+                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
                                 <i class="fa-solid fa-calculator"></i> Kelly 1/4
                             </button>
                         </div>
@@ -1452,6 +1452,15 @@
                             <option value="HALF_LOST">Mitad Perdida</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- OPCIÓN DE BITÁCORA PARALELA NUEVA -->
+                <div class="bg-teal-950/20 border border-teal-500/30 p-2.5 rounded-xl space-y-1">
+                    <label class="block text-[10px] font-black text-teal-300 uppercase">Destino del Registro</label>
+                    <select id="logParallelOption" class="w-full bg-inputBg border border-teal-500/40 rounded-xl px-2.5 py-1.5 text-xs text-teal-200 font-bold focus:outline-none focus:border-teal-400">
+                        <option value="original_only">Solo Bitácora Original</option>
+                        <option value="both">Enviar a las Dos Bitácoras (Original + Paralela)</option>
+                    </select>
                 </div>
             </div>
 
@@ -1878,6 +1887,7 @@
             document.getElementById('logStake').value = calculatedStake;
             document.getElementById('logBookmaker').value = "Bet365";
             document.getElementById('logStatus').value = "PENDING";
+            document.getElementById('logParallelOption').value = "original_only";
 
             calculateLogEv();
             toggleLogBetModal(true);
@@ -2448,6 +2458,7 @@
             document.getElementById('logStake').value = calculatedStake;
             document.getElementById('logBookmaker').value = "Bet365";
             document.getElementById('logStatus').value = "PENDING";
+            document.getElementById('logParallelOption').value = "original_only";
 
             checkSelectionHistoricalProfit();
             calculateLogEv();
@@ -2472,6 +2483,7 @@
             document.getElementById('logStake').value = item.stake;
             document.getElementById('logBookmaker').value = item.bookmaker || "Bet365";
             document.getElementById('logStatus').value = item.status;
+            document.getElementById('logParallelOption').value = item.inParallel ? "both" : "original_only";
 
             checkSelectionHistoricalProfit();
             calculateLogEv();
@@ -2507,57 +2519,8 @@
             const prob = parseFloat(document.getElementById('logProb').value) || 0;
             const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 1.0;
             const ev = ((prob / 100) * bookieOdds) - 1;
-            const evPct = ev * 100;
-
-            // Detección automática del rango de EV más rentable de forma dinámica
-            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const ranges = [
-                { label: '0% - 5%', min: 0, max: 5, profit: 0, count: 0 },
-                { label: '5% - 10%', min: 5, max: 10, profit: 0, count: 0 },
-                { label: '10% - 15%', min: 10, max: 15, profit: 0, count: 0 },
-                { label: '15%+', min: 15, max: 999, profit: 0, count: 0 }
-            ];
-
-            activeBankBets.forEach(bet => {
-                if (bet.status !== 'PENDING') {
-                    const stake = parseFloat(bet.stake) || 0;
-                    const odds = parseFloat(bet.bookieOdds) || 1;
-                    const bEv = parseFloat(bet.ev) || 0;
-                    let pnl = 0;
-                    if (bet.status === 'WON') pnl = stake * (odds - 1);
-                    else if (bet.status === 'LOST') pnl = -stake;
-                    else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
-                    else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
-
-                    for (let r of ranges) {
-                        if (bEv >= r.min && bEv < r.max) {
-                            r.profit += pnl;
-                            r.count++;
-                            break;
-                        }
-                    }
-                }
-            });
-
-            let bestRange = null;
-            let maxRangeProfit = -Infinity;
-            ranges.forEach(r => {
-                if (r.count > 0 && r.profit > maxRangeProfit) {
-                    maxRangeProfit = r.profit;
-                    bestRange = r;
-                }
-            });
-
-            // Determinar si el EV actual está dentro del rango rentable detectado
-            let sendToParallel = false;
-            if (bestRange && maxRangeProfit > 0) {
-                if (evPct >= bestRange.min && evPct < bestRange.max) {
-                    sendToParallel = true;
-                }
-            } else if (evPct >= 5.0 && evPct <= 15.0) {
-                // Rango por defecto si aún no hay suficiente historial cerrado
-                sendToParallel = true;
-            }
+            const parallelOption = document.getElementById('logParallelOption').value;
+            const sendToParallel = (parallelOption === 'both');
 
             const betRecord = {
                 id: index >= 0 ? betLogData[index].id : Date.now(),
@@ -2571,7 +2534,7 @@
                 prob: prob.toFixed(1),
                 fairOdds: document.getElementById('logFairOdds').value,
                 bookieOdds: bookieOdds.toFixed(2),
-                ev: evPct.toFixed(1),
+                ev: (ev * 100).toFixed(1),
                 stake: parseFloat(document.getElementById('logStake').value) || 10,
                 bookmaker: document.getElementById('logBookmaker').value,
                 status: document.getElementById('logStatus').value,
@@ -2604,12 +2567,7 @@
             updateTrackerMetrics();
             updateParallelTrackerMetrics();
             toggleLogBetModal(false);
-            
-            if (sendToParallel) {
-                showToast("¡EV en rango rentable! Guardada en Bitácora Original y Bitácora Paralela.");
-            } else {
-                showToast("Guardada únicamente en la Bitácora Original.");
-            }
+            showToast(sendToParallel ? "¡Apuesta guardada en ambas bitácoras!" : "¡Apuesta guardada en la bitácora original!");
         }
 
         function deleteBetFromLog(index) {
@@ -2713,7 +2671,7 @@
             document.getElementById('parallelWinRate').innerText = winRateVal.toFixed(1) + '%';
 
             if (parallelBetLogData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">No hay apuestas en el rango de EV rentable para la bitácora paralela.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">No hay apuestas registradas en la bitácora paralela.</td></tr>`;
                 return;
             }
 
@@ -3874,8 +3832,8 @@
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="text-xs font-black text-gold-400">@${odds.toFixed(2)}</span>
-                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded border border-indigo-500/30">Parlay</button>
+                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-indigo-500/30">Parlay</button>
                         </div>
                     </div>
                 `;
@@ -4024,10 +3982,10 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-black text-emerald-400">${pct}%</span>
                             <span class="text-xs font-black text-gold-400">@${odds}</span>
-                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/25" title="Sencilla">
+                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
                                 Sencilla
                             </button>
-                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded border border-emerald-500/25" title="Parlay">
+                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Parlay">
                                 Parlay
                             </button>
                         </div>
@@ -4069,8 +4027,8 @@
                         
                         <div class="flex items-center gap-1.5">
                             <span class="font-black text-emerald-400">${pctOver}% (@${oddsOver})</span>
-                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
+                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
                         </div>
 
                         <div class="flex items-center gap-1.5">
