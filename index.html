@@ -1351,13 +1351,19 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN / MERCADO EN LA LIGA SELECCIONADA -->
-                <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-emerald-400"></i>
-                        <span class="text-slate-300 text-[10px]">Rentabilidad en <b id="widgetLeagueNameText">Liga</b>:</span>
+                <!-- WIDGET DE PROFIT HISTÓRICO Y RANGO EV MÁS RENTABLE -->
+                <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl space-y-1.5 text-xs">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                            <span class="text-slate-300 text-[10px]">Rentabilidad en <b id="widgetLeagueNameText">Liga</b>:</span>
+                        </div>
+                        <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
                     </div>
-                    <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
+                    <div class="flex items-center justify-between pt-1 border-t border-emerald-500/20 text-[11px]">
+                        <span class="text-slate-300 font-bold"><i class="fa-solid fa-bullseye text-gold-400 mr-1"></i> Rango EV+ más rentable:</span>
+                        <span id="widgetBestEvRangeVal" class="font-black text-gold-400">Calculando...</span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -1681,6 +1687,7 @@
             const widget = document.getElementById('selectionHistoryWidget');
             const profitValEl = document.getElementById('selectionHistoricalProfitVal');
             const leagueNameTextEl = document.getElementById('widgetLeagueNameText');
+            const bestEvRangeValEl = document.getElementById('widgetBestEvRangeVal');
 
             if (!selectionInput && !marketInput) {
                 widget.classList.add('hidden');
@@ -1692,19 +1699,50 @@
             let historicalProfit = 0;
             let foundCount = 0;
 
+            const ranges = [
+                { label: '0% - 5%', min: 0, max: 5, profit: 0, count: 0 },
+                { label: '5% - 10%', min: 5, max: 10, profit: 0, count: 0 },
+                { label: '10% - 15%', min: 10, max: 15, profit: 0, count: 0 },
+                { label: '15%+', min: 15, max: 999, profit: 0, count: 0 }
+            ];
+
             currentBankBets.forEach(bet => {
                 const matchLeague = !leagueInput || (bet.league && bet.league.toLowerCase().includes(leagueInput));
                 const matchMarket = !marketInput || (bet.market && bet.market.toLowerCase().includes(marketInput));
                 const matchSelection = !selectionInput || (bet.selection && bet.selection.toLowerCase().includes(selectionInput));
 
-                if (bet.status !== 'PENDING' && matchLeague && matchMarket && matchSelection) {
+                if (matchLeague && matchMarket && matchSelection) {
                     const stake = parseFloat(bet.stake) || 0;
                     const odds = parseFloat(bet.bookieOdds) || 1;
-                    if (bet.status === 'WON') historicalProfit += stake * (odds - 1);
-                    else if (bet.status === 'LOST') historicalProfit -= stake;
-                    else if (bet.status === 'HALF_WON') historicalProfit += (stake / 2) * (odds - 1);
-                    else if (bet.status === 'HALF_LOST') historicalProfit -= (stake / 2);
-                    foundCount++;
+                    const evVal = parseFloat(bet.ev) || 0;
+                    
+                    if (bet.status !== 'PENDING') {
+                        let pnl = 0;
+                        if (bet.status === 'WON') pnl = stake * (odds - 1);
+                        else if (bet.status === 'LOST') pnl = -stake;
+                        else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
+                        else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
+
+                        historicalProfit += pnl;
+                        foundCount++;
+
+                        for (let r of ranges) {
+                            if (evVal >= r.min && evVal < r.max) {
+                                r.profit += pnl;
+                                r.count++;
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+
+            let bestRange = null;
+            let maxRangeProfit = -Infinity;
+            ranges.forEach(r => {
+                if (r.count > 0 && r.profit > maxRangeProfit) {
+                    maxRangeProfit = r.profit;
+                    bestRange = r;
                 }
             });
 
@@ -1712,10 +1750,17 @@
                 widget.classList.remove('hidden');
                 profitValEl.innerText = (historicalProfit >= 0 ? '+$' : '-$') + Math.abs(historicalProfit).toFixed(2);
                 profitValEl.className = historicalProfit >= 0 ? "font-black text-emerald-400 text-xs" : "font-black text-rose-400 text-xs";
+
+                if (bestRange && maxRangeProfit > 0) {
+                    bestEvRangeValEl.innerText = `EV ${bestRange.label} (+$${bestRange.profit.toFixed(1)})`;
+                } else {
+                    bestEvRangeValEl.innerText = "Sin datos rentables aún";
+                }
             } else {
                 widget.classList.remove('hidden');
-                profitValEl.innerText = "$0.00 (Sin historial previo en esta selección/liga)";
+                profitValEl.innerText = "$0.00 (Sin historial previo)";
                 profitValEl.className = "font-bold text-slate-400 text-[11px]";
+                bestEvRangeValEl.innerText = "Sin historial";
             }
         }
 
