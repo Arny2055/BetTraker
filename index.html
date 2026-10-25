@@ -1181,15 +1181,15 @@
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Apuestas</span>
                         <span class="text-sm font-black text-white block mt-1" id="parallelTotalCount">0</span>
                     </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Profit Neto Paralelo</span>
                         <span class="text-sm font-black text-teal-400 block mt-1" id="parallelNetProfit">$0.00</span>
                     </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Yield Paralelo</span>
                         <span class="text-sm font-black text-gold-400 block mt-1" id="parallelYield">0.0%</span>
                     </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Win Rate</span>
                         <span class="text-sm font-black text-emerald-400 block mt-1" id="parallelWinRate">0.0%</span>
                     </div>
@@ -1351,19 +1351,13 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- WIDGET DE MUESTREO (LIGA + MERCADO) CORREGIDO -->
-                <div id="selectionHistoryWidget" class="bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex flex-col gap-1.5 text-xs">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-database text-emerald-400"></i>
-                            <span class="text-slate-300 text-[10px]">Muestreo Liga (<b id="widgetLeagueNameText">Liga</b>):</span>
-                        </div>
-                        <span id="widgetSampleSizeVal" class="font-black text-emerald-400 text-xs">MP: 0 partidos</span>
+                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN / MERCADO EN LA LIGA SELECCIONADA -->
+                <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                        <span class="text-slate-300 text-[10px]">Rentabilidad en <b id="widgetLeagueNameText">Liga</b>:</span>
                     </div>
-                    <div class="flex items-center justify-between pt-1 border-t border-emerald-500/20">
-                        <span class="text-slate-300 text-[10px]">Rentabilidad (Liga + Mercado):</span>
-                        <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
-                    </div>
+                    <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -1372,7 +1366,7 @@
                         <input type="date" id="logDate" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Liga / Competición</label>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Liga / Categoría</label>
                         <input type="text" id="logLeague" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
                     </div>
                 </div>
@@ -1686,27 +1680,14 @@
             
             const widget = document.getElementById('selectionHistoryWidget');
             const profitValEl = document.getElementById('selectionHistoricalProfitVal');
-            const sampleSizeValEl = document.getElementById('widgetSampleSizeVal');
             const leagueNameTextEl = document.getElementById('widgetLeagueNameText');
 
-            const currentLeagueName = document.getElementById('logLeague').value || DEFAULT_LEAGUE_NAME;
-            leagueNameTextEl.innerText = currentLeagueName;
-
-            let sampleSizeMP = 0;
-            let foundLeagueKey = Object.keys(leaguesData).find(l => l.toLowerCase() === currentLeagueName.toLowerCase()) || currentLeagueName;
-            let teamsInLeague = leaguesData[foundLeagueKey] || [];
-            
-            if (teamsInLeague.length > 0) {
-                // Sumamos o promediamos MP de los equipos de la liga o tomamos el valor máximo/promedio
-                let totalMpSum = 0;
-                teamsInLeague.forEach(t => totalMpSum += (parseInt(t.mp) || 0));
-                sampleSizeMP = Math.round(totalMpSum / teamsInLeague.length) || teamsInLeague[0].mp || teamsInLeague.length;
-            } else {
-                sampleSizeMP = 0;
+            if (!selectionInput && !marketInput) {
+                widget.classList.add('hidden');
+                return;
             }
 
-            sampleSizeValEl.innerText = `MP: ${sampleSizeMP} partidos`;
-
+            leagueNameTextEl.innerText = document.getElementById('logLeague').value || 'Liga';
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             let historicalProfit = 0;
             let foundCount = 0;
@@ -1727,12 +1708,13 @@
                 }
             });
 
-            widget.classList.remove('hidden');
             if (foundCount > 0) {
+                widget.classList.remove('hidden');
                 profitValEl.innerText = (historicalProfit >= 0 ? '+$' : '-$') + Math.abs(historicalProfit).toFixed(2);
                 profitValEl.className = historicalProfit >= 0 ? "font-black text-emerald-400 text-xs" : "font-black text-rose-400 text-xs";
             } else {
-                profitValEl.innerText = "$0.00 (Sin historial previo en esta liga/mercado)";
+                widget.classList.remove('hidden');
+                profitValEl.innerText = "$0.00 (Sin historial previo en esta selección/liga)";
                 profitValEl.className = "font-bold text-slate-400 text-[11px]";
             }
         }
@@ -1826,6 +1808,7 @@
 
             document.getElementById('editBetIndex').value = "-1";
             document.getElementById('logIsParlay').value = "true";
+            document.getElementById('selectionHistoryWidget').classList.add('hidden');
             document.getElementById('logBetModalTitle').innerText = `Registrar Apuesta Combinada (${parlaySelections.length} picks)`;
             document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
             document.getElementById('logLeague').value = activeLeague;
@@ -1861,7 +1844,6 @@
             document.getElementById('logStatus').value = "PENDING";
             document.getElementById('logParallelOption').value = "original_only";
 
-            checkSelectionHistoricalProfit();
             calculateLogEv();
             toggleLogBetModal(true);
         }
@@ -2516,6 +2498,7 @@
 
             if (index >= 0) {
                 betLogData[index] = betRecord;
+                // Sincronizar o actualizar en la paralela si corresponde
                 const pIndex = parallelBetLogData.findIndex(b => b.id === betRecord.id);
                 if (sendToParallel) {
                     if (pIndex >= 0) parallelBetLogData[pIndex] = { ...betRecord };
@@ -2918,6 +2901,7 @@
             saveBetLogToStorage();
         }
 
+        // --- FUNCIONES ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
         function updateLeaguePerformanceTable(bankBets) {
             const tableBody = document.getElementById('leaguePerformanceTableBody');
             const badgeEl = document.getElementById('leaguePerformanceBadge');
@@ -2988,6 +2972,7 @@
             tableBody.innerHTML = html;
         }
 
+        // --- SIMULADOR DE STAKE PLANO ---
         function openFlatStakeModal() {
             runFlatStakeSimulation();
             document.getElementById('flatStakeModal').classList.remove('hidden');
