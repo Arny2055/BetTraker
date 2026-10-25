@@ -131,12 +131,15 @@
                     <p class="text-[9px] font-bold text-emerald-400 tracking-wider uppercase">Predictor & Bet Tracker</p>
                 </div>
             </div>
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 flex-wrap justify-end">
                 <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-bullseye"></i> Calibración
                 </button>
                 <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
+                </button>
+                <button onclick="toggleParallelTrackerModal(true)" class="bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                    <i class="fa-solid fa-book-bookmark"></i> Bitácora Paralela
                 </button>
                 <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-database"></i> Ligas
@@ -886,7 +889,7 @@
                     <i class="fa-solid fa-receipt text-gold-400 text-base"></i>
                     <h3 class="font-black text-sm text-white">Bet Tracker Pro - Gestor de Apuestas</h3>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     <button onclick="openFlatStakeModal()" class="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
                         <i class="fa-solid fa-sliders"></i> Simulador Stake Plano
                     </button>
@@ -946,41 +949,8 @@
                     </div>
                 </div>
 
-                <!-- MÓDULO NUEVO (BITÁCORA PARALELA): SELECCIONES Y LIGAS CON RENTABILIDAD POSITIVA -->
-                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 overflow-hidden group shadow-lg" open>
-                    <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
-                        <div class="flex items-center gap-1.5">
-                            <i class="fa-solid fa-star text-gold-400 text-xs"></i>
-                            <span class="text-xs font-black text-white uppercase">Bitácora Paralela: Selecciones con Rentabilidad Positiva</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span id="positiveSelectionsBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">0 rentables</span>
-                            <i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i>
-                        </div>
-                    </summary>
-                    <div class="p-3 pt-0 space-y-2">
-                        <p class="text-[10px] text-slate-300">Filtro automático de tus mercados y selecciones que arrojan **beneficio neto positivo ($ > 0)** agrupados por liga.</p>
-                        <div class="overflow-x-auto rounded-xl border border-emerald-500/30 bg-slate-900/60 max-h-52">
-                            <table class="w-full text-[10px] text-left border-collapse excel-table">
-                                <thead class="bg-emerald-950/40 text-emerald-200 sticky top-0 font-extrabold shadow-md border-b border-emerald-500/20">
-                                    <tr>
-                                        <th class="p-1.5">Liga / Competición</th>
-                                        <th class="p-1.5">Mercado / Selección</th>
-                                        <th class="p-1.5 text-center">Aciertos / Total</th>
-                                        <th class="p-1.5 text-center">Yield (%)</th>
-                                        <th class="p-1.5 text-center">Profit Neto (+)</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="positiveSelectionsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
-                                    <!-- Generado dinámicamente -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </details>
-
-                <!-- MÓDULO: RENDIMIENTO POR LIGA -->
-                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group">
+                <!-- NUEVO MÓDULO: RENDIMIENTO POR LIGA -->
+                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
                         <div class="flex items-center gap-1.5">
                             <i class="fa-solid fa-trophy text-gold-400 text-xs"></i>
@@ -1169,6 +1139,99 @@
                     <i class="fa-solid fa-plus-circle"></i> Nueva Apuesta Manual
                 </button>
                 <button onclick="toggleTrackerModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
+                    Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL DE BITÁCORA PARALELA -->
+    <div id="parallelTrackerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-4xl max-h-[94vh] rounded-2xl border border-teal-500/40 flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Header Bitácora Paralela -->
+            <div class="p-3.5 bg-slate-900/90 border-b border-teal-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-teal-400 text-base"></i>
+                    <h3 class="font-black text-sm text-white">Bitácora Paralela - Rentabilidad Positiva por Selección y Liga</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportParallelBetsCSV()" class="bg-teal-500/20 border border-teal-500/40 text-teal-300 hover:bg-teal-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
+                        <i class="fa-solid fa-file-excel"></i> Exportar CSV
+                    </button>
+                    <button onclick="toggleParallelTrackerModal(false)" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body Bitácora Paralela -->
+            <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
+                <div class="bg-teal-950/30 border border-teal-500/30 p-3 rounded-xl text-xs text-slate-300 space-y-1">
+                    <p class="font-bold text-teal-300 flex items-center gap-1.5"><i class="fa-solid fa-circle-info"></i> ¿Qué almacena esta bitácora?</p>
+                    <p class="text-[11px] text-slate-400">
+                        Aquí se acumulan de forma exclusiva las apuestas seleccionadas para seguimiento especializado de rentabilidad positiva por selección, mercado y liga. Puedes enviar cualquier apuesta aquí al registrarla en el formulario principal.
+                    </p>
+                </div>
+
+                <!-- Métricas de la Bitácora Paralela -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Apuestas</span>
+                        <span class="text-sm font-black text-white block mt-1" id="parallelTotalCount">0</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Profit Neto Paralelo</span>
+                        <span class="text-sm font-black text-teal-400 block mt-1" id="parallelNetProfit">$0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Yield Paralelo</span>
+                        <span class="text-sm font-black text-gold-400 block mt-1" id="parallelYield">0.0%</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Win Rate</span>
+                        <span class="text-sm font-black text-emerald-400 block mt-1" id="parallelWinRate">0.0%</span>
+                    </div>
+                </div>
+
+                <!-- Tabla de Apuestas Paralelas -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center px-1">
+                        <span class="text-xs font-extrabold text-teal-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check"></i> Registro de Apuestas en Bitácora Paralela
+                        </span>
+                        <button onclick="clearParallelLogHistory()" class="text-[10px] text-rose-400 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> Vaciar Bitácora Paralela
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-teal-500/30 bg-slate-900/60 max-h-72">
+                        <table class="w-full text-[10px] text-left border-collapse excel-table">
+                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
+                                <tr>
+                                    <th class="p-1.5 text-center">Fecha</th>
+                                    <th class="p-1.5">Liga</th>
+                                    <th class="p-1.5">Partido</th>
+                                    <th class="p-1.5">Mercado / Selección</th>
+                                    <th class="p-1.5 text-center">Cuota Casa</th>
+                                    <th class="p-1.5 text-center">Stake ($)</th>
+                                    <th class="p-1.5 text-center">Estado</th>
+                                    <th class="p-1.5 text-center">P&L ($)</th>
+                                    <th class="p-1.5 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parallelBetsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                <!-- Generado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bitácora Paralela -->
+            <div class="p-3 bg-slate-900/90 border-t border-teal-500/30 flex justify-end">
+                <button onclick="toggleParallelTrackerModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
                     Cerrar
                 </button>
             </div>
@@ -1384,6 +1447,15 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- OPCIÓN DE BITÁCORA PARALELA NUEVA -->
+                <div class="bg-teal-950/20 border border-teal-500/30 p-2.5 rounded-xl space-y-1">
+                    <label class="block text-[10px] font-black text-teal-300 uppercase">Destino del Registro</label>
+                    <select id="logParallelOption" class="w-full bg-inputBg border border-teal-500/40 rounded-xl px-2.5 py-1.5 text-xs text-teal-200 font-bold focus:outline-none focus:border-teal-400">
+                        <option value="original_only">Solo Bitácora Original</option>
+                        <option value="both">Enviar a las Dos Bitácoras (Original + Paralela)</option>
+                    </select>
+                </div>
             </div>
 
             <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end gap-2">
@@ -1502,6 +1574,7 @@
         let bankrollsData = [];
         let activeBankrollId = 'default_bankroll';
         let betLogData = [];
+        let parallelBetLogData = [];
         let currentCalculatedProbs = {};
         let activeBetTab = 'pending';
         let currentCalendarDate = new Date();
@@ -1519,6 +1592,7 @@
             loadLeaguesFromStorage();
             loadBankrollsFromStorage();
             loadBetLogFromStorage();
+            loadParallelBetLogFromStorage();
             populateLeagueDropdowns();
             populateBankrollDropdowns();
             updateTeamSelectors();
@@ -1527,6 +1601,7 @@
             calculatePoisson();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
+            updateParallelTrackerMetrics();
             renderParlayBuilder();
             
             sliderAttackPrev = parseInt(document.getElementById('weightAttackRange').value);
@@ -1767,6 +1842,7 @@
             document.getElementById('logStake').value = calculatedStake;
             document.getElementById('logBookmaker').value = "Bet365";
             document.getElementById('logStatus').value = "PENDING";
+            document.getElementById('logParallelOption').value = "original_only";
 
             calculateLogEv();
             toggleLogBetModal(true);
@@ -1955,6 +2031,17 @@
         function saveBetLogToStorage() {
             localStorage.setItem('poisson_vip_betlog', JSON.stringify(betLogData));
             localStorage.setItem('poisson_vip_stakepct', document.getElementById('globalStakePct').value);
+        }
+
+        function loadParallelBetLogFromStorage() {
+            const stored = localStorage.getItem('poisson_vip_parallel_betlog');
+            if (stored) {
+                try { parallelBetLogData = JSON.parse(stored); } catch(e) { parallelBetLogData = []; }
+            }
+        }
+
+        function saveParallelBetLogToStorage() {
+            localStorage.setItem('poisson_vip_parallel_betlog', JSON.stringify(parallelBetLogData));
         }
 
         function populateLeagueDropdowns() {
@@ -2326,6 +2413,7 @@
             document.getElementById('logStake').value = calculatedStake;
             document.getElementById('logBookmaker').value = "Bet365";
             document.getElementById('logStatus').value = "PENDING";
+            document.getElementById('logParallelOption').value = "original_only";
 
             checkSelectionHistoricalProfit();
             calculateLogEv();
@@ -2350,6 +2438,7 @@
             document.getElementById('logStake').value = item.stake;
             document.getElementById('logBookmaker').value = item.bookmaker || "Bet365";
             document.getElementById('logStatus').value = item.status;
+            document.getElementById('logParallelOption').value = item.inParallel ? "both" : "original_only";
 
             checkSelectionHistoricalProfit();
             calculateLogEv();
@@ -2385,6 +2474,8 @@
             const prob = parseFloat(document.getElementById('logProb').value) || 0;
             const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 1.0;
             const ev = ((prob / 100) * bookieOdds) - 1;
+            const parallelOption = document.getElementById('logParallelOption').value;
+            const sendToParallel = (parallelOption === 'both');
 
             const betRecord = {
                 id: index >= 0 ? betLogData[index].id : Date.now(),
@@ -2401,13 +2492,25 @@
                 ev: (ev * 100).toFixed(1),
                 stake: parseFloat(document.getElementById('logStake').value) || 10,
                 bookmaker: document.getElementById('logBookmaker').value,
-                status: document.getElementById('logStatus').value
+                status: document.getElementById('logStatus').value,
+                inParallel: sendToParallel
             };
 
             if (index >= 0) {
                 betLogData[index] = betRecord;
+                // Sincronizar o actualizar en la paralela si corresponde
+                const pIndex = parallelBetLogData.findIndex(b => b.id === betRecord.id);
+                if (sendToParallel) {
+                    if (pIndex >= 0) parallelBetLogData[pIndex] = { ...betRecord };
+                    else parallelBetLogData.unshift({ ...betRecord });
+                } else {
+                    if (pIndex >= 0) parallelBetLogData.splice(pIndex, 1);
+                }
             } else {
                 betLogData.unshift(betRecord);
+                if (sendToParallel) {
+                    parallelBetLogData.unshift({ ...betRecord });
+                }
                 if (isParlay) {
                     parlaySelections = [];
                     renderParlayBuilder();
@@ -2415,36 +2518,190 @@
             }
 
             saveBetLogToStorage();
+            saveParallelBetLogToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
+            updateParallelTrackerMetrics();
             toggleLogBetModal(false);
-            showToast("¡Apuesta guardada en la bitácora!");
+            showToast(sendToParallel ? "¡Apuesta guardada en ambas bitácoras!" : "¡Apuesta guardada en la bitácora original!");
         }
 
         function deleteBetFromLog(index) {
+            const betToRemove = betLogData[index];
+            if (betToRemove) {
+                parallelBetLogData = parallelBetLogData.filter(b => b.id !== betToRemove.id);
+                saveParallelBetLogToStorage();
+            }
             betLogData.splice(index, 1);
             saveBetLogToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
+            updateParallelTrackerMetrics();
             showToast("Apuesta eliminada.");
         }
 
         function clearBetLogHistory() {
             if (confirm("¿Estás seguro de borrar el historial de apuestas de este Bankroll activo?")) {
+                const activeIds = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).map(b => b.id);
                 betLogData = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) !== activeBankrollId);
+                parallelBetLogData = parallelBetLogData.filter(b => !activeIds.includes(b.id));
                 saveBetLogToStorage();
+                saveParallelBetLogToStorage();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
+                updateParallelTrackerMetrics();
                 showToast("Historial de la caja vaciado.");
             }
         }
 
         function updateBetStatusDirect(index, newStatus) {
             betLogData[index].status = newStatus;
+            const betId = betLogData[index].id;
+            const pIdx = parallelBetLogData.findIndex(b => b.id === betId);
+            if (pIdx >= 0) {
+                parallelBetLogData[pIdx].status = newStatus;
+                saveParallelBetLogToStorage();
+            }
             saveBetLogToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
+            updateParallelTrackerMetrics();
             showToast("Estado actualizado.");
+        }
+
+        // --- FUNCIONES BITÁCORA PARALELA ---
+        function toggleParallelTrackerModal(show) {
+            const modal = document.getElementById('parallelTrackerModal');
+            if (show) {
+                updateParallelTrackerMetrics();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function updateParallelTrackerMetrics() {
+            const tableBody = document.getElementById('parallelBetsTableBody');
+            if (!tableBody) return;
+
+            let totalCount = parallelBetLogData.length;
+            let netProfit = 0;
+            let totalStaked = 0;
+            let wonCount = 0;
+            let closedCount = 0;
+
+            parallelBetLogData.forEach(bet => {
+                if (bet.status !== 'PENDING') {
+                    closedCount++;
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+                    let pnl = 0;
+
+                    if (bet.status === 'WON') {
+                        pnl = stake * (odds - 1);
+                        wonCount++;
+                        totalStaked += stake;
+                    } else if (bet.status === 'LOST') {
+                        pnl = -stake;
+                        totalStaked += stake;
+                    } else if (bet.status === 'HALF_WON') {
+                        pnl = (stake / 2) * (odds - 1);
+                        wonCount += 0.5;
+                        totalStaked += stake;
+                    } else if (bet.status === 'HALF_LOST') {
+                        pnl = -(stake / 2);
+                        totalStaked += stake;
+                    }
+                    netProfit += pnl;
+                }
+            });
+
+            const yieldVal = totalStaked > 0 ? (netProfit / totalStaked) * 100 : 0;
+            const winRateVal = closedCount > 0 ? (wonCount / closedCount) * 100 : 0;
+
+            document.getElementById('parallelTotalCount').innerText = totalCount;
+            const pNetEl = document.getElementById('parallelNetProfit');
+            pNetEl.innerText = (netProfit >= 0 ? '+$' : '-$') + Math.abs(netProfit).toFixed(2);
+            pNetEl.className = netProfit >= 0 ? "text-sm font-black text-teal-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
+            document.getElementById('parallelYield').innerText = yieldVal.toFixed(1) + '%';
+            document.getElementById('parallelWinRate').innerText = winRateVal.toFixed(1) + '%';
+
+            if (parallelBetLogData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">No hay apuestas registradas en la bitácora paralela.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            parallelBetLogData.forEach((bet, idx) => {
+                let pnl = 0;
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'WON') pnl = stake * (odds - 1);
+                else if (bet.status === 'LOST') pnl = -stake;
+                else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
+                else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
+
+                let statusBadge = `<span class="text-amber-400 font-bold">Pendiente</span>`;
+                if (bet.status === 'WON') statusBadge = `<span class="text-emerald-400 font-bold">Ganada</span>`;
+                else if (bet.status === 'LOST') statusBadge = `<span class="text-rose-400 font-bold">Perdida</span>`;
+                else if (bet.status === 'VOID') statusBadge = `<span class="text-slate-400 font-bold">Nula</span>`;
+
+                html += `
+                    <tr>
+                        <td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td>
+                        <td class="p-1.5 font-bold text-white">${bet.league}</td>
+                        <td class="p-1.5 font-bold text-slate-300">${bet.match}</td>
+                        <td class="p-1.5 font-bold text-teal-300">${bet.market} - ${bet.selection}</td>
+                        <td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td>
+                        <td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td>
+                        <td class="p-1.5 text-center">${statusBadge}</td>
+                        <td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-teal-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">
+                            ${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}
+                        </td>
+                        <td class="p-1.5 text-center">
+                            <button onclick="deleteParallelBet(${idx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
+        }
+
+        function deleteParallelBet(index) {
+            parallelBetLogData.splice(index, 1);
+            saveParallelBetLogToStorage();
+            updateParallelTrackerMetrics();
+            showToast("Apuesta eliminada de la bitácora paralela.");
+        }
+
+        function clearParallelLogHistory() {
+            if (confirm("¿Estás seguro de vaciar toda la bitácora paralela?")) {
+                parallelBetLogData = [];
+                saveParallelBetLogToStorage();
+                updateParallelTrackerMetrics();
+                showToast("Bitácora paralela vaciada.");
+            }
+        }
+
+        function exportParallelBetsCSV() {
+            if (parallelBetLogData.length === 0) {
+                showToast("No hay datos en la bitácora paralela para exportar.");
+                return;
+            }
+
+            let csv = "Fecha,Liga,Partido,Mercado,Seleccion,Cuota_Casa,Stake,Estado\n";
+            parallelBetLogData.forEach(b => {
+                csv += `"${b.date}","${b.league}","${b.match}","${b.market}","${b.selection}",${b.bookieOdds},${b.stake},"${b.status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `bitacora_paralela_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         function updateMarketFilterDropdown() {
@@ -2600,7 +2857,6 @@
             document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
             document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
 
-            updatePositiveSelectionsTable(currentBankBets);
             updateLeaguePerformanceTable(filteredBets);
             updateBestEvRangeAnalysis(filteredBets);
 
@@ -2643,88 +2899,6 @@
             renderCalendarView(filteredBets);
             renderPnlChart(currentBankrollArr);
             saveBetLogToStorage();
-        }
-
-        // --- BITÁCORA PARALELA: SELECCIONES CON RENTABILIDAD POSITIVA ---
-        function updatePositiveSelectionsTable(allBankBets) {
-            const tableBody = document.getElementById('positiveSelectionsTableBody');
-            const badgeEl = document.getElementById('positiveSelectionsBadge');
-            if (!tableBody) return;
-
-            const selectionMap = {};
-
-            allBankBets.forEach(bet => {
-                if (bet.status === 'PENDING') return;
-
-                const leagueName = bet.league || 'General';
-                const marketName = bet.market || 'Mercado';
-                const selectionName = bet.selection || 'Selección';
-                const key = `${leagueName}___${marketName}___${selectionName}`;
-
-                if (!selectionMap[key]) {
-                    selectionMap[key] = {
-                        league: leagueName,
-                        market: marketName,
-                        selection: selectionName,
-                        totalCount: 0,
-                        wonCount: 0,
-                        staked: 0,
-                        profit: 0
-                    };
-                }
-
-                selectionMap[key].totalCount++;
-                const stake = parseFloat(bet.stake) || 0;
-                const odds = parseFloat(bet.bookieOdds) || 1;
-                let pnl = 0;
-                let isWon = false;
-
-                if (bet.status === 'WON') {
-                    pnl = stake * (odds - 1);
-                    isWon = true;
-                    selectionMap[key].wonCount++;
-                    selectionMap[key].staked += stake;
-                } else if (bet.status === 'LOST') {
-                    pnl = -stake;
-                    selectionMap[key].staked += stake;
-                } else if (bet.status === 'HALF_WON') {
-                    pnl = (stake / 2) * (odds - 1);
-                    isWon = true;
-                    selectionMap[key].wonCount += 0.5;
-                    selectionMap[key].staked += stake;
-                } else if (bet.status === 'HALF_LOST') {
-                    pnl = -(stake / 2);
-                    selectionMap[key].staked += stake;
-                }
-
-                selectionMap[key].profit += pnl;
-            });
-
-            // Filtrar SOLO las que tienen rentabilidad positiva (Profit > 0)
-            const positiveList = Object.values(selectionMap).filter(item => item.profit > 0);
-            positiveList.sort((a, b) => b.profit - a.profit);
-
-            badgeEl.innerText = `${positiveList.length} rentables`;
-
-            if (positiveList.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500 italic">Aún no hay selecciones con beneficio neto positivo ($ > 0) registradas.</td></tr>`;
-                return;
-            }
-
-            let html = '';
-            positiveList.forEach(item => {
-                const yieldVal = item.staked > 0 ? (item.profit / item.staked) * 100 : 0;
-                html += `
-                    <tr>
-                        <td class="p-1.5 font-bold text-white"><i class="fa-solid fa-trophy text-gold-400 mr-1"></i>${item.league}</td>
-                        <td class="p-1.5 font-bold text-emerald-300">${item.market}: <span class="text-white">${item.selection}</span></td>
-                        <td class="p-1.5 text-center font-bold text-slate-300">${item.wonCount} / ${item.totalCount}</td>
-                        <td class="p-1.5 text-center font-bold text-gold-400">+${yieldVal.toFixed(1)}%</td>
-                        <td class="p-1.5 text-center font-black text-emerald-400">+$${item.profit.toFixed(2)}</td>
-                    </tr>
-                `;
-            });
-            tableBody.innerHTML = html;
         }
 
         // --- FUNCIONES ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
