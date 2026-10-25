@@ -1181,15 +1181,15 @@
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Total Apuestas</span>
                         <span class="text-sm font-black text-white block mt-1" id="parallelTotalCount">0</span>
                     </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Profit Neto Paralelo</span>
                         <span class="text-sm font-black text-teal-400 block mt-1" id="parallelNetProfit">$0.00</span>
                     </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Yield Paralelo</span>
                         <span class="text-sm font-black text-gold-400 block mt-1" id="parallelYield">0.0%</span>
                     </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Win Rate</span>
                         <span class="text-sm font-black text-emerald-400 block mt-1" id="parallelWinRate">0.0%</span>
                     </div>
@@ -2498,7 +2498,6 @@
 
             if (index >= 0) {
                 betLogData[index] = betRecord;
-                // Sincronizar o actualizar en la paralela si corresponde
                 const pIndex = parallelBetLogData.findIndex(b => b.id === betRecord.id);
                 if (sendToParallel) {
                     if (pIndex >= 0) parallelBetLogData[pIndex] = { ...betRecord };
@@ -2901,7 +2900,6 @@
             saveBetLogToStorage();
         }
 
-        // --- FUNCIONES ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
         function updateLeaguePerformanceTable(bankBets) {
             const tableBody = document.getElementById('leaguePerformanceTableBody');
             const badgeEl = document.getElementById('leaguePerformanceBadge');
@@ -2972,7 +2970,6 @@
             tableBody.innerHTML = html;
         }
 
-        // --- SIMULADOR DE STAKE PLANO ---
         function openFlatStakeModal() {
             runFlatStakeSimulation();
             document.getElementById('flatStakeModal').classList.remove('hidden');
