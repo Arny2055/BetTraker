@@ -141,30 +141,33 @@
             </div>
         </header>
 
-        <!-- APARTADO DE ESTRATEGIAS INTELIGENTES (NUEVO) -->
-        <section class="glass-card rounded-2xl p-3.5 space-y-3 border border-emerald-500/50 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 shadow-xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <!-- APARTADO DE ESTRATEGIAS INTELIGENTES DESPLEGABLE (MEJORADO) -->
+        <details class="glass-card rounded-2xl border border-emerald-500/50 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 shadow-xl overflow-hidden group" open>
+            <summary class="p-3.5 cursor-pointer flex items-center justify-between font-black text-xs text-white uppercase select-none bg-emerald-950/30">
                 <div class="flex items-center gap-2">
                     <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
                         <i class="fa-solid fa-brain text-xs"></i>
                     </div>
                     <div>
-                        <h2 class="font-black text-xs text-white uppercase tracking-wide">Estrategias Inteligentes & Valor</h2>
-                        <p class="text-[9px] text-emerald-400 font-bold">Patrones predictivos y selección automatizada de rentabilidad</p>
+                        <h2>Estrategias Inteligentes & Valor</h2>
+                        <p class="text-[9px] text-emerald-400 font-bold normal-case">Patrones predictivos y selección automatizada de rentabilidad</p>
                     </div>
                 </div>
-                <button onclick="generateSmartStrategies()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-xl transition-all shadow-md flex items-center gap-1 active:scale-95">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Analizar Partido
-                </button>
-            </div>
-
+                <div class="flex items-center gap-2">
+                    <button onclick="event.stopPropagation(); generateSmartStrategies();" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-xl transition-all shadow-md flex items-center gap-1 active:scale-95">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Analizar
+                    </button>
+                    <i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i>
+                </div>
+            </summary>
+            
             <!-- Contenedor de Recomendaciones Inteligentes -->
-            <div id="smartStrategiesContainer" class="space-y-2 pt-1">
+            <div id="smartStrategiesContainer" class="p-3.5 space-y-2 pt-1">
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-center text-xs text-slate-400 italic">
-                    Haz clic en "Analizar Partido" para que la inteligencia evalúe los xG, Skellam y el histórico de tu bitácora y te recomiende los mejores patrones rentables.
+                    Haz clic en "Analizar" para que la inteligencia evalúe los xG, Skellam y el histórico de tu bitácora y te recomiende los mejores patrones rentables.
                 </div>
             </div>
-        </section>
+        </details>
 
         <!-- WIDGET NUEVO: MITIGACIÓN DE PÉRDIDAS & STOP-LOSS DINÁMICO -->
         <section id="lossMitigationSection" class="glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 transition-all">
@@ -2631,7 +2634,6 @@
             const probHomeWin = currentCalculatedProbs.probHomeWin || 0.4;
             const probAwayWin = currentCalculatedProbs.probAwayWin || 0.3;
 
-            // Analizar historial de bitácora para ver qué mercado ha sido más rentable
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             const marketProfitMap = {};
             currentBankBets.forEach(bet => {
@@ -2657,7 +2659,6 @@
 
             let strategies = [];
 
-            // Estrategia 1: Oportunidad de Goles / Over
             if (totalLambda >= 2.6) {
                 strategies.push({
                     title: "Patrón de Alta Explosividad Ofensiva",
@@ -2680,7 +2681,6 @@
                 });
             }
 
-            // Estrategia 2: BTTS Inteligente
             if (lambdaHome >= 1.2 && lambdaAway >= 1.0) {
                 strategies.push({
                     title: "Patrón de Intercambio de Goles (BTTS)",
@@ -2703,7 +2703,6 @@
                 });
             }
 
-            // Estrategia 3: Basada en el mercado con mejor histórico en tu bitácora
             strategies.push({
                 title: `Optimización por Histórico (${bestHistoricalMarket})`,
                 desc: `Tu bitácora indica que el mercado <b>${bestHistoricalMarket}</b> ha arrojado los mejores rendimientos en tus cajas. Aprovecha este patrón validado.`,
