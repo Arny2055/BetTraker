@@ -1351,8 +1351,8 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- WIDGET DE CANTIDAD DE MUESTRA Y RENTABILIDAD HISTÓRICA CORREGIDO POR LIGA Y MERCADO -->
-                <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex flex-col gap-1.5 text-xs">
+                <!-- WIDGET DE MUESTREO (LIGA + MERCADO) CORREGIDO -->
+                <div id="selectionHistoryWidget" class="bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex flex-col gap-1.5 text-xs">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-database text-emerald-400"></i>
@@ -1683,7 +1683,6 @@
             const marketInput = document.getElementById('logMarket').value.trim().toLowerCase();
             const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
             const leagueInput = document.getElementById('logLeague').value.trim().toLowerCase();
-            const homeTeamInput = document.getElementById('homeName').value.trim();
             
             const widget = document.getElementById('selectionHistoryWidget');
             const profitValEl = document.getElementById('selectionHistoricalProfitVal');
@@ -1693,28 +1692,20 @@
             const currentLeagueName = document.getElementById('logLeague').value || DEFAULT_LEAGUE_NAME;
             leagueNameTextEl.innerText = currentLeagueName;
 
-            // --- CORRECCIÓN CLAVE ---
-            // Obtenemos los partidos jugados (MP) filtrando estrictamente por la liga introducida en el input del modal
             let sampleSizeMP = 0;
-            // Buscamos coincidencia exacta o parcial en las ligas guardadas
             let foundLeagueKey = Object.keys(leaguesData).find(l => l.toLowerCase() === currentLeagueName.toLowerCase()) || currentLeagueName;
             let teamsInLeague = leaguesData[foundLeagueKey] || [];
             
             if (teamsInLeague.length > 0) {
-                const foundTeam = teamsInLeague.find(t => t.name.toLowerCase() === homeTeamInput.toLowerCase()) || teamsInLeague[0];
-                sampleSizeMP = foundTeam ? foundTeam.mp : teamsInLeague.length;
+                // Sumamos o promediamos MP de los equipos de la liga o tomamos el valor máximo/promedio
+                let totalMpSum = 0;
+                teamsInLeague.forEach(t => totalMpSum += (parseInt(t.mp) || 0));
+                sampleSizeMP = Math.round(totalMpSum / teamsInLeague.length) || teamsInLeague[0].mp || teamsInLeague.length;
             } else {
                 sampleSizeMP = 0;
             }
 
             sampleSizeValEl.innerText = `MP: ${sampleSizeMP} partidos`;
-
-            if (!selectionInput && !marketInput) {
-                widget.classList.remove('hidden');
-                profitValEl.innerText = "$0.00 (Sin selección activa)";
-                profitValEl.className = "font-bold text-slate-400 text-[11px]";
-                return;
-            }
 
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             let historicalProfit = 0;
@@ -2927,7 +2918,6 @@
             saveBetLogToStorage();
         }
 
-        // --- FUNCIONES ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
         function updateLeaguePerformanceTable(bankBets) {
             const tableBody = document.getElementById('leaguePerformanceTableBody');
             const badgeEl = document.getElementById('leaguePerformanceBadge');
@@ -2998,7 +2988,6 @@
             tableBody.innerHTML = html;
         }
 
-        // --- SIMULADOR DE STAKE PLANO ---
         function openFlatStakeModal() {
             runFlatStakeSimulation();
             document.getElementById('flatStakeModal').classList.remove('hidden');
