@@ -943,19 +943,24 @@
                     </div>
                 </div>
 
-                <!-- WIDGET NUEVO: RANGO DE EV MÁS RENTABLE HISTÓRICAMENTE -->
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 space-y-2">
-                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <!-- WIDGET NUEVO: RANGO DE EV MÁS RENTABLE HISTÓRICAMENTE (DESPLEGABLE) -->
+                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group">
+                    <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
                         <div class="flex items-center gap-1.5">
                             <i class="fa-solid fa-chart-pie text-emerald-400 text-xs"></i>
                             <span class="text-xs font-black text-white uppercase">Rango de EV Más Rentable Históricamente</span>
                         </div>
-                        <span id="bestEvRangeBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Sin datos suficientes</span>
+                        <div class="flex items-center gap-2">
+                            <span id="bestEvRangeBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Sin datos suficientes</span>
+                            <i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i>
+                        </div>
+                    </summary>
+                    <div class="p-3 pt-0 space-y-2">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1" id="evRangesGridContainer">
+                            <!-- Generado dinámicamente por JS -->
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1" id="evRangesGridContainer">
-                        <!-- Generado dinámicamente por JS -->
-                    </div>
-                </div>
+                </details>
 
                 <!-- GRÁFICA DE CURVA DE BENEFICIOS (P&L) -->
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
