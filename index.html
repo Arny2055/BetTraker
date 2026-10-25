@@ -59,6 +59,7 @@
             min-height: 100vh;
         }
 
+        /* Ocultar flechas en inputs numéricos */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none;
@@ -68,6 +69,7 @@
             -moz-appearance: textfield;
         }
 
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -80,11 +82,15 @@
             border-radius: 9999px;
         }
 
+        /* Neon Glow & Glassmorphism */
         .neon-emerald-glow {
             box-shadow: 0 0 15px -3px rgba(16, 185, 129, 0.35);
         }
         .neon-gold-glow {
             box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.35);
+        }
+        .neon-rose-glow {
+            box-shadow: 0 0 15px -3px rgba(244, 63, 94, 0.35);
         }
         .glass-card {
             background: rgba(18, 24, 38, 0.85);
@@ -92,6 +98,7 @@
             border: 1px solid rgba(255, 255, 255, 0.07);
         }
 
+        /* Excel Grid Styles */
         .excel-table th, .excel-table td {
             border: 1px solid rgba(255, 255, 255, 0.08);
             white-space: nowrap;
@@ -106,10 +113,12 @@
 </head>
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
 
+    <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <div class="iphone-frame w-full flex flex-col justify-between px-3.5 py-3 space-y-3.5">
         
+        <!-- Header VIP -->
         <header class="glass-card rounded-2xl p-3 flex items-center justify-between border border-slate-800">
             <div class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-emerald-500/20">
@@ -123,44 +132,17 @@
                 </div>
             </div>
             <div class="flex items-center gap-1.5">
-                <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-bullseye"></i> Calibración
                 </button>
-                <button onclick="toggleTrackerModal(true)" class="bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
                 </button>
-                <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-xs px-2.5 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-database"></i> Ligas
                 </button>
             </div>
         </header>
-
-        <!-- APARTADO DE ESTRATEGIA INTELIGENTE ÚNICA OPTIMIZADA -->
-        <details class="glass-card rounded-2xl border border-emerald-500/50 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 shadow-xl overflow-hidden group" open>
-            <summary class="p-3.5 cursor-pointer flex items-center justify-between font-black text-xs text-white uppercase select-none bg-emerald-950/30">
-                <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                        <i class="fa-solid fa-brain text-xs"></i>
-                    </div>
-                    <div>
-                        <h2>Estrategia Inteligente Óptima (Caja Activa)</h2>
-                        <p class="text-[9px] text-emerald-400 font-bold normal-case">Análisis de rendimiento histórico de tu caja y patrones predictivos</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="event.stopPropagation(); generateSmartStrategies();" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-xl transition-all shadow-md flex items-center gap-1 active:scale-95">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Analizar
-                    </button>
-                    <i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i>
-                </div>
-            </summary>
-            
-            <div id="smartStrategiesContainer" class="p-3.5 space-y-2 pt-1">
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-center text-xs text-slate-400 italic">
-                    Haz clic en "Analizar" para que la inteligencia evalúe exclusivamente tu caja activa y seleccione la mejor estrategia global.
-                </div>
-            </div>
-        </details>
 
         <!-- WIDGET NUEVO: MITIGACIÓN DE PÉRDIDAS & STOP-LOSS DINÁMICO -->
         <section id="lossMitigationSection" class="glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 transition-all">
@@ -205,10 +187,12 @@
                 </button>
             </div>
 
+            <!-- Selector de Bankroll y Resumen -->
             <div class="grid grid-cols-3 gap-2 text-center pt-1 items-center">
                 <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 text-left px-2.5">
                     <span class="block text-[8px] uppercase text-slate-400 font-bold">Caja / Bankroll</span>
                     <select id="activeBankrollSelect" onchange="switchActiveBankroll()" class="w-full bg-inputBg border border-slate-700 rounded text-[11px] font-black text-white py-0.5 mt-0.5 focus:outline-none focus:border-emerald-500 truncate">
+                        <!-- Opciones cargadas por JS -->
                     </select>
                 </div>
                 <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
@@ -238,9 +222,11 @@
                     <span class="text-xs font-black text-slate-200 uppercase tracking-wide">Liga Activa:</span>
                 </div>
                 <select id="activeLeagueSelect" onchange="onLeagueSelectChange()" class="bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1 text-xs font-extrabold text-emerald-400 focus:outline-none focus:border-emerald-500 max-w-[200px] truncate">
+                    <!-- Opciones de Ligas cargadas dinámicamente -->
                 </select>
             </div>
 
+            <!-- Seleccionadores Rápidos de Equipos -->
             <div class="grid grid-cols-2 gap-2.5">
                 <div>
                     <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cargar Local</label>
@@ -270,6 +256,7 @@
         <!-- FORMULARIO DE ENTRADAS -->
         <section class="glass-card rounded-2xl p-3.5 space-y-3">
             
+            <!-- Nombres de Equipos -->
             <div class="grid grid-cols-2 gap-2.5">
                 <div>
                     <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Local</label>
@@ -281,7 +268,9 @@
                 </div>
             </div>
 
+            <!-- MODO 1: xG Favor/Contra + GF/GC Híbrido -->
             <div id="modeXgSection" class="space-y-3">
+                <!-- Controles de Ponderación (Sliders) -->
                 <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center text-[10px] font-bold">
                         <span class="text-emerald-400"><i class="fa-solid fa-sliders"></i> Ponderación Ataque (xG vs GF)</span>
@@ -297,6 +286,7 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2.5">
+                    <!-- Stats Local -->
                     <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800/90 space-y-2">
                         <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wide block border-b border-slate-800 pb-1">Stats Local</span>
                         <div>
@@ -317,6 +307,7 @@
                         </div>
                     </div>
 
+                    <!-- Stats Visitante -->
                     <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800/90 space-y-2">
                         <span class="text-[10px] font-black text-emerald-400 uppercase tracking-wide block border-b border-slate-800 pb-1">Stats Visitante</span>
                         <div>
@@ -339,6 +330,7 @@
                 </div>
             </div>
 
+            <!-- MODO 2: Direct xG -->
             <div id="modeDirectSection" class="hidden space-y-2">
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
@@ -352,6 +344,7 @@
                 </div>
             </div>
 
+            <!-- AJUSTE DIXON-COLES -->
             <div class="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/30 space-y-1.5">
                 <div class="flex justify-between items-center text-[10px] font-bold">
                     <span class="text-indigo-400 flex items-center gap-1">
@@ -365,6 +358,7 @@
                 <p class="text-[8px] text-slate-400">Corrige la interdependencia en marcador bajo (0-0, 1-0, 0-1, 1-1). Usa 0.00 para Poisson Estándar.</p>
             </div>
 
+            <!-- BOTONES DE ACCIÓN -->
             <div class="grid grid-cols-3 gap-2 pt-1">
                 <button onclick="clearAllData()" title="Limpiar los datos" class="col-span-1 py-2.5 bg-rose-950/60 hover:bg-rose-900/80 border border-rose-700/40 text-rose-300 font-bold text-xs rounded-xl active:scale-[0.97] transition-all flex items-center justify-center gap-1.5">
                     <i class="fa-solid fa-trash-can text-xs"></i> Limpiar
@@ -376,6 +370,7 @@
             </div>
         </section>
 
+        <!-- LAMBDAS CALCULADAS -->
         <div class="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800/80 flex items-center justify-between text-center">
             <div class="flex-1">
                 <p class="text-[9px] uppercase font-bold text-slate-400 truncate" id="labelHomeLambda">Exp. Goles Local</p>
@@ -388,6 +383,7 @@
             </div>
         </div>
 
+        <!-- MÓDULO SKELLAM DISTRIBUTION MEJORADO Y ACCIONABLE -->
         <details class="glass-card rounded-2xl border border-indigo-500/40 overflow-hidden group shadow-lg" open>
             <summary class="p-3 cursor-pointer flex items-center justify-between font-black text-xs text-indigo-300 select-none bg-indigo-950/40">
                 <div class="flex items-center gap-2">
@@ -400,26 +396,30 @@
                 <p class="text-[10px] text-slate-300">Modela matemáticamente la <b>diferencia neta de goles</b> ($Goles_{Local} - Goles_{Visitante}$) para decisiones de Hándicaps Asiáticos y Mercados 1X2 puros con precisión analítica superior.</p>
                 
                 <div class="grid grid-cols-3 gap-2 text-center" id="skellamSummaryContainer">
+                    <!-- Generado dinámicamente -->
                 </div>
 
                 <div class="space-y-2 pt-1">
                     <div class="text-[10px] font-black text-indigo-300 uppercase tracking-wide">Márgenes de Victoria & Hándicaps Accionables:</div>
                     <div class="space-y-1.5" id="skellamDetailsContainer">
+                        <!-- Detalle interactivo inyectado por JS -->
                     </div>
                 </div>
             </div>
         </details>
 
+        <!-- MERCADO OVER / UNDER 2.5 FT (PRINCIPAL) -->
         <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-fire text-emerald-400 text-xs"></i>
                     <h2 class="font-extrabold text-xs text-white">Mercado Over / Under 2.5 FT</h2>
                 </div>
-                <span class="text-[9px] font-black bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Mercado Clave</span>
+                <span class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Mercado Clave</span>
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
+                <!-- Over 2.5 -->
                 <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/30 neon-emerald-glow flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center">
@@ -438,15 +438,16 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
-                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="addToParlayBuilder('Over / Under Goles', 'Over 2.5', currentCalculatedProbs.probOver25)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-layer-group"></i> Parlay
                         </button>
                     </div>
                 </div>
 
+                <!-- Under 2.5 -->
                 <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center">
@@ -476,19 +477,23 @@
             </div>
         </section>
 
+        <!-- APARTADO DINÁMICO ADICIONAL: REVISIÓN DE TODOS LOS MERCADOS OVER / UNDER (0.5 a 4.5) -->
         <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-list-check text-indigo-400 text-xs"></i>
                     <h2 class="font-extrabold text-xs text-white">Revisión Dinámica de Líneas Over / Under</h2>
                 </div>
-                <span class="text-[9px] font-bold text-indigo-400 bg-indigo-500/15 px-2 py-0.5 rounded border border-indigo-500/20">Líneas Adicionales</span>
+                <span class="text-[9px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">Líneas Adicionales</span>
             </div>
 
+            <!-- Contenedor dinámico inyectado por JS -->
             <div id="dynamicOuContainer" class="space-y-2">
+                <!-- Se genera dinámicamente -->
             </div>
         </section>
 
+        <!-- MERCADO BTTS (AMBOS ANOTAN) -->
         <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
@@ -498,6 +503,7 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
+                <!-- BTTS YES -->
                 <div class="bg-slate-900/90 p-2.5 rounded-xl border border-gold-500/30 neon-gold-glow flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center">
@@ -516,7 +522,7 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2.5">
-                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/15 hover:bg-gold-500/25 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                        <button onclick="openLogBetModal('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
                             <i class="fa-solid fa-plus-circle"></i> Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Ambos Anotan', 'Ambos Anotan Si', currentCalculatedProbs.probBttsYes)" class="w-full py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
@@ -525,6 +531,7 @@
                     </div>
                 </div>
 
+                <!-- BTTS NO -->
                 <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center">
@@ -554,6 +561,7 @@
             </div>
         </section>
 
+        <!-- TOP 3 MARCADORES CORRECTOS -->
         <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
@@ -564,9 +572,11 @@
             </div>
 
             <div class="space-y-2" id="topScoresContainer">
+                <!-- Se genera dinámicamente -->
             </div>
         </section>
 
+        <!-- MERCADO 1X2 -->
         <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
@@ -583,7 +593,7 @@
                         <p class="text-[10px] font-black text-gold-400" id="odds1x2Home">@2.07</p>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2">
-                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20">
+                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20">
                             Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Resultado Final (1X2)', 'Gana ' + (document.getElementById('homeName').value || 'Local'), currentCalculatedProbs.probHomeWin)" class="py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded border border-slate-700">
@@ -613,7 +623,7 @@
                         <p class="text-[10px] font-black text-gold-400" id="odds1x2Away">@3.37</p>
                     </div>
                     <div class="grid grid-cols-2 gap-1 mt-2">
-                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 text-[9px] font-bold rounded border border-rose-500/20">
+                        <button onclick="openLogBetModal('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[9px] font-bold rounded border border-rose-500/20">
                             Sencilla
                         </button>
                         <button onclick="addToParlayBuilder('Resultado Final (1X2)', 'Gana ' + (document.getElementById('awayName').value || 'Visitante'), currentCalculatedProbs.probAwayWin)" class="py-1 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded border border-slate-700">
@@ -624,6 +634,7 @@
             </div>
         </section>
 
+        <!-- WIDGET FLOTANTE / SECCIÓN DE APUESTA COMBINADA (PARLAY BUILDER) -->
         <section class="glass-card rounded-2xl p-3.5 space-y-3 border border-gold-500/40 bg-gradient-to-r from-slate-900 via-amber-950/20 to-slate-900">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
@@ -637,6 +648,7 @@
                 <p class="text-slate-500 text-[11px] italic text-center py-2">No hay selecciones en la combinada. Haz clic en el botón "Parlay" de cualquier mercado.</p>
             </div>
 
+            <!-- Resumen de Parlay -->
             <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 grid grid-cols-3 gap-2 text-center">
                 <div>
                     <span class="block text-[8px] uppercase font-bold text-slate-400">Prob. Conjunta</span>
@@ -655,6 +667,7 @@
             </div>
         </section>
 
+        <!-- MATRIZ COMPLETA DE CALOR DESPLEGABLE -->
         <details class="glass-card rounded-2xl border border-slate-800 overflow-hidden group">
             <summary class="p-3 cursor-pointer flex items-center justify-between font-black text-xs text-white select-none">
                 <div class="flex items-center gap-2">
@@ -678,11 +691,13 @@
                         </tr>
                     </thead>
                     <tbody id="matrixBody" class="divide-y divide-slate-800/40">
+                        <!-- Generado por JS -->
                     </tbody>
                 </table>
             </div>
         </details>
 
+        <!-- GRÁFICA DE GOLES DE CADA EQUIPO -->
         <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
@@ -695,6 +710,7 @@
             </div>
         </section>
 
+        <!-- FOOTER VIP -->
         <footer class="text-center py-2 text-slate-500 text-[10px] space-y-0.5">
             <p class="font-bold text-slate-400">Poisson VIP Pro - Modelador & Bet Tracker</p>
             <p>Cuotas justas calculadas sin margen comercial.</p>
@@ -731,6 +747,7 @@
             </div>
 
             <div class="p-4 space-y-4 overflow-y-auto max-h-[75vh]">
+                <!-- Formulario para Añadir Nuevo Bankroll -->
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2">
                     <span class="text-xs font-bold text-emerald-400 block"><i class="fa-solid fa-plus-circle"></i> Crear Nuevo Bankroll</span>
                     <div class="grid grid-cols-2 gap-2">
@@ -748,9 +765,11 @@
                     </button>
                 </div>
 
+                <!-- Lista de Bankrolls Existentes -->
                 <div class="space-y-2">
                     <span class="text-xs font-extrabold text-slate-200 block">Bankrolls Registrados & Gestor de Retiros (50% Utilidad)</span>
                     <div id="bankrollsListContainer" class="space-y-2">
+                        <!-- Generado por JS -->
                     </div>
                 </div>
             </div>
@@ -767,6 +786,7 @@
     <div id="calibrationModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-4xl max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
             
+            <!-- Header Modal Calibración -->
             <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-bullseye text-indigo-400 text-base"></i>
@@ -779,7 +799,10 @@
                 </div>
             </div>
 
+            <!-- Modal Body Calibración -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
+                
+                <!-- MÉTRICAS PRINCIPALES DE EVALUACIÓN -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center space-y-1">
                         <span class="text-[10px] uppercase font-bold text-slate-400 block">Brier Score Binario</span>
@@ -798,6 +821,7 @@
                     </div>
                 </div>
 
+                <!-- DESCRIPCIÓN Y FORMULAS DE REFERENCIA -->
                 <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1.5">
                     <p class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i> ¿Qué miden estas métricas?</p>
                     <p class="text-[11px] text-slate-400">
@@ -805,6 +829,7 @@
                     </p>
                 </div>
 
+                <!-- GRÁFICA DE CALIBRACIÓN (RELIABILITY DIAGRAM) -->
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-slate-300">Diagrama de Confiabilidad (Reliability Diagram)</span>
@@ -815,6 +840,7 @@
                     </div>
                 </div>
 
+                <!-- TABLA DE EVALUACIÓN DETALLADA -->
                 <div class="space-y-1.5">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-extrabold text-slate-200">Desglose de Calibración por Apuesta Cerrada</span>
@@ -832,6 +858,7 @@
                                 </tr>
                             </thead>
                             <tbody id="calibrationTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                <!-- Filas de calibración cargadas por JS -->
                             </tbody>
                         </table>
                     </div>
@@ -839,6 +866,7 @@
 
             </div>
 
+            <!-- Footer Modal Calibración -->
             <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
                 <button onclick="toggleCalibrationModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
                     Cerrar
@@ -852,6 +880,7 @@
     <div id="trackerModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-4xl max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
             
+            <!-- Header Modal Tracker -->
             <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-receipt text-gold-400 text-base"></i>
@@ -870,8 +899,10 @@
                 </div>
             </div>
 
+            <!-- Modal Body Tracker -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
                 
+                <!-- FILTRO DE MERCADO Y SELECCIÓN ESPECÍFICA -->
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-emerald-500/30 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div class="flex flex-col gap-1">
                         <label class="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1">
@@ -891,6 +922,7 @@
                     </div>
                 </div>
 
+                <!-- METRICAS DE RENDIMIENTO PRINCIPALES -->
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Bankroll Activo</span>
@@ -914,6 +946,7 @@
                     </div>
                 </div>
 
+                <!-- NUEVO MÓDULO: RENDIMIENTO POR LIGA -->
                 <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
                         <div class="flex items-center gap-1.5">
@@ -938,12 +971,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="leaguePerformanceTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                    <!-- Generado dinámicamente -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </details>
 
+                <!-- WIDGET NUEVO: RANGO DE EV MÁS RENTABLE HISTÓRICAMENTE (DESPLEGABLE) -->
                 <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group">
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
                         <div class="flex items-center gap-1.5">
@@ -957,10 +992,12 @@
                     </summary>
                     <div class="p-3 pt-0 space-y-2">
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1" id="evRangesGridContainer">
+                            <!-- Generado dinámicamente por JS -->
                         </div>
                     </div>
                 </details>
 
+                <!-- GRÁFICA DE CURVA DE BENEFICIOS (P&L) -->
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-slate-300">Curva de Beneficios (P&L de Apuestas Cerradas)</span>
@@ -971,6 +1008,7 @@
                     </div>
                 </div>
 
+                <!-- SECCIÓN Y VISTA DE CALENDARIO DIARIO (DESPLEGABLE) -->
                 <details class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden group">
                     <summary class="p-3 cursor-pointer flex items-center justify-between font-bold text-xs text-white select-none">
                         <div class="flex items-center gap-2">
@@ -988,17 +1026,22 @@
                             </div>
                         </div>
 
+                        <!-- Días de la semana -->
                         <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 border-b border-slate-800 pb-1">
                             <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
                         </div>
 
+                        <!-- Cuadrícula del Calendario -->
                         <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
+                            <!-- Generado por JS -->
                         </div>
                     </div>
                 </details>
 
+                <!-- SECCIÓN Y TABLAS: SEPARACIÓN APUESTAS PENDIENTES VS CERRADAS -->
                 <div class="space-y-2">
                     
+                    <!-- BARRA DE PESTAÑAS Y NAVEGACIÓN -->
                     <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                         <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
                             <button id="tabBtnPending" onclick="setActiveBetTab('pending')" class="px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow-md">
@@ -1019,6 +1062,7 @@
                         </button>
                     </div>
 
+                    <!-- TABLA APUESTAS PENDIENTES -->
                     <div id="sectionPendingBets" class="space-y-1.5">
                         <div class="flex justify-between items-center px-1">
                             <span class="text-xs font-extrabold text-amber-400 flex items-center gap-1.5">
@@ -1044,11 +1088,13 @@
                                     </tr>
                                 </thead>
                                 <tbody id="pendingBetsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                    <!-- Filas de pendientes cargadas por JS -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
+                    <!-- TABLA APUESTAS CERRADAS / LIQUIDADAS -->
                     <div id="sectionClosedBets" class="space-y-1.5 hidden">
                         <div class="flex justify-between items-center px-1">
                             <span class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5">
@@ -1074,6 +1120,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="closedBetsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                    <!-- Filas de cerradas cargadas por JS -->
                                 </tbody>
                             </table>
                         </div>
@@ -1083,6 +1130,7 @@
 
             </div>
 
+            <!-- Footer Modal Tracker -->
             <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-between items-center">
                 <button onclick="openLogBetModal()" class="bg-gold-500 hover:bg-gold-600 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl transition-all shadow-md flex items-center gap-1.5">
                     <i class="fa-solid fa-plus-circle"></i> Nueva Apuesta Manual
@@ -1108,6 +1156,7 @@
                 </button>
             </div>
             <div class="p-4 space-y-3 overflow-y-auto max-h-[65vh]" id="dayBetsModalContent">
+                <!-- Generado por JS -->
             </div>
             <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
                 <button onclick="toggleDayBetsModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button>
@@ -1115,7 +1164,7 @@
         </div>
     </div>
 
-    <!-- MODAL SIMULADOR DE STAKE PLANO -->
+    <!-- MODAL SIMULADOR DE STAKE PLANO (WHAT-IF FLAT STAKE) -->
     <div id="flatStakeModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-2xl max-h-[92vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
             <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
@@ -1129,6 +1178,7 @@
             </div>
 
             <div class="p-4 space-y-4 overflow-y-auto flex-1">
+                <!-- Controles del simulador -->
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div>
                         <span class="text-xs font-extrabold text-white block">Importe de Stake Fijo por Apuesta</span>
@@ -1140,6 +1190,7 @@
                     </div>
                 </div>
 
+                <!-- Métricas Comparativas de la Simulación -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
                         <span class="block text-[8px] uppercase text-slate-400 font-bold">P&L Real (Actual)</span>
@@ -1159,11 +1210,13 @@
                     </div>
                 </div>
 
+                <!-- Análisis / Veredicto -->
                 <div id="simVerdictBox" class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-xs text-slate-300 space-y-1">
                     <p class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i> Conclusión del Simulador</p>
                     <p id="simVerdictText" class="text-[11px] text-slate-400">Calculando resultados de la simulación...</p>
                 </div>
 
+                <!-- Gráfica Comparativa de Curvas -->
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-300">Curva Comparativa: Real vs Stake Plano</span>
@@ -1202,6 +1255,7 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
+                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN -->
                 <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-chart-line text-emerald-400"></i>
@@ -1252,6 +1306,7 @@
                     </div>
                 </div>
 
+                <!-- ALERTA VALUE TRAP -->
                 <div id="valueTrapWarning" class="hidden text-[10px] bg-amber-950/50 border border-amber-500/40 text-amber-300 p-2 rounded-xl flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
                     <span><b>Atención:</b> Esta cuota muestra EV negativo o trampa de valor frente a la probabilidad Poisson.</span>
@@ -1265,7 +1320,7 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-[10px] font-bold text-slate-400">Stake / Apuesta ($)</label>
-                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/15 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
+                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
                                 <i class="fa-solid fa-calculator"></i> Kelly 1/4
                             </button>
                         </div>
@@ -1440,7 +1495,6 @@
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             renderParlayBuilder();
-            generateSmartStrategies();
             
             sliderAttackPrev = parseInt(document.getElementById('weightAttackRange').value);
             sliderDefensePrev = parseInt(document.getElementById('weightDefenseRange').value);
@@ -1894,7 +1948,6 @@
             saveBankrollsToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
-            generateSmartStrategies(); // Recalcula estrategia basada en la caja activa
             showToast("Caja activa cambiada.");
         }
 
@@ -1931,7 +1984,6 @@
             populateBankrollDropdowns();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
-            generateSmartStrategies();
 
             nameInput.value = '';
             amountInput.value = '1000';
@@ -1954,7 +2006,6 @@
                 populateBankrollDropdowns();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
-                generateSmartStrategies();
                 showToast("Bankroll eliminado.");
             }
         }
@@ -2034,7 +2085,7 @@
                                 <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Profit Neto: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateMarketFilterDropdown(); updateTrackerMetrics(); generateSmartStrategies(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
                                 <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
@@ -2315,7 +2366,6 @@
             saveBetLogToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
-            generateSmartStrategies();
             toggleLogBetModal(false);
             showToast("¡Apuesta guardada en la bitácora!");
         }
@@ -2325,7 +2375,6 @@
             saveBetLogToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
-            generateSmartStrategies();
             showToast("Apuesta eliminada.");
         }
 
@@ -2335,7 +2384,6 @@
                 saveBetLogToStorage();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
-                generateSmartStrategies();
                 showToast("Historial de la caja vaciado.");
             }
         }
@@ -2345,7 +2393,6 @@
             saveBetLogToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
-            generateSmartStrategies();
             showToast("Estado actualizado.");
         }
 
@@ -2546,161 +2593,7 @@
             saveBetLogToStorage();
         }
 
-        // --- APARTADO INTELIGENTE: SOLO LA MEJOR ESTRATEGIA BASADA EXCLUSIVAMENTE EN LA CAJA ACTIVA ---
-        function generateSmartStrategies() {
-            const container = document.getElementById('smartStrategiesContainer');
-            const homeName = document.getElementById('homeName').value || 'Local';
-            const awayName = document.getElementById('awayName').value || 'Visitante';
-            
-            const lambdaHome = parseFloat(document.getElementById('valHomeLambda').innerText) || 1.5;
-            const lambdaAway = parseFloat(document.getElementById('valAwayLambda').innerText) || 1.2;
-            const totalLambda = lambdaHome + lambdaAway;
-
-            const probOver25 = currentCalculatedProbs.probOver25 || 0.5;
-            const probUnder25 = currentCalculatedProbs.probUnder25 || 0.5;
-            const probBttsYes = currentCalculatedProbs.probBttsYes || 0.5;
-            const probBttsNo = currentCalculatedProbs.probBttsNo || 0.5;
-            const probHomeWin = currentCalculatedProbs.probHomeWin || 0.4;
-            const probAwayWin = currentCalculatedProbs.probAwayWin || 0.3;
-
-            // Filtramos estrictamente el historial por la caja activa
-            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            
-            // Recopilamos y mezclamos todo el rendimiento del historial de esta caja (por mercado y selección)
-            const performanceMap = {};
-            currentBankBets.forEach(bet => {
-                if (bet.status !== 'PENDING') {
-                    const marketKey = `${bet.market || 'General'} — ${bet.selection || 'General'}`;
-                    if (!performanceMap[marketKey]) {
-                        performanceMap[marketKey] = { profit: 0, count: 0, won: 0, staked: 0 };
-                    }
-                    const stake = parseFloat(bet.stake) || 0;
-                    const odds = parseFloat(bet.bookieOdds) || 1;
-                    if (bet.status === 'WON') {
-                        performanceMap[marketKey].profit += stake * (odds - 1);
-                        performanceMap[marketKey].won++;
-                        performanceMap[marketKey].staked += stake;
-                    } else if (bet.status === 'LOST') {
-                        performanceMap[marketKey].profit -= stake;
-                        performanceMap[marketKey].staked += stake;
-                    } else if (bet.status === 'HALF_WON') {
-                        performanceMap[marketKey].profit += (stake / 2) * (odds - 1);
-                        performanceMap[marketKey].won += 0.5;
-                        performanceMap[marketKey].staked += stake;
-                    } else if (bet.status === 'HALF_LOST') {
-                        performanceMap[marketKey].profit -= (stake / 2);
-                        performanceMap[marketKey].staked += stake;
-                    }
-                    performanceMap[marketKey].count++;
-                }
-            });
-
-            // Buscamos la selección más rentable histórica dentro de la caja activa
-            let bestHistoricalSelection = null;
-            let maxProfitFound = -Infinity;
-            Object.keys(performanceMap).forEach(key => {
-                if (performanceMap[key].profit > maxProfitFound) {
-                    maxProfitFound = performanceMap[key].profit;
-                    bestHistoricalSelection = { key, ...performanceMap[key] };
-                }
-            });
-
-            // Generamos candidatos de estrategia actual combinando modelo matemático y datos de la caja
-            let candidates = [
-                {
-                    title: "Estrategia xG: Over 2.5 Explosivo",
-                    desc: `El total combinado de goles (${totalLambda.toFixed(2)}) sugiere un encuentro con tendencia ofensiva alta. Probabilidad Poisson: ${(probOver25*100).toFixed(1)}%.`,
-                    market: "Over / Under Goles",
-                    selection: "Over 2.5",
-                    prob: probOver25,
-                    score: probOver25 * 100
-                },
-                {
-                    title: "Estrategia xG: Under 2.5 Táctico",
-                    desc: `El xG conjunto de ${totalLambda.toFixed(2)} indica un partido cerrado de máxima cautela defensiva. Probabilidad Poisson: ${(probUnder25*100).toFixed(1)}%.`,
-                    market: "Over / Under Goles",
-                    selection: "Under 2.5",
-                    prob: probUnder25,
-                    score: probUnder25 * 100
-                },
-                {
-                    title: "Estrategia xG: Ambos Equipos Anotan (BTTS Sí)",
-                    desc: `Ambos equipos registran índices de ataque sólidos. Probabilidad calculada de intercambio de goles: ${(probBttsYes*100).toFixed(1)}%.`,
-                    market: "Ambos Anotan",
-                    selection: "Ambos Anotan Si",
-                    prob: probBttsYes,
-                    score: probBttsYes * 100
-                },
-                {
-                    title: "Estrategia 1X2: Victoria Sólida Local",
-                    desc: `El diferencial de xG avala la superioridad del equipo local. Probabilidad de triunfo: ${(probHomeWin*100).toFixed(1)}%.`,
-                    market: "Resultado Final (1X2)",
-                    selection: "Gana " + homeName,
-                    prob: probHomeWin,
-                    score: probHomeWin * 100
-                }
-            ];
-
-            // Si hay un patrón histórico ganador en esta caja, le damos máxima prioridad ponderada
-            let bestStrategy = candidates[0];
-            let topScore = -1;
-
-            candidates.forEach(cand => {
-                let currentScore = cand.score;
-                // Si este candidato coincide con lo que históricamente le ha dado más dinero en ESTA caja, sube su peso
-                if (bestHistoricalSelection && bestHistoricalSelection.key.toLowerCase().includes(cand.selection.toLowerCase()) && bestHistoricalSelection.profit > 0) {
-                    currentScore += (bestHistoricalSelection.profit * 2);
-                }
-                if (currentScore > topScore) {
-                    topScore = currentScore;
-                    bestStrategy = cand;
-                }
-            });
-
-            // Si el historial de la caja tiene un claro ganador con profit positivo neto, lo destacamos como la mejor estrategia absoluta basada en el historial
-            let badgeText = "Óptima por Modelo & Caja";
-            if (bestHistoricalSelection && bestHistoricalSelection.profit > 0) {
-                bestStrategy = {
-                    title: `Patrón Validado por Historial (${bestHistoricalSelection.key})`,
-                    desc: `Tu bitácora en la caja activa muestra un beneficio neto de <b>+$${bestHistoricalSelection.profit.toFixed(2)}</b> en esta selección. El cruce con el xG actual refuerza su viabilidad.`,
-                    market: bestHistoricalSelection.key.split(' — ')[0] || 'Over / Under Goles',
-                    selection: bestHistoricalSelection.key.split(' — ')[1] || 'Over 2.5',
-                    prob: bestStrategy.prob
-                };
-                badgeText = "👑 Mayor Rentabilidad Histórica (Caja Activa)";
-            }
-
-            const fairOdds = (1 / Math.max(0.001, bestStrategy.prob)).toFixed(2);
-
-            let html = `
-                <div class="bg-slate-900/90 p-3.5 rounded-xl border border-emerald-500/40 space-y-2.5 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 shadow-lg">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-black text-white flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-check text-emerald-400"></i> ${bestStrategy.title}
-                        </span>
-                        <span class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                            ${badgeText}
-                        </span>
-                    </div>
-                    <p class="text-[11px] text-slate-300 leading-relaxed">${bestStrategy.desc}</p>
-                    <div class="flex justify-between items-center pt-2 border-t border-slate-800 text-xs">
-                        <span class="text-slate-400">Selección: <b class="text-emerald-400">${bestStrategy.market} — ${bestStrategy.selection}</b> (${(bestStrategy.prob*100).toFixed(1)}% | @${fairOdds})</span>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick="openLogModFromStrategy('${bestStrategy.market}', '${bestStrategy.selection}', ${bestStrategy.prob})" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] rounded-lg shadow transition-all active:scale-95">
-                                <i class="fa-solid fa-plus-circle mr-1"></i> Añadir a Bitácora
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            container.innerHTML = html;
-        }
-
-        function openLogModFromStrategy(market, selection, prob) {
-            openLogBetModal(market, selection, prob);
-        }
-
+        // --- FUNCIÓN NUEVA: ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
         function updateLeaguePerformanceTable(bankBets) {
             const tableBody = document.getElementById('leaguePerformanceTableBody');
             const badgeEl = document.getElementById('leaguePerformanceBadge');
@@ -2749,6 +2642,7 @@
                 return;
             }
 
+            // Ordenar por beneficio neto descendente
             leaguesArray.sort((a, b) => b.profit - a.profit);
 
             let html = '';
@@ -2771,6 +2665,7 @@
             tableBody.innerHTML = html;
         }
 
+        // --- FUNCIONES DEL NUEVO SIMULADOR DE STAKE PLANO ---
         function openFlatStakeModal() {
             runFlatStakeSimulation();
             document.getElementById('flatStakeModal').classList.remove('hidden');
@@ -3588,8 +3483,8 @@
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="text-xs font-black text-gold-400">@${odds.toFixed(2)}</span>
-                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded border border-indigo-500/30">Parlay</button>
+                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-indigo-500/30">Parlay</button>
                         </div>
                     </div>
                 `;
@@ -3738,10 +3633,10 @@
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-black text-emerald-400">${pct}%</span>
                             <span class="text-xs font-black text-gold-400">@${odds}</span>
-                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
+                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
                                 Sencilla
                             </button>
-                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Parlay">
+                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/20" title="Parlay">
                                 Parlay
                             </button>
                         </div>
@@ -3751,7 +3646,6 @@
 
             renderMatrix(matrix);
             renderGoalsChart(homeProbs, awayProbs);
-            generateSmartStrategies();
         }
 
         function renderDynamicOverUnder(matrix) {
@@ -3784,8 +3678,8 @@
                         
                         <div class="flex items-center gap-1.5">
                             <span class="font-black text-emerald-400">${pctOver}% (@${oddsOver})</span>
-                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/15 hover:bg-gold-500/25 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
+                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
                         </div>
 
                         <div class="flex items-center gap-1.5">
