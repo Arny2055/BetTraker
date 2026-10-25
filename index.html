@@ -887,6 +887,9 @@
                     <h3 class="font-black text-sm text-white">Bet Tracker Pro - Gestor de Apuestas</h3>
                 </div>
                 <div class="flex items-center gap-2">
+                    <button onclick="openFlatStakeModal()" class="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
+                        <i class="fa-solid fa-sliders"></i> Simulador Stake Plano
+                    </button>
                     <button onclick="exportBetsCSV()" class="bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
                         <i class="fa-solid fa-file-excel"></i> Exportar CSV
                     </button>
@@ -1129,6 +1132,79 @@
         </div>
     </div>
 
+    <!-- MODAL SIMULADOR DE STAKE PLANO (WHAT-IF FLAT STAKE) -->
+    <div id="flatStakeModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-2xl max-h-[92vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-indigo-400 text-base"></i>
+                    <h3 class="font-black text-sm text-white">Simulador de Stake Plano (What-If Analysis)</h3>
+                </div>
+                <button onclick="toggleFlatStakeModal(false)" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-4 space-y-4 overflow-y-auto flex-1">
+                <!-- Controles del simulador -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div>
+                        <span class="text-xs font-extrabold text-white block">Importe de Stake Fijo por Apuesta</span>
+                        <span class="text-[10px] text-slate-400">Calcula qué hubiera pasado si todas tus apuestas usaran esta cantidad exacta.</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-emerald-400 font-bold text-xs">$</span>
+                        <input type="number" id="flatStakeAmountInput" value="20" step="5" min="1" oninput="runFlatStakeSimulation()" class="w-24 bg-inputBg border border-indigo-500/50 rounded-xl px-3 py-1.5 text-sm font-black text-white text-center">
+                    </div>
+                </div>
+
+                <!-- Métricas Comparativas de la Simulación -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">P&L Real (Actual)</span>
+                        <span class="text-xs font-black mt-1 block" id="simRealPnl">$0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/40 bg-indigo-950/20">
+                        <span class="block text-[8px] uppercase text-indigo-400 font-bold">P&L Stake Plano</span>
+                        <span class="text-xs font-black mt-1 block text-indigo-300" id="simFlatPnl">$0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Yield Real</span>
+                        <span class="text-xs font-black mt-1 block text-gold-400" id="simRealYield">0.0%</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Yield Stake Plano</span>
+                        <span class="text-xs font-black mt-1 block text-emerald-400" id="simFlatYield">0.0%</span>
+                    </div>
+                </div>
+
+                <!-- Análisis / Veredicto -->
+                <div id="simVerdictBox" class="bg-slate-900/60 border border-slate-800 p-3 rounded-xl text-xs text-slate-300 space-y-1">
+                    <p class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i> Conclusión del Simulador</p>
+                    <p id="simVerdictText" class="text-[11px] text-slate-400">Calculando resultados de la simulación...</p>
+                </div>
+
+                <!-- Gráfica Comparativa de Curvas -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-300">Curva Comparativa: Real vs Stake Plano</span>
+                        <div class="flex items-center gap-3 text-[10px]">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Real</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block"></span> Stake Plano</span>
+                        </div>
+                    </div>
+                    <div class="h-44 w-full">
+                        <canvas id="flatStakeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
+                <button onclick="toggleFlatStakeModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE FORMULARIO REGISTRAR APUESTA -->
     <div id="logBetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-md rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
@@ -1253,11 +1329,9 @@
         </div>
     </div>
 
-    <!-- MODAL DE GESTIÓN DE LIGAS Y TABLA ESTILO EXCEL -->
+    <!-- MODAL DE GESTIÓN DE LIGAS -->
     <div id="leagueModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-2xl max-h-[92vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
-            
-            <!-- Header Modal -->
             <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-table text-emerald-400 text-base"></i>
@@ -1268,10 +1342,7 @@
                 </button>
             </div>
 
-            <!-- Modal Body -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
-                
-                <!-- Sección para Importar/Pegar Texto en Bruto -->
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2.5">
                     <div class="flex justify-between items-center">
                         <label class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5">
@@ -1279,17 +1350,16 @@
                         </label>
                         <span class="text-[9px] text-slate-400">Soporta tabs, espacios y formato sin espacios</span>
                     </div>
-                    <textarea id="rawInput" rows="4" placeholder="Pega aquí la tabla copiada (ej. # Team MP xG xGA... o copiada directo de Excel)" class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+                    <textarea id="rawInput" rows="4" placeholder="Pega aquí la tabla copiada..." class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
                     
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="text" id="leagueNameInput" placeholder="Nombre de la Liga (ej. Eliteserien Noruega)" class="bg-inputBg border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                        <input type="text" id="leagueNameInput" placeholder="Nombre de la Liga" class="bg-inputBg border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
                         <button onclick="parseAndSaveLeague()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs py-1.5 px-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-floppy-disk"></i> Procesar y Guardar
                         </button>
                     </div>
                 </div>
 
-                <!-- Selector / Administración de Ligas Guardadas -->
                 <div class="flex items-center justify-between bg-slate-900/50 p-2 rounded-xl border border-slate-800">
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-bold text-slate-300">Liga Visualizada:</span>
@@ -1301,7 +1371,6 @@
                     </button>
                 </div>
 
-                <!-- VISTA ESTILO EXCEL DE LA TABLA DE LA LIGA -->
                 <div class="space-y-1.5">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-extrabold text-slate-200">Vista de Tabla Estilo Excel</span>
@@ -1324,27 +1393,22 @@
                                 </tr>
                             </thead>
                             <tbody id="excelTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
-                                <!-- Filas de Excel cargadas por JS -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
 
-            <!-- Footer Modal -->
             <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
                 <button onclick="toggleLeagueModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
                     Cerrar
                 </button>
             </div>
-
         </div>
     </div>
 
     <!-- JAVASCRIPT COMPLETO -->
     <script>
-        // DATOS INICIALES POR DEFECTO (Liga Noruega Eliteserien)
         const DEFAULT_LEAGUE_NAME = "Eliteserien (Noruega)";
         const DEFAULT_RAW_DATA = `#	Team	MP	xG	xGA	xGD	GF	GA	xG vs Actual
 1	FK Bodo - Glimt	23	2.29	0.95	+1.34	2.52	0.87	+0.23
@@ -1368,6 +1432,7 @@
         let chartInstance = null;
         let pnlChartInstance = null;
         let calibrationChartInstance = null;
+        let flatStakeChartInstance = null;
         let leaguesData = {};
         let bankrollsData = [];
         let activeBankrollId = 'default_bankroll';
@@ -1377,17 +1442,14 @@
         let currentCalendarDate = new Date();
         let stopLossDismissedToday = false;
         
-        // Variables temporales para confirmación de sliders
         let pendingSliderType = null;
         let pendingSliderElement = null;
         let pendingSliderVal = 70;
         let sliderAttackPrev = 70;
         let sliderDefensePrev = 70;
 
-        // CONSTRUCTOR DE PARLAYS / COMBINADAS
         let parlaySelections = [];
 
-        // INICIALIZACIÓN
         window.onload = function() {
             loadLeaguesFromStorage();
             loadBankrollsFromStorage();
@@ -1406,7 +1468,6 @@
             sliderDefensePrev = parseInt(document.getElementById('weightDefenseRange').value);
         };
 
-        // CONTROL DE CONFIRMACIÓN DE SLIDERS DE PONDERACIÓN
         function previewWeightChange(type, slider) {
             const val = slider.value;
             if (type === 'attack') {
@@ -1455,7 +1516,6 @@
             updateWeightLabels();
         }
 
-        // SISTEMA DE NOTIFICACIONES TOAST
         function showToast(message) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -1473,7 +1533,6 @@
             document.getElementById('lossMitigationAlert').classList.add('hidden');
         }
 
-        // VERIFICAR PROFIT HISTÓRICO DE LA SELECCIÓN
         function checkSelectionHistoricalProfit() {
             const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
             const widget = document.getElementById('selectionHistoryWidget');
@@ -1509,7 +1568,6 @@
             }
         }
 
-        // FUNCIONES DEL CONSTRUCTOR DE PARLAYS
         function addToParlayBuilder(market, selection, prob) {
             const homeName = document.getElementById('homeName').value || 'Local';
             const awayName = document.getElementById('awayName').value || 'Visitante';
@@ -1638,7 +1696,6 @@
             toggleLogBetModal(true);
         }
 
-        // CONTROL DE SECCIONES / PESTAÑAS
         function setActiveBetTab(tab) {
             activeBetTab = tab;
             const btnPending = document.getElementById('tabBtnPending');
@@ -1667,7 +1724,6 @@
             }
         }
 
-        // CAMBIO DE MODO
         function switchMode(mode) {
             currentMode = mode;
             const btnXg = document.getElementById('btnModeXg');
@@ -2143,7 +2199,7 @@
             if (recommendedStake < 1) recommendedStake = 1;
 
             document.getElementById('logStake').value = recommendedStake;
-            showToast(`Stake Kelly 1/4 (${selectionNetProfit < 0 ? '80% saldo por selección en negativo' : '100% saldo'}): $${recommendedStake}`);
+            showToast(`Stake Kelly 1/4: $${recommendedStake}`);
         }
 
         function openLogBetModal(market = '', selection = '', prob = 0) {
@@ -2461,7 +2517,6 @@
             document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
             document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
 
-            // --- CÁLCULO DE RANGO DE EV MÁS RENTABLE HISTÓRICAMENTE ---
             updateBestEvRangeAnalysis(filteredBets);
 
             const streakLabel = streakType === 'LOSS' ? `🔥 ${currentStreakCount} Derrotas` : (streakType === 'WIN' ? `⭐ ${currentStreakCount} Victorias` : 'Neutral');
@@ -2505,14 +2560,150 @@
             saveBetLogToStorage();
         }
 
-        // FUNCIÓN ANALÍTICA DE RANGOS DE EV
+        // --- FUNCIONES DEL NUEVO SIMULADOR DE STAKE PLANO ---
+        function openFlatStakeModal() {
+            runFlatStakeSimulation();
+            document.getElementById('flatStakeModal').classList.remove('hidden');
+        }
+
+        function toggleFlatStakeModal(show) {
+            const modal = document.getElementById('flatStakeModal');
+            if (show) {
+                runFlatStakeSimulation();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function runFlatStakeSimulation() {
+            const flatStakeVal = parseFloat(document.getElementById('flatStakeAmountInput').value) || 20;
+            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
+            const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            
+            const filteredBets = currentBankBets.filter(b => {
+                const matchMarket = (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter);
+                const matchSelection = (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter);
+                return matchMarket && matchSelection;
+            });
+
+            const closedBetsChronological = filteredBets.filter(b => b.status !== 'PENDING').slice().reverse();
+
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            const initialBank = activeBankObj.initial;
+
+            let realTotalProfit = 0;
+            let flatTotalProfit = 0;
+            let flatTotalStaked = 0;
+            let realTotalStaked = 0;
+
+            const realCurve = [initialBank];
+            const flatCurve = [initialBank];
+
+            let currentRealBank = initialBank;
+            let currentFlatBank = initialBank;
+
+            closedBetsChronological.forEach(bet => {
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                const realStake = parseFloat(bet.stake) || 0;
+                
+                // Real PnL
+                let realPnl = 0;
+                if (bet.status === 'WON') { realPnl = realStake * (odds - 1); realTotalStaked += realStake; }
+                else if (bet.status === 'LOST') { realPnl = -realStake; realTotalStaked += realStake; }
+                else if (bet.status === 'HALF_WON') { realPnl = (realStake / 2) * (odds - 1); realTotalStaked += realStake; }
+                else if (bet.status === 'HALF_LOST') { realPnl = -(realStake / 2); realTotalStaked += realStake; }
+                
+                realTotalProfit += realPnl;
+                currentRealBank += realPnl;
+                realCurve.push(currentRealBank);
+
+                // Flat Stake PnL
+                let flatPnl = 0;
+                if (bet.status === 'WON') { flatPnl = flatStakeVal * (odds - 1); flatTotalStaked += flatStakeVal; }
+                else if (bet.status === 'LOST') { flatPnl = -flatStakeVal; flatTotalStaked += flatStakeVal; }
+                else if (bet.status === 'HALF_WON') { flatPnl = (flatStakeVal / 2) * (odds - 1); flatTotalStaked += flatStakeVal; }
+                else if (bet.status === 'HALF_LOST') { flatPnl = -(flatStakeVal / 2); flatTotalStaked += flatStakeVal; }
+
+                flatTotalProfit += flatPnl;
+                currentFlatBank += flatPnl;
+                flatCurve.push(currentFlatBank);
+            });
+
+            const realYield = realTotalStaked > 0 ? (realTotalProfit / realTotalStaked) * 100 : 0;
+            const flatYield = flatTotalStaked > 0 ? (flatTotalProfit / flatTotalStaked) * 100 : 0;
+
+            document.getElementById('simRealPnl').innerText = (realTotalProfit >= 0 ? '+$' : '-$') + Math.abs(realTotalProfit).toFixed(2);
+            document.getElementById('simRealPnl').className = realTotalProfit >= 0 ? 'text-xs font-black mt-1 block text-emerald-400' : 'text-xs font-black mt-1 block text-rose-400';
+
+            document.getElementById('simFlatPnl').innerText = (flatTotalProfit >= 0 ? '+$' : '-$') + Math.abs(flatTotalProfit).toFixed(2);
+            document.getElementById('simFlatPnl').className = flatTotalProfit >= 0 ? 'text-xs font-black mt-1 block text-emerald-400' : 'text-xs font-black mt-1 block text-rose-400';
+
+            document.getElementById('simRealYield').innerText = realYield.toFixed(1) + '%';
+            document.getElementById('simFlatYield').innerText = flatYield.toFixed(1) + '%';
+
+            const verdictText = document.getElementById('simVerdictText');
+            if (closedBetsChronological.length === 0) {
+                verdictText.innerText = "No hay suficientes apuestas cerradas en esta caja para realizar la simulación.";
+            } else if (flatTotalProfit > realTotalProfit) {
+                verdictText.innerHTML = `Con un stake plano de <b>$${flatStakeVal}</b> habrías obtenido <b>+$${(flatTotalProfit - realTotalProfit).toFixed(2)} extra</b> en comparación con tu gestión variable actual. El stake plano protege mejor ante rachas descendentes si mantienes cuotas estables.`;
+            } else {
+                verdictText.innerHTML = `Tu gestión variable actual supera al stake fijo de $${flatStakeVal} por <b>+$${(realTotalProfit - flatTotalProfit).toFixed(2)}</b>. Tu asignación dinámica de stake ha sabido capitalizar mejor los momentos de valor.`;
+            }
+
+            renderFlatStakeChart(realCurve, flatCurve);
+        }
+
+        function renderFlatStakeChart(realCurve, flatCurve) {
+            const ctx = document.getElementById('flatStakeChart').getContext('2d');
+            if (flatStakeChartInstance) flatStakeChartInstance.destroy();
+
+            const maxLen = Math.max(realCurve.length, flatCurve.length);
+            const labels = Array.from({length: maxLen}, (_, i) => i === 0 ? 'Inicio' : `#${i}`);
+
+            flatStakeChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Bankroll Real',
+                            data: realCurve,
+                            borderColor: '#10b981',
+                            backgroundColor: 'transparent',
+                            tension: 0.2,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Bankroll Stake Plano',
+                            data: flatCurve,
+                            borderColor: '#6366f1',
+                            backgroundColor: 'transparent',
+                            tension: 0.2,
+                            pointRadius: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
+        }
+        // --- FIN DE SIMULADOR DE STAKE PLANO ---
+
         function updateBestEvRangeAnalysis(bankBets) {
             const closedBets = bankBets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
             const gridContainer = document.getElementById('evRangesGridContainer');
             const badgeEl = document.getElementById('bestEvRangeBadge');
             if (!gridContainer) return;
 
-            // Definición de rangos de EV
             const ranges = [
                 { label: '0% - 5%', min: 0, max: 5, profit: 0, staked: 0, count: 0, won: 0 },
                 { label: '5% - 10%', min: 5, max: 10, profit: 0, staked: 0, count: 0, won: 0 },
@@ -2527,19 +2718,11 @@
                 let pnl = 0;
                 let isWon = false;
 
-                if (bet.status === 'WON') {
-                    pnl = stake * (odds - 1);
-                    isWon = true;
-                } else if (bet.status === 'LOST') {
-                    pnl = -stake;
-                } else if (bet.status === 'HALF_WON') {
-                    pnl = (stake / 2) * (odds - 1);
-                    isWon = true;
-                } else if (bet.status === 'HALF_LOST') {
-                    pnl = -(stake / 2);
-                }
+                if (bet.status === 'WON') { pnl = stake * (odds - 1); isWon = true; }
+                else if (bet.status === 'LOST') { pnl = -stake; }
+                else if (bet.status === 'HALF_WON') { pnl = (stake / 2) * (odds - 1); isWon = true; }
+                else if (bet.status === 'HALF_LOST') { pnl = -(stake / 2); }
 
-                // Buscar el rango correspondiente
                 for (let r of ranges) {
                     if (evVal >= r.min && evVal < r.max) {
                         r.profit += pnl;
@@ -2551,7 +2734,6 @@
                 }
             });
 
-            // Encontrar el más rentable (mayor profit neto con al menos 1 apuesta)
             let bestRange = null;
             let maxProfit = -Infinity;
 
@@ -3124,7 +3306,6 @@
             return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
         }
 
-        // --- DISTRIBUCIÓN SKELLAM RIGUROSA ---
         function modifiedBesselI(k, z) {
             let sum = 0;
             const maxIter = 40;
