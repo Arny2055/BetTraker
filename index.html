@@ -926,7 +926,7 @@
                 </div>
 
                 <!-- METRICAS DE RENDIMIENTO PRINCIPALES -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Bankroll Activo</span>
                         <span class="text-sm font-black text-white block mt-1" id="dashActiveBankName">Principal</span>
@@ -946,10 +946,6 @@
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
                         <span class="text-[9px] uppercase font-bold text-slate-400 block">Win Rate</span>
                         <span class="text-sm font-black text-emerald-400 block mt-1" id="dashWinRate">0.0%</span>
-                    </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/40 text-center bg-emerald-950/20">
-                        <span class="text-[9px] uppercase font-bold text-emerald-400 block">Muestra (N)</span>
-                        <span class="text-sm font-black text-emerald-300 block mt-1" id="dashSampleSize">0 bets</span>
                     </div>
                 </div>
 
@@ -971,7 +967,7 @@
                                 <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
                                     <tr>
                                         <th class="p-1.5">Liga / Competición</th>
-                                        <th class="p-1.5 text-center">Apuestas (Muestra N)</th>
+                                        <th class="p-1.5 text-center">Apuestas</th>
                                         <th class="p-1.5 text-center">Win Rate</th>
                                         <th class="p-1.5 text-center">Yield (%)</th>
                                         <th class="p-1.5 text-center">Profit / P&L</th>
@@ -1226,7 +1222,7 @@
                                 </tr>
                             </thead>
                             <tbody id="parallelBetsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
-                                <!-- Generado dinámicamente -->
+                                <!-- Generado por JS -->
                             </tbody>
                         </table>
                     </div>
@@ -1282,7 +1278,7 @@
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div>
                         <span class="text-xs font-extrabold text-white block">Importe de Stake Fijo por Apuesta</span>
-                        <span class="text-[10px] text-slate-400">Calcula qué hubiera pasado si todas iyongas usaran esta cantidad exacta.</span>
+                        <span class="text-[10px] text-slate-400">Calcula qué hubiera pasado si todas tus apuestas usaran esta cantidad exacta.</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-emerald-400 font-bold text-xs">$</span>
@@ -1355,13 +1351,19 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN / MERCADO EN LA LIGA SELECCIONADA -->
-                <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-emerald-400"></i>
-                        <span class="text-slate-300 text-[10px]">Rentabilidad en <b id="widgetLeagueNameText">Liga</b>:</span>
+                <!-- WIDGET DE CANTIDAD DE MUESTRA Y RENTABILIDAD HISTÓRICA -->
+                <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex flex-col gap-1.5 text-xs">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-database text-emerald-400"></i>
+                            <span class="text-slate-300 text-[10px]">Muestreo de <b id="widgetLeagueNameText">Liga</b>:</span>
+                        </div>
+                        <span id="widgetSampleSizeVal" class="font-black text-emerald-400 text-xs">MP: 0 partidos</span>
                     </div>
-                    <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
+                    <div class="flex items-center justify-between pt-1 border-t border-emerald-500/20">
+                        <span class="text-slate-300 text-[10px]">Rentabilidad Histórica:</span>
+                        <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
@@ -1681,17 +1683,34 @@
             const marketInput = document.getElementById('logMarket').value.trim().toLowerCase();
             const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
             const leagueInput = document.getElementById('logLeague').value.trim().toLowerCase();
+            const homeTeamInput = document.getElementById('homeName').value.trim();
             
             const widget = document.getElementById('selectionHistoryWidget');
             const profitValEl = document.getElementById('selectionHistoricalProfitVal');
+            const sampleSizeValEl = document.getElementById('widgetSampleSizeVal');
             const leagueNameTextEl = document.getElementById('widgetLeagueNameText');
 
+            const currentLeagueName = document.getElementById('logLeague').value || DEFAULT_LEAGUE_NAME;
+            leagueNameTextEl.innerText = currentLeagueName;
+
+            // Obtener partidos jugados (MP) de la liga seleccionada
+            let sampleSizeMP = 0;
+            const teamsInLeague = leaguesData[currentLeagueName] || [];
+            if (teamsInLeague.length > 0) {
+                // Tomar el MP promedio o del equipo local si existe
+                const foundTeam = teamsInLeague.find(t => t.name.toLowerCase() === homeTeamInput.toLowerCase()) || teamsInLeague[0];
+                sampleSizeMP = foundTeam ? foundTeam.mp : teams.length;
+            }
+
+            sampleSizeValEl.innerText = `MP: ${sampleSizeMP} partidos`;
+
             if (!selectionInput && !marketInput) {
-                widget.classList.add('hidden');
+                widget.classList.remove('hidden');
+                profitValEl.innerText = "$0.00 (Sin selección activa)";
+                profitValEl.className = "font-bold text-slate-400 text-[11px]";
                 return;
             }
 
-            leagueNameTextEl.innerText = document.getElementById('logLeague').value || 'Liga';
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             let historicalProfit = 0;
             let foundCount = 0;
@@ -1712,12 +1731,11 @@
                 }
             });
 
+            widget.classList.remove('hidden');
             if (foundCount > 0) {
-                widget.classList.remove('hidden');
                 profitValEl.innerText = (historicalProfit >= 0 ? '+$' : '-$') + Math.abs(historicalProfit).toFixed(2);
                 profitValEl.className = historicalProfit >= 0 ? "font-black text-emerald-400 text-xs" : "font-black text-rose-400 text-xs";
             } else {
-                widget.classList.remove('hidden');
                 profitValEl.innerText = "$0.00 (Sin historial previo en esta selección/liga)";
                 profitValEl.className = "font-bold text-slate-400 text-[11px]";
             }
@@ -1812,7 +1830,6 @@
 
             document.getElementById('editBetIndex').value = "-1";
             document.getElementById('logIsParlay').value = "true";
-            document.getElementById('selectionHistoryWidget').classList.add('hidden');
             document.getElementById('logBetModalTitle').innerText = `Registrar Apuesta Combinada (${parlaySelections.length} picks)`;
             document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
             document.getElementById('logLeague').value = activeLeague;
@@ -1848,6 +1865,7 @@
             document.getElementById('logStatus').value = "PENDING";
             document.getElementById('logParallelOption').value = "original_only";
 
+            checkSelectionHistoricalProfit();
             calculateLogEv();
             toggleLogBetModal(true);
         }
@@ -2853,13 +2871,12 @@
             document.getElementById('dashPendingRisk').innerText = `$${totalRiskPending.toFixed(2)}`;
             document.getElementById('dashYield').innerText = yieldVal.toFixed(1) + '%';
             document.getElementById('dashWinRate').innerText = winRateVal.toFixed(1) + '%';
-            document.getElementById('dashSampleSize').innerText = `${countClosed} bets`;
 
             document.getElementById('badgePendingCount').innerText = countPending;
             document.getElementById('badgeClosedCount').innerText = countClosed;
 
             document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
-            document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas (Muestra N=${countClosed}): ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
+            document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
 
             updateLeaguePerformanceTable(filteredBets);
             updateBestEvRangeAnalysis(filteredBets);
@@ -2964,7 +2981,7 @@
                 html += `
                     <tr>
                         <td class="p-1.5 font-bold text-white"><i class="fa-solid fa-futbol text-emerald-400 mr-1"></i>${l.name}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-300">N = ${l.closedCount} <span class="text-[8px] text-slate-500">(tot: ${l.count})</span></td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">${l.count} <span class="text-[8px] text-slate-500">(${l.closedCount} cerradas)</span></td>
                         <td class="p-1.5 text-center font-bold text-indigo-300">${winRate.toFixed(0)}%</td>
                         <td class="p-1.5 text-center font-bold ${yieldVal >= 0 ? 'text-gold-400' : 'text-rose-400'}">${yieldVal.toFixed(1)}%</td>
                         <td class="p-1.5 text-center font-black ${l.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
@@ -3061,9 +3078,9 @@
             if (closedBetsChronological.length === 0) {
                 verdictText.innerText = "No hay suficientes apuestas cerradas en esta caja para realizar la simulación.";
             } else if (flatTotalProfit > realTotalProfit) {
-                verdictText.innerHTML = `Con un stake plano de <b>$${flatStakeVal}</b> (Muestra N=${closedBetsChronological.length}) habrías obtenido <b>+$${(flatTotalProfit - realTotalProfit).toFixed(2)} extra</b>.`;
+                verdictText.innerHTML = `Con un stake plano de <b>$${flatStakeVal}</b> habrías obtenido <b>+$${(flatTotalProfit - realTotalProfit).toFixed(2)} extra</b> en comparación con tu gestión variable actual. El stake plano protege mejor ante rachas descendentes si mantienes cuotas estables.`;
             } else {
-                verdictText.innerHTML = `Tu gestión variable actual supera al stake fijo de $${flatStakeVal} (Muestra N=${closedBetsChronological.length}) por <b>+$${(realTotalProfit - flatTotalProfit).toFixed(2)}</b>.`;
+                verdictText.innerHTML = `Tu gestión variable actual supera al stake fijo de $${flatStakeVal} por <b>+$${(realTotalProfit - flatTotalProfit).toFixed(2)}</b>. Tu asignación dinámica de stake ha sabido capitalizar mejor los momentos de valor.`;
             }
 
             renderFlatStakeChart(realCurve, flatCurve);
@@ -3158,7 +3175,7 @@
             });
 
             if (bestRange && maxProfit > 0) {
-                badgeEl.innerText = `Mejor: Rango EV ${bestRange.label} (N=${bestRange.count}, +$${bestRange.profit.toFixed(1)})`;
+                badgeEl.innerText = `Mejor: Rango EV ${bestRange.label} (+$${bestRange.profit.toFixed(1)})`;
                 badgeEl.className = "text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30";
             } else {
                 badgeEl.innerText = closedBets.length === 0 ? "Sin apuestas cerradas" : "Sin rango rentable aún";
@@ -3175,7 +3192,7 @@
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border ${isBest ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-slate-800'} space-y-1 text-center">
                         <div class="flex justify-between items-center text-[9px] font-bold text-slate-400">
                             <span>EV ${r.label}</span>
-                            <span class="text-[8px] bg-slate-800 px-1 rounded text-slate-300">N = ${r.count}</span>
+                            <span class="text-[8px] bg-slate-800 px-1 rounded text-slate-300">${r.count} bets</span>
                         </div>
                         <div class="text-xs font-black ${r.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
                             ${r.profit >= 0 ? '+$' : '-$'}${Math.abs(r.profit).toFixed(1)}
@@ -3259,7 +3276,7 @@
                     <div onclick="openDayBetsModal('${fullDateKey}')" class="${bgClass} border rounded-lg p-1 flex flex-col justify-between h-14 cursor-pointer transition-all active:scale-95">
                         <div class="flex justify-between items-center text-[9px] font-bold">
                             <span>${day}</span>
-                            ${dayData ? `<span class="bg-slate-900/60 px-1 rounded text-[8px] text-slate-300">N=${dayData.count}</span>` : ''}
+                            ${dayData ? `<span class="bg-slate-900/60 px-1 rounded text-[8px] text-slate-300">${dayData.count}</span>` : ''}
                         </div>
                         <div class="text-center font-black text-[10px] truncate">
                             ${pnlText}
@@ -3277,7 +3294,7 @@
             const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             const dayBets = activeBankBets.filter(b => b.date === dateStr && (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter) && (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter));
 
-            document.getElementById('dayBetsModalTitle').innerText = `Apuestas del ${dateStr} (Muestra N=${dayBets.length})`;
+            document.getElementById('dayBetsModalTitle').innerText = `Apuestas del ${dateStr}`;
             const contentContainer = document.getElementById('dayBetsModalContent');
 
             if (dayBets.length === 0) {
