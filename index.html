@@ -1255,11 +1255,11 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN -->
+                <!-- WIDGET DE PROFIT HISTÓRICO DE LA SELECCIÓN / MERCADO EN LA LIGA SELECCIONADA -->
                 <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex items-center justify-between text-xs">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-chart-line text-emerald-400"></i>
-                        <span class="text-slate-300 text-[10px]">Profit histórico de esta selección:</span>
+                        <span class="text-slate-300 text-[10px]">Rentabilidad en <b id="widgetLeagueNameText">Liga</b>:</span>
                     </div>
                     <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
                 </div>
@@ -1271,7 +1271,7 @@
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">Liga / Categoría</label>
-                        <input type="text" id="logLeague" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
+                        <input type="text" id="logLeague" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
                     </div>
                 </div>
 
@@ -1283,7 +1283,7 @@
                 <div class="grid grid-cols-2 gap-2" id="logSingleFieldsContainer">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">Mercado</label>
-                        <input type="text" id="logMarket" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
+                        <input type="text" id="logMarket" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 mb-1">Selección Elegida</label>
@@ -1566,21 +1566,30 @@
         }
 
         function checkSelectionHistoricalProfit() {
+            const marketInput = document.getElementById('logMarket').value.trim().toLowerCase();
             const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
+            const leagueInput = document.getElementById('logLeague').value.trim().toLowerCase();
+            
             const widget = document.getElementById('selectionHistoryWidget');
             const profitValEl = document.getElementById('selectionHistoricalProfitVal');
+            const leagueNameTextEl = document.getElementById('widgetLeagueNameText');
 
-            if (!selectionInput) {
+            if (!selectionInput && !marketInput) {
                 widget.classList.add('hidden');
                 return;
             }
 
+            leagueNameTextEl.innerText = document.getElementById('logLeague').value || 'Liga';
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             let historicalProfit = 0;
             let foundCount = 0;
 
             currentBankBets.forEach(bet => {
-                if (bet.status !== 'PENDING' && bet.selection && bet.selection.toLowerCase().includes(selectionInput)) {
+                const matchLeague = !leagueInput || (bet.league && bet.league.toLowerCase().includes(leagueInput));
+                const matchMarket = !marketInput || (bet.market && bet.market.toLowerCase().includes(marketInput));
+                const matchSelection = !selectionInput || (bet.selection && bet.selection.toLowerCase().includes(selectionInput));
+
+                if (bet.status !== 'PENDING' && matchLeague && (matchMarket || matchSelection)) {
                     const stake = parseFloat(bet.stake) || 0;
                     const odds = parseFloat(bet.bookieOdds) || 1;
                     if (bet.status === 'WON') historicalProfit += stake * (odds - 1);
@@ -1596,7 +1605,9 @@
                 profitValEl.innerText = (historicalProfit >= 0 ? '+$' : '-$') + Math.abs(historicalProfit).toFixed(2);
                 profitValEl.className = historicalProfit >= 0 ? "font-black text-emerald-400 text-xs" : "font-black text-rose-400 text-xs";
             } else {
-                widget.classList.add('hidden');
+                widget.classList.remove('hidden');
+                profitValEl.innerText = "$0.00 (Sin historial previo en esta liga)";
+                profitValEl.className = "font-bold text-slate-400 text-[11px]";
             }
         }
 
@@ -2593,7 +2604,7 @@
             saveBetLogToStorage();
         }
 
-        // --- FUNCIÓN NUEVA: ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
+        // --- FUNCIONES ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
         function updateLeaguePerformanceTable(bankBets) {
             const tableBody = document.getElementById('leaguePerformanceTableBody');
             const badgeEl = document.getElementById('leaguePerformanceBadge');
@@ -2642,7 +2653,6 @@
                 return;
             }
 
-            // Ordenar por beneficio neto descendente
             leaguesArray.sort((a, b) => b.profit - a.profit);
 
             let html = '';
@@ -2665,7 +2675,7 @@
             tableBody.innerHTML = html;
         }
 
-        // --- FUNCIONES DEL NUEVO SIMULADOR DE STAKE PLANO ---
+        // --- SIMULADOR DE STAKE PLANO ---
         function openFlatStakeModal() {
             runFlatStakeSimulation();
             document.getElementById('flatStakeModal').classList.remove('hidden');
@@ -3636,7 +3646,7 @@
                             <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
                                 Sencilla
                             </button>
-                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/20" title="Parlay">
+                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Parlay">
                                 Parlay
                             </button>
                         </div>
