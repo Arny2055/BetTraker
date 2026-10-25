@@ -946,34 +946,32 @@
                     </div>
                 </div>
 
-                <!-- MÓDULO NUEVO: RENDIMIENTO POR LIGA -->
-                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group">
+                <!-- NUEVO MÓDULO: RENDIMIENTO POR LIGA -->
+                <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
                         <div class="flex items-center gap-1.5">
                             <i class="fa-solid fa-trophy text-gold-400 text-xs"></i>
-                            <span class="text-xs font-black text-white uppercase">Rendimiento por Liga / Competición</span>
+                            <span class="text-xs font-black text-white uppercase">Análisis y Rendimiento por Liga</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span id="leaguePerfCountBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">0 ligas</span>
+                            <span id="leaguePerformanceBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Desglose Activo</span>
                             <i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i>
                         </div>
                     </summary>
-                    <div class="p-3 pt-0 space-y-3">
-                        <p class="text-[10px] text-slate-300">Desglose analítico de rendimiento (Profit, Win Rate y Yield) agrupado por competición para identificar tus ligas más rentables.</p>
+                    <div class="p-3 pt-0 space-y-2">
                         <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60">
                             <table class="w-full text-[10px] text-left border-collapse excel-table">
                                 <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
                                     <tr>
                                         <th class="p-1.5">Liga / Competición</th>
                                         <th class="p-1.5 text-center">Apuestas</th>
-                                        <th class="p-1.5 text-center">Acertadas</th>
                                         <th class="p-1.5 text-center">Win Rate</th>
-                                        <th class="p-1.5 text-center">Profit ($)</th>
                                         <th class="p-1.5 text-center">Yield (%)</th>
+                                        <th class="p-1.5 text-center">Profit / P&L</th>
                                     </tr>
                                 </thead>
                                 <tbody id="leaguePerformanceTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
-                                    <!-- Generado por JS -->
+                                    <!-- Generado dinámicamente -->
                                 </tbody>
                             </table>
                         </div>
@@ -2087,15 +2085,18 @@
                                 <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Profit Neto: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Activar</button>` : ''}
-                                ${bankrollsData.length > 1 ? `<button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                                <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between pt-1 border-t border-slate-800/80">
-                            <span class="text-[10px] text-slate-300">Retirar 50% de Utilidad Neta (Dispo: <span class="text-gold-400 font-bold">$${halfProfit.toFixed(2)}</span>):</span>
-                            <button onclick="withdrawHalfProfit('${b.id}')" class="px-2.5 py-1 bg-gold-500 hover:bg-gold-600 text-slate-950 font-black text-[10px] rounded-lg transition-all shadow">
-                                Retirar 50%
+                        <div class="flex items-center justify-between bg-slate-900/90 p-2 rounded-lg border border-emerald-500/30">
+                            <div>
+                                <span class="block text-[8px] uppercase font-bold text-slate-400">Retirar 50% de Utilidad</span>
+                                <span class="text-xs font-black text-emerald-400">$${halfProfit.toFixed(2)}</span>
+                            </div>
+                            <button onclick="withdrawHalfProfit('${b.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-3 py-1.5 rounded-lg transition-all shadow flex items-center gap-1">
+                                <i class="fa-solid fa-money-bill-transfer"></i> Retirar 50%
                             </button>
                         </div>
                         ${withdrawHistoryHtml}
@@ -2105,682 +2106,164 @@
             container.innerHTML = html;
         }
 
-        function updateTeamSelectors() {
-            const leagueName = document.getElementById('activeLeagueSelect').value;
-            const teams = leaguesData[leagueName] || [];
-            
-            const selHome = document.getElementById('selectHomeTeam');
-            const selAway = document.getElementById('selectAwayTeam');
-
-            selHome.innerHTML = '<option value="">-- Seleccionar --</option>';
-            selAway.innerHTML = '<option value="">-- Seleccionar --</option>';
-
-            teams.forEach((t, idx) => {
-                selHome.add(new Option(t.name, idx));
-                selAway.add(new Option(t.name, idx));
-            });
-
-            if (teams.length >= 2) {
-                selHome.value = "0";
-                selAway.value = "1";
-                autoFillTeamData('home');
-                autoFillTeamData('away');
-            }
-        }
-
         function onLeagueSelectChange() {
             updateTeamSelectors();
             calculatePoisson();
         }
 
-        function autoFillTeamData(side) {
-            const leagueName = document.getElementById('activeLeagueSelect').value;
-            const teams = leaguesData[leagueName] || [];
-            const selectEl = document.getElementById(side === 'home' ? 'selectHomeTeam' : 'selectAwayTeam');
-            const idx = parseInt(selectEl.value);
+        function updateTeamSelectors() {
+            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const teams = leaguesData[activeLeague] || [];
 
-            if (isNaN(idx) || !teams[idx]) return;
-            const t = teams[idx];
+            const homeSelect = document.getElementById('selectHomeTeam');
+            const awaySelect = document.getElementById('selectAwayTeam');
+
+            homeSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+            awaySelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+
+            teams.forEach(t => {
+                homeSelect.add(new Option(t.name, t.name));
+                awaySelect.add(new Option(t.name, t.name));
+            });
+        }
+
+        function autoFillTeamData(side) {
+            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const teams = leaguesData[activeLeague] || [];
+            const selectEl = side === 'home' ? document.getElementById('selectHomeTeam') : document.getElementById('selectAwayTeam');
+            const selectedName = selectEl.value;
+
+            if (!selectedName) return;
+
+            const team = teams.find(t => t.name === selectedName);
+            if (!team) return;
 
             if (side === 'home') {
-                document.getElementById('homeName').value = t.name;
-                document.getElementById('homeXgFor').value = t.xg;
-                document.getElementById('homeGf').value = t.gf;
-                document.getElementById('homeXgAgainst').value = t.xga;
-                document.getElementById('homeGc').value = t.ga;
+                document.getElementById('homeName').value = team.name;
+                document.getElementById('homeXgFor').value = team.xg.toFixed(2);
+                document.getElementById('homeGf').value = team.gf.toFixed(2);
+                document.getElementById('homeXgAgainst').value = team.xga.toFixed(2);
+                document.getElementById('homeGc').value = team.ga.toFixed(2);
             } else {
-                document.getElementById('awayName').value = t.name;
-                document.getElementById('awayXgFor').value = t.xg;
-                document.getElementById('awayGf').value = t.gf;
-                document.getElementById('awayXgAgainst').value = t.xga;
-                document.getElementById('awayGc').value = t.ga;
+                document.getElementById('awayName').value = team.name;
+                document.getElementById('awayXgFor').value = team.xg.toFixed(2);
+                document.getElementById('awayGf').value = team.gf.toFixed(2);
+                document.getElementById('awayXgAgainst').value = team.xga.toFixed(2);
+                document.getElementById('awayGc').value = team.ga.toFixed(2);
             }
+
             calculatePoisson();
         }
 
-        function toggleLeagueModal(show) {
-            const modal = document.getElementById('leagueModal');
-            if (show) {
-                renderModalLeagueTable();
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
-
-        function renderModalLeagueTable() {
-            const leagueName = document.getElementById('modalLeagueSelect').value;
-            const teams = leaguesData[leagueName] || [];
-            const tbody = document.getElementById('excelTableBody');
-            document.getElementById('teamCountBadge').innerText = `${teams.length} equipos`;
-
-            let html = '';
-            teams.forEach(t => {
-                html += `
-                    <tr>
-                        <td class="p-1.5 text-center font-bold text-slate-400">${t.pos}</td>
-                        <td class="p-1.5 font-bold text-white">${t.name}</td>
-                        <td class="p-1.5 text-center">${t.mp}</td>
-                        <td class="p-1.5 text-center font-bold text-emerald-400">${t.xg}</td>
-                        <td class="p-1.5 text-center font-bold text-rose-300">${t.xga}</td>
-                        <td class="p-1.5 text-center font-bold">${t.xgd}</td>
-                        <td class="p-1.5 text-center font-bold text-amber-300">${t.gf}</td>
-                        <td class="p-1.5 text-center font-bold text-purple-300">${t.ga}</td>
-                        <td class="p-1.5 text-center font-bold">${t.vsActual}</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function parseAndSaveLeague() {
-            const rawText = document.getElementById('rawInput').value.trim();
-            const leagueName = document.getElementById('leagueNameInput').value.trim();
-
-            if (!leagueName) {
-                showToast("Introduce un nombre para la liga.");
-                return;
-            }
-            if (!rawText) {
-                showToast("Pega los datos de la tabla.");
-                return;
-            }
-
-            const parsedTeams = parseRawLeagueData(rawText);
-            if (parsedTeams.length === 0) {
-                showToast("No se pudieron parsear los datos. Verifica el formato.");
-                return;
-            }
-
-            leaguesData[leagueName] = parsedTeams;
-            saveLeaguesToStorage();
-            populateLeagueDropdowns();
-
-            document.getElementById('activeLeagueSelect').value = leagueName;
-            document.getElementById('modalLeagueSelect').value = leagueName;
-            updateTeamSelectors();
-
-            document.getElementById('rawInput').value = '';
-            document.getElementById('leagueNameInput').value = '';
-            renderModalLeagueTable();
-            showToast(`¡Liga "${leagueName}" guardada correctamente!`);
-        }
-
-        function deleteCurrentLeague() {
-            const leagueName = document.getElementById('modalLeagueSelect').value;
-            if (Object.keys(leaguesData).length <= 1) {
-                showToast("Debes conservar al menos una liga en el sistema.");
-                return;
-            }
-            if (confirm(`¿Estás seguro de eliminar la liga "${leagueName}"?`)) {
-                delete leaguesData[leagueName];
-                saveLeaguesToStorage();
-                populateLeagueDropdowns();
-                updateTeamSelectors();
-                renderModalLeagueTable();
-                showToast("Liga eliminada.");
-            }
-        }
-
-        function factorial(n) {
-            if (n <= 1) return 1;
-            let res = 1;
-            for (let i = 2; i <= n; i++) res *= i;
-            return res;
-        }
-
-        function poissonProbability(lambda, k) {
-            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
-        }
-
-        function calculatePoisson() {
-            let lambdaHome = 1.5;
-            let lambdaAway = 1.2;
-
-            if (currentMode === 'xg') {
-                const wAtk = parseInt(document.getElementById('weightAttackRange').value) / 100;
-                const wDef = parseInt(document.getElementById('weightDefenseRange').value) / 100;
-
-                const hXgF = parseFloat(document.getElementById('homeXgFor').value) || 0;
-                const hGF = parseFloat(document.getElementById('homeGf').value) || 0;
-                const hXgA = parseFloat(document.getElementById('homeXgAgainst').value) || 0;
-                const hGC = parseFloat(document.getElementById('homeGc').value) || 0;
-
-                const aXgF = parseFloat(document.getElementById('awayXgFor').value) || 0;
-                const aGF = parseFloat(document.getElementById('awayGf').value) || 0;
-                const aXgA = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
-                const aGC = parseFloat(document.getElementById('awayGc').value) || 0;
-
-                const homeAttack = (wAtk * hXgF) + ((1 - wAtk) * hGF);
-                const homeDefense = (wDef * hXgA) + ((1 - wDef) * hGC);
-
-                const awayAttack = (wAtk * aXgF) + ((1 - wAtk) * aGF);
-                const awayDefense = (wDef * aXgA) + ((1 - wDef) * aGC);
-
-                const leagueAvgGoal = 1.35;
-                lambdaHome = (homeAttack * awayDefense) / leagueAvgGoal;
-                lambdaAway = (awayAttack * homeDefense) / leagueAvgGoal;
-            } else {
-                lambdaHome = parseFloat(document.getElementById('directHomeXg').value) || 1.5;
-                lambdaAway = parseFloat(document.getElementById('directAwayXg').value) || 1.2;
-            }
-
-            lambdaHome = Math.max(0.1, lambdaHome);
-            lambdaAway = Math.max(0.1, lambdaAway);
-
-            document.getElementById('valHomeLambda').innerText = lambdaHome.toFixed(3);
-            document.getElementById('valAwayLambda').innerText = lambdaAway.toFixed(3);
-
-            const homeName = document.getElementById('homeName').value.trim() || 'Local';
-            const awayName = document.getElementById('awayName').value.trim() || 'Visitante';
-            document.getElementById('name1x2Home').innerText = homeName;
-            document.getElementById('name1x2Away').innerText = awayName;
-
-            const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0.0;
-
-            let matrix = [];
-            let probHomeWin = 0;
-            let probDraw = 0;
-            let probAwayWin = 0;
-            let exactScores = [];
-
-            for (let i = 0; i <= 6; i++) {
-                matrix[i] = [];
-                for (let j = 0; j <= 6; j++) {
-                    let p = poissonProbability(lambdaHome, i) * poissonProbability(lambdaAway, j);
-                    
-                    if (rho !== 0) {
-                        if (i === 0 && j === 0) p *= (1 - lambdaHome * lambdaAway * rho);
-                        else if (i === 0 && j === 1) p *= (1 + lambdaHome * rho);
-                        else if (i === 1 && j === 0) p *= (1 + lambdaAway * rho);
-                        else if (i === 1 && j === 1) p *= (1 - rho);
-                    }
-                    p = Math.max(0, p);
-                    matrix[i][j] = p;
-
-                    if (i > j) probHomeWin += p;
-                    else if (i === j) probDraw += p;
-                    else probAwayWin += p;
-
-                    exactScores.push({ home: i, away: j, prob: p });
-                }
-            }
-
-            let sumMatrix = 0;
-            for (let i = 0; i <= 6; i++) {
-                for (let j = 0; j <= 6; j++) {
-                    sumMatrix += matrix[i][j];
-                }
-            }
-            if (sumMatrix > 0) {
-                probHomeWin /= sumMatrix;
-                probDraw /= sumMatrix;
-                probAwayWin /= sumMatrix;
-                exactScores.forEach(s => s.prob /= sumMatrix);
-            }
-
-            let probOver25 = 0;
-            let probUnder25 = 0;
-            let probBttsYes = 0;
-            let probBttsNo = 0;
-
-            for (let i = 0; i <= 6; i++) {
-                for (let j = 0; j <= 6; j++) {
-                    let p = matrix[i][j];
-                    if ((i + j) > 2.5) probOver25 += p;
-                    else probUnder25 += p;
-
-                    if (i > 0 && j > 0) probBttsYes += p;
-                    else probBttsNo += p;
-                }
-            }
-
-            currentCalculatedProbs = {
-                probHomeWin, probDraw, probAwayWin,
-                probOver25, probUnder25,
-                probBttsYes, probBttsNo,
-                lambdaHome, lambdaAway
-            };
-
-            document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
-            document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
-            document.getElementById('barOver25').style.width = (probOver25 * 100) + '%';
-
-            document.getElementById('pctUnder25').innerText = (probUnder25 * 100).toFixed(1) + '%';
-            document.getElementById('oddsUnder25').innerText = '@' + (1 / Math.max(0.001, probUnder25)).toFixed(2);
-            document.getElementById('barUnder25').style.width = (probUnder25 * 100) + '%';
-
-            document.getElementById('pctBttsYes').innerText = (probBttsYes * 100).toFixed(1) + '%';
-            document.getElementById('oddsBttsYes').innerText = '@' + (1 / Math.max(0.001, probBttsYes)).toFixed(2);
-            document.getElementById('barBttsYes').style.width = (probBttsYes * 100) + '%';
-
-            document.getElementById('pctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
-            document.getElementById('oddsBttsNo').innerText = '@' + (1 / Math.max(0.001, probBttsNo)).toFixed(2);
-            document.getElementById('barBttsNo').style.width = (probBttsNo * 100) + '%';
-
-            document.getElementById('pct1x2Home').innerText = (probHomeWin * 100).toFixed(1) + '%';
-            document.getElementById('odds1x2Home').innerText = '@' + (1 / Math.max(0.001, probHomeWin)).toFixed(2);
-
-            document.getElementById('pct1x2Draw').innerText = (probDraw * 100).toFixed(1) + '%';
-            document.getElementById('odds1x2Draw').innerText = '@' + (1 / Math.max(0.001, probDraw)).toFixed(2);
-
-            document.getElementById('pct1x2Away').innerText = (probAwayWin * 100).toFixed(1) + '%';
-            document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.001, probAwayWin)).toFixed(2);
-
-            exactScores.sort((a, b) => b.prob - a.prob);
-            const topScoresContainer = document.getElementById('topScoresContainer');
-            let topScoresHtml = '';
-            for (let k = 0; k < 3; k++) {
-                const s = exactScores[k];
-                const pct = (s.prob * 100).toFixed(1);
-                const odds = (1 / Math.max(0.001, s.prob)).toFixed(2);
-                topScoresHtml += `
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px]">#${k+1}</span>
-                            <span class="font-bold text-white">${s.home} - ${s.away}</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="font-black text-emerald-400">${pct}%</span>
-                            <span class="font-bold text-gold-400">@${odds}</span>
-                            <button onclick="openLogBetModal('Marcador Exacto', '${s.home} - ${s.away}', ${s.prob})" class="px-2 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold text-[10px] rounded border border-emerald-500/20">Registrar</button>
-                        </div>
-                    </div>
-                `;
-            }
-            topScoresContainer.innerHTML = topScoresHtml;
-
-            renderDynamicOuLines(lambdaHome, lambdaAway);
-            renderSkellamAnalysis(lambdaHome, lambdaAway);
-            renderMatrixTable(matrix);
-            renderGoalsChart(lambdaHome, lambdaAway);
-        }
-
-        function renderDynamicOuLines(lh, la) {
-            const container = document.getElementById('dynamicOuContainer');
-            const lines = [0.5, 1.5, 2.5, 3.5, 4.5];
-            let html = '';
-
-            lines.forEach(line => {
-                let probOver = 0;
-                for (let i = 0; i <= 8; i++) {
-                    for (let j = 0; j <= 8; j++) {
-                        if ((i + j) > line) {
-                            probOver += poissonProbability(lh, i) * poissonProbability(la, j);
-                        }
-                    }
-                }
-                probOver = Math.min(1, Math.max(0, probOver));
-                let probUnder = 1 - probOver;
-                let oddsOver = 1 / Math.max(0.001, probOver);
-                let oddsUnder = 1 / Math.max(0.001, probUnder);
-
-                html += `
-                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-                        <div class="w-16 font-extrabold text-indigo-300">O/U ${line}</div>
-                        <div class="flex items-center gap-4 flex-1 justify-around">
-                            <div>Over: <span class="font-black text-emerald-400">(${(probOver*100).toFixed(1)}% | @${oddsOver.toFixed(2)})</span></div>
-                            <div>Under: <span class="font-black text-slate-300">(${(probUnder*100).toFixed(1)}% | @${oddsUnder.toFixed(2)})</span></div>
-                        </div>
-                        <div class="flex gap-1">
-                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20">Over</button>
-                            <button onclick="openLogBetModal('Over / Under Goles', 'Under ${line}', ${probUnder})" class="px-2 py-0.5 bg-slate-800 text-slate-300 text-[9px] font-bold rounded border border-slate-700">Under</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function renderSkellamAnalysis(lh, la) {
-            let pHomeCoverMinus1 = 0;
-            let pDrawOrAway = 0;
-            let pHomeWinClean = 0;
-
-            for (let i = 0; i <= 6; i++) {
-                for (let j = 0; j <= 6; j++) {
-                    let p = poissonProbability(lh, i) * poissonProbability(la, j);
-                    let diff = i - j;
-                    if (diff >= 2) pHomeCoverMinus1 += p;
-                    if (diff <= 0) pDrawOrAway += p;
-                    if (diff >= 1) pHomeWinClean += p;
-                }
-            }
-
-            const sum = pHomeCoverMinus1 + pDrawOrAway + (1 - (pHomeCoverMinus1 + pDrawOrAway)); 
-            const summaryContainer = document.getElementById('skellamSummaryContainer');
-            summaryContainer.innerHTML = `
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Local -1.0 (AH)</span>
-                    <span class="text-xs font-black text-emerald-400">${(pHomeCoverMinus1*100).toFixed(1)}%</span>
-                </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Empate / Visitante (+1)</span>
-                    <span class="text-xs font-black text-slate-200">${(pDrawOrAway*100).toFixed(1)}%</span>
-                </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
-                    <span class="block text-[8px] uppercase text-slate-400 font-bold">Diferencial Neto</span>
-                    <span class="text-xs font-black text-indigo-300">${(lh - la). >= 0 ? '+' : ''}${(lh - la).toFixed(2)} Goles</span>
-                </div>
-            `;
-
-            const detailsContainer = document.getElementById('skellamDetailsContainer');
-            detailsContainer.innerHTML = `
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                    <span>Hándicap Asiático Local (-0.5) [Gana Partido]:</span>
-                    <span class="font-black text-emerald-400">${(currentCalculatedProbs.probHomeWin*100).toFixed(1)}% (@${(1/Math.max(0.001, currentCalculatedProbs.probHomeWin)).toFixed(2)})</span>
-                </div>
-                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                    <span>Hándicap Asiático Visitante (+0.5) [Empate o Gana Visitante]:</span>
-                    <span class="font-black text-indigo-300">${((currentCalculatedProbs.probDraw + currentCalculatedProbs.probAwayWin)*100).toFixed(1)}% (@${(1/Math.max(0.001, currentCalculatedProbs.probDraw + currentCalculatedProbs.probAwayWin)).toFixed(2)})</span>
-                </div>
-            `;
-        }
-
-        function renderMatrixTable(matrix) {
-            const tbody = document.getElementById('matrixBody');
-            let html = '';
-            for (let i = 0; i <= 6; i++) {
-                html += `<tr class="border-b border-slate-800/40"><td class="p-1 font-bold bg-slate-900 text-slate-400">${i}</td>`;
-                for (let j = 0; j <= 6; j++) {
-                    const p = matrix[i][j] * 100;
-                    let bgClass = "bg-slate-900/20";
-                    if (p > 15) bgClass = "bg-emerald-500/30 text-emerald-300 font-black";
-                    else if (p > 8) bgClass = "bg-emerald-500/15 text-emerald-400 font-bold";
-                    else if (p > 4) bgClass = "bg-slate-800/60 text-slate-300";
-                    
-                    html += `<td class="p-1 ${bgClass}">${p.toFixed(1)}%</td>`;
-                }
-                html += `</tr>`;
-            }
-            tbody.innerHTML = html;
-        }
-
-        function renderGoalsChart(lh, la) {
-            const ctx = document.getElementById('goalsChart').getContext('2d');
-            const labels = ['0', '1', '2', '3', '4', '5+'];
-            
-            let homeData = [0,0,0,0,0,0];
-            let awayData = [0,0,0,0,0,0];
-
-            for (let k = 0; k <= 6; k++) {
-                let pHome = poissonProbability(lh, k);
-                let pAway = poissonProbability(la, k);
-                if (k < 5) {
-                    homeData[k] = pHome * 100;
-                    awayData[k] = pAway * 100;
-                } else {
-                    homeData[5] += pHome * 100;
-                    awayData[5] += pAway * 100;
-                }
-            }
-
-            if (chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Local (%)',
-                            data: homeData,
-                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                            borderColor: '#10b981',
-                            borderWidth: 1,
-                            borderRadius: 6
-                        },
-                        {
-                            label: 'Visitante (%)',
-                            data: awayData,
-                            backgroundColor: 'rgba(245, 158, 11, 0.7)',
-                            borderColor: '#f59e0b',
-                            borderWidth: 1,
-                            borderRadius: 6
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { size: 10 } } }
-                    },
-                    scales: {
-                        x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                    }
-                }
-            });
-        }
-
         function clearAllData() {
-            if (confirm("¿Estás seguro de limpiar el formulario actual?")) {
-                document.getElementById('homeName').value = '';
-                document.getElementById('awayName').value = '';
-                document.getElementById('homeXgFor').value = '';
-                document.getElementById('homeGf').value = '';
-                document.getElementById('homeXgAgainst').value = '';
-                document.getElementById('homeGc').value = '';
-                document.getElementById('awayXgFor').value = '';
-                document.getElementById('awayGf').value = '';
-                document.getElementById('awayXgAgainst').value = '';
-                document.getElementById('awayGc').value = '';
-                calculatePoisson();
-                showToast("Formulario limpiado.");
-            }
+            document.getElementById('homeName').value = "";
+            document.getElementById('awayName').value = "";
+            document.getElementById('homeXgFor').value = "0.00";
+            document.getElementById('homeGf').value = "0.00";
+            document.getElementById('homeXgAgainst').value = "0.00";
+            document.getElementById('homeGc').value = "0.00";
+            document.getElementById('awayXgFor').value = "0.00";
+            document.getElementById('awayGf').value = "0.00";
+            document.getElementById('awayXgAgainst').value = "0.00";
+            document.getElementById('awayGc').value = "0.00";
+            document.getElementById('directHomeXg').value = "0.00";
+            document.getElementById('directAwayXg').value = "0.00";
+
+            calculatePoisson();
+            showToast("Campos borrados.");
         }
 
-        function toggleCalibrationModal(show) {
-            const modal = document.getElementById('calibrationModal');
-            if (show) {
-                updateCalibrationData();
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
+        function applyKellyQuarter() {
+            const prob = parseFloat(document.getElementById('logProb').value) / 100 || 0;
+            const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
 
-        function updateCalibrationData() {
-            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const evaluated = currentBankBets.filter(b => b.status === 'WON' || b.status === 'LOST');
-
-            document.getElementById('valEvaluatedCount').innerText = evaluated.length;
-
-            if (evaluated.length === 0) {
-                document.getElementById('valBrierScore').innerText = '0.0000';
-                document.getElementById('valLogLoss').innerText = '0.0000';
-                renderCalibrationTable([]);
-                renderCalibrationChart([]);
+            if (prob <= 0 || bookieOdds <= 1) {
+                showToast("Introduce probabilidad y cuota de casa válidas.");
                 return;
             }
-
-            let brierSum = 0;
-            let logLossSum = 0;
-            let tableRows = [];
-
-            evaluated.forEach(bet => {
-                let prob = parseFloat(bet.prob) || 50;
-                let pDecimal = Math.min(0.999, Math.max(0.001, prob / 100));
-                let actual = bet.status === 'WON' ? 1 : 0;
-
-                let brier = Math.pow(pDecimal - actual, 2);
-                let logLoss = -(actual * Math.log(pDecimal) + (1 - actual) * Math.log(1 - pDecimal));
-
-                brierSum += brier;
-                logLossSum += logLoss;
-
-                tableRows.push({
-                    match: bet.match,
-                    selection: bet.selection,
-                    prob: prob,
-                    status: bet.status,
-                    brier: brier,
-                    logLoss: logLoss
-                });
-            });
-
-            const brierScore = brierSum / evaluated.length;
-            const logLossScore = logLossSum / evaluated.length;
-
-            document.getElementById('valBrierScore').innerText = brierScore.toFixed(4);
-            document.getElementById('valLogLoss').innerText = logLossScore.toFixed(4);
-
-            renderCalibrationTable(tableRows);
-            renderCalibrationChart(evaluated);
-        }
-
-        function renderCalibrationTable(rows) {
-            const tbody = document.getElementById('calibrationTableBody');
-            if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500 italic">No hay apuestas liquidadas (Ganadas o Perdidas) en esta caja.</td></tr>`;
-                return;
-            }
-
-            let html = '';
-            rows.forEach(r => {
-                const statusBadge = r.status === 'WON' 
-                    ? '<span class="text-emerald-400 font-bold">Ganada</span>' 
-                    : '<span class="text-rose-400 font-bold">Perdida</span>';
-
-                html += `
-                    <tr>
-                        <td class="p-1.5"><span class="font-bold text-white block">${r.match}</span><span class="text-[9px] text-slate-400">${r.selection}</span></td>
-                        <td class="p-1.5 text-center font-bold text-emerald-400">${r.prob.toFixed(1)}%</td>
-                        <td class="p-1.5 text-center">${statusBadge}</td>
-                        <td class="p-1.5 text-center font-mono text-indigo-300">${r.brier.toFixed(4)}</td>
-                        <td class="p-1.5 text-center font-mono text-gold-400">${r.logLoss.toFixed(4)}</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function renderCalibrationChart(evaluated) {
-            const ctx = document.getElementById('calibrationChart').getContext('2d');
-            
-            const bins = [
-                { label: '0-20%', count: 0, wins: 0 },
-                { label: '21-40%', count: 0, wins: 0 },
-                { label: '41-60%', count: 0, wins: 0 },
-                { label: '61-80%', count: 0, wins: 0 },
-                { label: '81-100%', count: 0, wins: 0 }
-            ];
-
-            evaluated.forEach(b => {
-                let p = parseFloat(b.prob) || 50;
-                let idx = Math.min(4, Math.floor(p / 20));
-                bins[idx].count++;
-                if (b.status === 'WON') bins[idx].wins++;
-            });
-
-            const actualFreqs = bins.map(b => b.count > 0 ? (b.wins / b.count) * 100 : 0);
-            const expectedFreqs = [10, 30, 50, 70, 90];
-
-            if (calibrationChartInstance) calibrationChartInstance.destroy();
-
-            calibrationChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['0-20%', '21-40%', '41-60%', '61-80%', '81-100%'],
-                    datasets: [
-                        {
-                            label: 'Frecuencia Real de Acierto (%)',
-                            data: actualFreqs,
-                            backgroundColor: 'rgba(99, 102, 241, 0.7)',
-                            borderColor: '#6366f1',
-                            borderWidth: 1,
-                            borderRadius: 4
-                        },
-                        {
-                            type: 'line',
-                            label: 'Calibración Ideal (45°)',
-                            data: expectedFreqs,
-                            borderColor: '#34d399',
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            fill: false
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { size: 10 } } }
-                    },
-                    scales: {
-                        x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
-                        y: { min: 0, max: 100, ticks: { color: '#94a3b8', font: { size: 9 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                    }
-                }
-            });
-        }
-
-        function toggleTrackerModal(show) {
-            const modal = document.getElementById('trackerModal');
-            if (show) {
-                updateTrackerMetrics();
-                modal.classList.remove('hidden');
-            } else {
-                modal.classList.add('hidden');
-            }
-        }
-
-        function openLogBetModal(market = '', selection = '', prob = 0.5) {
-            document.getElementById('editBetIndex').value = "-1";
-            document.getElementById('logIsParlay').value = "false";
-            document.getElementById('selectionHistoryWidget').classList.add('hidden');
-            document.getElementById('logBetModalTitle').innerText = "Registrar Nueva Apuesta";
-            
-            const homeName = document.getElementById('homeName').value || 'Local';
-            const awayName = document.getElementById('awayName').value || 'Visitante';
-            const leagueName = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
-
-            document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
-            document.getElementById('logLeague').value = leagueName;
-            document.getElementById('logMatch').value = `${homeName} vs ${awayName}`;
-            document.getElementById('logMarket').value = market || 'Over / Under Goles';
-            document.getElementById('logSelection').value = selection || 'Over 2.5';
-
-            const probPct = prob * 100;
-            const fairOdds = 1 / Math.max(0.001, prob);
-
-            document.getElementById('logProb').value = probPct.toFixed(1);
-            document.getElementById('logFairOdds').value = fairOdds.toFixed(2);
-            document.getElementById('logBookieOdds').value = (fairOdds * 1.05).toFixed(2);
 
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             let initialBank = activeBankObj.initial;
             let totalProfit = 0;
             let pendingRiskCalc = 0;
+            
+            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'PENDING') pendingRiskCalc += stake;
+                else if (bet.status === 'WON') totalProfit += stake * (odds - 1);
+                else if (bet.status === 'LOST') totalProfit -= stake;
+                else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
+                else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
+            });
+            const currentBankroll = Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc);
 
+            const b = bookieOdds - 1;
+            const q = 1 - prob;
+            const fullKelly = (prob * b - q) / b;
+
+            if (fullKelly <= 0) {
+                showToast("Kelly sugiere 0 arriesgo (EV no favorable).");
+                document.getElementById('logStake').value = "0";
+                return;
+            }
+
+            const quarterKellyFraction = fullKelly * 0.25;
+
+            const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
+            let selectionNetProfit = 0;
+            if (selectionInput) {
+                const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+                currentBankBets.forEach(bet => {
+                    if (bet.status !== 'PENDING' && bet.selection && bet.selection.toLowerCase().includes(selectionInput)) {
+                        const s = parseFloat(bet.stake) || 0;
+                        const o = parseFloat(bet.bookieOdds) || 1;
+                        if (bet.status === 'WON') selectionNetProfit += s * (o - 1);
+                        else if (bet.status === 'LOST') selectionNetProfit -= s;
+                        else if (bet.status === 'HALF_WON') selectionNetProfit += (s / 2) * (o - 1);
+                        else if (bet.status === 'HALF_LOST') selectionNetProfit -= (s / 2);
+                    }
+                });
+            }
+
+            const availableBalanceMultiplier = selectionNetProfit < 0 ? 0.80 : 1.00;
+            let recommendedStake = Math.round(currentBankroll * availableBalanceMultiplier * quarterKellyFraction);
+            if (recommendedStake < 1) recommendedStake = 1;
+
+            document.getElementById('logStake').value = recommendedStake;
+            showToast(`Stake Kelly 1/4: $${recommendedStake}`);
+        }
+
+        function openLogBetModal(market = '', selection = '', prob = 0) {
+            const homeName = document.getElementById('homeName').value.trim() || 'Local';
+            const awayName = document.getElementById('awayName').value.trim() || 'Visitante';
+            const activeLeague = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
+
+            document.getElementById('editBetIndex').value = "-1";
+            document.getElementById('logIsParlay').value = "false";
+            document.getElementById('logBetModalTitle').innerText = "Registrar Nueva Apuesta Sencilla";
+            document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('logLeague').value = activeLeague;
+            document.getElementById('logMatch').value = `${homeName} vs ${awayName}`;
+            document.getElementById('logMarket').value = market || 'Ganador Partido';
+            document.getElementById('logSelection').value = selection || homeName;
+            
+            const probPct = prob ? (prob * 100).toFixed(1) : '50.0';
+            document.getElementById('logProb').value = probPct;
+            
+            const fairOdds = prob ? (1 / prob).toFixed(2) : '2.00';
+            document.getElementById('logFairOdds').value = fairOdds;
+            document.getElementById('logBookieOdds').value = fairOdds;
+            
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            let initialBank = activeBankObj.initial;
+            let totalProfit = 0;
+            let pendingRiskCalc = 0;
             betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
                 const s = parseFloat(bet.stake) || 0;
                 const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') {
-                    pendingRiskCalc += s;
-                } else if (bet.status === 'WON') totalProfit += s * (o - 1);
+                if (bet.status === 'PENDING') pendingRiskCalc += s;
+                else if (bet.status === 'WON') totalProfit += s * (o - 1);
                 else if (bet.status === 'LOST') totalProfit -= s;
                 else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
                 else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
@@ -2793,725 +2276,396 @@
             document.getElementById('logBookmaker').value = "Bet365";
             document.getElementById('logStatus').value = "PENDING";
 
+            checkSelectionHistoricalProfit();
             calculateLogEv();
-            document.getElementById('logBetModal').classList.remove('hidden');
+            toggleLogBetModal(true);
         }
 
-        function toggleLogBetModal(show) {
-            const modal = document.getElementById('logBetModal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
+        function editBetInLog(index) {
+            const item = betLogData[index];
+            if (!item) return;
+
+            document.getElementById('editBetIndex').value = index;
+            document.getElementById('logIsParlay').value = item.isParlay ? "true" : "false";
+            document.getElementById('logBetModalTitle').innerText = item.isParlay ? "Editar Apuesta Combinada (Parlay)" : "Editar Apuesta Sencilla";
+            document.getElementById('logDate').value = item.date || new Date().toISOString().slice(0, 10);
+            document.getElementById('logLeague').value = item.league;
+            document.getElementById('logMatch').value = item.match;
+            document.getElementById('logMarket').value = item.market;
+            document.getElementById('logSelection').value = item.selection;
+            document.getElementById('logProb').value = item.prob;
+            document.getElementById('logFairOdds').value = item.fairOdds;
+            document.getElementById('logBookieOdds').value = item.bookieOdds;
+            document.getElementById('logStake').value = item.stake;
+            document.getElementById('logBookmaker').value = item.bookmaker || "Bet365";
+            document.getElementById('logStatus').value = item.status;
+
+            checkSelectionHistoricalProfit();
+            calculateLogEv();
+            toggleLogBetModal(true);
         }
 
         function calculateLogEv() {
-            const prob = parseFloat(document.getElementById('logProb').value) || 0;
-            const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 1.0;
+            const prob = parseFloat(document.getElementById('logProb').value) / 100 || 0;
+            const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
             
-            const fairOdds = 1 / Math.max(0.001, prob / 100);
-            document.getElementById('logFairOdds').value = fairOdds.toFixed(2);
+            if (prob > 0) {
+                document.getElementById('logFairOdds').value = (1 / prob).toFixed(2);
+            }
 
-            const ev = ((prob / 100) * bookieOdds) - 1;
-            const evDisplay = document.getElementById('logEvDisplay');
-            const warningEl = document.getElementById('valueTrapWarning');
-
-            evDisplay.innerText = (ev >= 0 ? '+' : '') + (ev * 100).toFixed(1) + '%';
-            evDisplay.className = ev >= 0 ? "text-sm font-black text-emerald-400 block" : "text-sm font-black text-rose-400 block";
-
-            if (ev < 0) warningEl.classList.remove('hidden');
-            else warningEl.classList.add('hidden');
-        }
-
-        function applyKellyQuarter() {
-            const prob = (parseFloat(document.getElementById('logProb').value) || 50) / 100;
-            const odds = parseFloat(document.getElementById('logBookieOdds').value) || 2.0;
+            const ev = (prob * bookieOdds) - 1;
+            const evPct = (ev * 100).toFixed(1);
             
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            let initialBank = activeBankObj.initial;
-            let totalProfit = 0;
-            let pendingRiskCalc = 0;
+            const evEl = document.getElementById('logEvDisplay');
+            evEl.innerText = (ev >= 0 ? '+' : '') + evPct + '%';
+            evEl.className = ev >= 0 ? 'text-sm font-black text-emerald-400 block' : 'text-sm font-black text-rose-400 block';
 
-            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') pendingRiskCalc += s;
-                else if (bet.status === 'WON') totalProfit += s * (o - 1);
-                else if (bet.status === 'LOST') totalProfit -= s;
-                else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
-                else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
-            });
-            const dynamicBankroll = Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc);
-
-            const q = 1 - prob;
-            const b = odds - 1;
-            let kellyFraction = (b * prob - q) / b;
-            kellyFraction = Math.max(0, kellyFraction) * 0.25; 
-
-            const recommendedStake = Math.max(1, Math.round(dynamicBankroll * kellyFraction));
-            document.getElementById('logStake').value = recommendedStake;
-            showToast(`Stake calculado con Kelly 1/4: $${recommendedStake}`);
+            const trapWarning = document.getElementById('valueTrapWarning');
+            if (ev < -0.05) {
+                trapWarning.classList.remove('hidden');
+            } else {
+                trapWarning.classList.add('hidden');
+            }
         }
 
         function saveBetToLog() {
-            const editIndex = parseInt(document.getElementById('editBetIndex').value);
-            const isParlay = document.getElementById('logIsParlay').value === 'true';
+            const index = parseInt(document.getElementById('editBetIndex').value);
+            const isParlay = document.getElementById('logIsParlay').value === "true";
+            const prob = parseFloat(document.getElementById('logProb').value) || 0;
+            const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 1.0;
+            const ev = ((prob / 100) * bookieOdds) - 1;
 
-            const date = document.getElementById('logDate').value || new Date().toISOString().slice(0, 10);
-            const league = document.getElementById('logLeague').value.trim() || DEFAULT_LEAGUE_NAME;
-            const match = document.getElementById('logMatch').value.trim() || 'Partido';
-            const market = document.getElementById('logMarket').value.trim() || 'Mercado';
-            const selection = document.getElementById('logSelection').value.trim() || 'Selección';
-            const prob = parseFloat(document.getElementById('logProb').value) || 50;
-            const fairOdds = parseFloat(document.getElementById('logFairOdds').value) || 2.0;
-            const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 2.0;
-            const stake = parseFloat(document.getElementById('logStake').value) || 20;
-            const bookmaker = document.getElementById('logBookmaker').value;
-            const status = document.getElementById('logStatus').value;
-
-            const ev = (((prob / 100) * bookieOdds) - 1) * 100;
-
-            const betObj = {
-                id: editIndex >= 0 ? betLogData[editIndex].id : 'bet_' + Date.now(),
-                bankrollId: activeBankrollId,
-                date, league, match, market, selection, prob, fairOdds, bookieOdds, stake, bookmaker, status, ev, isParlay
+            const betRecord = {
+                id: index >= 0 ? betLogData[index].id : Date.now(),
+                bankrollId: index >= 0 ? (betLogData[index].bankrollId || bankrollsData[0].id) : activeBankrollId,
+                isParlay: isParlay,
+                date: document.getElementById('logDate').value || new Date().toISOString().slice(0, 10),
+                league: document.getElementById('logLeague').value,
+                match: document.getElementById('logMatch').value,
+                market: document.getElementById('logMarket').value,
+                selection: document.getElementById('logSelection').value,
+                prob: prob.toFixed(1),
+                fairOdds: document.getElementById('logFairOdds').value,
+                bookieOdds: bookieOdds.toFixed(2),
+                ev: (ev * 100).toFixed(1),
+                stake: parseFloat(document.getElementById('logStake').value) || 10,
+                bookmaker: document.getElementById('logBookmaker').value,
+                status: document.getElementById('logStatus').value
             };
 
-            if (editIndex >= 0) {
-                betLogData[editIndex] = betObj;
-                showToast("Apuesta actualizada con éxito.");
+            if (index >= 0) {
+                betLogData[index] = betRecord;
             } else {
-                betLogData.unshift(betObj);
-                showToast("¡Apuesta registrada con éxito!");
+                betLogData.unshift(betRecord);
+                if (isParlay) {
+                    parlaySelections = [];
+                    renderParlayBuilder();
+                }
             }
 
             saveBetLogToStorage();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             toggleLogBetModal(false);
+            showToast("¡Apuesta guardada en la bitácora!");
         }
 
-        function editBet(id) {
-            const index = betLogData.findIndex(b => b.id === id);
-            if (index < 0) return;
-            const b = betLogData[index];
-
-            document.getElementById('editBetIndex').value = index;
-            document.getElementById('logIsParlay').value = b.isParlay ? 'true' : 'false';
-            document.getElementById('logBetModalTitle').innerText = "Editar Apuesta";
-            
-            document.getElementById('logDate').value = b.date || new Date().toISOString().slice(0, 10);
-            document.getElementById('logLeague').value = b.league;
-            document.getElementById('logMatch').value = b.match;
-            document.getElementById('logMarket').value = b.market;
-            document.getElementById('logSelection').value = b.selection;
-            document.getElementById('logProb').value = b.prob;
-            document.getElementById('logFairOdds').value = b.fairOdds;
-            document.getElementById('logBookieOdds').value = b.bookieOdds;
-            document.getElementById('logStake').value = b.stake;
-            document.getElementById('logBookmaker').value = b.bookmaker || 'Bet365';
-            document.getElementById('logStatus').value = b.status;
-
-            calculateLogEv();
-            checkSelectionHistoricalProfit();
-            toggleLogBetModal(true);
+        function deleteBetFromLog(index) {
+            betLogData.splice(index, 1);
+            saveBetLogToStorage();
+            updateMarketFilterDropdown();
+            updateTrackerMetrics();
+            showToast("Apuesta eliminada.");
         }
 
-        function deleteBet(id) {
-            if (confirm("¿Estás seguro de eliminar este registro de apuesta?")) {
-                betLogData = betLogData.filter(b => b.id !== id);
+        function clearBetLogHistory() {
+            if (confirm("¿Estás seguro de borrar el historial de apuestas de este Bankroll activo?")) {
+                betLogData = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) !== activeBankrollId);
                 saveBetLogToStorage();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
-                showToast("Apuesta eliminada.");
+                showToast("Historial de la caja vaciado.");
             }
         }
 
-        function quickResolveBet(id, status) {
-            const bet = betLogData.find(b => b.id === id);
-            if (!bet) return;
-            bet.status = status;
+        function updateBetStatusDirect(index, newStatus) {
+            betLogData[index].status = newStatus;
             saveBetLogToStorage();
+            updateMarketFilterDropdown();
             updateTrackerMetrics();
-            showToast(`Apuesta marcada como: ${status}`);
+            showToast("Estado actualizado.");
         }
 
         function updateMarketFilterDropdown() {
             const marketSelect = document.getElementById('marketFilterSelect');
-            const selectionSelect = document.getElementById('selectionFilterSelect');
-            
+            if (!marketSelect) return;
+
+            const currentMarketVal = marketSelect.value;
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-
-            const markets = [...new Set(currentBankBets.map(b => b.market))];
-            const selections = [...new Set(currentBankBets.map(b => b.selection))];
-
-            const curMarket = marketSelect.value;
-            const curSelection = selectionSelect.value;
+            
+            const marketsSet = new Set();
+            currentBankBets.forEach(b => {
+                if (b.market) marketsSet.add(b.market);
+            });
 
             marketSelect.innerHTML = '<option value="ALL">🌐 Todos los Mercados</option>';
-            markets.forEach(m => {
-                marketSelect.add(new Option(m, m));
+            marketsSet.forEach(market => {
+                const opt = new Option(market, market);
+                if (market === currentMarketVal) opt.selected = true;
+                marketSelect.add(opt);
             });
-            if (markets.includes(curMarket)) marketSelect.value = curMarket;
 
-            selectionSelect.innerHTML = '<option value="ALL">⭐ Todas las Selecciones</option>';
-            selections.forEach(s => {
-                selectionSelect.add(new Option(s, s));
-            });
-            if (selections.includes(curSelection)) selectionSelect.value = curSelection;
+            updateSelectionFilterDropdown();
         }
 
         function onMarketFilterChange() {
-            const market = document.getElementById('marketFilterSelect').value;
-            const selectionSelect = document.getElementById('selectionFilterSelect');
-            
-            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-
-            const filtered = market === 'ALL' ? currentBankBets : currentBankBets.filter(b => b.market === market);
-            const selections = [...new Set(filtered.map(b => b.selection))];
-
-            selectionSelect.innerHTML = '<option value="ALL">⭐ Todas las Selecciones</option>';
-            selections.forEach(s => {
-                selectionSelect.add(new Option(s, s));
-            });
-
+            updateSelectionFilterDropdown();
             updateTrackerMetrics();
         }
 
-        function updateTrackerMetrics() {
-            const marketFilter = document.getElementById('marketFilterSelect').value;
-            const selectionFilter = document.getElementById('selectionFilterSelect').value;
+        function updateSelectionFilterDropdown() {
+            const marketSelect = document.getElementById('marketFilterSelect');
+            const selectionSelect = document.getElementById('selectionFilterSelect');
+            if (!selectionSelect) return;
 
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            document.getElementById('dashActiveBankName').innerText = activeBankObj.name;
-
+            const currentSelectionVal = selectionSelect.value;
+            const selectedMarket = marketSelect ? marketSelect.value : 'ALL';
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
 
-            let filteredBets = currentBankBets;
-            if (marketFilter !== 'ALL') {
-                filteredBets = filteredBets.filter(b => b.market === marketFilter);
-            }
-            if (selectionFilter !== 'ALL') {
-                filteredBets = filteredBets.filter(b => b.selection === selectionFilter);
-            }
-
-            let totalProfit = 0;
-            let totalStakedTurnover = 0;
-            let wonCount = 0;
-            let lostCount = 0;
-            let pendingRisk = 0;
-
-            let pendingBets = [];
-            let closedBets = [];
-
-            currentBankBets.forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') {
-                    pendingRisk += s;
+            const selectionsSet = new Set();
+            currentBankBets.forEach(b => {
+                if (selectedMarket === 'ALL' || b.market === selectedMarket) {
+                    if (b.selection) selectionsSet.add(b.selection);
                 }
             });
 
-            filteredBets.forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
+            selectionSelect.innerHTML = '<option value="ALL">⭐ Todas las Selecciones</option>';
+            selectionsSet.forEach(sel => {
+                const opt = new Option(sel, sel);
+                if (sel === currentSelectionVal) opt.selected = true;
+                selectionSelect.add(opt);
+            });
+        }
+
+        function updateTrackerMetrics() {
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            const initialBank = activeBankObj.initial;
+            const totalWithdrawn = activeBankObj.totalWithdrawn || 0;
+            
+            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
+            const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
+
+            let totalProfitClosed = 0;
+            let totalStakedClosed = 0;
+            let totalRiskPending = 0;
+            let countPending = 0;
+            let countClosed = 0;
+            let wonCount = 0;
+
+            const currentBankrollArr = [initialBank];
+            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            
+            const filteredBets = currentBankBets.filter(b => {
+                const matchMarket = (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter);
+                const matchSelection = (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter);
+                return matchMarket && matchSelection;
+            });
+
+            const cronoBets = filteredBets.slice().reverse();
+
+            let currentStreakCount = 0;
+            let streakType = 'NONE';
+            let peakBank = initialBank;
+            let maxDrawdownVal = 0;
+
+            cronoBets.forEach(bet => {
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
 
                 if (bet.status === 'PENDING') {
-                    pendingBets.push(bet);
+                    totalRiskPending += stake;
+                    countPending++;
                 } else {
-                    closedBets.push(bet);
-                    totalStakedTurnover += s;
+                    countClosed++;
+                    let pnl = 0;
+                    if (bet.status === 'WON') {
+                        pnl = stake * (odds - 1);
+                        wonCount++;
+                        totalStakedClosed += stake;
+                        if (streakType === 'WIN' || streakType === 'NONE') currentStreakCount++;
+                        else { currentStreakCount = 1; }
+                        streakType = 'WIN';
+                    } else if (bet.status === 'LOST') {
+                        pnl = -stake;
+                        totalStakedClosed += stake;
+                        if (streakType === 'LOSS' || streakType === 'NONE') currentStreakCount++;
+                        else { currentStreakCount = 1; }
+                        streakType = 'LOSS';
+                    } else if (bet.status === 'HALF_WON') {
+                        pnl = (stake / 2) * (odds - 1);
+                        wonCount += 0.5;
+                        totalStakedClosed += stake;
+                    } else if (bet.status === 'HALF_LOST') {
+                        pnl = -(stake / 2);
+                        totalStakedClosed += stake;
+                    } else if (bet.status === 'VOID') {
+                        pnl = 0;
+                    }
+
+                    totalProfitClosed += pnl;
+                    const lastBank = currentBankrollArr[currentBankrollArr.length - 1];
+                    const nextBank = lastBank + pnl;
+                    currentBankrollArr.push(nextBank);
+
+                    if (nextBank > peakBank) peakBank = nextBank;
+                    const dd = peakBank - nextBank;
+                    if (dd > maxDrawdownVal) maxDrawdownVal = dd;
+                }
+            });
+
+            const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn - totalRiskPending;
+            const yieldVal = totalStakedClosed > 0 ? (totalProfitClosed / totalStakedClosed) * 100 : 0;
+            const winRateVal = countClosed > 0 ? (wonCount / countClosed) * 100 : 0;
+
+            document.getElementById('summaryBankroll').innerText = `$${currentBankroll.toFixed(2)}`;
+            const sumProfitEl = document.getElementById('summaryProfit');
+            sumProfitEl.innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
+            sumProfitEl.className = totalProfitClosed >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
+
+            let filterLabelSuffix = '';
+            if (selectedMarketFilter !== 'ALL') filterLabelSuffix += ` [${selectedMarketFilter}]`;
+            if (selectedSelectionFilter !== 'ALL') filterLabelSuffix += ` (${selectedSelectionFilter})`;
+
+            document.getElementById('dashActiveBankName').innerText = activeBankObj.name + filterLabelSuffix;
+            document.getElementById('dashNetProfit').innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
+            document.getElementById('dashNetProfit').className = totalProfitClosed >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
+            document.getElementById('dashPendingRisk').innerText = `$${totalRiskPending.toFixed(2)}`;
+            document.getElementById('dashYield').innerText = yieldVal.toFixed(1) + '%';
+            document.getElementById('dashWinRate').innerText = winRateVal.toFixed(1) + '%';
+
+            document.getElementById('badgePendingCount').innerText = countPending;
+            document.getElementById('badgeClosedCount').innerText = countClosed;
+
+            document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
+            document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
+
+            updateLeaguePerformanceTable(filteredBets);
+            updateBestEvRangeAnalysis(filteredBets);
+
+            const streakLabel = streakType === 'LOSS' ? `🔥 ${currentStreakCount} Derrotas` : (streakType === 'WIN' ? `⭐ ${currentStreakCount} Victorias` : 'Neutral');
+            document.getElementById('statCurrentStreak').innerText = streakLabel;
+            const maxDDPct = peakBank > 0 ? (maxDrawdownVal / peakBank) * 100 : 0;
+            document.getElementById('statMaxDD').innerText = `-$${maxDrawdownVal.toFixed(0)} (${maxDDPct.toFixed(1)}%)`;
+
+            const sugStakeEl = document.getElementById('statSuggestedStakePct');
+            const mitSection = document.getElementById('lossMitigationSection');
+            const mitBadge = document.getElementById('lossMitigationBadge');
+            const mitIcon = document.getElementById('lossMitigationIcon');
+            const stopLossAlertBox = document.getElementById('lossMitigationAlert');
+
+            if (streakType === 'LOSS' && currentStreakCount >= 3) {
+                sugStakeEl.innerText = "1.0% (Mitigación)";
+                sugStakeEl.className = "text-xs font-black text-amber-400";
+                mitBadge.innerText = "Estado: Alerta de Racha";
+                mitBadge.className = "text-[9px] font-black bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30";
+                mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-amber-500/40 bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 transition-all";
+                mitIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-xs";
+            } else if (maxDDPct >= 10 && !stopLossDismissedToday) {
+                sugStakeEl.innerText = "0.5% (Stop-Loss)";
+                sugStakeEl.className = "text-xs font-black text-rose-400";
+                mitBadge.innerText = "Estado: Stop-Loss Activado";
+                mitBadge.className = "text-[9px] font-black bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full border border-rose-500/30";
+                mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-rose-500/40 bg-gradient-to-r from-slate-900 via-rose-950/30 to-slate-900 transition-all";
+                mitIcon.className = "fa-solid fa-shield-halved text-rose-400 text-xs";
+                stopLossAlertBox.classList.remove('hidden');
+            } else {
+                sugStakeEl.innerText = `${document.getElementById('globalStakePct').value}% (Normal)`;
+                sugStakeEl.className = "text-xs font-black text-emerald-400";
+                mitBadge.innerText = "Estado: Seguro";
+                mitBadge.className = "text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30";
+                mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 transition-all";
+                mitIcon.className = "fa-solid fa-shield-cat text-emerald-400 text-xs";
+            }
+
+            renderSeparatedBetsTables(filteredBets);
+            renderCalendarView(filteredBets);
+            renderPnlChart(currentBankrollArr);
+            saveBetLogToStorage();
+        }
+
+        // --- FUNCIÓN NUEVA: ACTUALIZAR TABLA DE RENDIMIENTO POR LIGA ---
+        function updateLeaguePerformanceTable(bankBets) {
+            const tableBody = document.getElementById('leaguePerformanceTableBody');
+            const badgeEl = document.getElementById('leaguePerformanceBadge');
+            if (!tableBody) return;
+
+            const leagueMap = {};
+
+            bankBets.forEach(bet => {
+                const leagueName = bet.league || 'Sin Liga';
+                if (!leagueMap[leagueName]) {
+                    leagueMap[leagueName] = { name: leagueName, count: 0, closedCount: 0, wonCount: 0, profit: 0, staked: 0 };
+                }
+
+                leagueMap[leagueName].count++;
+
+                if (bet.status !== 'PENDING') {
+                    leagueMap[leagueName].closedCount++;
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+                    let pnl = 0;
 
                     if (bet.status === 'WON') {
-                        totalProfit += s * (o - 1);
-                        wonCount++;
+                        pnl = stake * (odds - 1);
+                        leagueMap[leagueName].wonCount++;
+                        leagueMap[leagueName].staked += stake;
                     } else if (bet.status === 'LOST') {
-                        totalProfit -= s;
-                        lostCount++;
+                        pnl = -stake;
+                        leagueMap[leagueName].staked += stake;
                     } else if (bet.status === 'HALF_WON') {
-                        totalProfit += (s / 2) * (o - 1);
-                        wonCount++;
+                        pnl = (stake / 2) * (odds - 1);
+                        leagueMap[leagueName].wonCount += 0.5;
+                        leagueMap[leagueName].staked += stake;
                     } else if (bet.status === 'HALF_LOST') {
-                        totalProfit -= (s / 2);
-                        lostCount++;
+                        pnl = -(stake / 2);
+                        leagueMap[leagueName].staked += stake;
                     }
+                    leagueMap[leagueName].profit += pnl;
                 }
             });
 
-            const yieldPct = totalStakedTurnover > 0 ? (totalProfit / totalStakedTurnover) * 100 : 0;
-            const totalDecided = wonCount + lostCount;
-            const winRate = totalDecided > 0 ? (wonCount / totalDecided) * 100 : 0;
+            const leaguesArray = Object.values(leagueMap);
+            badgeEl.innerText = `${leaguesArray.length} ligas registradas`;
 
-            const dynamicBankroll = activeBankObj.initial + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRisk;
-            document.getElementById('summaryBankroll').innerText = '$' + dynamicBankroll.toFixed(2);
-            document.getElementById('summaryProfit').innerText = (totalProfit >= 0 ? '+$' : '-$') + Math.abs(totalProfit).toFixed(2);
-            document.getElementById('summaryProfit').className = totalProfit >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
-
-            document.getElementById('dashNetProfit').innerText = (totalProfit >= 0 ? '+$' : '-$') + Math.abs(totalProfit).toFixed(2);
-            document.getElementById('dashNetProfit').className = totalProfit >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
-
-            document.getElementById('dashPendingRisk').innerText = '$' + pendingRisk.toFixed(2);
-            document.getElementById('dashYield').innerText = (yieldPct >= 0 ? '+' : '') + yieldPct.toFixed(1) + '%';
-            document.getElementById('dashYield').className = yieldPct >= 0 ? "text-sm font-black text-gold-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
-
-            document.getElementById('dashWinRate').innerText = winRate.toFixed(1) + '%';
-
-            document.getElementById('badgePendingCount').innerText = pendingBets.length;
-            document.getElementById('badgeClosedCount').innerText = closedBets.length;
-            document.getElementById('pendingSummaryText').innerText = `Riesgo Total: $${pendingRisk.toFixed(2)}`;
-            document.getElementById('closedSummaryText').innerText = `Beneficio: $${totalProfit.toFixed(2)}`;
-
-            renderPendingBetsTable(pendingBets);
-            renderClosedBetsTable(closedBets);
-            renderPnlChart(closedBets, activeBankObj.initial);
-            renderCalendarGrid();
-            renderEvRangesWidget(currentBankBets);
-            renderLeaguePerformanceTable(currentBankBets);
-            updateLossMitigationWidget(currentBankBets, dynamicBankroll, activeBankObj.initial);
-        }
-
-        /* ---------------------------------------------------- */
-        /* MODIFICACIÓN SOLICITUD: RENDIMIENTO POR LIGA           */
-        /* ---------------------------------------------------- */
-        function renderLeaguePerformanceTable(bets) {
-            const container = document.getElementById('leaguePerformanceTableBody');
-            const countBadge = document.getElementById('leaguePerfCountBadge');
-            
-            const closedBets = bets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
-            
-            const leagueMap = {};
-            closedBets.forEach(b => {
-                const lg = b.league || 'Otra Liga';
-                if (!leagueMap[lg]) {
-                    leagueMap[lg] = { total: 0, won: 0, staked: 0, profit: 0 };
-                }
-                const s = parseFloat(b.stake) || 0;
-                const o = parseFloat(b.bookieOdds) || 1;
-                leagueMap[lg].total++;
-                leagueMap[lg].staked += s;
-
-                if (b.status === 'WON') {
-                    leagueMap[lg].won++;
-                    leagueMap[lg].profit += s * (o - 1);
-                } else if (b.status === 'LOST') {
-                    leagueMap[lg].profit -= s;
-                } else if (b.status === 'HALF_WON') {
-                    leagueMap[lg].won++;
-                    leagueMap[lg].profit += (s / 2) * (o - 1);
-                } else if (b.status === 'HALF_LOST') {
-                    leagueMap[lg].profit -= (s / 2);
-                }
-            });
-
-            const leaguesArr = Object.keys(leagueMap).map(lg => {
-                const d = leagueMap[lg];
-                const winRate = d.total > 0 ? (d.won / d.total) * 100 : 0;
-                const yieldPct = d.staked > 0 ? (d.profit / d.staked) * 100 : 0;
-                return { league: lg, ...d, winRate, yieldPct };
-            });
-
-            leaguesArr.sort((a, b) => b.profit - a.profit);
-            countBadge.innerText = `${leaguesArr.length} ligas`;
-
-            if (leaguesArr.length === 0) {
-                container.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-slate-500 italic">No hay suficientes apuestas liquidadas para calcular rendimiento por liga.</td></tr>`;
+            if (leaguesArray.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-slate-500 italic">No hay apuestas registradas para mostrar rendimiento por liga.</td></tr>`;
                 return;
             }
 
-            let html = '';
-            leaguesArr.forEach(item => {
-                const profitColor = item.profit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold';
-                const yieldColor = item.yieldPct >= 0 ? 'text-gold-400 font-bold' : 'text-rose-400 font-bold';
-                
-                html += `
-                    <tr>
-                        <td class="p-1.5 font-bold text-white">${item.league}</td>
-                        <td class="p-1.5 text-center">${item.total}</td>
-                        <td class="p-1.5 text-center">${item.won}</td>
-                        <td class="p-1.5 text-center font-bold text-indigo-300">${item.winRate.toFixed(1)}%</td>
-                        <td class="p-1.5 text-center ${profitColor}">${(item.profit >= 0 ? '+$' : '-$') + Math.abs(item.profit).toFixed(2)}</td>
-                        <td class="p-1.5 text-center ${yieldColor}">${(item.yieldPct >= 0 ? '+' : '') + item.yieldPct.toFixed(1)}%</td>
-                    </tr>
-                `;
-            });
-            container.innerHTML = html;
-        }
-
-        function updateLossMitigationWidget(bets, currentBank, initialBank) {
-            const closedBets = bets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
-            closedBets.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-            let currentStreak = 0;
-            let streakType = 'Neutral';
-            if (closedBets.length > 0) {
-                const last = closedBets[closedBets.length - 1];
-                if (last.status === 'WON' || last.status === 'HALF_WON') {
-                    currentStreak = 1;
-                    streakType = 'Ganadora';
-                    for (let i = closedBets.length - 2; i >= 0; i--) {
-                        if (closedBets[i].status === 'WON' || closedBets[i].status === 'HALF_WON') currentStreak++;
-                        else break;
-                    }
-                } else {
-                    currentStreak = 1;
-                    streakType = 'Perdedora';
-                    for (let i = closedBets.length - 2; i >= 0; i--) {
-                        if (closedBets[i].status === 'LOST' || closedBets[i].status === 'HALF_LOST') currentStreak++;
-                        else break;
-                    }
-                }
-            }
-
-            let peak = initialBank;
-            let maxDDVal = 0;
-            let runningBank = initialBank;
-
-            closedBets.forEach(b => {
-                const s = parseFloat(b.stake) || 0;
-                const o = parseFloat(b.bookieOdds) || 1;
-                if (b.status === 'WON') runningBank += s * (o - 1);
-                else if (b.status === 'LOST') runningBank -= s;
-                else if (b.status === 'HALF_WON') runningBank += (s / 2) * (o - 1);
-                else if (b.status === 'HALF_LOST') runningBank -= (s / 2);
-
-                if (runningBank > peak) peak = runningBank;
-                const dd = peak - runningBank;
-                if (dd > maxDDVal) maxDDVal = dd;
-            });
-
-            const maxDDPct = peak > 0 ? (maxDDVal / peak) * 100 : 0;
-
-            document.getElementById('statCurrentStreak').innerText = `${currentStreak} (${streakType})`;
-            document.getElementById('statMaxDD').innerText = `-$${maxDDVal.toFixed(2)} (${maxDDPct.toFixed(1)}%)`;
-
-            const suggestedStakeEl = document.getElementById('statSuggestedStakePct');
-            const mitigationSection = document.getElementById('lossMitigationSection');
-            const badge = document.getElementById('lossMitigationBadge');
-            const alertBox = document.getElementById('lossMitigationAlert');
-
-            if (streakType === 'Perdedora' && currentStreak >= 3) {
-                suggestedStakeEl.innerText = "1.0% (Defensivo)";
-                suggestedStakeEl.className = "text-xs font-black text-amber-400";
-                badge.innerText = "Estado: Precaución (Racha Negativa)";
-                mitigationSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-amber-500/60 bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 transition-all";
-            } else if (maxDDPct >= 15) {
-                suggestedStakeEl.innerText = "0.5% (Emergencia)";
-                suggestedStakeEl.className = "text-xs font-black text-rose-400";
-                badge.innerText = "Estado: Alerta Drawdown";
-                mitigationSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-rose-500/60 bg-gradient-to-r from-slate-900 via-rose-950/30 to-slate-900 transition-all";
-                if (!stopLossDismissedToday) alertBox.classList.remove('hidden');
-            } else {
-                suggestedStakeEl.innerText = "2.0% (Normal)";
-                suggestedStakeEl.className = "text-xs font-black text-emerald-400";
-                badge.innerText = "Estado: Seguro";
-                mitigationSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 transition-all";
-                alertBox.classList.add('hidden');
-            }
-        }
-
-        function renderEvRangesWidget(bets) {
-            const container = document.getElementById('evRangesGridContainer');
-            const badge = document.getElementById('bestEvRangeBadge');
-
-            const closedBets = bets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
-            
-            const ranges = [
-                { label: '0% - 5%', min: 0, max: 5, bets: 0, profit: 0, staked: 0 },
-                { label: '5.1% - 10%', min: 5.1, max: 10, bets: 0, profit: 0, staked: 0 },
-                { label: '10.1% - 20%', min: 10.1, max: 20, bets: 0, profit: 0, staked: 0 },
-                { label: '> 20%', min: 20.1, max: 999, bets: 0, profit: 0, staked: 0 }
-            ];
-
-            closedBets.forEach(b => {
-                const ev = parseFloat(b.ev) || 0;
-                const s = parseFloat(b.stake) || 0;
-                const o = parseFloat(b.bookieOdds) || 1;
-
-                let r = ranges.find(rng => ev >= rng.min && ev <= rng.max);
-                if (!r) {
-                    if (ev < 0) r = ranges[0];
-                    else r = ranges[3];
-                }
-
-                r.bets++;
-                r.staked += s;
-                if (b.status === 'WON') r.profit += s * (o - 1);
-                else if (b.status === 'LOST') r.profit -= s;
-                else if (b.status === 'HALF_WON') r.profit += (s / 2) * (o - 1);
-                else if (b.status === 'HALF_LOST') r.profit -= (s / 2);
-            });
-
-            let bestRange = null;
-            let maxYield = -999;
+            // Ordenar por beneficio neto descendente
+            leaguesArray.sort((a, b) => b.profit - a.profit);
 
             let html = '';
-            ranges.forEach(rng => {
-                const yieldPct = rng.staked > 0 ? (rng.profit / rng.staked) * 100 : 0;
-                if (rng.bets >= 2 && yieldPct > maxYield) {
-                    maxYield = yieldPct;
-                    bestRange = rng.label;
-                }
-
-                const yieldColor = yieldPct >= 0 ? 'text-emerald-400' : 'text-rose-400';
-                html += `
-                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 text-center">
-                        <span class="block text-[8px] uppercase text-slate-400 font-bold">EV ${rng.label}</span>
-                        <span class="text-xs font-black ${yieldColor} block mt-0.5">${(yieldPct >= 0 ? '+' : '') + yieldPct.toFixed(1)}% Yield</span>
-                        <span class="text-[8px] text-slate-500 block">${rng.bets} apuestas</span>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-            if (bestRange && maxYield > 0) {
-                badge.innerText = `Mejor: EV ${bestRange} (+${maxYield.toFixed(1)}% Yield)`;
-            } else {
-                badge.innerText = "Sin datos suficientes (min 2 bets)";
-            }
-        }
-
-        function renderPendingBetsTable(pendingBets) {
-            const tbody = document.getElementById('pendingBetsTableBody');
-            if (pendingBets.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">No hay apuestas pendientes de resolver en esta caja.</td></tr>`;
-                return;
-            }
-
-            let html = '';
-            pendingBets.forEach(bet => {
-                const potentialReturn = (bet.stake * bet.bookieOdds).toFixed(2);
-                const evClass = bet.ev >= 0 ? 'text-emerald-400' : 'text-rose-400';
+            leaguesArray.forEach(l => {
+                const winRate = l.closedCount > 0 ? (l.wonCount / l.closedCount) * 100 : 0;
+                const yieldVal = l.staked > 0 ? (l.profit / l.staked) * 100 : 0;
 
                 html += `
                     <tr>
-                        <td class="p-1.5 text-center text-slate-400">${bet.date}</td>
-                        <td class="p-1.5"><span class="font-bold text-white block">${bet.market}</span><span class="text-[9px] text-slate-400">${bet.league}</span></td>
-                        <td class="p-1.5"><span class="font-bold text-white block">${bet.match}</span><span class="text-[9px] text-gold-400">${bet.selection}</span></td>
-                        <td class="p-1.5 text-center font-bold text-indigo-300">${bet.prob.toFixed(1)}%</td>
-                        <td class="p-1.5 text-center font-bold text-emerald-300">@${bet.bookieOdds.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-bold ${evClass}">${(bet.ev >= 0 ? '+' : '') + bet.ev.toFixed(1)}%</td>
-                        <td class="p-1.5 text-center font-black text-white">$${bet.stake.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-bold text-gold-400">$${potentialReturn}</td>
-                        <td class="p-1.5 text-center">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="quickResolveBet('${bet.id}', 'WON')" class="px-1.5 py-0.5 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-slate-950 font-black rounded text-[9px]">G</button>
-                                <button onclick="quickResolveBet('${bet.id}', 'LOST')" class="px-1.5 py-0.5 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white font-black rounded text-[9px]">P</button>
-                                <button onclick="quickResolveBet('${bet.id}', 'VOID')" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded text-[9px]">N</button>
-                            </div>
-                        </td>
-                        <td class="p-1.5 text-center">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="editBet('${bet.id}')" class="text-indigo-400 hover:text-indigo-300 p-1"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteBet('${bet.id}')" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
+                        <td class="p-1.5 font-bold text-white"><i class="fa-solid fa-futbol text-emerald-400 mr-1"></i>${l.name}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">${l.count} <span class="text-[8px] text-slate-500">(${l.closedCount} cerradas)</span></td>
+                        <td class="p-1.5 text-center font-bold text-indigo-300">${winRate.toFixed(0)}%</td>
+                        <td class="p-1.5 text-center font-bold ${yieldVal >= 0 ? 'text-gold-400' : 'text-rose-400'}">${yieldVal.toFixed(1)}%</td>
+                        <td class="p-1.5 text-center font-black ${l.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${l.profit >= 0 ? '+$' : '-$'}${Math.abs(l.profit).toFixed(2)}
                         </td>
                     </tr>
                 `;
             });
-            tbody.innerHTML = html;
+            tableBody.innerHTML = html;
         }
 
-        function renderClosedBetsTable(closedBets) {
-            const tbody = document.getElementById('closedBetsTableBody');
-            if (closedBets.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">No hay apuestas cerradas o liquidadas en esta caja.</td></tr>`;
-                return;
-            }
-
-            let html = '';
-            closedBets.forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
-                let profit = 0;
-                let statusBadge = '';
-
-                if (bet.status === 'WON') {
-                    profit = s * (o - 1);
-                    statusBadge = '<span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 font-bold rounded text-[9px]">Ganada</span>';
-                } else if (bet.status === 'LOST') {
-                    profit = -s;
-                    statusBadge = '<span class="px-2 py-0.5 bg-rose-500/20 text-rose-400 font-bold rounded text-[9px]">Perdida</span>';
-                } else if (bet.status === 'VOID') {
-                    profit = 0;
-                    statusBadge = '<span class="px-2 py-0.5 bg-slate-800 text-slate-300 font-bold rounded text-[9px]">Nula</span>';
-                } else if (bet.status === 'HALF_WON') {
-                    profit = (s / 2) * (o - 1);
-                    statusBadge = '<span class="px-2 py-0.5 bg-teal-500/20 text-teal-300 font-bold rounded text-[9px]">Mitad G.</span>';
-                } else if (bet.status === 'HALF_LOST') {
-                    profit = -(s / 2);
-                    statusBadge = '<span class="px-2 py-0.5 bg-amber-500/20 text-amber-300 font-bold rounded text-[9px]">Mitad P.</span>';
-                }
-
-                const profitClass = profit >= 0 ? 'text-emerald-400' : 'text-rose-400';
-                const evClass = bet.ev >= 0 ? 'text-emerald-400' : 'text-rose-400';
-
-                html += `
-                    <tr>
-                        <td class="p-1.5 text-center text-slate-400">${bet.date}</td>
-                        <td class="p-1.5"><span class="font-bold text-white block">${bet.market}</span><span class="text-[9px] text-slate-400">${bet.league}</span></td>
-                        <td class="p-1.5"><span class="font-bold text-white block">${bet.match}</span><span class="text-[9px] text-gold-400">${bet.selection}</span></td>
-                        <td class="p-1.5 text-center font-bold text-indigo-300">${bet.prob.toFixed(1)}%</td>
-                        <td class="p-1.5 text-center font-bold text-emerald-300">@${bet.bookieOdds.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-bold ${evClass}">${(bet.ev >= 0 ? '+' : '') + bet.ev.toFixed(1)}%</td>
-                        <td class="p-1.5 text-center font-black text-white">$${s.toFixed(2)}</td>
-                        <td class="p-1.5 text-center">${statusBadge}</td>
-                        <td class="p-1.5 text-center font-black ${profitClass}">${(profit >= 0 ? '+$' : '-$') + Math.abs(profit).toFixed(2)}</td>
-                        <td class="p-1.5 text-center">
-                            <div class="flex items-center justify-center gap-1">
-                                <button onclick="editBet('${bet.id}')" class="text-indigo-400 hover:text-indigo-300 p-1"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteBet('${bet.id}')" class="text-rose-400 hover:text-rose-300 p-1"><i class="fa-solid fa-trash-can"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function renderPnlChart(closedBets, initialBank) {
-            const ctx = document.getElementById('pnlChart').getContext('2d');
-            
-            const sorted = [...closedBets].sort((a, b) => new Date(a.date) - new Date(b.date));
-            let running = initialBank;
-            const labels = ['Inicio'];
-            const data = [initialBank];
-
-            sorted.forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'WON') running += s * (o - 1);
-                else if (bet.status === 'LOST') running -= s;
-                else if (bet.status === 'HALF_WON') running += (s / 2) * (o - 1);
-                else if (bet.status === 'HALF_LOST') running -= (s / 2);
-
-                labels.push(bet.date);
-                data.push(running);
-            });
-
-            if (pnlChartInstance) pnlChartInstance.destroy();
-
-            pnlChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Evolución Caja ($)',
-                        data: data,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.2,
-                        pointRadius: 3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                    }
-                }
-            });
-        }
-
-        function changeCalendarMonth(dir) {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + dir);
-            renderCalendarGrid();
-        }
-
-        function renderCalendarGrid() {
-            const grid = document.getElementById('calendarGrid');
-            const title = document.getElementById('calendarMonthTitle');
-            
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-
-            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-            title.innerText = `${monthNames[month]} ${year}`;
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const adjustedFirstDay = firstDayIndex === 0 ? 6 : firstDayIndex - 1; // Lunes como inicio
-            const totalDays = new Date(year, month + 1, 0).getDate();
-
-            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-
-            let html = '';
-            for (let i = 0; i < adjustedFirstDay; i++) {
-                html += `<div></div>`;
-            }
-
-            for (let day = 1; day <= totalDays; day++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayBets = currentBankBets.filter(b => b.date === dateStr);
-
-                let dayProfit = 0;
-                let hasBets = dayBets.length > 0;
-                let bgClass = "bg-slate-900/80 border border-slate-800 text-slate-300";
-
-                if (hasBets) {
-                    dayBets.forEach(bet => {
-                        const s = parseFloat(bet.stake) || 0;
-                        const o = parseFloat(bet.bookieOdds) || 1;
-                        if (bet.status === 'WON') dayProfit += s * (o - 1);
-                        else if (bet.status === 'LOST') dayProfit -= s;
-                        else if (bet.status === 'HALF_WON') dayProfit += (s / 2) * (o - 1);
-                        else if (bet.status === 'HALF_LOST') dayProfit -= (s / 2);
-                    });
-
-                    if (dayProfit > 0) bgClass = "bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 font-bold";
-                    else if (dayProfit < 0) bgClass = "bg-rose-950/70 border border-rose-500/40 text-rose-300 font-bold";
-                    else bgClass = "bg-slate-800 border border-slate-700 text-slate-200 font-bold";
-                }
-
-                html += `
-                    <div onclick="openDayBetsModal('${dateStr}')" class="${bgClass} rounded-lg p-1 text-center cursor-pointer hover:scale-105 transition-all text-[10px] flex flex-col justify-between h-12">
-                        <span class="text-[9px] text-slate-400">${day}</span>
-                        <span class="text-[9px] truncate">${hasBets ? (dayProfit >= 0 ? '+$' : '-$') + Math.abs(dayProfit).toFixed(0) : ''}</span>
-                    </div>
-                `;
-            }
-
-            grid.innerHTML = html;
-        }
-
-        function openDayBetsModal(dateStr) {
-            const modal = document.getElementById('dayBetsModal');
-            document.getElementById('dayBetsModalTitle').innerText = `Apuestas del ${dateStr}`;
-            
-            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const dayBets = currentBankBets.filter(b => b.date === dateStr);
-            const content = document.getElementById('dayBetsModalContent');
-
-            if (dayBets.length === 0) {
-                content.innerHTML = `<p class="text-slate-500 text-xs italic text-center py-4">No hay apuestas registradas en esta fecha.</p>`;
-            } else {
-                let html = '';
-                dayBets.forEach(bet => {
-                    html += `
-                        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-xs space-y-1">
-                            <div class="flex justify-between font-bold">
-                                <span class="text-white">${bet.match}</span>
-                                <span class="text-emerald-400">@${bet.bookieOdds.toFixed(2)}</span>
-                            </div>
-                            <div class="text-[10px] text-slate-400 flex justify-between">
-                                <span>${bet.market}: <b class="text-gold-400">${bet.selection}</b></span>
-                                <span>Stake: $${bet.stake.toFixed(2)}</span>
-                            </div>
-                        </div>
-                    `;
-                });
-                content.innerHTML = html;
-            }
-            modal.classList.remove('hidden');
-        }
-
-        function toggleDayBetsModal(show) {
-            const modal = document.getElementById('dayBetsModal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
-        }
-
+        // --- FUNCIONES DEL NUEVO SIMULADOR DE STAKE PLANO ---
         function openFlatStakeModal() {
             runFlatStakeSimulation();
             document.getElementById('flatStakeModal').classList.remove('hidden');
@@ -3519,86 +2673,97 @@
 
         function toggleFlatStakeModal(show) {
             const modal = document.getElementById('flatStakeModal');
-            if (show) modal.classList.remove('hidden');
-            else modal.classList.add('hidden');
+            if (show) {
+                runFlatStakeSimulation();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
         }
 
         function runFlatStakeSimulation() {
-            const flatStake = parseFloat(document.getElementById('flatStakeAmountInput2') || document.getElementById('flatStakeAmountInput').value) || 20;
+            const flatStakeVal = parseFloat(document.getElementById('flatStakeAmountInput').value) || 20;
+            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
+            const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
             const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const closedBets = currentBankBets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
-            closedBets.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const filteredBets = currentBankBets.filter(b => {
+                const matchMarket = (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter);
+                const matchSelection = (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter);
+                return matchMarket && matchSelection;
+            });
+
+            const closedBetsChronological = filteredBets.filter(b => b.status !== 'PENDING').slice().reverse();
 
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            let initialBank = activeBankObj.initial;
+            const initialBank = activeBankObj.initial;
 
             let realTotalProfit = 0;
-            let realTurnover = 0;
-            closedBets.forEach(b => {
-                const s = parseFloat(b.stake) || 0;
-                const o = parseFloat(b.bookieOdds) || 1;
-                realTurnover += s;
-                if (b.status === 'WON') realTotalProfit += s * (o - 1);
-                else if (b.status === 'LOST') realTotalProfit -= s;
-                else if (b.status === 'HALF_WON') realTotalProfit += (s / 2) * (o - 1);
-                else if (b.status === 'HALF_LOST') realTotalProfit -= (s / 2);
-            });
-            const realYield = realTurnover > 0 ? (realTotalProfit / realTurnover) * 100 : 0;
-
             let flatTotalProfit = 0;
-            let flatTurnover = 0;
-            let flatRunning = initialBank;
-            let flatLabels = ['Inicio'];
-            let flatData = [initialBank];
-            let realData = [initialBank];
-            let realRunning = initialBank;
+            let flatTotalStaked = 0;
+            let realTotalStaked = 0;
 
-            closedBets.forEach(b => {
-                const o = parseFloat(b.bookieOdds) || 1;
-                flatTurnover += flatStake;
+            const realCurve = [initialBank];
+            const flatCurve = [initialBank];
 
-                let p = 0;
-                if (b.status === 'WON') p = flatStake * (o - 1);
-                else if (b.status === 'LOST') p = -flatStake;
-                else if (b.status === 'HALF_WON') p = (flatStake / 2) * (o - 1);
-                else if (b.status === 'HALF_LOST') p = -(flatStake / 2);
+            let currentRealBank = initialBank;
+            let currentFlatBank = initialBank;
 
-                flatTotalProfit += p;
-                flatRunning += p;
+            closedBetsChronological.forEach(bet => {
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                const realStake = parseFloat(bet.stake) || 0;
+                
+                let realPnl = 0;
+                if (bet.status === 'WON') { realPnl = realStake * (odds - 1); realTotalStaked += realStake; }
+                else if (bet.status === 'LOST') { realPnl = -realStake; realTotalStaked += realStake; }
+                else if (bet.status === 'HALF_WON') { realPnl = (realStake / 2) * (odds - 1); realTotalStaked += realStake; }
+                else if (bet.status === 'HALF_LOST') { realPnl = -(realStake / 2); realTotalStaked += realStake; }
+                
+                realTotalProfit += realPnl;
+                currentRealBank += realPnl;
+                realCurve.push(currentRealBank);
 
-                const s = parseFloat(b.stake) || 0;
-                if (b.status === 'WON') realRunning += s * (o - 1);
-                else if (b.status === 'LOST') realRunning -= s;
-                else if (b.status === 'HALF_WON') realRunning += (s / 2) * (o - 1);
-                else if (b.status === 'HALF_LOST') realRunning -= (s / 2);
+                let flatPnl = 0;
+                if (bet.status === 'WON') { flatPnl = flatStakeVal * (odds - 1); flatTotalStaked += flatStakeVal; }
+                else if (bet.status === 'LOST') { flatPnl = -flatStakeVal; flatTotalStaked += flatStakeVal; }
+                else if (bet.status === 'HALF_WON') { flatPnl = (flatStakeVal / 2) * (odds - 1); flatTotalStaked += flatStakeVal; }
+                else if (bet.status === 'HALF_LOST') { flatPnl = -(flatStakeVal / 2); flatTotalStaked += flatStakeVal; }
 
-                flatLabels.push(b.date);
-                flatData.push(flatRunning);
-                realData.push(realRunning);
+                flatTotalProfit += flatPnl;
+                currentFlatBank += flatPnl;
+                flatCurve.push(currentFlatBank);
             });
 
-            const flatYield = flatTurnover > 0 ? (flatTotalProfit / flatTurnover) * 100 : 0;
+            const realYield = realTotalStaked > 0 ? (realTotalProfit / realTotalStaked) * 100 : 0;
+            const flatYield = flatTotalStaked > 0 ? (flatTotalProfit / flatTotalStaked) * 100 : 0;
 
             document.getElementById('simRealPnl').innerText = (realTotalProfit >= 0 ? '+$' : '-$') + Math.abs(realTotalProfit).toFixed(2);
-            document.getElementById('simRealPnl').className = realTotalProfit >= 0 ? "text-xs font-black mt-1 block text-emerald-400" : "text-xs font-black mt-1 block text-rose-400";
-            
+            document.getElementById('simRealPnl').className = realTotalProfit >= 0 ? 'text-xs font-black mt-1 block text-emerald-400' : 'text-xs font-black mt-1 block text-rose-400';
+
             document.getElementById('simFlatPnl').innerText = (flatTotalProfit >= 0 ? '+$' : '-$') + Math.abs(flatTotalProfit).toFixed(2);
-            document.getElementById('simFlatPnl').className = flatTotalProfit >= 0 ? "text-xs font-black mt-1 block text-emerald-300" : "text-xs font-black mt-1 block text-rose-400";
+            document.getElementById('simFlatPnl').className = flatTotalProfit >= 0 ? 'text-xs font-black mt-1 block text-emerald-400' : 'text-xs font-black mt-1 block text-rose-400';
 
-            document.getElementById('simRealYield').innerText = (realYield >= 0 ? '+' : '') + realYield.toFixed(1) + '%';
-            document.getElementById('simFlatYield').innerText = (flatYield >= 0 ? '+' : '') + flatYield.toFixed(1) + '%';
+            document.getElementById('simRealYield').innerText = realYield.toFixed(1) + '%';
+            document.getElementById('simFlatYield').innerText = flatYield.toFixed(1) + '%';
 
-            const verdictText = flatTotalProfit > realTotalProfit 
-                ? `Usar un Stake Plano de $${flatStake} habría generado un <b>mayor beneficio neto</b> (+$${flatTotalProfit.toFixed(2)} vs +$${realTotalProfit.toFixed(2)}) gracias a una gestión de exposición más constante.`
-                : `Tu estrategia de staking actual superó al Stake Plano de $${flatStake} en beneficio total acumulado.`;
-            document.getElementById('simVerdictText').innerHTML = verdictText;
+            const verdictText = document.getElementById('simVerdictText');
+            if (closedBetsChronological.length === 0) {
+                verdictText.innerText = "No hay suficientes apuestas cerradas en esta caja para realizar la simulación.";
+            } else if (flatTotalProfit > realTotalProfit) {
+                verdictText.innerHTML = `Con un stake plano de <b>$${flatStakeVal}</b> habrías obtenido <b>+$${(flatTotalProfit - realTotalProfit).toFixed(2)} extra</b> en comparación con tu gestión variable actual. El stake plano protege mejor ante rachas descendentes si mantienes cuotas estables.`;
+            } else {
+                verdictText.innerHTML = `Tu gestión variable actual supera al stake fijo de $${flatStakeVal} por <b>+$${(realTotalProfit - flatTotalProfit).toFixed(2)}</b>. Tu asignación dinámica de stake ha sabido capitalizar mejor los momentos de valor.`;
+            }
 
-            renderFlatStakeChart(flatLabels, realData, flatData);
+            renderFlatStakeChart(realCurve, flatCurve);
         }
 
-        function renderFlatStakeChart(labels, realData, flatData) {
+        function renderFlatStakeChart(realCurve, flatCurve) {
             const ctx = document.getElementById('flatStakeChart').getContext('2d');
             if (flatStakeChartInstance) flatStakeChartInstance.destroy();
+
+            const maxLen = Math.max(realCurve.length, flatCurve.length);
+            const labels = Array.from({length: maxLen}, (_, i) => i === 0 ? 'Inicio' : `#${i}`);
 
             flatStakeChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -3606,20 +2771,18 @@
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Real ($)',
-                            data: realData,
+                            label: 'Bankroll Real',
+                            data: realCurve,
                             borderColor: '#10b981',
-                            borderWidth: 2,
-                            fill: false,
+                            backgroundColor: 'transparent',
                             tension: 0.2,
                             pointRadius: 2
                         },
                         {
-                            label: 'Stake Plano ($)',
-                            data: flatData,
+                            label: 'Bankroll Stake Plano',
+                            data: flatCurve,
                             borderColor: '#6366f1',
-                            borderWidth: 2,
-                            fill: false,
+                            backgroundColor: 'transparent',
                             tension: 0.2,
                             pointRadius: 2
                         }
@@ -3630,43 +2793,965 @@
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
-                        y: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
                     }
                 }
             });
         }
 
-        function clearBetLogHistory() {
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            if (confirm(`¿Estás seguro de limpiar todas las apuestas de la caja "${activeBankObj.name}"?`)) {
-                betLogData = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) !== activeBankrollId);
-                saveBetLogToStorage();
-                updateMarketFilterDropdown();
-                updateTrackerMetrics();
-                showToast("Historial de la caja actual limpiado.");
+        function updateBestEvRangeAnalysis(bankBets) {
+            const closedBets = bankBets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
+            const gridContainer = document.getElementById('evRangesGridContainer');
+            const badgeEl = document.getElementById('bestEvRangeBadge');
+            if (!gridContainer) return;
+
+            const ranges = [
+                { label: '0% - 5%', min: 0, max: 5, profit: 0, staked: 0, count: 0, won: 0 },
+                { label: '5% - 10%', min: 5, max: 10, profit: 0, staked: 0, count: 0, won: 0 },
+                { label: '10% - 15%', min: 10, max: 15, profit: 0, staked: 0, count: 0, won: 0 },
+                { label: '15%+', min: 15, max: 999, profit: 0, staked: 0, count: 0, won: 0 }
+            ];
+
+            closedBets.forEach(bet => {
+                const evVal = parseFloat(bet.ev) || 0;
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                let pnl = 0;
+                let isWon = false;
+
+                if (bet.status === 'WON') { pnl = stake * (odds - 1); isWon = true; }
+                else if (bet.status === 'LOST') { pnl = -stake; }
+                else if (bet.status === 'HALF_WON') { pnl = (stake / 2) * (odds - 1); isWon = true; }
+                else if (bet.status === 'HALF_LOST') { pnl = -(stake / 2); }
+
+                for (let r of ranges) {
+                    if (evVal >= r.min && evVal < r.max) {
+                        r.profit += pnl;
+                        r.staked += stake;
+                        r.count++;
+                        if (isWon) r.won++;
+                        break;
+                    }
+                }
+            });
+
+            let bestRange = null;
+            let maxProfit = -Infinity;
+
+            ranges.forEach(r => {
+                if (r.count > 0 && r.profit > maxProfit) {
+                    maxProfit = r.profit;
+                    bestRange = r;
+                }
+            });
+
+            if (bestRange && maxProfit > 0) {
+                badgeEl.innerText = `Mejor: Rango EV ${bestRange.label} (+$${bestRange.profit.toFixed(1)})`;
+                badgeEl.className = "text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30";
+            } else {
+                badgeEl.innerText = closedBets.length === 0 ? "Sin apuestas cerradas" : "Sin rango rentable aún";
+                badgeEl.className = "text-[9px] font-black bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700";
+            }
+
+            let html = '';
+            ranges.forEach(r => {
+                const yieldVal = r.staked > 0 ? (r.profit / r.staked) * 100 : 0;
+                const winRate = r.count > 0 ? (r.won / r.count) * 100 : 0;
+                const isBest = bestRange && bestRange.label === r.label && r.profit > 0;
+
+                html += `
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border ${isBest ? 'border-emerald-500/60 bg-emerald-950/20' : 'border-slate-800'} space-y-1 text-center">
+                        <div class="flex justify-between items-center text-[9px] font-bold text-slate-400">
+                            <span>EV ${r.label}</span>
+                            <span class="text-[8px] bg-slate-800 px-1 rounded text-slate-300">${r.count} bets</span>
+                        </div>
+                        <div class="text-xs font-black ${r.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${r.profit >= 0 ? '+$' : '-$'}${Math.abs(r.profit).toFixed(1)}
+                        </div>
+                        <div class="flex justify-between text-[8px] text-slate-400 pt-0.5 border-t border-slate-800">
+                            <span>Yield: <b class="${yieldVal >= 0 ? 'text-gold-400' : 'text-rose-400'}">${yieldVal.toFixed(1)}%</b></span>
+                            <span>WR: <b>${winRate.toFixed(0)}%</b></span>
+                        </div>
+                    </div>
+                `;
+            });
+            gridContainer.innerHTML = html;
+        }
+
+        function changeCalendarMonth(direction) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+            updateTrackerMetrics();
+        }
+
+        function renderCalendarView(bankBets) {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            document.getElementById('calendarMonthTitle').innerText = `${monthNames[month]} ${year}`;
+
+            const dailyStats = {};
+            bankBets.forEach(bet => {
+                const dateStr = bet.date;
+                if (!dateStr) return;
+                if (!dailyStats[dateStr]) {
+                    dailyStats[dateStr] = { pnl: 0, count: 0, bets: [] };
+                }
+                dailyStats[dateStr].count++;
+                dailyStats[dateStr].bets.push(bet);
+
+                let pnl = 0;
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'WON') pnl = stake * (odds - 1);
+                else if (bet.status === 'LOST') pnl = -stake;
+                else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
+                else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
+                
+                dailyStats[dateStr].pnl += pnl;
+            });
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const startingDay = (firstDayIndex === 0) ? 6 : firstDayIndex - 1;
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            const gridContainer = document.getElementById('calendarGrid');
+            let html = '';
+
+            for (let i = 0; i < startingDay; i++) {
+                html += `<div class="bg-slate-900/30 rounded-lg h-14 opacity-30"></div>`;
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(month + 1).padStart(2, '0');
+                const fullDateKey = `${year}-${monthStr}-${dayStr}`;
+
+                const dayData = dailyStats[fullDateKey];
+                let bgClass = "bg-slate-900/80 border-slate-800 text-slate-400";
+                let pnlText = "";
+
+                if (dayData && dayData.count > 0) {
+                    if (dayData.pnl > 0) {
+                        bgClass = "bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/60";
+                        pnlText = `+$${dayData.pnl.toFixed(0)}`;
+                    } else if (dayData.pnl < 0) {
+                        bgClass = "bg-rose-950/40 border-rose-500/40 text-rose-300 hover:bg-rose-950/60";
+                        pnlText = `-$${Math.abs(dayData.pnl).toFixed(0)}`;
+                    } else {
+                        bgClass = "bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800";
+                        pnlText = `$0`;
+                    }
+                }
+
+                html += `
+                    <div onclick="openDayBetsModal('${fullDateKey}')" class="${bgClass} border rounded-lg p-1 flex flex-col justify-between h-14 cursor-pointer transition-all active:scale-95">
+                        <div class="flex justify-between items-center text-[9px] font-bold">
+                            <span>${day}</span>
+                            ${dayData ? `<span class="bg-slate-900/60 px-1 rounded text-[8px] text-slate-300">${dayData.count}</span>` : ''}
+                        </div>
+                        <div class="text-center font-black text-[10px] truncate">
+                            ${pnlText}
+                        </div>
+                    </div>
+                `;
+            }
+
+            gridContainer.innerHTML = html;
+        }
+
+        function openDayBetsModal(dateStr) {
+            const selectedMarketFilter = document.getElementById('marketFilterSelect').value;
+            const selectedSelectionFilter = document.getElementById('selectionFilterSelect').value;
+            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            const dayBets = activeBankBets.filter(b => b.date === dateStr && (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter) && (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter));
+
+            document.getElementById('dayBetsModalTitle').innerText = `Apuestas del ${dateStr}`;
+            const contentContainer = document.getElementById('dayBetsModalContent');
+
+            if (dayBets.length === 0) {
+                contentContainer.innerHTML = `<p class="text-center text-slate-500 text-xs py-4">No hay apuestas registradas en esta fecha con el filtro actual.</p>`;
+            } else {
+                let html = '';
+                dayBets.forEach(bet => {
+                    let pnl = 0;
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+                    if (bet.status === 'WON') pnl = stake * (odds - 1);
+                    else if (bet.status === 'LOST') pnl = -stake;
+                    else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
+                    else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
+
+                    let statusBadge = `<span class="text-amber-400 font-bold">Pendiente</span>`;
+                    if (bet.status === 'WON') statusBadge = `<span class="text-emerald-400 font-bold">Ganada (+$${pnl.toFixed(2)})</span>`;
+                    else if (bet.status === 'LOST') statusBadge = `<span class="text-rose-400 font-bold">Perdida (-$${stake.toFixed(2)})</span>`;
+                    else if (bet.status === 'VOID') statusBadge = `<span class="text-slate-400 font-bold">Nula</span>`;
+
+                    const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1.5 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
+
+                    html += `
+                        <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-1 text-xs">
+                            <div class="flex justify-between items-center font-bold text-white">
+                                <span>${typeTag}${bet.match}</span>
+                                <span class="text-[10px] text-slate-400">${bet.league}</span>
+                            </div>
+                            <div class="text-[11px] text-emerald-300 font-semibold">${bet.market} - ${bet.selection}</div>
+                            <div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800">
+                                <span>Cuota: @${bet.bookieOdds} | Stake: $${bet.stake}</span>
+                                ${statusBadge}
+                            </div>
+                        </div>
+                    `;
+                });
+                contentContainer.innerHTML = html;
+            }
+
+            document.getElementById('dayBetsModal').classList.remove('hidden');
+        }
+
+        function toggleDayBetsModal(show) {
+            const modal = document.getElementById('dayBetsModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        function renderSeparatedBetsTables(bankBets) {
+            const pendingTbody = document.getElementById('pendingBetsTableBody');
+            const closedTbody = document.getElementById('closedBetsTableBody');
+
+            const pendingBets = [];
+            const closedBets = [];
+
+            bankBets.forEach((bet) => {
+                const originalIdx = betLogData.findIndex(b => b.id === bet.id);
+                const betWithIndex = { ...bet, originalIdx };
+                if (bet.status === 'PENDING') {
+                    pendingBets.push(betWithIndex);
+                } else {
+                    closedBets.push(betWithIndex);
+                }
+            });
+
+            if (pendingBets.length === 0) {
+                pendingTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas pendientes en curso con el filtro actual.</td></tr>`;
+            } else {
+                let htmlP = '';
+                pendingBets.forEach(bet => {
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+                    const potReturn = stake * odds;
+                    const evVal = parseFloat(bet.ev) || 0;
+                    const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
+
+                    htmlP += `
+                        <tr class="bg-amber-950/10 hover:bg-amber-900/20">
+                            <td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td>
+                            <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td>
+                            <td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td>
+                            <td class="p-1.5 text-center font-bold">${bet.prob}%</td>
+                            <td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td>
+                            <td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td>
+                            <td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td>
+                            <td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td>
+                            <td class="p-1.5 text-center">
+                                <select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none">
+                                    <option value="PENDING" selected>⌛ Pendiente</option>
+                                    <option value="WON">✅ Ganada</option>
+                                    <option value="LOST">❌ Perdida</option>
+                                    <option value="VOID">↩️ Nula</option>
+                                    <option value="HALF_WON">½ Ganada</option>
+                                    <option value="HALF_LOST">½ Perdida</option>
+                                </select>
+                            </td>
+                            <td class="p-1.5 text-center">
+                                <button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                pendingTbody.innerHTML = htmlP;
+            }
+
+            if (closedBets.length === 0) {
+                closedTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic font-medium">No hay apuestas liquidadas con el filtro actual.</td></tr>`;
+            } else {
+                let htmlC = '';
+                closedBets.forEach(bet => {
+                    let pnl = 0;
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+
+                    if (bet.status === 'WON') pnl = stake * (odds - 1);
+                    else if (bet.status === 'LOST') pnl = -stake;
+                    else if (bet.status === 'HALF_WON') pnl = (stake / 2) * (odds - 1);
+                    else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
+
+                    const evVal = parseFloat(bet.ev) || 0;
+                    const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
+
+                    htmlC += `
+                        <tr>
+                            <td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td>
+                            <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td>
+                            <td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td>
+                            <td class="p-1.5 text-center">${bet.prob}%</td>
+                            <td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td>
+                            <td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td>
+                            <td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td>
+                            <td class="p-1.5 text-center">
+                                <select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none">
+                                    <option value="PENDING">⌛ Pendiente</option>
+                                    <option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option>
+                                    <option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option>
+                                    <option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option>
+                                    <option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option>
+                                    <option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option>
+                                </select>
+                            </td>
+                            <td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">
+                                ${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}
+                            </td>
+                            <td class="p-1.5 text-center">
+                                <button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                closedTbody.innerHTML = htmlC;
             }
         }
 
-        function exportBetsCSV() {
-            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            if (currentBankBets.length === 0) {
-                showToast("No hay apuestas para exportar.");
+        function renderPnlChart(bankHistory) {
+            const ctx = document.getElementById('pnlChart').getContext('2d');
+            if (pnlChartInstance) pnlChartInstance.destroy();
+
+            const labels = bankHistory.map((_, i) => i === 0 ? 'Inicio' : `#${i}`);
+
+            pnlChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Bankroll ($)',
+                        data: bankHistory,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
+        }
+
+        function toggleCalibrationModal(show) {
+            const modal = document.getElementById('calibrationModal');
+            if (show) {
+                calculateCalibrationMetrics();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function calculateCalibrationMetrics() {
+            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            const settledBets = activeBankBets.filter(b => b.status === 'WON' || b.status === 'LOST');
+            
+            const countEl = document.getElementById('valEvaluatedCount');
+            const brierEl = document.getElementById('valBrierScore');
+            const logLossEl = document.getElementById('valLogLoss');
+            const tableBody = document.getElementById('calibrationTableBody');
+
+            countEl.innerText = settledBets.length;
+
+            if (settledBets.length === 0) {
+                brierEl.innerText = "0.0000";
+                logLossEl.innerText = "0.0000";
+                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas en este Bankroll para calibración.</td></tr>`;
+                renderReliabilityDiagram([], [], []);
                 return;
             }
 
-            let csv = "ID,Fecha,Liga,Partido,Mercado,Seleccion,Prob,CuotaJusta,CuotaBookie,Stake,EV,Casa,Estado\n";
-            currentBankBets.forEach(b => {
-                csv += `"${b.id}","${b.date}","${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.stake},${b.ev},"${b.bookmaker}","${b.status}"\n`;
+            let totalBrier = 0;
+            let totalLogLoss = 0;
+            let tableHtml = '';
+
+            const bins = [
+                { min: 0.0, max: 0.2, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.2, max: 0.4, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.4, max: 0.6, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.6, max: 0.8, predSum: 0, actualSum: 0, count: 0 },
+                { min: 0.8, max: 1.0, predSum: 0, actualSum: 0, count: 0 }
+            ];
+
+            settledBets.forEach(bet => {
+                const p = parseFloat(bet.prob) / 100;
+                const o = bet.status === 'WON' ? 1 : 0;
+
+                const brierInd = Math.pow(p - o, 2);
+                totalBrier += brierInd;
+
+                const eps = 1e-15;
+                const pSafe = Math.max(eps, Math.min(1 - eps, p));
+                const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
+                totalLogLoss += logLossInd;
+
+                const bin = bins.find(b => p >= b.min && (p < b.max || (p === 1.0 && b.max === 1.0)));
+                if (bin) {
+                    bin.predSum += p;
+                    bin.actualSum += o;
+                    bin.count++;
+                }
+
+                tableHtml += `
+                    <tr>
+                        <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.market}</span>${bet.match}</td>
+                        <td class="p-1.5 text-center font-bold text-indigo-400">${bet.prob}%</td>
+                        <td class="p-1.5 text-center font-black ${o === 1 ? 'text-emerald-400' : 'text-rose-400'}">${o === 1 ? 'Ganada (1)' : 'Perdida (0)'}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-200">${brierInd.toFixed(4)}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-200">${logLossInd.toFixed(4)}</td>
+                    </tr>
+                `;
+            });
+
+            const avgBrier = totalBrier / settledBets.length;
+            const avgLogLoss = totalLogLoss / settledBets.length;
+
+            brierEl.innerText = avgBrier.toFixed(4);
+            logLossEl.innerText = avgLogLoss.toFixed(4);
+            tableBody.innerHTML = tableHtml;
+
+            const binLabels = bins.map(b => `${(b.min * 100).toFixed(0)}% - ${(b.max * 100).toFixed(0)}%`);
+            const binPredicted = bins.map(b => b.count > 0 ? ((b.predSum / b.count) * 100).toFixed(1) : 0);
+            const binActual = bins.map(b => b.count > 0 ? ((b.actualSum / b.count) * 100).toFixed(1) : 0);
+
+            renderReliabilityDiagram(binLabels, binPredicted, binActual);
+        }
+
+        function renderReliabilityDiagram(labels, predicted, actual) {
+            const ctx = document.getElementById('calibrationChart').getContext('2d');
+            if (calibrationChartInstance) calibrationChartInstance.destroy();
+
+            calibrationChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Probabilidad Promedio Pronosticada (%)',
+                            data: predicted,
+                            backgroundColor: '#6366f1',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Frecuencia Real de Acierto (%)',
+                            data: actual,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { 
+                            ticks: { color: '#64748b', font: { size: 9 } }, 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportBetsCSV() {
+            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+            if (activeBankBets.length === 0) {
+                showToast("No hay datos en este Bankroll para exportar.");
+                return;
+            }
+
+            let csv = "Fecha,Es_Parlay,Liga,Partido,Mercado,Seleccion,Prob_Poisson_Pct,Cuota_Justa,Cuota_Casa,EV_Pct,Stake,Casa,Estado\n";
+            activeBankBets.forEach(b => {
+                csv += `"${b.date}",${b.isParlay || false},"${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.ev},${b.stake},"${b.bookmaker}","${b.status}"\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `BetTracker_${activeBankrollId}_${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-            showToast("Archivo CSV exportado con éxito.");
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `poisson_bankroll_${activeBankrollId}_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function toggleTrackerModal(show) {
+            const modal = document.getElementById('trackerModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        function toggleLogBetModal(show) {
+            const modal = document.getElementById('logBetModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        function toggleLeagueModal(show) {
+            const modal = document.getElementById('leagueModal');
+            if (show) {
+                renderModalLeagueTable();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function parseAndSaveLeague() {
+            const rawText = document.getElementById('rawInput').value;
+            const leagueName = document.getElementById('leagueNameInput').value.trim() || "Nueva Liga Importada";
+
+            const parsedTeams = parseRawLeagueData(rawText);
+
+            if (parsedTeams.length === 0) {
+                showToast("No se pudieron parsear equipos del texto introducido.");
+                return;
+            }
+
+            leaguesData[leagueName] = parsedTeams;
+            saveLeaguesToStorage();
+            populateLeagueDropdowns();
+
+            document.getElementById('activeLeagueSelect').value = leagueName;
+            document.getElementById('modalLeagueSelect').value = leagueName;
+
+            updateTeamSelectors();
+            renderModalLeagueTable();
+            showToast(`¡Liga "${leagueName}" guardada con ${parsedTeams.length} equipos!`);
+            document.getElementById('rawInput').value = '';
+        }
+
+        function deleteCurrentLeague() {
+            const modalSelect = document.getElementById('modalLeagueSelect');
+            const targetLeague = modalSelect.value;
+
+            if (!targetLeague) return;
+
+            if (confirm(`¿Seguro que deseas eliminar la liga "${targetLeague}"?`)) {
+                delete leaguesData[targetLeague];
+                saveLeaguesToStorage();
+                populateLeagueDropdowns();
+                updateTeamSelectors();
+                renderModalLeagueTable();
+                showToast("Liga eliminada.");
+            }
+        }
+
+        function renderModalLeagueTable() {
+            const modalSelect = document.getElementById('modalLeagueSelect');
+            const selectedLeague = modalSelect.value;
+            const teams = leaguesData[selectedLeague] || [];
+
+            document.getElementById('teamCountBadge').innerText = `${teams.length} equipos`;
+
+            const tbody = document.getElementById('excelTableBody');
+            if (teams.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500">No hay datos en esta liga.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            teams.forEach(t => {
+                html += `
+                    <tr>
+                        <td class="p-1.5 text-center font-bold text-slate-400">${t.pos}</td>
+                        <td class="p-1.5 font-extrabold text-white">${t.name}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">${t.mp}</td>
+                        <td class="p-1.5 text-center font-black text-emerald-400 bg-emerald-950/20">${t.xg.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-black text-rose-300 bg-rose-950/20">${t.xga.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">${t.xgd}</td>
+                        <td class="p-1.5 text-center font-black text-amber-300 bg-amber-950/20">${t.gf.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-black text-purple-300 bg-purple-950/20">${t.ga.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-400">${t.vsActual}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let res = 1;
+            for (let i = 2; i <= n; i++) res *= i;
+            return res;
+        }
+
+        function poissonProb(k, lambda) {
+            return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+        }
+
+        function modifiedBesselI(k, z) {
+            let sum = 0;
+            const maxIter = 40;
+            const kAbs = Math.abs(k);
+            for (let m = 0; m < maxIter; m++) {
+                let termNum = Math.pow(z / 2, kAbs + 2 * m);
+                let termDen = factorial(m) * factorial(kAbs + m);
+                sum += termNum / termDen;
+            }
+            return sum;
+        }
+
+        function skellamProb(k, lambda1, lambda2) {
+            if (lambda1 <= 0 || lambda2 <= 0) return 0;
+            let expFactor = Math.exp(-(lambda1 + lambda2));
+            let ratioTerm = Math.pow(lambda1 / lambda2, k / 2);
+            let besselTerm = modifiedBesselI(k, 2 * Math.sqrt(lambda1 * lambda2));
+            return expFactor * ratioTerm * besselTerm;
+        }
+
+        function calculateSkellamAnalysis(lambdaHome, lambdaAway) {
+            let probHomeWin = 0;
+            let probDraw = 0;
+            let probAwayWin = 0;
+
+            const diffProbs = {};
+            for (let k = -5; k <= 5; k++) {
+                let p = skellamProb(k, lambdaHome, lambdaAway);
+                diffProbs[k] = p;
+                if (k > 0) probHomeWin += p;
+                else if (k === 0) probDraw += p;
+                else probAwayWin += p;
+            }
+
+            const summaryContainer = document.getElementById('skellamSummaryContainer');
+            const detailsContainer = document.getElementById('skellamDetailsContainer');
+
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
+
+            summaryContainer.innerHTML = `
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Skellam Local</span>
+                    <span class="text-sm font-black text-emerald-400">${(probHomeWin * 100).toFixed(1)}%</span>
+                </div>
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Skellam Empate</span>
+                    <span class="text-sm font-black text-slate-200">${(probDraw * 100).toFixed(1)}%</span>
+                </div>
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800">
+                    <span class="block text-[8px] uppercase font-bold text-slate-400 truncate">Skellam Visit.</span>
+                    <span class="text-sm font-black text-rose-400">${(probAwayWin * 100).toFixed(1)}%</span>
+                </div>
+            `;
+
+            let detailsHtml = '';
+            const keyDifferentials = [
+                { diff: 2, label: `${homeName} Gana por 2+ goles (Hándicap -1.5)` },
+                { diff: 1, label: `${homeName} Gana por 1 gol exacto` },
+                { diff: 0, label: `Empate Neto (0 goles de diferencia)` },
+                { diff: -1, label: `${awayName} Gana por 1 gol exacto` },
+                { diff: -2, label: `${awayName} Gana por 2+ goles (Hándicap +1.5)` }
+            ];
+
+            keyDifferentials.forEach(item => {
+                let p = diffProbs[item.diff] || 0;
+                let odds = 1 / Math.max(0.001, p);
+                detailsHtml += `
+                    <div class="flex justify-between items-center bg-slate-900/70 px-2.5 py-1.5 rounded-xl border border-slate-800 text-xs">
+                        <div class="pr-2">
+                            <span class="font-bold text-white block">${item.label}</span>
+                            <span class="text-[9px] text-indigo-400 font-semibold">Probabilidad Skellam: ${(p * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <span class="text-xs font-black text-gold-400">@${odds.toFixed(2)}</span>
+                            <button onclick="openLogBetModal('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 text-[9px] font-bold rounded border border-indigo-500/30">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Skellam / Margen', '${item.label}', ${p})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-indigo-500/30">Parlay</button>
+                        </div>
+                    </div>
+                `;
+            });
+            detailsContainer.innerHTML = detailsHtml;
+        }
+
+        function calculatePoisson() {
+            let lambdaHome = 0;
+            let lambdaAway = 0;
+
+            if (currentMode === 'xg') {
+                const hXgFor = parseFloat(document.getElementById('homeXgFor').value) || 0;
+                const hGf = parseFloat(document.getElementById('homeGf').value) || 0;
+                const hXgAgainst = parseFloat(document.getElementById('homeXgAgainst').value) || 0;
+                const hGc = parseFloat(document.getElementById('homeGc').value) || 0;
+
+                const aXgFor = parseFloat(document.getElementById('awayXgFor').value) || 0;
+                const aGf = parseFloat(document.getElementById('awayGf').value) || 0;
+                const aXgAgainst = parseFloat(document.getElementById('awayXgAgainst').value) || 0;
+                const aGc = parseFloat(document.getElementById('awayGc').value) || 0;
+
+                const wAtk = parseInt(document.getElementById('weightAttackRange').value) / 100;
+                const wDef = parseInt(document.getElementById('weightDefenseRange').value) / 100;
+
+                const homeAttack = (hXgFor * wAtk) + (hGf * (1 - wAtk));
+                const awayDefense = (aXgAgainst * wDef) + (aGc * (1 - wDef));
+
+                const awayAttack = (aXgFor * wAtk) + (aGf * (1 - wAtk));
+                const homeDefense = (hXgAgainst * wDef) + (hGc * (1 - wDef));
+
+                lambdaHome = (homeAttack + awayDefense) / 2;
+                lambdaAway = (awayAttack + homeDefense) / 2;
+            } else {
+                lambdaHome = parseFloat(document.getElementById('directHomeXg').value) || 0;
+                lambdaAway = parseFloat(document.getElementById('directAwayXg').value) || 0;
+            }
+
+            document.getElementById('valHomeLambda').innerText = lambdaHome.toFixed(3);
+            document.getElementById('valAwayLambda').innerText = lambdaAway.toFixed(3);
+
+            calculateSkellamAnalysis(lambdaHome, lambdaAway);
+
+            const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0;
+
+            const matrix = Array(7).fill(0).map(() => Array(7).fill(0));
+            let probHomeWin = 0;
+            let probDraw = 0;
+            let probAwayWin = 0;
+
+            let probOver25 = 0;
+            let probUnder25 = 0;
+
+            let probBttsYes = 0;
+            let probBttsNo = 0;
+
+            const exactScores = [];
+            const homeProbs = Array(7).fill(0);
+            const awayProbs = Array(7).fill(0);
+
+            for (let i = 0; i <= 6; i++) {
+                homeProbs[i] = poissonProb(i, lambdaHome);
+                awayProbs[i] = poissonProb(i, lambdaAway);
+            }
+
+            for (let i = 0; i <= 6; i++) {
+                for (let j = 0; j <= 6; j++) {
+                    let p = homeProbs[i] * awayProbs[j];
+
+                    if (rho !== 0) {
+                        if (i === 0 && j === 0) p *= (1 - lambdaHome * lambdaAway * rho);
+                        else if (i === 1 && j === 0) p *= (1 + lambdaAway * rho);
+                        else if (i === 0 && j === 1) p *= (1 + lambdaHome * rho);
+                        else if (i === 1 && j === 1) p *= (1 - rho);
+                    }
+
+                    matrix[i][j] = p;
+
+                    if (i > j) probHomeWin += p;
+                    else if (i === j) probDraw += p;
+                    else probAwayWin += p;
+
+                    if ((i + j) > 2.5) probOver25 += p;
+                    else probUnder25 += p;
+
+                    if (i > 0 && j > 0) probBttsYes += p;
+                    else probBttsNo += p;
+
+                    exactScores.push({ score: `${i} - ${j}`, prob: p });
+                }
+            }
+
+            currentCalculatedProbs = {
+                probHomeWin, probDraw, probAwayWin,
+                probOver25, probUnder25,
+                probBttsYes, probBttsNo
+            };
+
+            document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
+            document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
+            document.getElementById('barOver25').style.width = (probOver25 * 100).toFixed(1) + '%';
+
+            document.getElementById('pctUnder25').innerText = (probUnder25 * 100).toFixed(1) + '%';
+            document.getElementById('oddsUnder25').innerText = '@' + (1 / Math.max(0.001, probUnder25)).toFixed(2);
+            document.getElementById('barUnder25').style.width = (probUnder25 * 100).toFixed(1) + '%';
+
+            renderDynamicOverUnder(matrix);
+
+            document.getElementById('pctBttsYes').innerText = (probBttsYes * 100).toFixed(1) + '%';
+            document.getElementById('oddsBttsYes').innerText = '@' + (1 / Math.max(0.001, probBttsYes)).toFixed(2);
+            document.getElementById('barBttsYes').style.width = (probBttsYes * 100).toFixed(1) + '%';
+
+            document.getElementById('pctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
+            document.getElementById('oddsBttsNo').innerText = '@' + (1 / Math.max(0.001, probBttsNo)).toFixed(2);
+            document.getElementById('barBttsNo').style.width = (probBttsNo * 100).toFixed(1) + '%';
+
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
+
+            document.getElementById('name1x2Home').innerText = homeName;
+            document.getElementById('name1x2Away').innerText = awayName;
+
+            document.getElementById('pct1x2Home').innerText = (probHomeWin * 100).toFixed(1) + '%';
+            document.getElementById('odds1x2Home').innerText = '@' + (1 / Math.max(0.001, probHomeWin)).toFixed(2);
+
+            document.getElementById('pct1x2Draw').innerText = (probDraw * 100).toFixed(1) + '%';
+            document.getElementById('odds1x2Draw').innerText = '@' + (1 / Math.max(0.001, probDraw)).toFixed(2);
+
+            document.getElementById('pct1x2Away').innerText = (probAwayWin * 100).toFixed(1) + '%';
+            document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.001, probAwayWin)).toFixed(2);
+
+            exactScores.sort((a, b) => b.prob - a.prob);
+            const top3 = exactScores.slice(0, 3);
+            const topScoresContainer = document.getElementById('topScoresContainer');
+            topScoresContainer.innerHTML = '';
+
+            top3.forEach((item, index) => {
+                const pct = (item.prob * 100).toFixed(1);
+                const odds = (1 / item.prob).toFixed(2);
+                topScoresContainer.innerHTML += `
+                    <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[10px] font-black flex items-center justify-center">#${index + 1}</span>
+                            <span class="text-xs font-black text-white">${item.score}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-emerald-400">${pct}%</span>
+                            <span class="text-xs font-black text-gold-400">@${odds}</span>
+                            <button onclick="openLogBetModal('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/20" title="Sencilla">
+                                Sencilla
+                            </button>
+                            <button onclick="addToParlayBuilder('Marcador Exacto', '${item.score}', ${item.prob})" class="py-0.5 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/20" title="Parlay">
+                                Parlay
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            renderMatrix(matrix);
+            renderGoalsChart(homeProbs, awayProbs);
+        }
+
+        function renderDynamicOverUnder(matrix) {
+            const lines = [0.5, 1.5, 2.5, 3.5, 4.5];
+            const container = document.getElementById('dynamicOuContainer');
+            container.innerHTML = '';
+
+            lines.forEach(line => {
+                let probOver = 0;
+                let probUnder = 0;
+
+                for (let i = 0; i <= 6; i++) {
+                    for (let j = 0; j <= 6; j++) {
+                        const p = matrix[i][j];
+                        if ((i + j) > line) probOver += p;
+                        else probUnder += p;
+                    }
+                }
+
+                const pctOver = (probOver * 100).toFixed(1);
+                const oddsOver = (1 / Math.max(0.001, probOver)).toFixed(2);
+                const pctUnder = (probUnder * 100).toFixed(1);
+                const oddsUnder = (1 / Math.max(0.001, probUnder)).toFixed(2);
+
+                container.innerHTML += `
+                    <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                        <div class="font-black text-white w-14">
+                            O/U ${line}
+                        </div>
+                        
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-black text-emerald-400">${pctOver}% (@${oddsOver})</span>
+                            <button onclick="openLogBetModal('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Over ${line}', ${probOver})" class="px-1.5 py-0.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-black text-slate-300">${pctUnder}% (@${oddsUnder})</span>
+                            <button onclick="openLogBetModal('Over / Under Goles', 'Under ${line}', ${probUnder})" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[9px] font-bold rounded">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Over / Under Goles', 'Under ${line}', ${probUnder})" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[9px] font-bold rounded">Parlay</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderMatrix(matrix) {
+            const body = document.getElementById('matrixBody');
+            body.innerHTML = '';
+
+            for (let i = 0; i <= 6; i++) {
+                let rowHtml = `<tr class="border-b border-slate-800/40"><td class="p-1 font-bold text-slate-400 bg-slate-900/80">${i}</td>`;
+                for (let j = 0; j <= 6; j++) {
+                    const prob = matrix[i][j];
+                    const pct = (prob * 100).toFixed(1);
+                    
+                    let bgStyle = 'bg-slate-900/40 text-slate-300';
+                    if (prob > 0.12) bgStyle = 'bg-emerald-500/30 text-emerald-300 font-bold';
+                    else if (prob > 0.07) bgStyle = 'bg-emerald-500/15 text-slate-200';
+
+                    rowHtml += `<td class="p-1 ${bgStyle}">${pct}%</td>`;
+                }
+                rowHtml += '</tr>';
+                body.innerHTML += rowHtml;
+            }
+        }
+
+        function renderGoalsChart(homeProbs, awayProbs) {
+            const ctx = document.getElementById('goalsChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            const labels = ['0 Goles', '1 Gol', '2 Goles', '3 Goles', '4 Goles', '5 Goles', '6+ Goles'];
+            const homeName = document.getElementById('homeName').value || 'Local';
+            const awayName = document.getElementById('awayName').value || 'Visitante';
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: homeName,
+                            data: homeProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        },
+                        {
+                            label: awayName,
+                            data: awayProbs.map(p => (p * 100).toFixed(1)),
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
         }
     </script>
 </body>
