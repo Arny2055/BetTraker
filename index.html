@@ -1589,7 +1589,7 @@
                 const matchMarket = !marketInput || (bet.market && bet.market.toLowerCase().includes(marketInput));
                 const matchSelection = !selectionInput || (bet.selection && bet.selection.toLowerCase().includes(selectionInput));
 
-                if (bet.status !== 'PENDING' && matchLeague && (matchMarket || matchSelection)) {
+                if (bet.status !== 'PENDING' && matchLeague && matchMarket && matchSelection) {
                     const stake = parseFloat(bet.stake) || 0;
                     const odds = parseFloat(bet.bookieOdds) || 1;
                     if (bet.status === 'WON') historicalProfit += stake * (odds - 1);
@@ -1606,7 +1606,7 @@
                 profitValEl.className = historicalProfit >= 0 ? "font-black text-emerald-400 text-xs" : "font-black text-rose-400 text-xs";
             } else {
                 widget.classList.remove('hidden');
-                profitValEl.innerText = "$0.00 (Sin historial previo en esta liga)";
+                profitValEl.innerText = "$0.00 (Sin historial previo en esta selección/liga)";
                 profitValEl.className = "font-bold text-slate-400 text-[11px]";
             }
         }
@@ -2222,11 +2222,18 @@
             const quarterKellyFraction = fullKelly * 0.25;
 
             const selectionInput = document.getElementById('logSelection').value.trim().toLowerCase();
+            const marketInput = document.getElementById('logMarket').value.trim().toLowerCase();
+            const leagueInput = document.getElementById('logLeague').value.trim().toLowerCase();
+            
             let selectionNetProfit = 0;
-            if (selectionInput) {
+            if (selectionInput || marketInput) {
                 const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
                 currentBankBets.forEach(bet => {
-                    if (bet.status !== 'PENDING' && bet.selection && bet.selection.toLowerCase().includes(selectionInput)) {
+                    const matchLeague = !leagueInput || (bet.league && bet.league.toLowerCase().includes(leagueInput));
+                    const matchMarket = !marketInput || (bet.market && bet.market.toLowerCase().includes(marketInput));
+                    const matchSelection = !selectionInput || (bet.selection && bet.selection.toLowerCase().includes(selectionInput));
+
+                    if (bet.status !== 'PENDING' && matchLeague && matchMarket && matchSelection) {
                         const s = parseFloat(bet.stake) || 0;
                         const o = parseFloat(bet.bookieOdds) || 1;
                         if (bet.status === 'WON') selectionNetProfit += s * (o - 1);
