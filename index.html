@@ -1351,17 +1351,17 @@
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
-                <!-- WIDGET DE CANTIDAD DE MUESTRA Y RENTABILIDAD HISTÓRICA -->
+                <!-- WIDGET DE CANTIDAD DE MUESTRA Y RENTABILIDAD HISTÓRICA CORREGIDO POR LIGA Y MERCADO -->
                 <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl flex flex-col gap-1.5 text-xs">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-database text-emerald-400"></i>
-                            <span class="text-slate-300 text-[10px]">Muestreo de <b id="widgetLeagueNameText">Liga</b>:</span>
+                            <span class="text-slate-300 text-[10px]">Muestreo Liga (<b id="widgetLeagueNameText">Liga</b>):</span>
                         </div>
                         <span id="widgetSampleSizeVal" class="font-black text-emerald-400 text-xs">MP: 0 partidos</span>
                     </div>
                     <div class="flex items-center justify-between pt-1 border-t border-emerald-500/20">
-                        <span class="text-slate-300 text-[10px]">Rentabilidad Histórica:</span>
+                        <span class="text-slate-300 text-[10px]">Rentabilidad (Liga + Mercado):</span>
                         <span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span>
                     </div>
                 </div>
@@ -1372,7 +1372,7 @@
                         <input type="date" id="logDate" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
                     </div>
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Liga / Categoría</label>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">Liga / Competición</label>
                         <input type="text" id="logLeague" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold">
                     </div>
                 </div>
@@ -1693,13 +1693,18 @@
             const currentLeagueName = document.getElementById('logLeague').value || DEFAULT_LEAGUE_NAME;
             leagueNameTextEl.innerText = currentLeagueName;
 
-            // Obtener partidos jugados (MP) de la liga seleccionada
+            // --- CORRECCIÓN CLAVE ---
+            // Obtenemos los partidos jugados (MP) filtrando estrictamente por la liga introducida en el input del modal
             let sampleSizeMP = 0;
-            const teamsInLeague = leaguesData[currentLeagueName] || [];
+            // Buscamos coincidencia exacta o parcial en las ligas guardadas
+            let foundLeagueKey = Object.keys(leaguesData).find(l => l.toLowerCase() === currentLeagueName.toLowerCase()) || currentLeagueName;
+            let teamsInLeague = leaguesData[foundLeagueKey] || [];
+            
             if (teamsInLeague.length > 0) {
-                // Tomar el MP promedio o del equipo local si existe
                 const foundTeam = teamsInLeague.find(t => t.name.toLowerCase() === homeTeamInput.toLowerCase()) || teamsInLeague[0];
-                sampleSizeMP = foundTeam ? foundTeam.mp : teams.length;
+                sampleSizeMP = foundTeam ? foundTeam.mp : teamsInLeague.length;
+            } else {
+                sampleSizeMP = 0;
             }
 
             sampleSizeValEl.innerText = `MP: ${sampleSizeMP} partidos`;
@@ -1736,7 +1741,7 @@
                 profitValEl.innerText = (historicalProfit >= 0 ? '+$' : '-$') + Math.abs(historicalProfit).toFixed(2);
                 profitValEl.className = historicalProfit >= 0 ? "font-black text-emerald-400 text-xs" : "font-black text-rose-400 text-xs";
             } else {
-                profitValEl.innerText = "$0.00 (Sin historial previo en esta selección/liga)";
+                profitValEl.innerText = "$0.00 (Sin historial previo en esta liga/mercado)";
                 profitValEl.className = "font-bold text-slate-400 text-[11px]";
             }
         }
