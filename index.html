@@ -1576,7 +1576,6 @@
         let pnlChartInstance = null;
         let calibrationChartInstance = null;
         let flatStakeChartInstance = null;
-        let leaguesData = {};
         let bankrollsData = [];
         let activeBankrollId = 'default_bankroll';
         let betLogData = [];
@@ -1595,7 +1594,6 @@
         let parlaySelections = [];
 
         window.onload = function() {
-            loadLeaguesFromStorage();
             loadBankrollsFromStorage();
             loadBetLogFromStorage();
             loadParallelBetLogFromStorage();
@@ -2002,22 +2000,6 @@
             return teams;
         }
 
-        function loadLeaguesFromStorage() {
-            const stored = localStorage.getItem('poisson_vip_leagues');
-            if (stored) {
-                try { leaguesData = JSON.parse(stored); } catch(e) { leaguesData = {}; }
-            }
-            if (Object.keys(leaguesData).length === 0) {
-                const defaultTeams = parseRawLeagueData(DEFAULT_RAW_DATA);
-                leaguesData[DEFAULT_LEAGUE_NAME] = defaultTeams;
-                saveLeaguesToStorage();
-            }
-        }
-
-        function saveLeaguesToStorage() {
-            localStorage.setItem('poisson_vip_leagues', JSON.stringify(leaguesData));
-        }
-
         function loadBankrollsFromStorage() {
             const stored = localStorage.getItem('poisson_vip_bankrolls');
             if (stored) {
@@ -2026,12 +2008,22 @@
                     bankrollsData.forEach(b => {
                         if (b.totalWithdrawn === undefined) b.totalWithdrawn = 0;
                         if (!b.withdrawLog) b.withdrawLog = [];
+                        if (!b.leaguesData) {
+                            b.leaguesData = { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
+                        }
                     });
                 } catch(e) { bankrollsData = []; }
             }
             if (bankrollsData.length === 0) {
                 bankrollsData = [
-                    { id: 'default_bankroll', name: 'Bankroll Principal', initial: 1000, totalWithdrawn: 0, withdrawLog: [] }
+                    { 
+                        id: 'default_bankroll', 
+                        name: 'Bankroll Principal', 
+                        initial: 1000, 
+                        totalWithdrawn: 0, 
+                        withdrawLog: [],
+                        leaguesData: { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) }
+                    }
                 ];
                 saveBankrollsToStorage();
             }
@@ -2046,6 +2038,14 @@
         function saveBankrollsToStorage() {
             localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
             localStorage.setItem('poisson_vip_active_bankroll', activeBankrollId);
+        }
+
+        function getCurrentBankrollLeagues() {
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            if (!activeBankObj.leaguesData) {
+                activeBankObj.leaguesData = { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
+            }
+            return activeBankObj.leaguesData;
         }
 
         function loadBetLogFromStorage() {
@@ -2096,14 +2096,16 @@
             selectActive.innerHTML = '';
             selectModal.innerHTML = '';
 
-            Object.keys(leaguesData).forEach(leagueName => {
+            const leagues = getCurrentBankrollLeagues();
+
+            Object.keys(leagues).forEach(leagueName => {
                 selectActive.add(new Option(leagueName, leagueName));
                 selectModal.add(new Option(leagueName, leagueName));
             });
 
-            if (Object.keys(leaguesData).length > 0) {
-                selectActive.value = Object.keys(leaguesData)[0];
-                selectModal.value = Object.keys(leaguesData)[0];
+            if (Object.keys(leagues).length > 0) {
+                selectActive.value = Object.keys(leagues)[0];
+                selectModal.value = Object.keys(leagues)[0];
             }
         }
 
@@ -2122,9 +2124,11 @@
             const select = document.getElementById('activeBankrollSelect');
             activeBankrollId = select.value;
             saveBankrollsToStorage();
+            populateLeagueDropdowns();
+            updateTeamSelectors();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
-            showToast("Caja activa cambiada.");
+            showToast("Caja activa cambiada (Ligas y apuestas independientes cargadas).");
         }
 
         function toggleBankrollManagerModal(show) {
@@ -2153,11 +2157,20 @@
             }
 
             const newId = 'bankroll_' + Date.now();
-            bankrollsData.push({ id: newId, name, initial, totalWithdrawn: 0, withdrawLog: [] });
+            bankrollsData.push({ 
+                id: newId, 
+                name, 
+                initial, 
+                totalWithdrawn: 0, 
+                withdrawLog: [],
+                leaguesData: { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) }
+            });
             activeBankrollId = newId;
 
             saveBankrollsToStorage();
             populateBankrollDropdowns();
+            populateLeagueDropdowns();
+            updateTeamSelectors();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
 
@@ -2180,6 +2193,8 @@
                 saveBankrollsToStorage();
                 saveBetLogToStorage();
                 populateBankrollDropdowns();
+                populateLeagueDropdowns();
+                updateTeamSelectors();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
                 showToast("Bankroll eliminado.");
@@ -2261,7 +2276,7 @@
                                 <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Profit Neto: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
                                 <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
@@ -2289,7 +2304,8 @@
 
         function updateTeamSelectors() {
             const activeLeague = document.getElementById('activeLeagueSelect').value;
-            const teams = leaguesData[activeLeague] || [];
+            const leagues = getCurrentBankrollLeagues();
+            const teams = leagues[activeLeague] || [];
 
             const homeSelect = document.getElementById('selectHomeTeam');
             const awaySelect = document.getElementById('selectAwayTeam');
@@ -2305,7 +2321,8 @@
 
         function autoFillTeamData(side) {
             const activeLeague = document.getElementById('activeLeagueSelect').value;
-            const teams = leaguesData[activeLeague] || [];
+            const leagues = getCurrentBankrollLeagues();
+            const teams = leagues[activeLeague] || [];
             const selectEl = side === 'home' ? document.getElementById('selectHomeTeam') : document.getElementById('selectAwayTeam');
             const selectedName = selectEl.value;
 
@@ -2942,6 +2959,7 @@
             renderSeparatedBetsTables(filteredBets);
             renderCalendarView(filteredBets);
             renderPnlChart(currentBankrollArr);
+            saveBankrollsToStorage();
             saveBetLogToStorage();
         }
 
@@ -3684,8 +3702,11 @@
                 return;
             }
 
-            leaguesData[leagueName] = parsedTeams;
-            saveLeaguesToStorage();
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            if (!activeBankObj.leaguesData) activeBankObj.leaguesData = {};
+
+            activeBankObj.leaguesData[leagueName] = parsedTeams;
+            saveBankrollsToStorage();
             populateLeagueDropdowns();
 
             document.getElementById('activeLeagueSelect').value = leagueName;
@@ -3693,7 +3714,7 @@
 
             updateTeamSelectors();
             renderModalLeagueTable();
-            showToast(`¡Liga "${leagueName}" guardada con ${parsedTeams.length} equipos!`);
+            showToast(`¡Liga "${leagueName}" guardada en esta caja con ${parsedTeams.length} equipos!`);
             document.getElementById('rawInput').value = '';
         }
 
@@ -3703,20 +3724,24 @@
 
             if (!targetLeague) return;
 
-            if (confirm(`¿Seguro que deseas eliminar la liga "${targetLeague}"?`)) {
-                delete leaguesData[targetLeague];
-                saveLeaguesToStorage();
-                populateLeagueDropdowns();
-                updateTeamSelectors();
-                renderModalLeagueTable();
-                showToast("Liga eliminada.");
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            if (activeBankObj.leaguesData && activeBankObj.leaguesData[targetLeague]) {
+                if (confirm(`¿Seguro que deseas eliminar la liga "${targetLeague}" de esta caja?`)) {
+                    delete activeBankObj.leaguesData[targetLeague];
+                    saveBankrollsToStorage();
+                    populateLeagueDropdowns();
+                    updateTeamSelectors();
+                    renderModalLeagueTable();
+                    showToast("Liga eliminada de esta caja.");
+                }
             }
         }
 
         function renderModalLeagueTable() {
             const modalSelect = document.getElementById('modalLeagueSelect');
             const selectedLeague = modalSelect.value;
-            const teams = leaguesData[selectedLeague] || [];
+            const leagues = getCurrentBankrollLeagues();
+            const teams = leagues[selectedLeague] || [];
 
             document.getElementById('teamCountBadge').innerText = `${teams.length} equipos`;
 
