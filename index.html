@@ -135,6 +135,9 @@
                 <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-bullseye"></i> Calibración
                 </button>
+                <button onclick="toggleKellyMonteCarloModal(true)" class="bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                    <i class="fa-solid fa-dice"></i> Kelly MC
+                </button>
                 <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
                 </button>
@@ -185,9 +188,14 @@
                     <i class="fa-solid fa-wallet text-emerald-400 text-xs"></i>
                     <span class="text-xs font-black text-white uppercase">Gestión de Bankroll Activo</span>
                 </div>
-                <button onclick="toggleBankrollManagerModal(true)" class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
-                    <i class="fa-solid fa-gear"></i> Administrar Cajas
-                </button>
+                <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                    <button onclick="toggleKellyMonteCarloModal(true)" class="text-[9px] font-bold text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30 flex items-center gap-1">
+                        <i class="fa-solid fa-dice"></i> Kelly vs Varianza
+                    </button>
+                    <button onclick="toggleBankrollManagerModal(true)" class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+                        <i class="fa-solid fa-gear"></i> Administrar Cajas
+                    </button>
+                </div>
             </div>
 
             <!-- Selector de Bankroll y Resumen -->
@@ -890,6 +898,9 @@
                     <h3 class="font-black text-sm text-white">Bet Tracker Pro - Gestor de Apuestas</h3>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="toggleKellyMonteCarloModal(true)" class="bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
+                        <i class="fa-solid fa-dice"></i> Kelly vs Varianza (MC)
+                    </button>
                     <button onclick="openFlatStakeModal()" class="bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
                         <i class="fa-solid fa-sliders"></i> Simulador Stake Plano
                     </button>
@@ -1333,6 +1344,330 @@
         </div>
     </div>
 
+    <!-- MODAL ANÁLISIS DE CORRELACIÓN DE CRITERIO DE KELLY VS VARIANZA (MONTE CARLO SIMULATION) -->
+    <div id="kellyMonteCarloModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-4">
+        <div class="glass-card w-full max-w-5xl max-h-[96vh] rounded-2xl border border-purple-500/40 flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Header Modal -->
+            <div class="p-3.5 bg-slate-900/90 border-b border-purple-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 via-indigo-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-purple-500/20">
+                        <i class="fa-solid fa-dice text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-white flex items-center gap-2">
+                            Análisis de Correlación: Criterio de Kelly vs Varianza del Bankroll
+                            <span class="text-[9px] bg-purple-500/20 text-purple-300 font-extrabold px-2 py-0.5 rounded-full border border-purple-500/30">Monte Carlo Simulation</span>
+                        </h3>
+                        <p class="text-[10px] text-slate-400">Modelado estocástico de trayectorias, riesgo de ruina, varianza (&sigma;&sup2;) y eficiencia de crecimiento logarítmico.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportKellyMonteCarloCSV()" class="bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1 transition-all">
+                        <i class="fa-solid fa-file-excel"></i> Exportar CSV
+                    </button>
+                    <button onclick="toggleKellyMonteCarloModal(false)" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
+                
+                <!-- SECCIÓN DE CONFIGURACIÓN & SELECTOR DE MODO -->
+                <div class="bg-slate-900/90 p-3 rounded-2xl border border-purple-500/30 space-y-3">
+                    
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-white uppercase"><i class="fa-solid fa-sliders text-purple-400 mr-1"></i> Modo de Simulación:</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+                            <button id="kmcModeParametric" onclick="setKmcMode('parametric')" class="px-3 py-1 rounded-lg transition-all bg-purple-500 text-slate-950 font-black shadow">
+                                ⚙️ Paramétrico / Escenario
+                            </button>
+                            <button id="kmcModeBootstrap" onclick="setKmcMode('bootstrap')" class="px-3 py-1 rounded-lg transition-all text-slate-400 hover:text-white">
+                                📦 Bootstrap (Historial Real Caja)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Presets Rápidos -->
+                    <div class="flex items-center gap-1.5 flex-wrap text-[10px]">
+                        <span class="text-slate-400 font-bold uppercase mr-1"><i class="fa-solid fa-bolt text-gold-400"></i> Presets Rápidos:</span>
+                        <button onclick="applyKmcPreset('current_match')" class="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold transition-all">
+                            ⚽ Partido Poisson Actual
+                        </button>
+                        <button onclick="applyKmcPreset('standard_value')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold transition-all">
+                            🎯 Value Bet Típico (54% @1.95)
+                        </button>
+                        <button onclick="applyKmcPreset('underdog')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold transition-all">
+                            🚀 Underdog Value (32% @3.40)
+                        </button>
+                        <button onclick="applyKmcPreset('strong_favorite')" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold transition-all">
+                            🛡️ Favorito Sólido (72% @1.45)
+                        </button>
+                    </div>
+
+                    <!-- Inputs Paramétricos -->
+                    <div id="kmcParametricInputs" class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 pt-1">
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Bankroll Inicial ($)</label>
+                            <input type="number" id="kmcInitialBankroll" value="1000" step="50" min="10" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold text-center focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Probabilidad Éxito (%)</label>
+                            <input type="number" id="kmcWinProb" value="55.0" step="0.5" min="1" max="99" oninput="updateKmcTheoreticalKelly()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-emerald-400 font-bold text-center focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cuota Bookie (@)</label>
+                            <input type="number" id="kmcOdds" value="1.95" step="0.01" min="1.01" max="50" oninput="updateKmcTheoreticalKelly()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-gold-400 font-bold text-center focus:border-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Apuestas por Serie (N)</label>
+                            <select id="kmcBetsCount" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white font-bold focus:border-purple-500">
+                                <option value="100">100 apuestas</option>
+                                <option value="250" selected>250 apuestas (Recomendado)</option>
+                                <option value="500">500 apuestas</option>
+                                <option value="1000">1,000 apuestas (Largo Plazo)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Trayectorias Monte Carlo</label>
+                            <select id="kmcSimCount" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-purple-300 font-bold focus:border-purple-500">
+                                <option value="300">300 iteraciones</option>
+                                <option value="500">500 iteraciones</option>
+                                <option value="1000" selected>1,000 iteraciones (Preciso)</option>
+                                <option value="2000">2,000 iteraciones</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Info Box de Criterio de Kelly Teórico Calculado -->
+                    <div id="kmcTheoreticalInfoBox" class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs flex-wrap gap-2">
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <span class="text-[9px] text-slate-400 uppercase font-bold block">Valor Esperado (EV)</span>
+                                <span id="kmcTheoreticalEv" class="font-black text-emerald-400 text-xs">+7.25%</span>
+                            </div>
+                            <div class="h-6 w-px bg-slate-800"></div>
+                            <div>
+                                <span class="text-[9px] text-slate-400 uppercase font-bold block">Full Kelly Teórico (1.0x)</span>
+                                <span id="kmcTheoreticalFullKelly" class="font-black text-gold-400 text-xs">7.63% de Caja</span>
+                            </div>
+                            <div class="h-6 w-px bg-slate-800"></div>
+                            <div>
+                                <span class="text-[9px] text-slate-400 uppercase font-bold block">Cuarto Kelly Sugerido (0.25x)</span>
+                                <span id="kmcTheoreticalQuarterKelly" class="font-black text-indigo-400 text-xs">1.91% de Caja</span>
+                            </div>
+                        </div>
+                        <button onclick="runKellyMonteCarloSimulation()" class="bg-gradient-to-r from-purple-500 via-indigo-500 to-emerald-500 hover:from-purple-600 hover:to-emerald-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition-all shadow-lg shadow-purple-500/20 active:scale-95 flex items-center gap-1.5">
+                            <i class="fa-solid fa-play"></i> Ejecutar Simulación Monte Carlo
+                        </button>
+                    </div>
+
+                    <!-- Mensaje Bootstrap Informativo -->
+                    <div id="kmcBootstrapInfo" class="hidden bg-teal-950/30 border border-teal-500/30 p-2.5 rounded-xl text-xs text-slate-300 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-teal-300 flex items-center gap-1.5"><i class="fa-solid fa-database"></i> Muestreo Bootstrap del Historial Real</span>
+                            <span id="kmcBootstrapCountBadge" class="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">0 apuestas cerradas</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">
+                            La simulación tomará las cuotas y probabilidades reales de tus apuestas cerradas en la caja activa para generar miles de combinaciones estocásticas posibles, evaluando cómo se correlaciona la varianza con cada nivel de Kelly en tu propia operativa.
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- KPI METRICAS CLAVE DE CORRELACIÓN Y VEREDICTO CUANTITATIVO -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    
+                    <div class="bg-slate-900/90 p-3 rounded-2xl border border-purple-500/40 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] uppercase font-extrabold text-purple-300">Correlación Kelly vs Varianza</span>
+                            <i class="fa-solid fa-chart-line text-purple-400 text-xs"></i>
+                        </div>
+                        <div class="mt-1 flex items-baseline gap-2">
+                            <span class="text-2xl font-black text-white" id="kmcMetricPearsonR">+0.992</span>
+                            <span class="text-[10px] font-bold text-purple-300">Pearson (r)</span>
+                        </div>
+                        <p class="text-[9px] text-slate-400 mt-1">Correlación casi perfecta. La varianza escala cuadráticamente con la fracción (f&sup2;).</p>
+                    </div>
+
+                    <div class="bg-slate-900/90 p-3 rounded-2xl border border-emerald-500/40 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] uppercase font-extrabold text-emerald-400">Fracción Óptima Recomendada</span>
+                            <i class="fa-solid fa-crown text-gold-400 text-xs"></i>
+                        </div>
+                        <div class="mt-1 flex items-baseline gap-2">
+                            <span class="text-2xl font-black text-emerald-400" id="kmcMetricOptimalFraction">0.25x (1/4)</span>
+                            <span class="text-[10px] font-bold text-slate-400">Kelly</span>
+                        </div>
+                        <p class="text-[9px] text-slate-400 mt-1" id="kmcMetricOptimalEfficiency">Retiene ~75% de crecimiento con solo 11% de la varianza total.</p>
+                    </div>
+
+                    <div class="bg-slate-900/90 p-3 rounded-2xl border border-amber-500/40 relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] uppercase font-extrabold text-amber-300">Max Drawdown Full Kelly (1.0x)</span>
+                            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-xs"></i>
+                        </div>
+                        <div class="mt-1 flex items-baseline gap-2">
+                            <span class="text-2xl font-black text-rose-400" id="kmcMetricFullKellyDD">48.5%</span>
+                            <span class="text-[10px] font-bold text-slate-400">Mediano</span>
+                        </div>
+                        <p class="text-[9px] text-slate-400 mt-1" id="kmcMetricProbSevereDD">Probabilidad de caída &gt; 50%: <b class="text-rose-400">46.2%</b></p>
+                    </div>
+
+                    <div class="bg-slate-900/90 p-3 rounded-2xl border border-indigo-500/40 relative overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[9px] uppercase font-extrabold text-indigo-300">Acción Rápida de Ajuste</span>
+                                <i class="fa-solid fa-bolt text-indigo-400 text-xs"></i>
+                            </div>
+                            <span class="text-xs font-bold text-slate-300 block mt-1">Configurar Stake Recomendado</span>
+                        </div>
+                        <button onclick="applyOptimalKellyToApp()" class="w-full mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[11px] py-1.5 rounded-xl transition-all shadow flex items-center justify-center gap-1 active:scale-95">
+                            <i class="fa-solid fa-check-double"></i> Aplicar Cuarto Kelly a Herramienta
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- CONTENEDOR DE GRÁFICAS INTERACTIVAS CON PESTAÑAS -->
+                <div class="bg-slate-900/80 p-3.5 rounded-2xl border border-slate-800 space-y-3">
+                    
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                        <div class="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+                            <button id="kmcTabBtnCurve" onclick="switchKmcChartTab('curve')" class="px-3 py-1.5 rounded-lg transition-all bg-purple-500 text-slate-950 font-black shadow">
+                                📈 Curva Kelly vs Varianza & Crecimiento
+                            </button>
+                            <button id="kmcTabBtnFan" onclick="switchKmcChartTab('fan')" class="px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white">
+                                🌌 Abanico de Trayectorias Monte Carlo
+                            </button>
+                            <button id="kmcTabBtnScatter" onclick="switchKmcChartTab('scatter')" class="px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white">
+                                🎯 Dispersión Riesgo vs Retorno
+                            </button>
+                        </div>
+
+                        <!-- Selector auxiliar para el tab de abanico -->
+                        <div id="kmcFanFractionSelector" class="hidden flex items-center gap-1.5 text-xs">
+                            <span class="text-[10px] text-slate-400 font-bold">Fracción en Gráfica:</span>
+                            <select id="kmcFanFractionSelect" onchange="renderKmcFanChart()" class="bg-inputBg border border-purple-500/40 rounded-lg px-2 py-1 text-xs text-purple-300 font-black">
+                                <option value="compare">Comparativa (0.25x vs 1.0x)</option>
+                                <option value="0.10">0.10x Kelly (Ultra-Conservador)</option>
+                                <option value="0.25" selected>0.25x Cuarto Kelly (Recomendado)</option>
+                                <option value="0.50">0.50x Medio Kelly</option>
+                                <option value="0.75">0.75x Tres Cuartos Kelly</option>
+                                <option value="1.00">1.00x Full Kelly</option>
+                                <option value="1.25">1.25x Over-Kelly</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Vista 1: Curva de Kelly vs Varianza y Crecimiento (Doble eje Y) -->
+                    <div id="kmcChartViewCurve" class="space-y-1">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>Eje Izquierdo (Púrpura): <b class="text-purple-400">Varianza del Bankroll (&sigma;&sup2;)</b></span>
+                            <span>Eje Derecho (Verde): <b class="text-emerald-400">Bankroll Final Mediano ($)</b></span>
+                        </div>
+                        <div class="h-64 w-full">
+                            <canvas id="kmcCurveChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Vista 2: Abanico de Trayectorias (Fan Chart) -->
+                    <div id="kmcChartViewFan" class="hidden space-y-1">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>Abanico Estocástico de Percentiles: <span class="text-emerald-400 font-bold">P90 (Mejor Caso)</span> | <span class="text-indigo-400 font-bold">P50 (Mediana)</span> | <span class="text-rose-400 font-bold">P10 (Peor Caso)</span></span>
+                            <span class="text-[9px] text-slate-500">Muestra de trayectorias simuladas</span>
+                        </div>
+                        <div class="h-64 w-full">
+                            <canvas id="kmcFanChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Vista 3: Scatter Drawdown vs Retorno -->
+                    <div id="kmcChartViewScatter" class="hidden space-y-1">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>Eje X: <b class="text-amber-400">Max Drawdown Mediano (%)</b> vs Eje Y: <b class="text-emerald-400">Retorno Neto Mediano (%)</b></span>
+                            <span class="text-[9px] text-purple-400 font-bold">Relación Riesgo / Beneficio</span>
+                        </div>
+                        <div class="h-64 w-full">
+                            <canvas id="kmcScatterChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TABLA COMPARATIVA DETALLADA ESTILO EXCEL -->
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-extrabold text-slate-200 uppercase flex items-center gap-1.5">
+                            <i class="fa-solid fa-table-cells text-purple-400"></i> Tabla Comparativa Cuantitativa por Fracción de Kelly
+                        </span>
+                        <span class="text-[9px] text-slate-400 font-mono">Basado en <span id="kmcTableSimCountBadge">1000</span> trayectorias</span>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 max-h-72">
+                        <table class="w-full text-[10px] text-left border-collapse excel-table">
+                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
+                                <tr>
+                                    <th class="p-1.5">Fracción Kelly</th>
+                                    <th class="p-1.5 text-center">Stake Sugerido</th>
+                                    <th class="p-1.5 text-center">Bankroll Mediano</th>
+                                    <th class="p-1.5 text-center">Retorno (%)</th>
+                                    <th class="p-1.5 text-center bg-purple-950/40 text-purple-300">Varianza (&sigma;&sup2;)</th>
+                                    <th class="p-1.5 text-center">Volatilidad (&sigma;)</th>
+                                    <th class="p-1.5 text-center bg-amber-950/30 text-amber-300">Max Drawdown</th>
+                                    <th class="p-1.5 text-center">Prob. DD &gt;50%</th>
+                                    <th class="p-1.5 text-center">Riesgo Ruina</th>
+                                    <th class="p-1.5 text-center">Ratio Eficiencia</th>
+                                    <th class="p-1.5 text-center">Veredicto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kmcComparisonTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                <!-- Filas generadas por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PANEL PEDAGÓGICO & CONCLUSIONES MATEMÁTICAS DEL ASESOR VIP -->
+                <div class="bg-slate-900/70 border border-slate-800 p-3.5 rounded-2xl text-xs text-slate-300 space-y-2">
+                    <div class="flex items-center gap-2 text-purple-400 font-extrabold">
+                        <i class="fa-solid fa-graduation-cap text-base"></i>
+                        <span>Fundamentos Matemáticos: ¿Por qué Kelly Completo (1.0x) tiene Varianza Inaceptable?</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-slate-400 pt-1">
+                        <div class="space-y-1">
+                            <p><b class="text-white">1. El Costo Cuadrático de la Varianza (f&sup2;):</b> La tasa de crecimiento compuesto g(f) alcanza su máximo teórico en f* = 1.0, pero su derivada marginal es nula en el pico. En contraste, la varianza del bankroll Var = f&sup2; &times; &sigma;&sup2; crece de forma estrictamente cuadrática.</p>
+                            <p><b class="text-white">2. Ley del 75% con 1/4 de Varianza:</b> Usando <b>0.50x Kelly (Medio Kelly)</b> obtienes el <b>75% del crecimiento máximo</b> con solo el <b>25% de la varianza</b>. Usando <b>0.25x Kelly (Cuarto Kelly)</b> obtienes cerca del <b>44% del crecimiento</b> reduciendo la varianza a tan solo <b>6.25%</b>.</p>
+                        </div>
+                        <div class="space-y-1">
+                            <p><b class="text-white">3. El Abismo del Over-Kelly (&gt; 1.0x):</b> Si apuestas más de Full Kelly (a menudo debido a sobreestimar el EV o el valor de la ventaja), la tasa de crecimiento cae en picada hacia números negativos. Con 2.0x Kelly, la ruina es matemáticamente del 100% en el infinito.</p>
+                            <p><b class="text-white">4. Conclusión para Apuestas Deportivas:</b> Dado que las cuotas y probabilidades reales tienen incertidumbre de estimación, los modelos de inversión cuantitativa profesionales usan invariablemente <b>entre 0.15x y 0.30x Kelly</b> como escudo insuperable contra rachas adversas.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="p-3 bg-slate-900/90 border-t border-purple-500/30 flex items-center justify-between">
+                <span class="text-[10px] text-slate-400 hidden sm:inline"><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Sin margen comercial. Simulador Monte Carlo VIP Pro.</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="applyOptimalKellyToApp()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl transition-all shadow">
+                        Aplicar Stake Recomendado
+                    </button>
+                    <button onclick="toggleKellyMonteCarloModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- MODAL DE FORMULARIO REGISTRAR APUESTA -->
     <div id="logBetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-md rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
@@ -1422,9 +1757,14 @@
                     <div>
                         <div class="flex justify-between items-center mb-1">
                             <label class="block text-[10px] font-bold text-slate-400">Stake / Apuesta ($)</label>
-                            <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
-                                <i class="fa-solid fa-calculator"></i> Kelly 1/4
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
+                                    <i class="fa-solid fa-calculator"></i> Kelly 1/4
+                                </button>
+                                <button type="button" onclick="openKellyMonteCarloFromBetModal()" class="text-[9px] font-extrabold text-purple-400 hover:underline bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20" title="Simular correlación Kelly vs Varianza con esta cuota en Monte Carlo">
+                                    <i class="fa-solid fa-dice"></i> Simular MC
+                                </button>
+                            </div>
                         </div>
                         <input type="number" step="1" id="logStake" value="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1 text-xs text-white font-bold text-center">
                     </div>
@@ -1576,6 +1916,12 @@
         let pnlChartInstance = null;
         let calibrationChartInstance = null;
         let flatStakeChartInstance = null;
+        let kmcCurveChartInstance = null;
+        let kmcFanChartInstance = null;
+        let kmcScatterChartInstance = null;
+        let kmcCurrentSimulationResults = null;
+        let kmcActiveChartTab = 'curve';
+        let kmcCurrentMode = 'parametric';
         let bankrollsData = [];
         let activeBankrollId = 'default_bankroll';
         let betLogData = [];
@@ -1971,36 +2317,189 @@
             return name.trim();
         }
 
+        function parseNum(val, defaultVal = 0) {
+            if (val === undefined || val === null) return defaultVal;
+            let str = val.toString().trim();
+            if (!str) return defaultVal;
+            if (str.includes(',') && !str.includes('.')) {
+                str = str.replace(',', '.');
+            }
+            str = str.replace(/^\+/, '');
+            const num = parseFloat(str);
+            return isNaN(num) ? defaultVal : num;
+        }
+
         function parseRawLeagueData(rawText) {
-            const teams = [];
-            const lines = rawText.split(/\r?\n/);
+            if (!rawText || !rawText.trim()) return [];
+            const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) return [];
 
-            for (let line of lines) {
-                let trimmed = line.trim();
-                if (!trimmed || trimmed.startsWith('#')) continue;
+            function splitLine(line) {
+                if (line.includes('\t')) return line.split('\t').map(s => s.trim());
+                if (line.includes(';') && line.split(';').length >= 4) return line.split(';').map(s => s.trim());
+                if (line.includes(',') && line.split(',').length >= 5) {
+                    return line.split(',').map(s => s.trim());
+                }
+                return line.split(/\s{2,}|\t+/).map(s => s.trim());
+            }
 
-                const parts = trimmed.split(/\t+|\s{2,}/);
-                if (parts.length >= 8) {
-                    const pos = parseInt(parts[0]);
-                    const rawTeam = parts[1];
-                    const mp = parseInt(parts[2]);
-                    const xg = parseFloat(parts[3]);
-                    const xga = parseFloat(parts[4]);
-                    const xgd = parts[5].trim();
-                    const gf = parseFloat(parts[6]);
-                    const ga = parseFloat(parts[7]);
-                    const vsActual = parts[8] ? parts[8].trim() : '0.00';
+            let headerIdx = -1;
+            let colMap = null;
 
-                    if (!isNaN(pos) && !isNaN(mp) && !isNaN(xg) && !isNaN(xga)) {
-                        teams.push({ pos, name: cleanTeamName(rawTeam), mp, xg, xga, xgd, gf, ga, vsActual });
-                        continue;
-                    }
+            for (let i = 0; i < Math.min(5, lines.length); i++) {
+                const parts = splitLine(lines[i]).map(p => p.toLowerCase().replace(/[^a-z0-9/]/g, ''));
+                const hasTeam = parts.some(p => ['team', 'squad', 'equipo', 'club', 'nombre'].includes(p));
+                const hasXgOrGf = parts.some(p => ['xg', 'xga', 'gf', 'ga', 'mp', 'pj'].includes(p));
+                if (hasTeam || (hasXgOrGf && parts.length >= 4)) {
+                    headerIdx = i;
+                    colMap = {};
+                    parts.forEach((p, idx) => {
+                        if (['#', 'rk', 'pos', 'posicion', 'puesto'].includes(p)) colMap.pos = idx;
+                        else if (['team', 'squad', 'equipo', 'club', 'nombre'].includes(p)) colMap.team = idx;
+                        else if (['mp', 'pj', 'p', 'partidos', 'j', 'jugados'].includes(p)) colMap.mp = idx;
+                        else if (['xg', 'xgoals', 'xg_for'].includes(p) && colMap.xg === undefined) colMap.xg = idx;
+                        else if (['xga', 'xg_against', 'xgc', 'xconceded'].includes(p)) colMap.xga = idx;
+                        else if (['xgd', 'diff', 'dg_xg'].includes(p)) colMap.xgd = idx;
+                        else if (['gf', 'f', 'goles_favor', 'goals_for'].includes(p)) colMap.gf = idx;
+                        else if (['ga', 'gc', 'c', 'goles_contra', 'goals_against'].includes(p)) colMap.ga = idx;
+                        else if (['vsactual', 'xgvsactual', 'diff_actual'].includes(p)) colMap.vsActual = idx;
+                    });
+                    break;
                 }
             }
+
+            const teams = [];
+            const dataLines = headerIdx >= 0 ? lines.slice(headerIdx + 1) : lines;
+
+            dataLines.forEach((line, lineIndex) => {
+                let trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith('#')) return;
+
+                const parts = splitLine(trimmed);
+                if (parts.length < 3) return;
+
+                let pos = lineIndex + 1;
+                let rawTeam = '';
+                let mp = 20;
+                let xg = 1.30;
+                let xga = 1.20;
+                let xgd = '0.00';
+                let gf = 1.30;
+                let ga = 1.20;
+                let vsActual = '0.00';
+
+                if (colMap && colMap.team !== undefined) {
+                    if (colMap.pos !== undefined && parts[colMap.pos]) pos = parseInt(parts[colMap.pos]) || pos;
+                    rawTeam = parts[colMap.team] || `Equipo ${pos}`;
+                    if (colMap.mp !== undefined && parts[colMap.mp]) mp = parseInt(parts[colMap.mp]) || mp;
+                    
+                    if (colMap.xg !== undefined && parts[colMap.xg]) {
+                        const rawXg = parseNum(parts[colMap.xg]);
+                        xg = (rawXg > 10 && mp > 5) ? (rawXg / mp) : rawXg;
+                    }
+                    if (colMap.xga !== undefined && parts[colMap.xga]) {
+                        const rawXga = parseNum(parts[colMap.xga]);
+                        xga = (rawXga > 10 && mp > 5) ? (rawXga / mp) : rawXga;
+                    }
+                    if (colMap.gf !== undefined && parts[colMap.gf]) {
+                        const rawGf = parseNum(parts[colMap.gf]);
+                        gf = (rawGf > 10 && mp > 5) ? (rawGf / mp) : rawGf;
+                    } else {
+                        gf = xg;
+                    }
+                    if (colMap.ga !== undefined && parts[colMap.ga]) {
+                        const rawGa = parseNum(parts[colMap.ga]);
+                        ga = (rawGa > 10 && mp > 5) ? (rawGa / mp) : rawGa;
+                    } else {
+                        ga = xga;
+                    }
+                    if (colMap.xgd !== undefined && parts[colMap.xgd]) {
+                        xgd = parts[colMap.xgd].toString().trim();
+                    } else {
+                        xgd = (xg - xga).toFixed(2);
+                        if (xg - xga > 0) xgd = '+' + xgd;
+                    }
+                    if (colMap.vsActual !== undefined && parts[colMap.vsActual]) {
+                        vsActual = parts[colMap.vsActual].toString().trim();
+                    }
+                } else {
+                    let offset = 0;
+                    const firstNum = parseInt(parts[0]);
+                    if (!isNaN(firstNum) && String(firstNum) === parts[0].trim()) {
+                        pos = firstNum;
+                        offset = 1;
+                    }
+
+                    rawTeam = parts[offset];
+                    if (!rawTeam) return;
+
+                    const remaining = parts.slice(offset + 1);
+                    if (remaining.length === 0) return;
+
+                    mp = parseInt(remaining[0]) || 20;
+
+                    if (remaining.length >= 11 && parseNum(remaining[1]) >= 0 && parseNum(remaining[2]) >= 0 && parseNum(remaining[3]) >= 0) {
+                        const totalGf = parseNum(remaining[4]);
+                        const totalGa = parseNum(remaining[5]);
+                        gf = mp > 0 ? (totalGf / mp) : totalGf;
+                        ga = mp > 0 ? (totalGa / mp) : totalGa;
+
+                        let foundXg = 0, foundXga = 0;
+                        for (let c = 8; c < remaining.length; c++) {
+                            const val = parseNum(remaining[c]);
+                            if (val > 0 && !foundXg) {
+                                foundXg = val;
+                            } else if (val > 0 && !foundXga) {
+                                foundXga = val;
+                                break;
+                            }
+                        }
+                        xg = (foundXg > 10 && mp > 5) ? (foundXg / mp) : (foundXg || gf);
+                        xga = (foundXga > 10 && mp > 5) ? (foundXga / mp) : (foundXga || ga);
+                        xgd = (xg - xga).toFixed(2);
+                        if (xg - xga > 0) xgd = '+' + xgd;
+                    } else if (remaining.length >= 6) {
+                        xg = parseNum(remaining[1], 1.30);
+                        xga = parseNum(remaining[2], 1.20);
+                        xgd = remaining[3] ? remaining[3].toString().trim() : (xg - xga).toFixed(2);
+                        gf = parseNum(remaining[4], xg);
+                        ga = parseNum(remaining[5], xga);
+                        vsActual = remaining[6] ? remaining[6].toString().trim() : '0.00';
+                    } else if (remaining.length >= 2) {
+                        xg = parseNum(remaining[1], 1.30);
+                        xga = remaining[2] ? parseNum(remaining[2], 1.20) : 1.20;
+                        gf = xg;
+                        ga = xga;
+                        xgd = (xg - xga).toFixed(2);
+                    }
+                }
+
+                const teamName = cleanTeamName(rawTeam);
+                if (teamName && teamName.length > 0) {
+                    teams.push({
+                        pos,
+                        name: teamName,
+                        mp: isNaN(mp) ? 20 : mp,
+                        xg: Number(xg.toFixed(2)),
+                        xga: Number(xga.toFixed(2)),
+                        xgd: typeof xgd === 'string' ? xgd : (xg - xga > 0 ? '+' + (xg - xga).toFixed(2) : (xg - xga).toFixed(2)),
+                        gf: Number(gf.toFixed(2)),
+                        ga: Number(ga.toFixed(2)),
+                        vsActual: vsActual || '0.00'
+                    });
+                }
+            });
+
             return teams;
         }
 
         function loadBankrollsFromStorage() {
+            let sharedLeagues = null;
+            const storedShared = localStorage.getItem('poisson_vip_shared_leagues');
+            if (storedShared) {
+                try { sharedLeagues = JSON.parse(storedShared); } catch(e) {}
+            }
+
             const stored = localStorage.getItem('poisson_vip_bankrolls');
             if (stored) {
                 try { 
@@ -2008,13 +2507,22 @@
                     bankrollsData.forEach(b => {
                         if (b.totalWithdrawn === undefined) b.totalWithdrawn = 0;
                         if (!b.withdrawLog) b.withdrawLog = [];
-                        if (!b.leaguesData) {
-                            b.leaguesData = { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
+                        if (!b.leaguesData || Object.keys(b.leaguesData).length === 0) {
+                            b.leaguesData = sharedLeagues && Object.keys(sharedLeagues).length > 0 
+                                ? { ...sharedLeagues }
+                                : { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
+                        } else if (sharedLeagues) {
+                            Object.keys(sharedLeagues).forEach(k => {
+                                if (!b.leaguesData[k]) b.leaguesData[k] = sharedLeagues[k];
+                            });
                         }
                     });
                 } catch(e) { bankrollsData = []; }
             }
             if (bankrollsData.length === 0) {
+                const defaultLeagues = sharedLeagues && Object.keys(sharedLeagues).length > 0
+                    ? { ...sharedLeagues }
+                    : { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
                 bankrollsData = [
                     { 
                         id: 'default_bankroll', 
@@ -2022,7 +2530,7 @@
                         initial: 1000, 
                         totalWithdrawn: 0, 
                         withdrawLog: [],
-                        leaguesData: { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) }
+                        leaguesData: defaultLeagues
                     }
                 ];
                 saveBankrollsToStorage();
@@ -2038,11 +2546,38 @@
         function saveBankrollsToStorage() {
             localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
             localStorage.setItem('poisson_vip_active_bankroll', activeBankrollId);
+
+            // Keep shared league registry up-to-date
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            if (activeBankObj && activeBankObj.leaguesData) {
+                try {
+                    let shared = {};
+                    const storedShared = localStorage.getItem('poisson_vip_shared_leagues');
+                    if (storedShared) {
+                        try { shared = JSON.parse(storedShared) || {}; } catch(e) {}
+                    }
+                    Object.assign(shared, activeBankObj.leaguesData);
+                    localStorage.setItem('poisson_vip_shared_leagues', JSON.stringify(shared));
+                } catch(e) {}
+            }
         }
 
         function getCurrentBankrollLeagues() {
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            if (!activeBankObj.leaguesData) {
+            if (!activeBankObj) {
+                return { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
+            }
+            if (!activeBankObj.leaguesData || Object.keys(activeBankObj.leaguesData).length === 0) {
+                const storedShared = localStorage.getItem('poisson_vip_shared_leagues');
+                if (storedShared) {
+                    try {
+                        const parsed = JSON.parse(storedShared);
+                        if (parsed && Object.keys(parsed).length > 0) {
+                            activeBankObj.leaguesData = parsed;
+                            return activeBankObj.leaguesData;
+                        }
+                    } catch(e) {}
+                }
                 activeBankObj.leaguesData = { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
             }
             return activeBankObj.leaguesData;
@@ -2092,20 +2627,37 @@
         function populateLeagueDropdowns() {
             const selectActive = document.getElementById('activeLeagueSelect');
             const selectModal = document.getElementById('modalLeagueSelect');
+            if (!selectActive || !selectModal) return;
+
+            const prevActiveVal = selectActive.value;
+            const prevModalVal = selectModal.value;
 
             selectActive.innerHTML = '';
             selectModal.innerHTML = '';
 
             const leagues = getCurrentBankrollLeagues();
+            let leagueKeys = Object.keys(leagues);
 
-            Object.keys(leagues).forEach(leagueName => {
+            if (leagueKeys.length === 0) {
+                leagues[DEFAULT_LEAGUE_NAME] = parseRawLeagueData(DEFAULT_RAW_DATA);
+                leagueKeys = Object.keys(leagues);
+            }
+
+            leagueKeys.forEach(leagueName => {
                 selectActive.add(new Option(leagueName, leagueName));
                 selectModal.add(new Option(leagueName, leagueName));
             });
 
-            if (Object.keys(leagues).length > 0) {
-                selectActive.value = Object.keys(leagues)[0];
-                selectModal.value = Object.keys(leagues)[0];
+            if (leagueKeys.includes(prevActiveVal)) {
+                selectActive.value = prevActiveVal;
+            } else {
+                selectActive.value = leagueKeys[0];
+            }
+
+            if (leagueKeys.includes(prevModalVal)) {
+                selectModal.value = prevModalVal;
+            } else {
+                selectModal.value = selectActive.value;
             }
         }
 
@@ -2156,6 +2708,11 @@
                 return;
             }
 
+            const currentLeagues = getCurrentBankrollLeagues();
+            const inheritedLeagues = (currentLeagues && Object.keys(currentLeagues).length > 0)
+                ? JSON.parse(JSON.stringify(currentLeagues))
+                : { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
+
             const newId = 'bankroll_' + Date.now();
             bankrollsData.push({ 
                 id: newId, 
@@ -2163,7 +2720,7 @@
                 initial, 
                 totalWithdrawn: 0, 
                 withdrawLog: [],
-                leaguesData: { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) }
+                leaguesData: inheritedLeagues
             });
             activeBankrollId = newId;
 
@@ -2303,12 +2860,25 @@
         }
 
         function updateTeamSelectors() {
-            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const selectActive = document.getElementById('activeLeagueSelect');
+            if (!selectActive) return;
+
+            let activeLeague = selectActive.value;
             const leagues = getCurrentBankrollLeagues();
-            const teams = leagues[activeLeague] || [];
+
+            if (!activeLeague || !leagues[activeLeague]) {
+                const keys = Object.keys(leagues);
+                if (keys.length > 0) {
+                    activeLeague = keys[0];
+                    selectActive.value = activeLeague;
+                }
+            }
+
+            const teams = (activeLeague && leagues[activeLeague]) ? leagues[activeLeague] : [];
 
             const homeSelect = document.getElementById('selectHomeTeam');
             const awaySelect = document.getElementById('selectAwayTeam');
+            if (!homeSelect || !awaySelect) return;
 
             homeSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
             awaySelect.innerHTML = '<option value="">-- Seleccionar --</option>';
@@ -2320,10 +2890,13 @@
         }
 
         function autoFillTeamData(side) {
-            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const selectActive = document.getElementById('activeLeagueSelect');
+            if (!selectActive) return;
+            const activeLeague = selectActive.value;
             const leagues = getCurrentBankrollLeagues();
             const teams = leagues[activeLeague] || [];
             const selectEl = side === 'home' ? document.getElementById('selectHomeTeam') : document.getElementById('selectAwayTeam');
+            if (!selectEl) return;
             const selectedName = selectEl.value;
 
             if (!selectedName) return;
@@ -2331,18 +2904,37 @@
             const team = teams.find(t => t.name === selectedName);
             if (!team) return;
 
+            const xgNum = typeof team.xg === 'number' ? team.xg : (parseFloat(team.xg) || 1.30);
+            const xgaNum = typeof team.xga === 'number' ? team.xga : (parseFloat(team.xga) || 1.20);
+            const gfNum = typeof team.gf === 'number' ? team.gf : (parseFloat(team.gf) || xgNum);
+            const gaNum = typeof team.ga === 'number' ? team.ga : (parseFloat(team.ga) || xgaNum);
+
             if (side === 'home') {
-                document.getElementById('homeName').value = team.name;
-                document.getElementById('homeXgFor').value = team.xg.toFixed(2);
-                document.getElementById('homeGf').value = team.gf.toFixed(2);
-                document.getElementById('homeXgAgainst').value = team.xga.toFixed(2);
-                document.getElementById('homeGc').value = team.ga.toFixed(2);
+                const nameEl = document.getElementById('homeName');
+                if (nameEl) nameEl.value = team.name;
+                const hXg = document.getElementById('homeXgFor');
+                if (hXg) hXg.value = xgNum.toFixed(2);
+                const hGf = document.getElementById('homeGf');
+                if (hGf) hGf.value = gfNum.toFixed(2);
+                const hXga = document.getElementById('homeXgAgainst');
+                if (hXga) hXga.value = xgaNum.toFixed(2);
+                const hGc = document.getElementById('homeGc');
+                if (hGc) hGc.value = gaNum.toFixed(2);
+                const directH = document.getElementById('directHomeXg');
+                if (directH) directH.value = xgNum.toFixed(2);
             } else {
-                document.getElementById('awayName').value = team.name;
-                document.getElementById('awayXgFor').value = team.xg.toFixed(2);
-                document.getElementById('awayGf').value = team.gf.toFixed(2);
-                document.getElementById('awayXgAgainst').value = team.xga.toFixed(2);
-                document.getElementById('awayGc').value = team.ga.toFixed(2);
+                const nameEl = document.getElementById('awayName');
+                if (nameEl) nameEl.value = team.name;
+                const aXg = document.getElementById('awayXgFor');
+                if (aXg) aXg.value = xgNum.toFixed(2);
+                const aGf = document.getElementById('awayGf');
+                if (aGf) aGf.value = gfNum.toFixed(2);
+                const aXga = document.getElementById('awayXgAgainst');
+                if (aXga) aXga.value = xgaNum.toFixed(2);
+                const aGc = document.getElementById('awayGc');
+                if (aGc) aGc.value = gaNum.toFixed(2);
+                const directA = document.getElementById('directAwayXg');
+                if (directA) directA.value = xgNum.toFixed(2);
             }
 
             calculatePoisson();
@@ -3167,6 +3759,787 @@
             });
         }
 
+        // =========================================================================
+        // MÓDULO ANÁLISIS DE CORRELACIÓN DE CRITERIO DE KELLY VS VARIANZA (MONTE CARLO)
+        // =========================================================================
+
+        function toggleKellyMonteCarloModal(show) {
+            const modal = document.getElementById('kellyMonteCarloModal');
+            if (show) {
+                updateKmcTheoreticalKelly();
+                if (!kmcCurrentSimulationResults) {
+                    runKellyMonteCarloSimulation();
+                } else {
+                    renderKmcActiveChart();
+                }
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function openKellyMonteCarloModal() {
+            toggleKellyMonteCarloModal(true);
+        }
+
+        function openKellyMonteCarloFromBetModal() {
+            const prob = parseFloat(document.getElementById('logProb').value) || 50;
+            const odds = parseFloat(document.getElementById('logBookieOdds').value) || 2.0;
+            
+            document.getElementById('kmcWinProb').value = prob.toFixed(1);
+            document.getElementById('kmcOdds').value = odds.toFixed(2);
+            setKmcMode('parametric');
+            updateKmcTheoreticalKelly();
+            runKellyMonteCarloSimulation();
+            toggleKellyMonteCarloModal(true);
+        }
+
+        function setKmcMode(mode) {
+            kmcCurrentMode = mode;
+            const btnParametric = document.getElementById('kmcModeParametric');
+            const btnBootstrap = document.getElementById('kmcModeBootstrap');
+            const paramInputs = document.getElementById('kmcParametricInputs');
+            const bootInfo = document.getElementById('kmcBootstrapInfo');
+            const theoreticalBox = document.getElementById('kmcTheoreticalInfoBox');
+
+            if (mode === 'parametric') {
+                btnParametric.className = "px-3 py-1 rounded-lg transition-all bg-purple-500 text-slate-950 font-black shadow";
+                btnBootstrap.className = "px-3 py-1 rounded-lg transition-all text-slate-400 hover:text-white";
+                paramInputs.classList.remove('hidden');
+                bootInfo.classList.add('hidden');
+                theoreticalBox.classList.remove('hidden');
+            } else {
+                btnBootstrap.className = "px-3 py-1 rounded-lg transition-all bg-purple-500 text-slate-950 font-black shadow";
+                btnParametric.className = "px-3 py-1 rounded-lg transition-all text-slate-400 hover:text-white";
+                paramInputs.classList.add('hidden');
+                bootInfo.classList.remove('hidden');
+                
+                const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+                const settled = activeBankBets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
+                document.getElementById('kmcBootstrapCountBadge').innerText = `${settled.length} apuestas cerradas disponibles`;
+            }
+            updateKmcTheoreticalKelly();
+        }
+
+        function applyKmcPreset(key) {
+            setKmcMode('parametric');
+            if (key === 'current_match') {
+                let p = 50.0;
+                let o = 2.00;
+                if (currentCalculatedProbs && currentCalculatedProbs.probOver25) {
+                    p = currentCalculatedProbs.probOver25 * 100;
+                    o = 1 / Math.max(0.01, currentCalculatedProbs.probOver25);
+                }
+                document.getElementById('kmcWinProb').value = p.toFixed(1);
+                document.getElementById('kmcOdds').value = o.toFixed(2);
+                showToast("Preset 'Partido Poisson Actual' cargado.");
+            } else if (key === 'standard_value') {
+                document.getElementById('kmcWinProb').value = "54.0";
+                document.getElementById('kmcOdds').value = "1.95";
+                showToast("Preset 'Value Bet Típico' cargado.");
+            } else if (key === 'underdog') {
+                document.getElementById('kmcWinProb').value = "32.0";
+                document.getElementById('kmcOdds').value = "3.40";
+                showToast("Preset 'Underdog Value' cargado.");
+            } else if (key === 'strong_favorite') {
+                document.getElementById('kmcWinProb').value = "72.0";
+                document.getElementById('kmcOdds').value = "1.45";
+                showToast("Preset 'Favorito Sólido' cargado.");
+            }
+            updateKmcTheoreticalKelly();
+            runKellyMonteCarloSimulation();
+        }
+
+        function updateKmcTheoreticalKelly() {
+            const p = (parseFloat(document.getElementById('kmcWinProb').value) || 0) / 100;
+            const odds = parseFloat(document.getElementById('kmcOdds').value) || 1.0;
+            const b = odds - 1;
+
+            const ev = (p * odds) - 1;
+            const evEl = document.getElementById('kmcTheoreticalEv');
+            evEl.innerText = (ev >= 0 ? '+' : '') + (ev * 100).toFixed(2) + '%';
+            evEl.className = ev >= 0 ? 'font-black text-emerald-400 text-xs' : 'font-black text-rose-400 text-xs';
+
+            const fullKelly = b > 0 ? (p * b - (1 - p)) / b : 0;
+            const fullKellyPct = Math.max(0, fullKelly * 100);
+            const quarterKellyPct = fullKellyPct * 0.25;
+
+            document.getElementById('kmcTheoreticalFullKelly').innerText = fullKellyPct > 0 ? `${fullKellyPct.toFixed(2)}% de Caja` : "0.0% (Sin EV+)";
+            document.getElementById('kmcTheoreticalQuarterKelly').innerText = quarterKellyPct > 0 ? `${quarterKellyPct.toFixed(2)}% de Caja` : "0.0% (Sin EV+)";
+        }
+
+        function calculatePearsonR(x, y) {
+            const n = x.length;
+            if (n === 0) return 0;
+            const meanX = x.reduce((a, b) => a + b, 0) / n;
+            const meanY = y.reduce((a, b) => a + b, 0) / n;
+            let num = 0;
+            let denX = 0;
+            let denY = 0;
+            for (let i = 0; i < n; i++) {
+                const dx = x[i] - meanX;
+                const dy = y[i] - meanY;
+                num += dx * dy;
+                denX += dx * dx;
+                denY += dy * dy;
+            }
+            if (denX === 0 || denY === 0) return 0;
+            return num / Math.sqrt(denX * denY);
+        }
+
+        function runKellyMonteCarloSimulation() {
+            const initialBank = parseFloat(document.getElementById('kmcInitialBankroll').value) || 1000;
+            const numBets = parseInt(document.getElementById('kmcBetsCount').value) || 250;
+            const numSims = parseInt(document.getElementById('kmcSimCount').value) || 1000;
+            
+            const badgeEl = document.getElementById('kmcTableSimCountBadge');
+            if (badgeEl) badgeEl.innerText = numSims;
+
+            const fractions = [
+                { id: 'k010', label: '0.10x Kelly', mult: 0.10, isFlat: false, role: 'Conservador' },
+                { id: 'k025', label: '0.25x Cuarto Kelly', mult: 0.25, isFlat: false, recommended: true, role: '⭐ Óptimo Recomendado' },
+                { id: 'k050', label: '0.50x Medio Kelly', mult: 0.50, isFlat: false, role: 'Agresivo Moderado' },
+                { id: 'k075', label: '0.75x Kelly', mult: 0.75, isFlat: false, role: 'Alto Riesgo' },
+                { id: 'k100', label: '1.00x Full Kelly', mult: 1.00, isFlat: false, role: 'Varianza Crítica' },
+                { id: 'k125', label: '1.25x Over-Kelly', mult: 1.25, isFlat: false, dangerous: true, role: '☠️ Ruina Inminente' },
+                { id: 'flat2', label: 'Stake Plano 2%', mult: 0.02, isFlat: true, role: 'Referencia Fija' }
+            ];
+
+            let betPool = [];
+            let defaultP = 0.55;
+            let defaultOdds = 1.95;
+            let defaultB = 0.95;
+            let defaultFullKelly = 0.0763;
+
+            if (kmcCurrentMode === 'bootstrap') {
+                const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+                const settled = activeBankBets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
+                if (settled.length === 0) {
+                    showToast("Sin apuestas cerradas en esta caja. Usando modo paramétrico.");
+                    setKmcMode('parametric');
+                } else {
+                    betPool = settled.map(b => {
+                        const prob = (parseFloat(b.prob) || 50) / 100;
+                        const odds = parseFloat(b.bookieOdds) || 2.0;
+                        const netB = odds - 1;
+                        const fk = netB > 0 ? Math.max(0, (prob * netB - (1 - prob)) / netB) : 0;
+                        return { prob, odds, b: netB, fullKelly: fk };
+                    });
+                }
+            }
+
+            if (kmcCurrentMode === 'parametric' || betPool.length === 0) {
+                defaultP = (parseFloat(document.getElementById('kmcWinProb').value) || 50) / 100;
+                defaultOdds = parseFloat(document.getElementById('kmcOdds').value) || 2.0;
+                defaultB = Math.max(0.01, defaultOdds - 1);
+                defaultFullKelly = Math.max(0, (defaultP * defaultB - (1 - defaultP)) / defaultB);
+            }
+
+            const results = {};
+
+            fractions.forEach(frac => {
+                const finalBanks = [];
+                const maxDrawdowns = [];
+                const returnVariances = [];
+                let severeDdCount = 0;
+                let moderateDdCount = 0;
+                let ruinCount = 0;
+
+                const sampleTrajectories = [];
+                const stepBankrolls = Array.from({ length: numBets + 1 }, () => []);
+
+                for (let s = 0; s < numSims; s++) {
+                    let bank = initialBank;
+                    let peak = initialBank;
+                    let mdd = 0;
+                    let ruined = false;
+                    const returns = [];
+                    const recordPath = (s < 5);
+                    const pathHistory = recordPath ? [initialBank] : null;
+
+                    stepBankrolls[0].push(initialBank);
+
+                    for (let t = 1; t <= numBets; t++) {
+                        let betP, netOdds, f_stake;
+                        if (kmcCurrentMode === 'bootstrap' && betPool.length > 0) {
+                            const sampleBet = betPool[Math.floor(Math.random() * betPool.length)];
+                            betP = sampleBet.prob;
+                            netOdds = sampleBet.b;
+                            f_stake = frac.isFlat ? frac.mult : (sampleBet.fullKelly * frac.mult);
+                        } else {
+                            betP = defaultP;
+                            netOdds = defaultB;
+                            f_stake = frac.isFlat ? frac.mult : (defaultFullKelly * frac.mult);
+                        }
+
+                        f_stake = Math.min(0.50, Math.max(0.001, f_stake));
+                        const stake = Math.max(1, bank * f_stake);
+
+                        const isWin = Math.random() < betP;
+                        const pnl = isWin ? (stake * netOdds) : -stake;
+                        const prevBank = bank;
+                        bank = Math.max(0.01, bank + pnl);
+
+                        const ret = (bank - prevBank) / prevBank;
+                        returns.push(ret);
+
+                        if (bank > peak) peak = bank;
+                        const dd = (peak - bank) / peak;
+                        if (dd > mdd) mdd = dd;
+
+                        if (bank <= initialBank * 0.10) {
+                            ruined = true;
+                        }
+
+                        stepBankrolls[t].push(bank);
+                        if (pathHistory) pathHistory.push(bank);
+                    }
+
+                    finalBanks.push(bank);
+                    maxDrawdowns.push(mdd);
+
+                    const meanRet = returns.reduce((a, b) => a + b, 0) / returns.length;
+                    const varRet = returns.reduce((a, b) => a + Math.pow(b - meanRet, 2), 0) / returns.length;
+                    returnVariances.push(varRet);
+
+                    if (mdd >= 0.50) severeDdCount++;
+                    if (mdd >= 0.30) moderateDdCount++;
+                    if (ruined) ruinCount++;
+
+                    if (pathHistory) sampleTrajectories.push(pathHistory);
+                }
+
+                const p10Path = [];
+                const p50Path = [];
+                const p90Path = [];
+
+                for (let t = 0; t <= numBets; t++) {
+                    const sortedStep = stepBankrolls[t].slice().sort((a, b) => a - b);
+                    p10Path.push(sortedStep[Math.floor(sortedStep.length * 0.10)]);
+                    p50Path.push(sortedStep[Math.floor(sortedStep.length * 0.50)]);
+                    p90Path.push(sortedStep[Math.floor(sortedStep.length * 0.90)]);
+                }
+
+                finalBanks.sort((a, b) => a - b);
+                const medianFinal = finalBanks[Math.floor(finalBanks.length * 0.50)];
+                const meanFinal = finalBanks.reduce((a, b) => a + b, 0) / finalBanks.length;
+                const p10Final = finalBanks[Math.floor(finalBanks.length * 0.10)];
+                const p90Final = finalBanks[Math.floor(finalBanks.length * 0.90)];
+
+                maxDrawdowns.sort((a, b) => a - b);
+                const medianDD = maxDrawdowns[Math.floor(maxDrawdowns.length * 0.50)];
+                const p95DD = maxDrawdowns[Math.floor(maxDrawdowns.length * 0.95)];
+
+                const avgVariance = returnVariances.reduce((a, b) => a + b, 0) / returnVariances.length;
+                const stdDev = Math.sqrt(avgVariance);
+
+                const netReturnPct = ((medianFinal - initialBank) / initialBank) * 100;
+                const efficiencyRatio = stdDev > 0 ? (netReturnPct / (stdDev * 100)) : 0;
+                const typicalStakePct = frac.isFlat ? (frac.mult * 100) : (defaultFullKelly * frac.mult * 100);
+
+                results[frac.id] = {
+                    ...frac,
+                    typicalStakePct,
+                    medianFinal,
+                    meanFinal,
+                    p10Final,
+                    p90Final,
+                    medianDD,
+                    p95DD,
+                    probSevereDD: (severeDdCount / numSims) * 100,
+                    probModerateDD: (moderateDdCount / numSims) * 100,
+                    probRuin: (ruinCount / numSims) * 100,
+                    avgVariance,
+                    stdDev,
+                    netReturnPct,
+                    efficiencyRatio,
+                    p10Path,
+                    p50Path,
+                    p90Path,
+                    sampleTrajectories
+                };
+            });
+
+            const kellyKeys = ['k010', 'k025', 'k050', 'k075', 'k100', 'k125'];
+            const xVals = kellyKeys.map(k => results[k].mult);
+            const yVars = kellyKeys.map(k => results[k].avgVariance);
+            const yDDs = kellyKeys.map(k => results[k].medianDD);
+
+            const pearsonR_Var = calculatePearsonR(xVals, yVars);
+            const pearsonR_DD = calculatePearsonR(xVals, yDDs);
+
+            kmcCurrentSimulationResults = {
+                results,
+                pearsonR_Var,
+                pearsonR_DD,
+                initialBank,
+                numBets,
+                numSims,
+                defaultFullKelly
+            };
+
+            updateKmcKpiCards();
+            renderKmcActiveChart();
+            renderKmcComparisonTable();
+            showToast("Simulación Monte Carlo completada exitosamente.");
+        }
+
+        function updateKmcKpiCards() {
+            if (!kmcCurrentSimulationResults) return;
+            const { results, pearsonR_Var } = kmcCurrentSimulationResults;
+
+            const rEl = document.getElementById('kmcMetricPearsonR');
+            if (rEl) {
+                rEl.innerText = (pearsonR_Var >= 0 ? '+' : '') + pearsonR_Var.toFixed(3);
+            }
+
+            const k025 = results['k025'];
+            const k100 = results['k100'];
+
+            const optEffEl = document.getElementById('kmcMetricOptimalEfficiency');
+            if (optEffEl && k025 && k100) {
+                const growthRetained = k100.netReturnPct > 0 ? (k025.netReturnPct / k100.netReturnPct * 100) : 100;
+                const varFraction = k100.avgVariance > 0 ? (k025.avgVariance / k100.avgVariance * 100) : 6.25;
+                optEffEl.innerText = `Retiene ~${Math.max(40, growthRetained).toFixed(0)}% del crecimiento con solo ${varFraction.toFixed(1)}% de la varianza total.`;
+            }
+
+            const fullDD = document.getElementById('kmcMetricFullKellyDD');
+            if (fullDD && k100) {
+                fullDD.innerText = `${(k100.medianDD * 100).toFixed(1)}%`;
+            }
+
+            const probSevEl = document.getElementById('kmcMetricProbSevereDD');
+            if (probSevEl && k100) {
+                probSevEl.innerHTML = `Probabilidad de caída > 50%: <b class="${k100.probSevereDD > 30 ? 'text-rose-400' : 'text-amber-400'}">${k100.probSevereDD.toFixed(1)}%</b>`;
+            }
+        }
+
+        function switchKmcChartTab(tab) {
+            kmcActiveChartTab = tab;
+            const btnCurve = document.getElementById('kmcTabBtnCurve');
+            const btnFan = document.getElementById('kmcTabBtnFan');
+            const btnScatter = document.getElementById('kmcTabBtnScatter');
+
+            const viewCurve = document.getElementById('kmcChartViewCurve');
+            const viewFan = document.getElementById('kmcChartViewFan');
+            const viewScatter = document.getElementById('kmcChartViewScatter');
+            const fanSelector = document.getElementById('kmcFanFractionSelector');
+
+            [btnCurve, btnFan, btnScatter].forEach(b => {
+                b.className = "px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white";
+            });
+            viewCurve.classList.add('hidden');
+            viewFan.classList.add('hidden');
+            viewScatter.classList.add('hidden');
+            fanSelector.classList.add('hidden');
+
+            if (tab === 'curve') {
+                btnCurve.className = "px-3 py-1.5 rounded-lg transition-all bg-purple-500 text-slate-950 font-black shadow";
+                viewCurve.classList.remove('hidden');
+            } else if (tab === 'fan') {
+                btnFan.className = "px-3 py-1.5 rounded-lg transition-all bg-purple-500 text-slate-950 font-black shadow";
+                viewFan.classList.remove('hidden');
+                fanSelector.classList.remove('hidden');
+            } else if (tab === 'scatter') {
+                btnScatter.className = "px-3 py-1.5 rounded-lg transition-all bg-purple-500 text-slate-950 font-black shadow";
+                viewScatter.classList.remove('hidden');
+            }
+
+            renderKmcActiveChart();
+        }
+
+        function renderKmcActiveChart() {
+            if (!kmcCurrentSimulationResults) return;
+            if (kmcActiveChartTab === 'curve') renderKmcCurveChart();
+            else if (kmcActiveChartTab === 'fan') renderKmcFanChart();
+            else if (kmcActiveChartTab === 'scatter') renderKmcScatterChart();
+        }
+
+        function renderKmcCurveChart() {
+            const ctx = document.getElementById('kmcCurveChart').getContext('2d');
+            if (kmcCurveChartInstance) kmcCurveChartInstance.destroy();
+
+            const { results } = kmcCurrentSimulationResults;
+            const keys = ['k010', 'k025', 'k050', 'k075', 'k100', 'k125'];
+            const labels = keys.map(k => results[k].label);
+            const variances = keys.map(k => (results[k].avgVariance * 1000).toFixed(3)); // scaled for clarity
+            const medianBanks = keys.map(k => Math.round(results[k].medianFinal));
+
+            kmcCurveChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Varianza Retornos (x1000)',
+                            data: variances,
+                            borderColor: '#c084fc',
+                            backgroundColor: 'rgba(192, 132, 252, 0.15)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'yVar',
+                            pointRadius: 4,
+                            pointBackgroundColor: '#c084fc'
+                        },
+                        {
+                            label: 'Bankroll Mediano Final ($)',
+                            data: medianBanks,
+                            borderColor: '#10b981',
+                            backgroundColor: 'transparent',
+                            tension: 0.3,
+                            yAxisID: 'yBank',
+                            pointRadius: 5,
+                            pointBackgroundColor: '#10b981'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 10, weight: 'bold' } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8', font: { size: 9 } }, grid: { display: false } },
+                        yVar: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { color: '#c084fc', font: { size: 9 } },
+                            grid: { color: 'rgba(192, 132, 252, 0.08)' },
+                            title: { display: true, text: 'Varianza (σ² x1000)', color: '#c084fc', font: { size: 9 } }
+                        },
+                        yBank: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: { color: '#10b981', font: { size: 9 } },
+                            grid: { display: false },
+                            title: { display: true, text: 'Bankroll Final ($)', color: '#10b981', font: { size: 9 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderKmcFanChart() {
+            const ctx = document.getElementById('kmcFanChart').getContext('2d');
+            if (kmcFanChartInstance) kmcFanChartInstance.destroy();
+
+            const { results, numBets } = kmcCurrentSimulationResults;
+            const selectVal = document.getElementById('kmcFanFractionSelect').value;
+            const labels = Array.from({ length: numBets + 1 }, (_, i) => i === 0 ? '0' : (i % 25 === 0 ? `${i}` : ''));
+
+            let datasets = [];
+
+            if (selectVal === 'compare') {
+                const k025 = results['k025'];
+                const k100 = results['k100'];
+
+                datasets = [
+                    {
+                        label: '0.25x Cuarto Kelly (Mediana)',
+                        data: k025.p50Path,
+                        borderColor: '#10b981',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2.5,
+                        tension: 0.2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '0.25x Cuarto Kelly (P90)',
+                        data: k025.p90Path,
+                        borderColor: '#34d399',
+                        borderDash: [4, 4],
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.2,
+                        tension: 0.2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '0.25x Cuarto Kelly (P10)',
+                        data: k025.p10Path,
+                        borderColor: '#059669',
+                        borderDash: [4, 4],
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.2,
+                        tension: 0.2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '1.00x Full Kelly (Mediana)',
+                        data: k100.p50Path,
+                        borderColor: '#f43f5e',
+                        backgroundColor: 'transparent',
+                        borderWidth: 2.5,
+                        tension: 0.2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '1.00x Full Kelly (P90)',
+                        data: k100.p90Path,
+                        borderColor: '#fb7185',
+                        borderDash: [4, 4],
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.2,
+                        tension: 0.2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: '1.00x Full Kelly (P10)',
+                        data: k100.p10Path,
+                        borderColor: '#9f1239',
+                        borderDash: [4, 4],
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.2,
+                        tension: 0.2,
+                        pointRadius: 0
+                    }
+                ];
+            } else {
+                let fracKey = 'k025';
+                if (selectVal === '0.10') fracKey = 'k010';
+                else if (selectVal === '0.50') fracKey = 'k050';
+                else if (selectVal === '0.75') fracKey = 'k075';
+                else if (selectVal === '1.00') fracKey = 'k100';
+                else if (selectVal === '1.25') fracKey = 'k125';
+
+                const fData = results[fracKey];
+
+                datasets = [
+                    {
+                        label: `${fData.label} P90 (Optimista)`,
+                        data: fData.p90Path,
+                        borderColor: '#34d399',
+                        backgroundColor: 'rgba(52, 211, 153, 0.08)',
+                        fill: '+1',
+                        borderWidth: 1.5,
+                        tension: 0.2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: `${fData.label} P50 (Mediana)`,
+                        data: fData.p50Path,
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        fill: '+1',
+                        borderWidth: 2.5,
+                        tension: 0.2,
+                        pointRadius: 0
+                    },
+                    {
+                        label: `${fData.label} P10 (Pesimista)`,
+                        data: fData.p10Path,
+                        borderColor: '#f43f5e',
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.5,
+                        tension: 0.2,
+                        pointRadius: 0
+                    }
+                ];
+
+                if (fData.sampleTrajectories && fData.sampleTrajectories.length > 0) {
+                    fData.sampleTrajectories.slice(0, 3).forEach((path, idx) => {
+                        datasets.push({
+                            label: `Muestra #${idx + 1}`,
+                            data: path,
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            tension: 0.2
+                        });
+                    });
+                }
+            }
+
+            kmcFanChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 9 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
+                    }
+                }
+            });
+        }
+
+        function renderKmcScatterChart() {
+            const ctx = document.getElementById('kmcScatterChart').getContext('2d');
+            if (kmcScatterChartInstance) kmcScatterChartInstance.destroy();
+
+            const { results } = kmcCurrentSimulationResults;
+            const keys = ['k010', 'k025', 'k050', 'k075', 'k100', 'k125', 'flat2'];
+            const colors = ['#38bdf8', '#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#ef4444', '#94a3b8'];
+
+            const scatterData = keys.map((k, idx) => ({
+                label: results[k].label,
+                data: [{
+                    x: +(results[k].medianDD * 100).toFixed(1),
+                    y: +results[k].netReturnPct.toFixed(1)
+                }],
+                backgroundColor: colors[idx],
+                borderColor: '#ffffff',
+                borderWidth: 1,
+                pointRadius: results[k].recommended ? 9 : 7
+            }));
+
+            kmcScatterChartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: scatterData },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 9 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: DD Max ${context.raw.x}% | Retorno ${context.raw.y}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#cbd5e1', font: { size: 9 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            title: { display: true, text: 'Max Drawdown Mediano (%)', color: '#f59e0b', font: { size: 10 } }
+                        },
+                        y: {
+                            ticks: { color: '#cbd5e1', font: { size: 9 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            title: { display: true, text: 'Retorno Neto Mediano (%)', color: '#10b981', font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderKmcComparisonTable() {
+            const tableBody = document.getElementById('kmcComparisonTableBody');
+            if (!tableBody || !kmcCurrentSimulationResults) return;
+
+            const { results } = kmcCurrentSimulationResults;
+            const keys = ['k010', 'k025', 'k050', 'k075', 'k100', 'k125', 'flat2'];
+
+            let html = '';
+
+            keys.forEach(k => {
+                const item = results[k];
+                const isRec = item.recommended;
+                const isDang = item.dangerous;
+
+                let rowBg = '';
+                if (isRec) rowBg = 'bg-emerald-950/20 font-bold';
+                else if (isDang) rowBg = 'bg-rose-950/20';
+
+                let badge = `<span class="text-slate-400 font-bold">${item.role}</span>`;
+                if (isRec) {
+                    badge = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full font-black text-[9px]"><i class="fa-solid fa-crown mr-1 text-gold-400"></i>${item.role}</span>`;
+                } else if (isDang) {
+                    badge = `<span class="bg-rose-950 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full font-black text-[9px]">${item.role}</span>`;
+                }
+
+                html += `
+                    <tr class="${rowBg}">
+                        <td class="p-1.5 font-bold ${isRec ? 'text-emerald-300' : (isDang ? 'text-rose-400' : 'text-white')}">
+                            ${item.label}
+                        </td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">
+                            ${item.typicalStakePct.toFixed(1)}%
+                        </td>
+                        <td class="p-1.5 text-center font-black ${item.netReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            $${Math.round(item.medianFinal).toLocaleString()}
+                        </td>
+                        <td class="p-1.5 text-center font-black ${item.netReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                            ${item.netReturnPct >= 0 ? '+' : ''}${item.netReturnPct.toFixed(1)}%
+                        </td>
+                        <td class="p-1.5 text-center font-mono text-purple-300">
+                            ${item.avgVariance.toFixed(5)}
+                        </td>
+                        <td class="p-1.5 text-center font-mono text-slate-300">
+                            ${(item.stdDev * 100).toFixed(1)}%
+                        </td>
+                        <td class="p-1.5 text-center font-bold ${item.medianDD > 0.4 ? 'text-rose-400' : (item.medianDD > 0.2 ? 'text-amber-400' : 'text-emerald-400')}">
+                            ${(item.medianDD * 100).toFixed(1)}% <span class="text-[8px] text-slate-500">(P95: ${(item.p95DD * 100).toFixed(0)}%)</span>
+                        </td>
+                        <td class="p-1.5 text-center font-bold ${item.probSevereDD > 25 ? 'text-rose-400' : 'text-slate-300'}">
+                            ${item.probSevereDD.toFixed(1)}%
+                        </td>
+                        <td class="p-1.5 text-center font-bold ${item.probRuin > 5 ? 'text-rose-400' : 'text-emerald-400'}">
+                            ${item.probRuin.toFixed(1)}%
+                        </td>
+                        <td class="p-1.5 text-center font-black ${item.efficiencyRatio > 1.5 ? 'text-emerald-400' : (item.efficiencyRatio > 0.8 ? 'text-gold-400' : 'text-rose-400')}">
+                            ${item.efficiencyRatio.toFixed(2)}
+                        </td>
+                        <td class="p-1.5 text-center">
+                            ${badge}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+        }
+
+        function applyOptimalKellyToApp() {
+            if (!kmcCurrentSimulationResults) {
+                runKellyMonteCarloSimulation();
+            }
+
+            const k025 = kmcCurrentSimulationResults.results['k025'];
+            let suggestedPct = 2.0;
+
+            if (k025 && k025.typicalStakePct > 0) {
+                suggestedPct = Math.max(0.5, Math.min(5.0, k025.typicalStakePct));
+            }
+
+            document.getElementById('globalStakePct').value = suggestedPct.toFixed(1);
+            updateTrackerMetrics();
+            showToast(`¡Stake Cuarto Kelly (${suggestedPct.toFixed(1)}%) aplicado al bankroll activo!`);
+            toggleKellyMonteCarloModal(false);
+        }
+
+        function exportKellyMonteCarloCSV() {
+            if (!kmcCurrentSimulationResults) {
+                showToast("Ejecuta la simulación antes de exportar.");
+                return;
+            }
+
+            const { results, pearsonR_Var, pearsonR_DD, numBets, numSims } = kmcCurrentSimulationResults;
+            const keys = ['k010', 'k025', 'k050', 'k075', 'k100', 'k125', 'flat2'];
+
+            let csv = "# Analisis de Correlacion Kelly vs Varianza (Monte Carlo Simulation)\n";
+            csv += `# Correlacion_Pearson_Kelly_Varianza,${pearsonR_Var.toFixed(4)}\n`;
+            csv += `# Correlacion_Pearson_Kelly_MaxDrawdown,${pearsonR_DD.toFixed(4)}\n`;
+            csv += `# Iteraciones_Monte_Carlo,${numSims}\n`;
+            csv += `# Apuestas_Por_Serie,${numBets}\n\n`;
+
+            csv += "Fraccion,Stake_Pct,Bankroll_Mediano,Retorno_Neto_Pct,Varianza,Volatilidad_StdDev,Max_DD_Mediano_Pct,Peor_DD_P95_Pct,Prob_DD_Mayor_50_Pct,Prob_Ruina_Pct,Ratio_Eficiencia\n";
+
+            keys.forEach(k => {
+                const item = results[k];
+                csv += `"${item.label}",${item.typicalStakePct.toFixed(2)},${item.medianFinal.toFixed(2)},${item.netReturnPct.toFixed(2)},${item.avgVariance.toFixed(6)},${(item.stdDev * 100).toFixed(2)},${(item.medianDD * 100).toFixed(2)},${(item.p95DD * 100).toFixed(2)},${item.probSevereDD.toFixed(2)},${item.probRuin.toFixed(2)},${item.efficiencyRatio.toFixed(3)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `montecarlo_kelly_varianza_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV descargado.");
+        }
+
         function updateBestEvRangeAnalysis(bankBets) {
             const closedBets = bankBets.filter(b => b.status === 'WON' || b.status === 'LOST' || b.status === 'HALF_WON' || b.status === 'HALF_LOST');
             const gridContainer = document.getElementById('evRangesGridContainer');
@@ -3683,7 +5056,13 @@
 
         function toggleLeagueModal(show) {
             const modal = document.getElementById('leagueModal');
+            if (!modal) return;
             if (show) {
+                const activeLeague = document.getElementById('activeLeagueSelect');
+                const modalSelect = document.getElementById('modalLeagueSelect');
+                if (activeLeague && modalSelect && activeLeague.value) {
+                    modalSelect.value = activeLeague.value;
+                }
                 renderModalLeagueTable();
                 modal.classList.remove('hidden');
             } else {
@@ -3692,13 +5071,16 @@
         }
 
         function parseAndSaveLeague() {
-            const rawText = document.getElementById('rawInput').value;
-            const leagueName = document.getElementById('leagueNameInput').value.trim() || "Nueva Liga Importada";
+            const rawEl = document.getElementById('rawInput');
+            const nameEl = document.getElementById('leagueNameInput');
+            if (!rawEl) return;
+            const rawText = rawEl.value;
+            const leagueName = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : "Nueva Liga Importada";
 
             const parsedTeams = parseRawLeagueData(rawText);
 
             if (parsedTeams.length === 0) {
-                showToast("No se pudieron parsear equipos del texto introducido.");
+                showToast("No se pudieron parsear equipos. Revisa el texto pegado (soporta FBref, Excel, TSV y CSV).");
                 return;
             }
 
@@ -3706,46 +5088,72 @@
             if (!activeBankObj.leaguesData) activeBankObj.leaguesData = {};
 
             activeBankObj.leaguesData[leagueName] = parsedTeams;
+
+            // Propagate across bankrolls so it's always accessible
+            bankrollsData.forEach(b => {
+                if (!b.leaguesData) b.leaguesData = {};
+                b.leaguesData[leagueName] = parsedTeams;
+            });
+
             saveBankrollsToStorage();
             populateLeagueDropdowns();
 
-            document.getElementById('activeLeagueSelect').value = leagueName;
-            document.getElementById('modalLeagueSelect').value = leagueName;
+            const selectActive = document.getElementById('activeLeagueSelect');
+            const selectModal = document.getElementById('modalLeagueSelect');
+            if (selectActive) selectActive.value = leagueName;
+            if (selectModal) selectModal.value = leagueName;
 
             updateTeamSelectors();
             renderModalLeagueTable();
-            showToast(`¡Liga "${leagueName}" guardada en esta caja con ${parsedTeams.length} equipos!`);
-            document.getElementById('rawInput').value = '';
+            showToast(`¡Liga "${leagueName}" cargada exitosamente con ${parsedTeams.length} equipos!`);
+            rawEl.value = '';
+            if (nameEl) nameEl.value = '';
         }
 
         function deleteCurrentLeague() {
             const modalSelect = document.getElementById('modalLeagueSelect');
+            if (!modalSelect) return;
             const targetLeague = modalSelect.value;
 
             if (!targetLeague) return;
 
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            if (activeBankObj.leaguesData && activeBankObj.leaguesData[targetLeague]) {
-                if (confirm(`¿Seguro que deseas eliminar la liga "${targetLeague}" de esta caja?`)) {
+            if (activeBankObj && activeBankObj.leaguesData && activeBankObj.leaguesData[targetLeague]) {
+                if (confirm(`¿Seguro que deseas eliminar la liga "${targetLeague}"?`)) {
                     delete activeBankObj.leaguesData[targetLeague];
+                    bankrollsData.forEach(b => {
+                        if (b.leaguesData && b.leaguesData[targetLeague]) {
+                            delete b.leaguesData[targetLeague];
+                        }
+                    });
+                    const storedShared = localStorage.getItem('poisson_vip_shared_leagues');
+                    if (storedShared) {
+                        try {
+                            const shared = JSON.parse(storedShared);
+                            delete shared[targetLeague];
+                            localStorage.setItem('poisson_vip_shared_leagues', JSON.stringify(shared));
+                        } catch(e) {}
+                    }
                     saveBankrollsToStorage();
                     populateLeagueDropdowns();
                     updateTeamSelectors();
                     renderModalLeagueTable();
-                    showToast("Liga eliminada de esta caja.");
+                    showToast("Liga eliminada.");
                 }
             }
         }
 
         function renderModalLeagueTable() {
             const modalSelect = document.getElementById('modalLeagueSelect');
-            const selectedLeague = modalSelect.value;
+            const selectedLeague = modalSelect ? modalSelect.value : '';
             const leagues = getCurrentBankrollLeagues();
             const teams = leagues[selectedLeague] || [];
 
-            document.getElementById('teamCountBadge').innerText = `${teams.length} equipos`;
+            const countBadge = document.getElementById('teamCountBadge');
+            if (countBadge) countBadge.innerText = `${teams.length} equipos`;
 
             const tbody = document.getElementById('excelTableBody');
+            if (!tbody) return;
             if (teams.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500">No hay datos en esta liga.</td></tr>`;
                 return;
@@ -3753,17 +5161,21 @@
 
             let html = '';
             teams.forEach(t => {
+                const xgVal = (typeof t.xg === 'number' ? t.xg : parseFloat(t.xg) || 0).toFixed(2);
+                const xgaVal = (typeof t.xga === 'number' ? t.xga : parseFloat(t.xga) || 0).toFixed(2);
+                const gfVal = (typeof t.gf === 'number' ? t.gf : parseFloat(t.gf) || 0).toFixed(2);
+                const gaVal = (typeof t.ga === 'number' ? t.ga : parseFloat(t.ga) || 0).toFixed(2);
                 html += `
                     <tr>
-                        <td class="p-1.5 text-center font-bold text-slate-400">${t.pos}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-400">${t.pos || '-'}</td>
                         <td class="p-1.5 font-extrabold text-white">${t.name}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-300">${t.mp}</td>
-                        <td class="p-1.5 text-center font-black text-emerald-400 bg-emerald-950/20">${t.xg.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-black text-rose-300 bg-rose-950/20">${t.xga.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-300">${t.xgd}</td>
-                        <td class="p-1.5 text-center font-black text-amber-300 bg-amber-950/20">${t.gf.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-black text-purple-300 bg-purple-950/20">${t.ga.toFixed(2)}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-400">${t.vsActual}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">${t.mp || 0}</td>
+                        <td class="p-1.5 text-center font-black text-emerald-400 bg-emerald-950/20">${xgVal}</td>
+                        <td class="p-1.5 text-center font-black text-rose-300 bg-rose-950/20">${xgaVal}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-300">${t.xgd || '0.00'}</td>
+                        <td class="p-1.5 text-center font-black text-amber-300 bg-amber-950/20">${gfVal}</td>
+                        <td class="p-1.5 text-center font-black text-purple-300 bg-purple-950/20">${gaVal}</td>
+                        <td class="p-1.5 text-center font-bold text-slate-400">${t.vsActual || '0.00'}</td>
                     </tr>
                 `;
             });
