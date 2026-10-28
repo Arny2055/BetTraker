@@ -114,7 +114,7 @@
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
 
     <!-- TOAST NOTIFICATION CONTAINER -->
-    <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-4 right-4 z-[90] flex flex-col gap-2 pointer-events-none"></div>
 
     <div class="iphone-frame w-full flex flex-col justify-between px-3.5 py-3 space-y-3.5">
         
@@ -1345,7 +1345,7 @@
     </div>
 
     <!-- MODAL ANÁLISIS DE CORRELACIÓN DE CRITERIO DE KELLY VS VARIANZA (MONTE CARLO SIMULATION) -->
-    <div id="kellyMonteCarloModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div id="kellyMonteCarloModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[70] hidden flex items-center justify-center p-2 sm:p-4">
         <div class="glass-card w-full max-w-5xl max-h-[96vh] rounded-2xl border border-purple-500/40 flex flex-col shadow-2xl overflow-hidden">
             
             <!-- Header Modal -->
@@ -1374,6 +1374,28 @@
 
             <!-- Modal Body -->
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
+
+                <!-- BANNER CONTEXTUAL CUANDO SE ABRE DESDE REGISTRAR APUESTA -->
+                <div id="kmcFromBetBanner" class="hidden bg-gradient-to-r from-purple-950/70 via-indigo-950/60 to-emerald-950/60 border border-purple-500/50 p-3 rounded-2xl space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full bg-purple-500 text-slate-950 font-black text-[10px] uppercase">Apuesta en Registro</span>
+                            <span id="kmcFromBetTitle" class="text-xs font-black text-white truncate">Partido - Selección</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <button type="button" onclick="simulateBetModalWithValueBump()" id="kmcValueBumpBtn" class="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Probar Cuota Valor (+5% EV)
+                            </button>
+                            <button type="button" onclick="applySimulatedStakeToBetModal(0.25)" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-lg transition-all shadow flex items-center gap-1">
+                                <i class="fa-solid fa-check"></i> Usar 1/4 Kelly (<span id="kmcBannerStake025">$20</span>)
+                            </button>
+                            <button type="button" onclick="applySimulatedStakeToBetModal(0.50)" class="bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/40 text-indigo-300 text-[10px] font-black px-2.5 py-1 rounded-lg transition-all flex items-center gap-1">
+                                Usar 1/2 Kelly (<span id="kmcBannerStake050">$40</span>)
+                            </button>
+                        </div>
+                    </div>
+                    <p id="kmcFromBetSubtext" class="text-[10px] text-slate-300">Simulando impacto estocástico de esta apuesta sobre tu Bankroll disponible actual.</p>
+                </div>
                 
                 <!-- SECCIÓN DE CONFIGURACIÓN & SELECTOR DE MODO -->
                 <div class="bg-slate-900/90 p-3 rounded-2xl border border-purple-500/30 space-y-3">
@@ -1669,8 +1691,8 @@
     </div>
 
     <!-- MODAL DE FORMULARIO REGISTRAR APUESTA -->
-    <div id="logBetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
-        <div class="glass-card w-full max-w-md rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
+    <div id="logBetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[60] hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-md max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
             
             <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -1682,7 +1704,7 @@
                 </button>
             </div>
 
-            <div class="p-4 space-y-3">
+            <div class="p-4 space-y-3 overflow-y-auto flex-1">
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
                 
@@ -1761,12 +1783,59 @@
                                 <button type="button" onclick="applyKellyQuarter()" class="text-[9px] font-extrabold text-gold-400 hover:underline bg-gold-500/10 px-1.5 py-0.5 rounded border border-gold-500/20" title="Aplicar Criterio de Kelly 1/4 basado en Bankroll actual y cuota">
                                     <i class="fa-solid fa-calculator"></i> Kelly 1/4
                                 </button>
-                                <button type="button" onclick="openKellyMonteCarloFromBetModal()" class="text-[9px] font-extrabold text-purple-400 hover:underline bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20" title="Simular correlación Kelly vs Varianza con esta cuota en Monte Carlo">
+                                <button type="button" onclick="openKellyMonteCarloFromBetModal()" class="text-[9px] font-extrabold text-purple-300 hover:bg-purple-500/30 bg-purple-500/15 px-1.5 py-0.5 rounded border border-purple-500/40 transition-all active:scale-95" title="Simular correlación Kelly vs Varianza con esta cuota en Monte Carlo">
                                     <i class="fa-solid fa-dice"></i> Simular MC
                                 </button>
                             </div>
                         </div>
-                        <input type="number" step="1" id="logStake" value="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1 text-xs text-white font-bold text-center">
+                        <input type="number" step="1" id="logStake" value="20" oninput="onLogStakeInputChange()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1 text-xs text-white font-bold text-center">
+                    </div>
+                </div>
+
+                <!-- MINI-PANEL INTERACTIVO DE SIMULACIÓN MONTE CARLO EN REGISTRO DE APUESTA -->
+                <div id="betModalMcQuickPanel" class="hidden bg-gradient-to-br from-purple-950/50 via-slate-900/95 to-indigo-950/40 border border-purple-500/40 rounded-xl p-2.5 space-y-2 text-xs shadow-lg">
+                    <div class="flex items-center justify-between border-b border-purple-500/20 pb-1.5">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-dice text-purple-400"></i>
+                            <span class="text-[10px] font-black text-white uppercase tracking-wide">Simulación Monte Carlo (Apuesta Actual)</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button type="button" onclick="openFullMcModalFromQuickPanel()" class="text-[9px] font-black bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-lg transition-all flex items-center gap-1">
+                                <i class="fa-solid fa-chart-line"></i> Ver Gráficas MC
+                            </button>
+                            <button type="button" onclick="document.getElementById('betModalMcQuickPanel').classList.add('hidden')" class="text-slate-400 hover:text-white px-1 text-[10px]">✕</button>
+                        </div>
+                    </div>
+
+                    <div id="betModalMcQuickEvNotice" class="hidden text-[9px] bg-amber-950/60 border border-amber-500/40 text-amber-200 px-2 py-1 rounded-lg flex items-center justify-between gap-1">
+                        <span><i class="fa-solid fa-circle-info text-amber-400 mr-1"></i>Cuota sin EV+ (Kelly puro = $0). Simulando riesgo con tu Stake actual.</span>
+                        <button type="button" onclick="bumpBetModalBookieOddsForValue()" class="shrink-0 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded text-[8px]">+5% EV</button>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-1.5 text-center">
+                        <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-800">
+                            <span class="block text-[8px] uppercase text-slate-400 font-bold">Caja Mediana</span>
+                            <span id="quickMcMedianBank" class="text-[11px] font-black text-emerald-400">$1,000</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-800">
+                            <span class="block text-[8px] uppercase text-slate-400 font-bold">Max Drawdown</span>
+                            <span id="quickMcMedianDD" class="text-[11px] font-black text-amber-400">0.0%</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-800">
+                            <span class="block text-[8px] uppercase text-slate-400 font-bold">Varianza (&sigma;&sup2;)</span>
+                            <span id="quickMcVariance" class="text-[11px] font-black text-purple-300">0.000</span>
+                        </div>
+                        <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-800">
+                            <span class="block text-[8px] uppercase text-slate-400 font-bold">Prob. Profit</span>
+                            <span id="quickMcWinProbSeries" class="text-[11px] font-black text-indigo-300">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <span class="block text-[9px] font-bold text-slate-400 uppercase">Aplicar Stake Óptimo Simulado a esta Apuesta:</span>
+                        <div class="grid grid-cols-3 gap-1.5" id="quickMcFractionsButtons">
+                            <!-- Botones generados dinámicamente por JS -->
+                        </div>
                     </div>
                 </div>
 
@@ -3069,6 +3138,9 @@
             document.getElementById('logStatus').value = "PENDING";
             document.getElementById('logParallelOption').value = "original_only";
 
+            const quickPanel = document.getElementById('betModalMcQuickPanel');
+            if (quickPanel) quickPanel.classList.add('hidden');
+
             checkSelectionHistoricalProfit();
             calculateLogEv();
             toggleLogBetModal(true);
@@ -3093,6 +3165,9 @@
             document.getElementById('logBookmaker').value = item.bookmaker || "Bet365";
             document.getElementById('logStatus').value = item.status;
             document.getElementById('logParallelOption').value = item.inParallel ? "both" : "original_only";
+
+            const quickPanel = document.getElementById('betModalMcQuickPanel');
+            if (quickPanel) quickPanel.classList.add('hidden');
 
             checkSelectionHistoricalProfit();
             calculateLogEv();
@@ -3119,6 +3194,18 @@
                 trapWarning.classList.remove('hidden');
             } else {
                 trapWarning.classList.add('hidden');
+            }
+
+            const quickPanel = document.getElementById('betModalMcQuickPanel');
+            if (quickPanel && !quickPanel.classList.contains('hidden')) {
+                runBetModalQuickMcSimulation(false);
+            }
+        }
+
+        function onLogStakeInputChange() {
+            const quickPanel = document.getElementById('betModalMcQuickPanel');
+            if (quickPanel && !quickPanel.classList.contains('hidden')) {
+                runBetModalQuickMcSimulation(false);
             }
         }
 
@@ -3763,35 +3850,248 @@
         // MÓDULO ANÁLISIS DE CORRELACIÓN DE CRITERIO DE KELLY VS VARIANZA (MONTE CARLO)
         // =========================================================================
 
-        function toggleKellyMonteCarloModal(show) {
+        let kmcOpenedFromBetModal = false;
+
+        function getActiveAvailableBankroll() {
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            if (!activeBankObj) return 1000;
+            let initialBank = parseFloat(activeBankObj.initial) || 1000;
+            let totalProfit = 0;
+            let pendingRiskCalc = 0;
+            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
+                const s = parseFloat(bet.stake) || 0;
+                const o = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'PENDING') pendingRiskCalc += s;
+                else if (bet.status === 'WON') totalProfit += s * (o - 1);
+                else if (bet.status === 'LOST') totalProfit -= s;
+                else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
+                else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
+            });
+            return Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc);
+        }
+
+        function toggleKellyMonteCarloModal(show, fromBetModal = false) {
             const modal = document.getElementById('kellyMonteCarloModal');
+            const banner = document.getElementById('kmcFromBetBanner');
             if (show) {
-                updateKmcTheoreticalKelly();
-                if (!kmcCurrentSimulationResults) {
-                    runKellyMonteCarloSimulation();
-                } else {
-                    renderKmcActiveChart();
+                kmcOpenedFromBetModal = !!fromBetModal;
+                if (banner) {
+                    if (kmcOpenedFromBetModal) banner.classList.remove('hidden');
+                    else banner.classList.add('hidden');
                 }
+                // Quitar hidden PRIMERO para que Chart.js mida correctamente el canvas
                 modal.classList.remove('hidden');
+                updateKmcTheoreticalKelly();
+                requestAnimationFrame(() => {
+                    if (!kmcCurrentSimulationResults || kmcOpenedFromBetModal) {
+                        runKellyMonteCarloSimulation();
+                    } else {
+                        renderKmcActiveChart();
+                    }
+                });
             } else {
                 modal.classList.add('hidden');
+                kmcOpenedFromBetModal = false;
             }
         }
 
         function openKellyMonteCarloModal() {
-            toggleKellyMonteCarloModal(true);
+            const availBank = Math.round(getActiveAvailableBankroll());
+            const bankInput = document.getElementById('kmcInitialBankroll');
+            if (bankInput && availBank > 0) bankInput.value = availBank;
+            toggleKellyMonteCarloModal(true, false);
         }
 
-        function openKellyMonteCarloFromBetModal() {
-            const prob = parseFloat(document.getElementById('logProb').value) || 50;
-            const odds = parseFloat(document.getElementById('logBookieOdds').value) || 2.0;
-            
+        function runBetModalQuickMcSimulation(showToastMsg = false) {
+            const panel = document.getElementById('betModalMcQuickPanel');
+            if (!panel) return;
+            panel.classList.remove('hidden');
+
+            const availBank = getActiveAvailableBankroll();
+            const probPct = Math.min(99, Math.max(1, parseFloat(document.getElementById('logProb').value) || 50));
+            const prob = probPct / 100;
+            const odds = Math.max(1.01, parseFloat(document.getElementById('logBookieOdds').value) || 2.0);
+            const currentStake = Math.max(1, parseFloat(document.getElementById('logStake').value) || 20);
+            const b = odds - 1;
+            const ev = (prob * odds) - 1;
+            const pureFullKelly = b > 0 ? Math.max(0, (prob * b - (1 - prob)) / b) : 0;
+
+            const evNotice = document.getElementById('betModalMcQuickEvNotice');
+            if (evNotice) {
+                if (pureFullKelly <= 0.0001) evNotice.classList.remove('hidden');
+                else evNotice.classList.add('hidden');
+            }
+
+            // Simulación Monte Carlo rápida de 400 trayectorias x 100 apuestas con el Stake actual vs Fracciones Kelly
+            const sims = 400;
+            const serieBets = 100;
+            const stakeFractionCurrent = Math.min(0.50, Math.max(0.002, currentStake / availBank));
+            const finalBanks = [];
+            const maxDDs = [];
+            const variances = [];
+            let profitCount = 0;
+
+            for (let s = 0; s < sims; s++) {
+                let bank = availBank;
+                let peak = availBank;
+                let mdd = 0;
+                const rets = [];
+                for (let t = 0; t < serieBets; t++) {
+                    const st = Math.max(1, bank * stakeFractionCurrent);
+                    const win = Math.random() < prob;
+                    const pnl = win ? st * b : -st;
+                    const prev = bank;
+                    bank = Math.max(0.01, bank + pnl);
+                    rets.push((bank - prev) / prev);
+                    if (bank > peak) peak = bank;
+                    const dd = (peak - bank) / peak;
+                    if (dd > mdd) mdd = dd;
+                }
+                finalBanks.push(bank);
+                maxDDs.push(mdd);
+                if (bank > availBank) profitCount++;
+                const mRet = rets.reduce((a, c) => a + c, 0) / rets.length;
+                variances.push(rets.reduce((a, c) => a + Math.pow(c - mRet, 2), 0) / rets.length);
+            }
+
+            finalBanks.sort((a, c) => a - c);
+            maxDDs.sort((a, c) => a - c);
+            const medianBank = finalBanks[Math.floor(sims * 0.5)];
+            const medianDD = maxDDs[Math.floor(sims * 0.5)] * 100;
+            const avgVar = (variances.reduce((a, c) => a + c, 0) / sims) * 1000;
+            const winSeriesPct = (profitCount / sims) * 100;
+
+            const medEl = document.getElementById('quickMcMedianBank');
+            if (medEl) {
+                medEl.innerText = `$${Math.round(medianBank).toLocaleString()}`;
+                medEl.className = medianBank >= availBank ? "text-[11px] font-black text-emerald-400" : "text-[11px] font-black text-rose-400";
+            }
+            const ddEl = document.getElementById('quickMcMedianDD');
+            if (ddEl) {
+                ddEl.innerText = `-${medianDD.toFixed(1)}%`;
+                ddEl.className = medianDD > 35 ? "text-[11px] font-black text-rose-400" : (medianDD > 18 ? "text-[11px] font-black text-amber-400" : "text-[11px] font-black text-emerald-400");
+            }
+            const varEl = document.getElementById('quickMcVariance');
+            if (varEl) varEl.innerText = avgVar.toFixed(2);
+            const wpEl = document.getElementById('quickMcWinProbSeries');
+            if (wpEl) {
+                wpEl.innerText = `${winSeriesPct.toFixed(0)}%`;
+                wpEl.className = winSeriesPct >= 50 ? "text-[11px] font-black text-emerald-400" : "text-[11px] font-black text-rose-400";
+            }
+
+            const baseKellyForButtons = pureFullKelly > 0 ? pureFullKelly : Math.max(0.04, (parseFloat(document.getElementById('globalStakePct').value) || 2.0) / 100 * 4);
+            const stake010 = Math.max(1, Math.round(availBank * baseKellyForButtons * 0.10));
+            const stake025 = Math.max(1, Math.round(availBank * baseKellyForButtons * 0.25));
+            const stake050 = Math.max(1, Math.round(availBank * baseKellyForButtons * 0.50));
+
+            const btnsContainer = document.getElementById('quickMcFractionsButtons');
+            if (btnsContainer) {
+                btnsContainer.innerHTML = `
+                    <button type="button" onclick="setBetModalStakeFromMc(${stake010}, '0.10x Conservador')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-center transition-all active:scale-95">
+                        <span class="block text-[8px] text-slate-400 font-bold">0.10x Kelly</span>
+                        <span class="text-[11px] font-black text-sky-400">$${stake010}</span>
+                    </button>
+                    <button type="button" onclick="setBetModalStakeFromMc(${stake025}, '0.25x Cuarto Kelly')" class="bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/50 rounded-lg p-1.5 text-center transition-all active:scale-95">
+                        <span class="block text-[8px] text-emerald-300 font-black">⭐ 0.25x Óptimo</span>
+                        <span class="text-[11px] font-black text-emerald-400">$${stake025}</span>
+                    </button>
+                    <button type="button" onclick="setBetModalStakeFromMc(${stake050}, '0.50x Medio Kelly')" class="bg-slate-900 hover:bg-slate-800 border border-indigo-500/40 rounded-lg p-1.5 text-center transition-all active:scale-95">
+                        <span class="block text-[8px] text-indigo-300 font-bold">0.50x Medio</span>
+                        <span class="text-[11px] font-black text-indigo-400">$${stake050}</span>
+                    </button>
+                `;
+            }
+
+            if (showToastMsg) {
+                showToast(`MC Simulado: Caja Mediana $${Math.round(medianBank)} | DD -${medianDD.toFixed(1)}%`);
+            }
+        }
+
+        function setBetModalStakeFromMc(amount, label) {
+            const stakeInput = document.getElementById('logStake');
+            if (stakeInput) {
+                stakeInput.value = Math.max(1, Math.round(amount));
+                runBetModalQuickMcSimulation(false);
+                showToast(`Stake actualizado a $${Math.round(amount)} (${label})`);
+            }
+        }
+
+        function bumpBetModalBookieOddsForValue() {
+            const prob = (parseFloat(document.getElementById('logProb').value) || 50) / 100;
+            const fairOdds = 1 / Math.max(0.01, prob);
+            const valueOdds = Math.max(1.05, +(fairOdds * 1.06).toFixed(2));
+            document.getElementById('logBookieOdds').value = valueOdds.toFixed(2);
+            calculateLogEv();
+            runBetModalQuickMcSimulation(true);
+        }
+
+        function openFullMcModalFromQuickPanel() {
+            openKellyMonteCarloFromBetModal(true);
+        }
+
+        function openKellyMonteCarloFromBetModal(openFullModal = true) {
+            const prob = Math.min(99, Math.max(1, parseFloat(document.getElementById('logProb').value) || 50));
+            const odds = Math.max(1.01, parseFloat(document.getElementById('logBookieOdds').value) || 2.0);
+            const availBank = Math.round(getActiveAvailableBankroll());
+
+            // 1. Actualizar y mostrar siempre el panel rápido integrado en Registrar Apuesta
+            runBetModalQuickMcSimulation(false);
+
+            // 2. Sincronizar inputs del Simulador Monte Carlo Completo con los datos reales de la apuesta y bankroll
+            const bankInput = document.getElementById('kmcInitialBankroll');
+            if (bankInput) bankInput.value = availBank;
             document.getElementById('kmcWinProb').value = prob.toFixed(1);
             document.getElementById('kmcOdds').value = odds.toFixed(2);
+
+            const matchName = document.getElementById('logMatch').value || 'Partido';
+            const marketName = document.getElementById('logMarket').value || 'Mercado';
+            const selName = document.getElementById('logSelection').value || 'Selección';
+            const titleEl = document.getElementById('kmcFromBetTitle');
+            if (titleEl) titleEl.innerText = `${matchName} • ${marketName}: ${selName} (${prob.toFixed(1)}% @${odds.toFixed(2)})`;
+
             setKmcMode('parametric');
+            if (openFullModal) {
+                toggleKellyMonteCarloModal(true, true);
+            }
+        }
+
+        function simulateBetModalWithValueBump() {
+            const prob = (parseFloat(document.getElementById('kmcWinProb').value) || 50) / 100;
+            const fairOdds = 1 / Math.max(0.01, prob);
+            const bumpedOdds = Math.max(1.05, +(fairOdds * 1.06).toFixed(2));
+            document.getElementById('kmcOdds').value = bumpedOdds.toFixed(2);
+
+            const logOddsEl = document.getElementById('logBookieOdds');
+            if (logOddsEl && !document.getElementById('logBetModal').classList.contains('hidden')) {
+                logOddsEl.value = bumpedOdds.toFixed(2);
+                calculateLogEv();
+            }
             updateKmcTheoreticalKelly();
             runKellyMonteCarloSimulation();
-            toggleKellyMonteCarloModal(true);
+            showToast(`Simulando cuota con valor (+6% EV): @${bumpedOdds.toFixed(2)}`);
+        }
+
+        function applySimulatedStakeToBetModal(mult) {
+            const availBank = getActiveAvailableBankroll();
+            const p = (parseFloat(document.getElementById('kmcWinProb').value) || 50) / 100;
+            const odds = parseFloat(document.getElementById('kmcOdds').value) || 2.0;
+            const b = Math.max(0.01, odds - 1);
+            const pureKelly = Math.max(0, (p * b - (1 - p)) / b);
+            const fallbackBase = Math.max(0.04, ((parseFloat(document.getElementById('globalStakePct').value) || 2.0) / 100) * 4);
+            const effectiveBase = pureKelly > 0 ? pureKelly : fallbackBase;
+
+            const stakeDollars = Math.max(1, Math.round(availBank * effectiveBase * mult));
+            const stakePct = ((stakeDollars / availBank) * 100).toFixed(1);
+
+            const logStakeEl = document.getElementById('logStake');
+            if (logStakeEl) {
+                logStakeEl.value = stakeDollars;
+            }
+            document.getElementById('globalStakePct').value = Math.max(0.5, Math.min(10, parseFloat(stakePct))).toFixed(1);
+            updateTrackerMetrics();
+            runBetModalQuickMcSimulation(false);
+            toggleKellyMonteCarloModal(false);
+            showToast(`Stake ${mult}x Kelly ($${stakeDollars}) aplicado a tu apuesta en registro.`);
         }
 
         function setKmcMode(mode) {
@@ -3854,6 +4154,7 @@
             const p = (parseFloat(document.getElementById('kmcWinProb').value) || 0) / 100;
             const odds = parseFloat(document.getElementById('kmcOdds').value) || 1.0;
             const b = odds - 1;
+            const availBank = parseFloat(document.getElementById('kmcInitialBankroll').value) || getActiveAvailableBankroll();
 
             const ev = (p * odds) - 1;
             const evEl = document.getElementById('kmcTheoreticalEv');
@@ -3862,10 +4163,32 @@
 
             const fullKelly = b > 0 ? (p * b - (1 - p)) / b : 0;
             const fullKellyPct = Math.max(0, fullKelly * 100);
-            const quarterKellyPct = fullKellyPct * 0.25;
+            const fallbackBasePct = Math.max(4.0, (parseFloat(document.getElementById('globalStakePct').value) || 2.0) * 4);
+            const effectiveBasePct = fullKellyPct > 0 ? fullKellyPct : fallbackBasePct;
+            const quarterKellyPct = effectiveBasePct * 0.25;
 
-            document.getElementById('kmcTheoreticalFullKelly').innerText = fullKellyPct > 0 ? `${fullKellyPct.toFixed(2)}% de Caja` : "0.0% (Sin EV+)";
-            document.getElementById('kmcTheoreticalQuarterKelly').innerText = quarterKellyPct > 0 ? `${quarterKellyPct.toFixed(2)}% de Caja` : "0.0% (Sin EV+)";
+            document.getElementById('kmcTheoreticalFullKelly').innerText = fullKellyPct > 0 
+                ? `${fullKellyPct.toFixed(2)}% de Caja ($${Math.round(availBank * fullKellyPct / 100)})` 
+                : `0.0% Puro (Escala Base ${fallbackBasePct.toFixed(1)}%)`;
+            document.getElementById('kmcTheoreticalQuarterKelly').innerText = fullKellyPct > 0 
+                ? `${quarterKellyPct.toFixed(2)}% de Caja ($${Math.max(1, Math.round(availBank * quarterKellyPct / 100))})` 
+                : `${quarterKellyPct.toFixed(2)}% Base ($${Math.max(1, Math.round(availBank * quarterKellyPct / 100))})`;
+
+            const stake025Dollars = Math.max(1, Math.round(availBank * (effectiveBasePct / 100) * 0.25));
+            const stake050Dollars = Math.max(1, Math.round(availBank * (effectiveBasePct / 100) * 0.50));
+            const b025 = document.getElementById('kmcBannerStake025');
+            const b050 = document.getElementById('kmcBannerStake050');
+            if (b025) b025.innerText = `$${stake025Dollars}`;
+            if (b050) b050.innerText = `$${stake050Dollars}`;
+
+            const subtextEl = document.getElementById('kmcFromBetSubtext');
+            if (subtextEl) {
+                if (fullKellyPct > 0) {
+                    subtextEl.innerHTML = `<span class="text-emerald-300 font-bold">✅ Ventaja Matemática Detectada (EV ${(ev * 100).toFixed(1)}%):</span> Cuarto Kelly sugiere arriesgar <b>$${stake025Dollars}</b> (${quarterKellyPct.toFixed(2)}% de tu caja disponible de $${Math.round(availBank)}).`;
+                } else {
+                    subtextEl.innerHTML = `<span class="text-amber-300 font-bold">⚠️ Cuota sin EV+ actual (${(ev * 100).toFixed(1)}%):</span> Kelly puro sugiere $0. Simulando escalas proporcionales sobre tu Stake base para evaluar exposición y Drawdown.`;
+                }
+            }
         }
 
         function calculatePearsonR(x, y) {
@@ -3935,6 +4258,9 @@
                 defaultFullKelly = Math.max(0, (defaultP * defaultB - (1 - defaultP)) / defaultB);
             }
 
+            const fallbackBaseKelly = Math.max(0.04, ((parseFloat(document.getElementById('globalStakePct').value) || 2.0) / 100) * 4);
+            const effectiveFullKelly = defaultFullKelly > 0 ? defaultFullKelly : fallbackBaseKelly;
+
             const results = {};
 
             fractions.forEach(frac => {
@@ -3965,11 +4291,12 @@
                             const sampleBet = betPool[Math.floor(Math.random() * betPool.length)];
                             betP = sampleBet.prob;
                             netOdds = sampleBet.b;
-                            f_stake = frac.isFlat ? frac.mult : (sampleBet.fullKelly * frac.mult);
+                            const sampleBaseKelly = sampleBet.fullKelly > 0 ? sampleBet.fullKelly : fallbackBaseKelly;
+                            f_stake = frac.isFlat ? frac.mult : (sampleBaseKelly * frac.mult);
                         } else {
                             betP = defaultP;
                             netOdds = defaultB;
-                            f_stake = frac.isFlat ? frac.mult : (defaultFullKelly * frac.mult);
+                            f_stake = frac.isFlat ? frac.mult : (effectiveFullKelly * frac.mult);
                         }
 
                         f_stake = Math.min(0.50, Math.max(0.001, f_stake));
@@ -4035,7 +4362,7 @@
 
                 const netReturnPct = ((medianFinal - initialBank) / initialBank) * 100;
                 const efficiencyRatio = stdDev > 0 ? (netReturnPct / (stdDev * 100)) : 0;
-                const typicalStakePct = frac.isFlat ? (frac.mult * 100) : (defaultFullKelly * frac.mult * 100);
+                const typicalStakePct = frac.isFlat ? (frac.mult * 100) : (effectiveFullKelly * frac.mult * 100);
 
                 results[frac.id] = {
                     ...frac,
@@ -4503,7 +4830,20 @@
 
             document.getElementById('globalStakePct').value = suggestedPct.toFixed(1);
             updateTrackerMetrics();
-            showToast(`¡Stake Cuarto Kelly (${suggestedPct.toFixed(1)}%) aplicado al bankroll activo!`);
+
+            const logModal = document.getElementById('logBetModal');
+            if (logModal && !logModal.classList.contains('hidden')) {
+                const availBank = getActiveAvailableBankroll();
+                const recommendedDollars = Math.max(1, Math.round(availBank * (suggestedPct / 100)));
+                const stakeInput = document.getElementById('logStake');
+                if (stakeInput) {
+                    stakeInput.value = recommendedDollars;
+                }
+                runBetModalQuickMcSimulation(false);
+                showToast(`¡Stake Cuarto Kelly ($${recommendedDollars} / ${suggestedPct.toFixed(1)}%) aplicado a tu apuesta!`);
+            } else {
+                showToast(`¡Stake Cuarto Kelly (${suggestedPct.toFixed(1)}%) aplicado al bankroll activo!`);
+            }
             toggleKellyMonteCarloModal(false);
         }
 
