@@ -5289,79 +5289,110 @@
         }
 
         function calculateCalibrationMetrics() {
-            const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            const settledBets = activeBankBets.filter(b => b.status === 'WON' || b.status === 'LOST');
-            
-            const countEl = document.getElementById('valEvaluatedCount');
-            const brierEl = document.getElementById('valBrierScore');
-            const logLossEl = document.getElementById('valLogLoss');
-            const tableBody = document.getElementById('calibrationTableBody');
+    const selectedMarketFilter = document.getElementById('marketFilterSelect').value;
+    const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+    
+    // Filtro estricto: Solo resueltas, sin parlays, y respetando el mercado seleccionado
+    const settledBets = activeBankBets.filter(b => 
+        (b.status === 'WON' || b.status === 'LOST') && 
+        !b.isParlay &&
+        (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter)
+    );
+    
+    const countEl = document.getElementById('valEvaluatedCount');
+    const brierEl = document.getElementById('valBrierScore');
+    const logLossEl = document.getElementById('valLogLoss');
+    const tableBody = document.getElementById('calibrationTableBody');
+    
+    // Ajuste dinámico de los encabezados de la tabla para incluir el Brier de la casa
+    const thead = tableBody.previousElementSibling;
+    if (thead) {
+        thead.innerHTML = `
+            <tr>
+                <th class="p-1.5">Partido / Selección</th>
+                <th class="p-1.5 text-center">Prob. (Mod vs Casa)</th>
+                <th class="p-1.5 text-center">Resultado</th>
+                <th class="p-1.5 text-center">Brier Modelo</th>
+                <th class="p-1.5 text-center">Brier Casa</th>
+            </tr>
+        `;
+    }
 
-            countEl.innerText = settledBets.length;
+    countEl.innerText = settledBets.length;
 
-            if (settledBets.length === 0) {
-                brierEl.innerText = "0.0000";
-                logLossEl.innerText = "0.0000";
-                tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas liquidadas en este Bankroll para calibración.</td></tr>`;
-                renderReliabilityDiagram([], [], []);
-                return;
-            }
+    if (settledBets.length === 0) {
+        brierEl.innerHTML = "0.0000";
+        logLossEl.innerText = "0.0000";
+        tableBody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay apuestas simples liquidadas con el filtro actual.</td></tr>`;
+        renderReliabilityDiagram([], [], []);
+        return;
+    }
 
-            let totalBrier = 0;
-            let totalLogLoss = 0;
-            let tableHtml = '';
+    let totalModelBrier = 0;
+    let totalBookieBrier = 0;
+    let totalLogLoss = 0;
+    let tableHtml = '';
 
-            const bins = [
-                { min: 0.0, max: 0.2, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.2, max: 0.4, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.4, max: 0.6, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.6, max: 0.8, predSum: 0, actualSum: 0, count: 0 },
-                { min: 0.8, max: 1.0, predSum: 0, actualSum: 0, count: 0 }
-            ];
+    const bins = [
+        { min: 0.0, max: 0.2, predSum: 0, actualSum: 0, count: 0 },
+        { min: 0.2, max: 0.4, predSum: 0, actualSum: 0, count: 0 },
+        { min: 0.4, max: 0.6, predSum: 0, actualSum: 0, count: 0 },
+        { min: 0.6, max: 0.8, predSum: 0, actualSum: 0, count: 0 },
+        { min: 0.8, max: 1.0, predSum: 0, actualSum: 0, count: 0 }
+    ];
 
-            settledBets.forEach(bet => {
-                const p = parseFloat(bet.prob) / 100;
-                const o = bet.status === 'WON' ? 1 : 0;
+    settledBets.forEach(bet => {
+        const p = parseFloat(bet.prob) / 100;
+        const bookieOdds = parseFloat(bet.bookieOdds) || 1;
+        const bookieP = 1 / bookieOdds; // Probabilidad implícita bruta (Benchmark)
+        const o = bet.status === 'WON' ? 1 : 0;
 
-                const brierInd = Math.pow(p - o, 2);
-                totalBrier += brierInd;
+        const modelBrierInd = Math.pow(p - o, 2);
+        const bookieBrierInd = Math.pow(bookieP - o, 2);
+        
+        totalModelBrier += modelBrierInd;
+        totalBookieBrier += bookieBrierInd;
 
-                const eps = 1e-15;
-                const pSafe = Math.max(eps, Math.min(1 - eps, p));
-                const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
-                totalLogLoss += logLossInd;
+        const eps = 1e-15;
+        const pSafe = Math.max(eps, Math.min(1 - eps, p));
+        const logLossInd = - (o * Math.log(pSafe) + (1 - o) * Math.log(1 - pSafe));
+        totalLogLoss += logLossInd;
 
-                const bin = bins.find(b => p >= b.min && (p < b.max || (p === 1.0 && b.max === 1.0)));
-                if (bin) {
-                    bin.predSum += p;
-                    bin.actualSum += o;
-                    bin.count++;
-                }
-
-                tableHtml += `
-                    <tr>
-                        <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.market}</span>${bet.match}</td>
-                        <td class="p-1.5 text-center font-bold text-indigo-400">${bet.prob}%</td>
-                        <td class="p-1.5 text-center font-black ${o === 1 ? 'text-emerald-400' : 'text-rose-400'}">${o === 1 ? 'Ganada (1)' : 'Perdida (0)'}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-200">${brierInd.toFixed(4)}</td>
-                        <td class="p-1.5 text-center font-bold text-slate-200">${logLossInd.toFixed(4)}</td>
-                    </tr>
-                `;
-            });
-
-            const avgBrier = totalBrier / settledBets.length;
-            const avgLogLoss = totalLogLoss / settledBets.length;
-
-            brierEl.innerText = avgBrier.toFixed(4);
-            logLossEl.innerText = avgLogLoss.toFixed(4);
-            tableBody.innerHTML = tableHtml;
-
-            const binLabels = bins.map(b => `${(b.min * 100).toFixed(0)}% - ${(b.max * 100).toFixed(0)}%`);
-            const binPredicted = bins.map(b => b.count > 0 ? ((b.predSum / b.count) * 100).toFixed(1) : 0);
-            const binActual = bins.map(b => b.count > 0 ? ((b.actualSum / b.count) * 100).toFixed(1) : 0);
-
-            renderReliabilityDiagram(binLabels, binPredicted, binActual);
+        const bin = bins.find(b => p >= b.min && (p < b.max || (p === 1.0 && b.max === 1.0)));
+        if (bin) {
+            bin.predSum += p;
+            bin.actualSum += o;
+            bin.count++;
         }
+
+        tableHtml += `
+            <tr>
+                <td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.market}</span>${bet.match}</td>
+                <td class="p-1.5 text-center font-bold text-indigo-400">${bet.prob}% <span class="text-[9px] text-slate-500 block">vs ${(bookieP * 100).toFixed(1)}%</span></td>
+                <td class="p-1.5 text-center font-black ${o === 1 ? 'text-emerald-400' : 'text-rose-400'}">${o === 1 ? '1' : '0'}</td>
+                <td class="p-1.5 text-center font-bold ${modelBrierInd < bookieBrierInd ? 'text-emerald-400' : 'text-rose-400'}">${modelBrierInd.toFixed(4)}</td>
+                <td class="p-1.5 text-center font-bold text-slate-400">${bookieBrierInd.toFixed(4)}</td>
+            </tr>
+        `;
+    });
+
+    const avgModelBrier = totalModelBrier / settledBets.length;
+    const avgBookieBrier = totalBookieBrier / settledBets.length;
+    const avgLogLoss = totalLogLoss / settledBets.length;
+    
+    // Cálculo Brier Skill Score (BSS). > 0 significa que superas a la casa de apuestas.
+    const bss = 1 - (avgModelBrier / avgBookieBrier);
+
+    brierEl.innerHTML = `${avgModelBrier.toFixed(4)} <span class="text-[10px] ${bss > 0 ? 'text-emerald-400' : 'text-rose-400'} block mt-0.5">BSS: ${(bss * 100).toFixed(1)}% vs Bookie</span>`;
+    logLossEl.innerText = avgLogLoss.toFixed(4);
+    tableBody.innerHTML = tableHtml;
+
+    const binLabels = bins.map(b => `${(b.min * 100).toFixed(0)}% - ${(b.max * 100).toFixed(0)}%`);
+    const binPredicted = bins.map(b => b.count > 0 ? ((b.predSum / b.count) * 100).toFixed(1) : 0);
+    const binActual = bins.map(b => b.count > 0 ? ((b.actualSum / b.count) * 100).toFixed(1) : 0);
+
+    renderReliabilityDiagram(binLabels, binPredicted, binActual);
+}
 
         function renderReliabilityDiagram(labels, predicted, actual) {
             const ctx = document.getElementById('calibrationChart').getContext('2d');
