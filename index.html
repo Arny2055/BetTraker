@@ -5728,7 +5728,25 @@
 
             calculateSkellamAnalysis(lambdaHome, lambdaAway);
 
-            const rho = parseFloat(document.getElementById('dixonRhoRange').value) || 0;
+            // Cálculo dinámico de Dixon-Coles
+let rho = 0;
+const lambdaTotal = lambdaHome + lambdaAway;
+const lambdaDiff = Math.abs(lambdaHome - lambdaAway);
+
+if (lambdaTotal < 2.20 && lambdaDiff < 0.4) {
+    rho = -0.12; // Bloqueo táctico y equipos parejos
+} else if (lambdaTotal <= 2.60 && lambdaDiff <= 0.8) {
+    rho = -0.06; // Escenario estándar cerrado
+} else if (lambdaTotal > 3.20 || lambdaDiff > 1.2) {
+    rho = 0.00;  // Partido abierto o gran favorito
+} else {
+    rho = -0.03; // Ajuste residual suave
+}
+
+// Sincronizar la interfaz visual
+document.getElementById('dixonRhoRange').value = rho;
+document.getElementById('rhoValueDisplay').innerText = rho.toFixed(2);
+
 
             const matrix = Array(7).fill(0).map(() => Array(7).fill(0));
             let probHomeWin = 0;
