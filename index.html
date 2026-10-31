@@ -4294,7 +4294,7 @@
                 const sampleTrajectories = [];
                 const stepBankrolls = Array.from({ length: numBets + 1 }, () => []);
 
-                for (let s = 0; s < numSims; s++) {
+                                for (let s = 0; s < numSims; s++) {
                     let bank = initialBank;
                     let peak = initialBank;
                     let mdd = 0;
@@ -4306,6 +4306,13 @@
                     stepBankrolls[0].push(initialBank);
 
                     for (let t = 1; t <= numBets; t++) {
+                        // 1. CONDICIÓN DE RUINA ESTRICTA
+                        if (ruined) {
+                            stepBankrolls[t].push(0);
+                            if (pathHistory) pathHistory.push(0);
+                            continue;
+                        }
+
                         let betP, netOdds, f_stake;
                         if (kmcCurrentMode === 'bootstrap' && betPool.length > 0) {
                             const sampleBet = betPool[Math.floor(Math.random() * betPool.length)];
@@ -4319,19 +4326,34 @@
                             f_stake = frac.isFlat ? frac.mult : (effectiveFullKelly * frac.mult);
                         }
 
-                        f_stake = Math.min(0.50, Math.max(0.001, f_stake));
-                        const stake = Math.max(1, bank * f_stake);
+                        let stake;
+                        // 2. CORRECCIÓN DEL STAKE PLANO VS KELLY DINÁMICO
+                        if (frac.isFlat) {
+                            stake = initialBank * frac.mult; // Fijo sobre la caja original
+                        } else {
+                            f_stake = Math.min(0.50, Math.max(0.001, f_stake));
+                            stake = Math.max(1, bank * f_stake); // Dinámico sobre la caja actual
+                        }
+                        
+                        // 3. SEGURO DE CAJA
+                        stake = Math.min(stake, bank);
 
                         const isWin = Math.random() < betP;
                         const pnl = isWin ? (stake * netOdds) : -stake;
                         const prevBank = bank;
-                        bank = Math.max(0.01, bank + pnl);
+                        
+                        bank = bank + pnl; 
+
+                        if (bank < 1) {
+                            bank = 0;
+                            ruined = true;
+                        }
 
                         const ret = (bank - prevBank) / prevBank;
                         returns.push(ret);
 
                         if (bank > peak) peak = bank;
-                        const dd = (peak - bank) / peak;
+                        const dd = peak > 0 ? (peak - bank) / peak : 1;
                         if (dd > mdd) mdd = dd;
 
                         if (bank <= initialBank * 0.10) {
@@ -4345,16 +4367,17 @@
                     finalBanks.push(bank);
                     maxDrawdowns.push(mdd);
 
-                    const meanRet = returns.reduce((a, b) => a + b, 0) / returns.length;
-                    const varRet = returns.reduce((a, b) => a + Math.pow(b - meanRet, 2), 0) / returns.length;
+                    const meanRet = returns.length > 0 ? returns.reduce((a, b) => a + b, 0) / returns.length : 0;
+                    const varRet = returns.length > 0 ? returns.reduce((a, b) => a + Math.pow(b - meanRet, 2), 0) / returns.length : 0;
                     returnVariances.push(varRet);
 
                     if (mdd >= 0.50) severeDdCount++;
                     if (mdd >= 0.30) moderateDdCount++;
-                    if (ruined) ruinCount++;
+                    if (bank === 0 || ruined) ruinCount++;
 
                     if (pathHistory) sampleTrajectories.push(pathHistory);
                 }
+
 
                 const p10Path = [];
                 const p50Path = [];
