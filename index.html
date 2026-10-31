@@ -3496,152 +3496,172 @@
         }
 
         function updateTrackerMetrics() {
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            const initialBank = activeBankObj.initial;
-            const totalWithdrawn = activeBankObj.totalWithdrawn || 0;
-            
-            const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
-            const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
+    const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+    const initialBank = activeBankObj.initial;
+    const totalWithdrawn = activeBankObj.totalWithdrawn || 0;
+    
+    const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
+    const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
 
-            let totalProfitClosed = 0;
-            let totalStakedClosed = 0;
-            let totalRiskPending = 0;
-            let countPending = 0;
-            let countClosed = 0;
-            let wonCount = 0;
+    let totalProfitClosed = 0;
+    let totalStakedClosed = 0;
+    let totalRiskPending = 0;
+    let countPending = 0;
+    let countClosed = 0;
+    let wonCount = 0;
 
-            const currentBankrollArr = [initialBank];
-            const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
-            
-            const filteredBets = currentBankBets.filter(b => {
-                const matchMarket = (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter);
-                const matchSelection = (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter);
-                return matchMarket && matchSelection;
-            });
+    const currentBankrollArr = [initialBank];
+    const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
+    
+    const filteredBets = currentBankBets.filter(b => {
+        const matchMarket = (selectedMarketFilter === 'ALL' || b.market === selectedMarketFilter);
+        const matchSelection = (selectedSelectionFilter === 'ALL' || b.selection === selectedSelectionFilter);
+        return matchMarket && matchSelection;
+    });
 
-            const cronoBets = filteredBets.slice().reverse();
+    const cronoBets = filteredBets.slice().reverse();
 
-            let currentStreakCount = 0;
-            let streakType = 'NONE';
-            let peakBank = initialBank;
-            let maxDrawdownVal = 0;
+    // 1. Bucle original: Solo calcula métricas financieras y visuales
+    cronoBets.forEach(bet => {
+        const stake = parseFloat(bet.stake) || 0;
+        const odds = parseFloat(bet.bookieOdds) || 1;
 
-            cronoBets.forEach(bet => {
-                const stake = parseFloat(bet.stake) || 0;
-                const odds = parseFloat(bet.bookieOdds) || 1;
-
-                if (bet.status === 'PENDING') {
-                    totalRiskPending += stake;
-                    countPending++;
-                } else {
-                    countClosed++;
-                    let pnl = 0;
-                    if (bet.status === 'WON') {
-                        pnl = stake * (odds - 1);
-                        wonCount++;
-                        totalStakedClosed += stake;
-                        if (streakType === 'WIN' || streakType === 'NONE') currentStreakCount++;
-                        else { currentStreakCount = 1; }
-                        streakType = 'WIN';
-                    } else if (bet.status === 'LOST') {
-                        pnl = -stake;
-                        totalStakedClosed += stake;
-                        if (streakType === 'LOSS' || streakType === 'NONE') currentStreakCount++;
-                        else { currentStreakCount = 1; }
-                        streakType = 'LOSS';
-                    } else if (bet.status === 'HALF_WON') {
-                        pnl = (stake / 2) * (odds - 1);
-                        wonCount += 0.5;
-                        totalStakedClosed += stake;
-                    } else if (bet.status === 'HALF_LOST') {
-                        pnl = -(stake / 2);
-                        totalStakedClosed += stake;
-                    } else if (bet.status === 'VOID') {
-                        pnl = 0;
-                    }
-
-                    totalProfitClosed += pnl;
-                    const lastBank = currentBankrollArr[currentBankrollArr.length - 1];
-                    const nextBank = lastBank + pnl;
-                    currentBankrollArr.push(nextBank);
-
-                    if (nextBank > peakBank) peakBank = nextBank;
-                    const dd = peakBank - nextBank;
-                    if (dd > maxDrawdownVal) maxDrawdownVal = dd;
-                }
-            });
-
-            const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn - totalRiskPending;
-            const yieldVal = totalStakedClosed > 0 ? (totalProfitClosed / totalStakedClosed) * 100 : 0;
-            const winRateVal = countClosed > 0 ? (wonCount / countClosed) * 100 : 0;
-
-            document.getElementById('summaryBankroll').innerText = `$${currentBankroll.toFixed(2)}`;
-            const sumProfitEl = document.getElementById('summaryProfit');
-            sumProfitEl.innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
-            sumProfitEl.className = totalProfitClosed >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
-
-            let filterLabelSuffix = '';
-            if (selectedMarketFilter !== 'ALL') filterLabelSuffix += ` [${selectedMarketFilter}]`;
-            if (selectedSelectionFilter !== 'ALL') filterLabelSuffix += ` (${selectedSelectionFilter})`;
-
-            document.getElementById('dashActiveBankName').innerText = activeBankObj.name + filterLabelSuffix;
-            document.getElementById('dashNetProfit').innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
-            document.getElementById('dashNetProfit').className = totalProfitClosed >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
-            document.getElementById('dashPendingRisk').innerText = `$${totalRiskPending.toFixed(2)}`;
-            document.getElementById('dashYield').innerText = yieldVal.toFixed(1) + '%';
-            document.getElementById('dashWinRate').innerText = winRateVal.toFixed(1) + '%';
-
-            document.getElementById('badgePendingCount').innerText = countPending;
-            document.getElementById('badgeClosedCount').innerText = countClosed;
-
-            document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
-            document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
-
-            updateLeaguePerformanceTable(filteredBets);
-            updateBestEvRangeAnalysis(filteredBets);
-
-            const streakLabel = streakType === 'LOSS' ? `🔥 ${currentStreakCount} Derrotas` : (streakType === 'WIN' ? `⭐ ${currentStreakCount} Victorias` : 'Neutral');
-            document.getElementById('statCurrentStreak').innerText = streakLabel;
-            const maxDDPct = peakBank > 0 ? (maxDrawdownVal / peakBank) * 100 : 0;
-            document.getElementById('statMaxDD').innerText = `-$${maxDrawdownVal.toFixed(0)} (${maxDDPct.toFixed(1)}%)`;
-
-            const sugStakeEl = document.getElementById('statSuggestedStakePct');
-            const mitSection = document.getElementById('lossMitigationSection');
-            const mitBadge = document.getElementById('lossMitigationBadge');
-            const mitIcon = document.getElementById('lossMitigationIcon');
-            const stopLossAlertBox = document.getElementById('lossMitigationAlert');
-
-            if (streakType === 'LOSS' && currentStreakCount >= 3) {
-                sugStakeEl.innerText = "1.0% (Mitigación)";
-                sugStakeEl.className = "text-xs font-black text-amber-400";
-                mitBadge.innerText = "Estado: Alerta de Racha";
-                mitBadge.className = "text-[9px] font-black bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30";
-                mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-amber-500/40 bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 transition-all";
-                mitIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-xs";
-            } else if (maxDDPct >= 10 && !stopLossDismissedToday) {
-                sugStakeEl.innerText = "0.5% (Stop-Loss)";
-                sugStakeEl.className = "text-xs font-black text-rose-400";
-                mitBadge.innerText = "Estado: Stop-Loss Activado";
-                mitBadge.className = "text-[9px] font-black bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full border border-rose-500/30";
-                mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-rose-500/40 bg-gradient-to-r from-slate-900 via-rose-950/30 to-slate-900 transition-all";
-                mitIcon.className = "fa-solid fa-shield-halved text-rose-400 text-xs";
-                stopLossAlertBox.classList.remove('hidden');
-            } else {
-                sugStakeEl.innerText = `${document.getElementById('globalStakePct').value}% (Normal)`;
-                sugStakeEl.className = "text-xs font-black text-emerald-400";
-                mitBadge.innerText = "Estado: Seguro";
-                mitBadge.className = "text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30";
-                mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 transition-all";
-                mitIcon.className = "fa-solid fa-shield-cat text-emerald-400 text-xs";
+        if (bet.status === 'PENDING') {
+            totalRiskPending += stake;
+            countPending++;
+        } else {
+            countClosed++;
+            let pnl = 0;
+            if (bet.status === 'WON') {
+                pnl = stake * (odds - 1);
+                wonCount++;
+                totalStakedClosed += stake;
+            } else if (bet.status === 'LOST') {
+                pnl = -stake;
+                totalStakedClosed += stake;
+            } else if (bet.status === 'HALF_WON') {
+                pnl = (stake / 2) * (odds - 1);
+                wonCount += 0.5;
+                totalStakedClosed += stake;
+            } else if (bet.status === 'HALF_LOST') {
+                pnl = -(stake / 2);
+                totalStakedClosed += stake;
+            } else if (bet.status === 'VOID') {
+                pnl = 0;
             }
 
-            renderSeparatedBetsTables(filteredBets);
-            renderCalendarView(filteredBets);
-            renderPnlChart(currentBankrollArr);
-            saveBankrollsToStorage();
-            saveBetLogToStorage();
+            totalProfitClosed += pnl;
+            const lastBank = currentBankrollArr[currentBankrollArr.length - 1];
+            const nextBank = lastBank + pnl;
+            currentBankrollArr.push(nextBank);
         }
+    });
 
+    // 2. NUEVO BUCLE: Cálculo independiente de Racha y Drawdown global (Ignora los filtros de la UI)
+    const globalCronoBets = currentBankBets.slice().reverse();
+    let currentStreakCount = 0;
+    let streakType = 'NONE';
+    let globalPeakBank = initialBank;
+    let currentGlobalBank = initialBank;
+
+    globalCronoBets.forEach(bet => {
+        if (bet.status !== 'PENDING' && bet.status !== 'VOID') {
+            const stake = parseFloat(bet.stake) || 0;
+            const odds = parseFloat(bet.bookieOdds) || 1;
+            let pnl = 0;
+
+            if (bet.status === 'WON' || bet.status === 'HALF_WON') {
+                pnl = bet.status === 'WON' ? stake * (odds - 1) : (stake / 2) * (odds - 1);
+                if (streakType === 'WIN' || streakType === 'NONE') currentStreakCount++;
+                else currentStreakCount = 1;
+                streakType = 'WIN';
+            } else if (bet.status === 'LOST' || bet.status === 'HALF_LOST') {
+                pnl = bet.status === 'LOST' ? -stake : -(stake / 2);
+                if (streakType === 'LOSS' || streakType === 'NONE') currentStreakCount++;
+                else currentStreakCount = 1;
+                streakType = 'LOSS';
+            }
+
+            currentGlobalBank += pnl;
+            if (currentGlobalBank > globalPeakBank) globalPeakBank = currentGlobalBank;
+        }
+    });
+
+    // Calcula el Drawdown actual (Caída activa), no el histórico general
+    const currentDrawdownVal = globalPeakBank > currentGlobalBank ? globalPeakBank - currentGlobalBank : 0;
+    const currentDDPct = globalPeakBank > 0 ? (currentDrawdownVal / globalPeakBank) * 100 : 0;
+
+    // --- RESTO DE LA INTERFAZ ---
+    const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn - totalRiskPending;
+    const yieldVal = totalStakedClosed > 0 ? (totalProfitClosed / totalStakedClosed) * 100 : 0;
+    const winRateVal = countClosed > 0 ? (wonCount / countClosed) * 100 : 0;
+
+    document.getElementById('summaryBankroll').innerText = `$${currentBankroll.toFixed(2)}`;
+    const sumProfitEl = document.getElementById('summaryProfit');
+    sumProfitEl.innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
+    sumProfitEl.className = totalProfitClosed >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
+
+    let filterLabelSuffix = '';
+    if (selectedMarketFilter !== 'ALL') filterLabelSuffix += ` [${selectedMarketFilter}]`;
+    if (selectedSelectionFilter !== 'ALL') filterLabelSuffix += ` (${selectedSelectionFilter})`;
+
+    document.getElementById('dashActiveBankName').innerText = activeBankObj.name + filterLabelSuffix;
+    document.getElementById('dashNetProfit').innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
+    document.getElementById('dashNetProfit').className = totalProfitClosed >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
+    document.getElementById('dashPendingRisk').innerText = `$${totalRiskPending.toFixed(2)}`;
+    document.getElementById('dashYield').innerText = yieldVal.toFixed(1) + '%';
+    document.getElementById('dashWinRate').innerText = winRateVal.toFixed(1) + '%';
+
+    document.getElementById('badgePendingCount').innerText = countPending;
+    document.getElementById('badgeClosedCount').innerText = countClosed;
+
+    document.getElementById('pendingSummaryText').innerText = `Riesgo Total Pendiente: $${totalRiskPending.toFixed(2)}`;
+    document.getElementById('closedSummaryText').innerText = `Beneficio Apuestas Cerradas: ${totalProfitClosed >= 0 ? '+$' : '-$'}${Math.abs(totalProfitClosed).toFixed(2)}`;
+
+    updateLeaguePerformanceTable(filteredBets);
+    updateBestEvRangeAnalysis(filteredBets);
+
+    // 3. Activar los escudos usando la variable corregida de Drawdown
+    const streakLabel = streakType === 'LOSS' ? `🔥 ${currentStreakCount} Derrotas` : (streakType === 'WIN' ? `⭐ ${currentStreakCount} Victorias` : 'Neutral');
+    document.getElementById('statCurrentStreak').innerText = streakLabel;
+    document.getElementById('statMaxDD').innerText = `-$${currentDrawdownVal.toFixed(0)} (${currentDDPct.toFixed(1)}%)`;
+
+    const sugStakeEl = document.getElementById('statSuggestedStakePct');
+    const mitSection = document.getElementById('lossMitigationSection');
+    const mitBadge = document.getElementById('lossMitigationBadge');
+    const mitIcon = document.getElementById('lossMitigationIcon');
+    const stopLossAlertBox = document.getElementById('lossMitigationAlert');
+
+    if (streakType === 'LOSS' && currentStreakCount >= 3) {
+        sugStakeEl.innerText = "1.0% (Mitigación)";
+        sugStakeEl.className = "text-xs font-black text-amber-400";
+        mitBadge.innerText = "Estado: Alerta de Racha";
+        mitBadge.className = "text-[9px] font-black bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30";
+        mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-amber-500/40 bg-gradient-to-r from-slate-900 via-amber-950/30 to-slate-900 transition-all";
+        mitIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-xs";
+    } else if (currentDDPct >= 10 && !stopLossDismissedToday) {
+        sugStakeEl.innerText = "0.5% (Stop-Loss)";
+        sugStakeEl.className = "text-xs font-black text-rose-400";
+        mitBadge.innerText = "Estado: Stop-Loss Activado";
+        mitBadge.className = "text-[9px] font-black bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full border border-rose-500/30";
+        mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-rose-500/40 bg-gradient-to-r from-slate-900 via-rose-950/30 to-slate-900 transition-all";
+        mitIcon.className = "fa-solid fa-shield-halved text-rose-400 text-xs";
+        stopLossAlertBox.classList.remove('hidden');
+    } else {
+        sugStakeEl.innerText = `${document.getElementById('globalStakePct').value}% (Normal)`;
+        sugStakeEl.className = "text-xs font-black text-emerald-400";
+        mitBadge.innerText = "Estado: Seguro";
+        mitBadge.className = "text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30";
+        mitSection.className = "glass-card rounded-2xl p-3 space-y-2 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/30 to-slate-900 transition-all";
+        mitIcon.className = "fa-solid fa-shield-cat text-emerald-400 text-xs";
+    }
+
+    renderSeparatedBetsTables(filteredBets);
+    renderCalendarView(filteredBets);
+    renderPnlChart(currentBankrollArr);
+    saveBankrollsToStorage();
+    saveBetLogToStorage();
+}
         function updateLeaguePerformanceTable(bankBets) {
             const tableBody = document.getElementById('leaguePerformanceTableBody');
             const badgeEl = document.getElementById('leaguePerformanceBadge');
