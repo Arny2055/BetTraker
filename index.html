@@ -2827,127 +2827,101 @@
             }
         }
 
-        // NUEVA FUNCIÓN: Automatización Inteligente de Retiros
-function autoExecuteSmartWithdrawal() {
-    const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId);
-    if (!activeBankObj) {
-        showToast("No hay un Bankroll activo seleccionado.");
-        return;
-    }
+        function withdrawHalfProfit(bankId) {
+            const bankObj = bankrollsData.find(b => b.id === bankId);
+            if (!bankObj) return;
 
-    let totalProfit = 0;
-    betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
-        const stake = parseFloat(bet.stake) || 0;
-        const odds = parseFloat(bet.bookieOdds) || 1;
-        if (bet.status === 'WON') totalProfit += stake * (odds - 1);
-        else if (bet.status === 'LOST') totalProfit -= stake;
-        else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
-        else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
-    });
-
-    const netProfitAvailable = totalProfit - (activeBankObj.totalWithdrawn || 0);
-
-    // Validación automática: Solo ejecuta si hay beneficios netos reales
-    if (netProfitAvailable <= 5) {
-        showToast("⚠️ Auto-Retiro omitido: La utilidad neta disponible es menor o igual a $5.00.");
-        return;
-    }
-
-    // Calcula automáticamente el 50% de la utilidad neta
-    const amountToWithdraw = netProfitAvailable * 0.50;
-
-    if (!activeBankObj.withdrawLog) activeBankObj.withdrawLog = [];
-    
-    // Registro automático con fecha actual
-    const todayStr = new Date().toISOString().slice(0, 10);
-    activeBankObj.withdrawLog.push({
-        date: todayStr,
-        amount: amountToWithdraw,
-        profitBasis: netProfitAvailable,
-        automatic: true
-    });
-    
-    activeBankObj.totalWithdrawn = (activeBankObj.totalWithdrawn || 0) + amountToWithdraw;
-
-    saveBankrollsToStorage();
-    renderBankrollManagerList();
-    updateTrackerMetrics();
-    
-    showToast(`🤖 ¡Auto-Retiro ejecutado con éxito! Se apartaron $${amountToWithdraw.toFixed(2)} (50% de la utilidad).`);
-}
-
-// Actualización del HTML dentro del renderizador del Administrador de Cajas
-function renderBankrollManagerList() {
-    const container = document.getElementById('bankrollsListContainer');
-    if (!container) return;
-
-    let html = '';
-    bankrollsData.forEach(b => {
-        const isCurrent = b.id === activeBankrollId;
-
-        let totalProfit = 0;
-        betLogData.filter(bt => (bt.bankrollId || bankrollsData[0].id) === b.id).forEach(bet => {
-            const stake = parseFloat(bet.stake) || 0;
-            const odds = parseFloat(bet.bookieOdds) || 1;
-            if (bet.status === 'WON') totalProfit += stake * (odds - 1);
-            else if (bet.status === 'LOST') totalProfit -= stake;
-            else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
-            else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
-        });
-        const netProfit = totalProfit - (b.totalWithdrawn || 0);
-        const halfProfit = Math.max(0, netProfit * 0.5);
-
-        let withdrawHistoryHtml = '';
-        if (b.withdrawLog && b.withdrawLog.length > 0) {
-            withdrawHistoryHtml = `<div class="mt-2 pt-1 border-t border-slate-800 text-[9px] text-slate-400 space-y-0.5">
-                <span class="font-bold text-emerald-400">Historial de Retiros (Total: $${(b.totalWithdrawn || 0).toFixed(2)}):</span>`;
-            b.withdrawLog.forEach((w) => {
-                const autoTag = w.automatic ? ' 🤖[Auto]' : '';
-                withdrawHistoryHtml += `<div class="flex justify-between"><span>• [${w.date}] Retiro 50%${autoTag}</span><span class="text-emerald-300 font-bold">+$${w.amount.toFixed(2)}</span></div>`;
+            let totalProfit = 0;
+            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === bankId).forEach(bet => {
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'WON') totalProfit += stake * (odds - 1);
+                else if (bet.status === 'LOST') totalProfit -= stake;
+                else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
+                else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
             });
-            withdrawHistoryHtml += `</div>`;
+
+            const netProfitAvailable = totalProfit - (bankObj.totalWithdrawn || 0);
+
+            if (netProfitAvailable <= 0) {
+                showToast("No hay utilidad neta disponible para retirar en esta caja.");
+                return;
+            }
+
+            const amountToWithdraw = netProfitAvailable * 0.5;
+
+            if (!bankObj.withdrawLog) bankObj.withdrawLog = [];
+            bankObj.withdrawLog.push({
+                date: new Date().toISOString().slice(0, 10),
+                amount: amountToWithdraw,
+                profitBasis: netProfitAvailable
+            });
+            bankObj.totalWithdrawn = (bankObj.totalWithdrawn || 0) + amountToWithdraw;
+
+            saveBankrollsToStorage();
+            renderBankrollManagerList();
+            updateTrackerMetrics();
+            showToast(`¡Retiro registrado! 50% de utilidad: $${amountToWithdraw.toFixed(2)}`);
         }
 
-        html += `
-            <div class="bg-slate-900/70 p-3 rounded-xl border ${isCurrent ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-800'} space-y-2 text-xs">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <span class="font-bold text-white block">${b.name} ${isCurrent ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded ml-1">Activo</span>' : ''}</span>
-                        <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Profit Neto: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
-                        <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                </div>
+        function renderBankrollManagerList() {
+            const container = document.getElementById('bankrollsListContainer');
+            if (!container) return;
 
-                <div class="grid grid-cols-2 gap-2 pt-1">
-                    <div class="bg-slate-900/90 p-2 rounded-lg border border-emerald-500/30 flex flex-col justify-between">
-                        <div>
-                            <span class="block text-[8px] uppercase font-bold text-slate-400">Manual (50%)</span>
-                            <span class="text-xs font-black text-emerald-400">$${halfProfit.toFixed(2)}</span>
+            let html = '';
+            bankrollsData.forEach(b => {
+                const isCurrent = b.id === activeBankrollId;
+
+                let totalProfit = 0;
+                betLogData.filter(bt => (bt.bankrollId || bankrollsData[0].id) === b.id).forEach(bet => {
+                    const stake = parseFloat(bet.stake) || 0;
+                    const odds = parseFloat(bet.bookieOdds) || 1;
+                    if (bet.status === 'WON') totalProfit += stake * (odds - 1);
+                    else if (bet.status === 'LOST') totalProfit -= stake;
+                    else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
+                    else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
+                });
+                const netProfit = totalProfit - (b.totalWithdrawn || 0);
+                const halfProfit = Math.max(0, netProfit * 0.5);
+
+                let withdrawHistoryHtml = '';
+                if (b.withdrawLog && b.withdrawLog.length > 0) {
+                    withdrawHistoryHtml = `<div class="mt-2 pt-1 border-t border-slate-800 text-[9px] text-slate-400 space-y-0.5">
+                        <span class="font-bold text-emerald-400">Historial de Retiros (Total: $${(b.totalWithdrawn || 0).toFixed(2)}):</span>`;
+                    b.withdrawLog.forEach((w, idx) => {
+                        withdrawHistoryHtml += `<div class="flex justify-between"><span>• [${w.date}] Retiro 50% utilidad</span><span class="text-emerald-300 font-bold">+$${w.amount.toFixed(2)}</span></div>`;
+                    });
+                    withdrawHistoryHtml += `</div>`;
+                }
+
+                html += `
+                    <div class="bg-slate-900/70 p-3 rounded-xl border ${isCurrent ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-800'} space-y-2 text-xs">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-bold text-white block">${b.name} ${isCurrent ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded ml-1">Activo</span>' : ''}</span>
+                                <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Profit Neto: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                                <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
-                        <button onclick="withdrawHalfProfit('${b.id}')" class="mt-1 w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-[10px] py-1 rounded transition-all">
-                            Retirar Manual
-                        </button>
-                    </div>
-                    
-                    <div class="bg-emerald-950/30 p-2 rounded-lg border border-emerald-500/50 flex flex-col justify-between">
-                        <div>
-                            <span class="block text-[8px] uppercase font-bold text-emerald-300">🤖 Automatizado</span>
-                            <span class="text-[10px] text-slate-300">Ejecución Smart</span>
+
+                        <div class="flex items-center justify-between bg-slate-900/90 p-2 rounded-lg border border-emerald-500/30">
+                            <div>
+                                <span class="block text-[8px] uppercase font-bold text-slate-400">Retirar 50% de Utilidad</span>
+                                <span class="text-xs font-black text-emerald-400">$${halfProfit.toFixed(2)}</span>
+                            </div>
+                            <button onclick="withdrawHalfProfit('${b.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-3 py-1.5 rounded-lg transition-all shadow flex items-center gap-1">
+                                <i class="fa-solid fa-money-bill-transfer"></i> Retirar 50%
+                            </button>
                         </div>
-                        <button onclick="autoExecuteSmartWithdrawal()" class="mt-1 w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] py-1 rounded transition-all shadow">
-                            Auto-Ejecutar
-                        </button>
+                        ${withdrawHistoryHtml}
                     </div>
-                </div>
-                ${withdrawHistoryHtml}
-            </div>
-        `;
-    });
-    container.innerHTML = html;
-}
+                `;
+            });
+            container.innerHTML = html;
+        }
 
         function onLeagueSelectChange() {
             updateTeamSelectors();
