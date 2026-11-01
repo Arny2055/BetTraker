@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -189,6 +190,9 @@
                     <span class="text-xs font-black text-white uppercase">Gestión de Bankroll Activo</span>
                 </div>
                 <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                    <button onclick="openBoxTransactionsModal('DEPOSIT')" class="text-[9px] font-bold text-sky-300 bg-sky-500/15 hover:bg-sky-500/25 px-2 py-0.5 rounded border border-sky-500/40 flex items-center gap-1 transition-all active:scale-95">
+                        <i class="fa-solid fa-money-bill-transfer"></i> Depósitos / Retiros
+                    </button>
                     <button onclick="toggleKellyMonteCarloModal(true)" class="text-[9px] font-bold text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30 flex items-center gap-1">
                         <i class="fa-solid fa-dice"></i> Kelly vs Varianza
                     </button>
@@ -213,6 +217,23 @@
                 <div class="bg-slate-900/90 p-2 rounded-xl border border-emerald-500/40">
                     <span class="block text-[8px] uppercase text-emerald-400 font-bold">Profit Neto</span>
                     <span class="text-xs font-black text-emerald-400" id="summaryProfit">$0.00</span>
+                </div>
+            </div>
+
+            <!-- Barra Rápida de Flujo de Caja (Depósitos / Retiros) -->
+            <div class="bg-slate-900/80 px-2.5 py-1.5 rounded-xl border border-slate-800/90 flex items-center justify-between gap-2 text-[10px]">
+                <div class="flex items-center gap-2.5 flex-wrap">
+                    <span class="text-slate-400">Inic: <b class="text-slate-200" id="summaryInitialCapital">$1,000</b></span>
+                    <span class="text-sky-400">Dep: <b id="summaryTotalDeposits">+$0.00</b></span>
+                    <span class="text-amber-400">Ret: <b id="summaryTotalWithdrawals">-$0.00</b></span>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                    <button onclick="openBoxTransactionsModal('DEPOSIT')" class="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 font-black text-[9px] px-2 py-0.5 rounded-lg transition-all active:scale-95 flex items-center gap-1" title="Ingresar dinero (Depósito externo)">
+                        <i class="fa-solid fa-arrow-down-to-bracket"></i> +Depósito
+                    </button>
+                    <button onclick="openBoxTransactionsModal('WITHDRAW')" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-black text-[9px] px-2 py-0.5 rounded-lg transition-all active:scale-95 flex items-center gap-1" title="Retirar fondos o utilidades">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i> -Retiro
+                    </button>
                 </div>
             </div>
 
@@ -785,8 +806,188 @@
                 </div>
             </div>
 
-            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end">
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between">
+                <button onclick="toggleBankrollManagerModal(false); openBoxTransactionsModal('DEPOSIT');" class="bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 font-black text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-money-bill-transfer"></i> Depósitos y Retiros Pro
+                </button>
                 <button onclick="toggleBankrollManagerModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PROFESIONAL DE DEPÓSITOS Y RETIROS DE CAJA (boxTransactionsModal) -->
+    <div id="boxTransactionsModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[65] hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-2xl max-h-[94vh] rounded-2xl border border-sky-500/40 flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Header Modal Depósitos / Retiros -->
+            <div class="p-3.5 bg-slate-900/90 border-b border-sky-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 via-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-sky-500/20">
+                        <i class="fa-solid fa-money-bill-transfer text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-white flex items-center gap-2">
+                            Gestión Profesional de Depósitos y Retiros
+                            <span id="boxTxModalBankBadge" class="text-[9px] bg-emerald-500/20 text-emerald-300 font-extrabold px-2 py-0.5 rounded-full border border-emerald-500/30">Caja Activa</span>
+                        </h3>
+                        <p class="text-[10px] text-slate-400">Inyecciones de capital y extracción de beneficios sincronizadas con tu Bankroll y Gráfica P&amp;L</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportBoxTransactionsCSV()" class="bg-sky-500/20 border border-sky-500/40 text-sky-300 hover:bg-sky-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1 transition-all" title="Exportar Historial de Movimientos de Caja a CSV">
+                        <i class="fa-solid fa-file-csv"></i> CSV Caja
+                    </button>
+                    <button onclick="toggleBoxTransactionsModal(false)" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Body Modal Depósitos / Retiros -->
+            <div class="p-4 space-y-4 overflow-y-auto flex-1">
+
+                <!-- KPIs Financieros de la Caja Activa -->
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                        <span class="block text-[8px] uppercase font-bold text-slate-400">Capital Inicial</span>
+                        <span class="text-xs font-black text-slate-200 mt-0.5 block" id="boxKpiInitial">$1,000.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-sky-500/30">
+                        <span class="block text-[8px] uppercase font-bold text-sky-400">Total Depósitos</span>
+                        <span class="text-xs font-black text-sky-300 mt-0.5 block" id="boxKpiDeposits">+$0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-amber-500/30">
+                        <span class="block text-[8px] uppercase font-bold text-amber-400">Total Retiros</span>
+                        <span class="text-xs font-black text-amber-300 mt-0.5 block" id="boxKpiWithdrawals">-$0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/30">
+                        <span class="block text-[8px] uppercase font-bold text-emerald-400">Utilidad Neta Disp.</span>
+                        <span class="text-xs font-black text-emerald-400 mt-0.5 block" id="boxKpiNetProfitAvail">$0.00</span>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1 bg-slate-900/90 p-2.5 rounded-xl border border-white/20 bg-gradient-to-b from-slate-900 to-emerald-950/30">
+                        <span class="block text-[8px] uppercase font-black text-white">Saldo Disponible</span>
+                        <span class="text-xs font-black text-white mt-0.5 block" id="boxKpiAvailableBalance">$1,000.00</span>
+                    </div>
+                </div>
+
+                <!-- Formulario de Registro de Movimiento (Depósito / Retiro) -->
+                <div class="bg-slate-900/90 p-3.5 rounded-2xl border border-slate-800 space-y-3">
+                    
+                    <!-- Selector Tipo de Movimiento -->
+                    <div class="grid grid-cols-2 gap-2 bg-slate-950/90 p-1 rounded-xl border border-slate-800">
+                        <button type="button" id="btnTxTypeDeposit" onclick="setBoxTransactionType('DEPOSIT')" class="py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-md">
+                            <i class="fa-solid fa-arrow-down-to-bracket"></i> Ingresar Dinero (Depósito)
+                        </button>
+                        <button type="button" id="btnTxTypeWithdraw" onclick="setBoxTransactionType('WITHDRAW')" class="py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i> Retirar Fondos (Extracción)
+                        </button>
+                    </div>
+
+                    <!-- Opciones de Validación para Retiros (Solo visible en modo RETIRO) -->
+                    <div id="boxWithdrawValidationContainer" class="hidden bg-amber-950/20 border border-amber-500/30 p-2.5 rounded-xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[10px] font-black text-amber-300 uppercase flex items-center gap-1.5">
+                                <i class="fa-solid fa-shield-halved"></i> Regla de Validación del Retiro:
+                            </label>
+                            <span id="boxWithdrawLimitLabel" class="text-[10px] font-black text-emerald-400">Máx. Retirable: $0.00</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-amber-500/40 transition-all">
+                                <input type="radio" name="boxWithdrawValidationMode" value="PROFIT" checked onchange="onBoxTransactionFormChange()" class="mt-0.5 accent-amber-500">
+                                <div>
+                                    <span class="text-[11px] font-bold text-white block">Contra Utilidad Neta (Recomendado)</span>
+                                    <span class="text-[9px] text-slate-400 block">Retira solo ganancias reales acumuladas sin descapitalizar tu base.</span>
+                                </div>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 rounded-lg bg-slate-900/90 border border-slate-800 cursor-pointer hover:border-amber-500/40 transition-all">
+                                <input type="radio" name="boxWithdrawValidationMode" value="BANKROLL" onchange="onBoxTransactionFormChange()" class="mt-0.5 accent-amber-500">
+                                <div>
+                                    <span class="text-[11px] font-bold text-white block">Contra Bankroll Total Disponible</span>
+                                    <span class="text-[9px] text-slate-400 block">Permite extraer cualquier monto hasta el saldo libre actual de la caja.</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Campos de Entrada: Fecha, Monto y Concepto -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Fecha de Operación</label>
+                            <input type="date" id="boxTxDate" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Monto ($)</label>
+                            <input type="number" id="boxTxAmount" step="0.01" min="0.01" placeholder="Ej. 250.00" oninput="onBoxTransactionFormChange()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-emerald-400 font-black text-center focus:outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">Concepto / Nota (Opcional)</label>
+                            <input type="text" id="boxTxConcept" placeholder="Ej. Inyección de capital / Retiro" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold focus:outline-none focus:border-sky-500">
+                        </div>
+                    </div>
+
+                    <!-- Botones de Monto Rápido -->
+                    <div class="flex items-center justify-between flex-wrap gap-1.5 pt-0.5">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase" id="boxQuickAmountsLabel">Atajos Rápidos:</span>
+                        <div class="flex items-center gap-1.5 flex-wrap" id="boxQuickAmountsButtons">
+                            <!-- Generado dinámicamente según Depósito o Retiro -->
+                        </div>
+                    </div>
+
+                    <!-- Vista Previa de Impacto en Saldo y Alerta de Validación -->
+                    <div id="boxTxPreviewBanner" class="bg-slate-950/90 border border-slate-800 px-3 py-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                        <div class="flex items-center gap-2">
+                            <i id="boxTxPreviewIcon" class="fa-solid fa-circle-info text-sky-400"></i>
+                            <span id="boxTxPreviewText" class="text-[11px] text-slate-300">Ingresa un monto para previsualizar el saldo resultante de la caja.</span>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="text-[9px] uppercase font-bold text-slate-400 block">Saldo Resultante Est.</span>
+                            <span id="boxTxResultingBalancePreview" class="text-xs font-black text-white">$1,000.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Botón Ejecutar Movimiento -->
+                    <button type="button" id="btnSubmitBoxTx" onclick="submitBoxTransaction()" class="w-full py-2.5 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check-circle"></i> Registrar Depósito en Caja
+                    </button>
+                </div>
+
+                <!-- Historial de Movimientos de Caja (boxTransactionsLog) -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-sky-400 text-xs"></i>
+                            <span class="text-xs font-extrabold text-white uppercase">Historial de Movimientos de Caja (boxTransactionsLog)</span>
+                        </div>
+                        <span id="boxTxCountBadge" class="text-[10px] font-bold bg-sky-500/15 text-sky-300 px-2 py-0.5 rounded-full border border-sky-500/30">0 movimientos</span>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 max-h-60">
+                        <table class="w-full text-[10px] text-left border-collapse excel-table">
+                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
+                                <tr>
+                                    <th class="p-1.5 text-center">Fecha</th>
+                                    <th class="p-1.5 text-center">Tipo</th>
+                                    <th class="p-1.5">Concepto / Validación</th>
+                                    <th class="p-1.5 text-center">Monto</th>
+                                    <th class="p-1.5 text-center">Saldo Resultante</th>
+                                    <th class="p-1.5 text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="boxTransactionsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200">
+                                <!-- Cargado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between">
+                <span class="text-[10px] text-slate-400"><i class="fa-solid fa-lock text-emerald-400 mr-1"></i> Guardado seguro en localStorage sin alterar tus apuestas.</span>
+                <button onclick="toggleBoxTransactionsModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl transition-all">
                     Cerrar
                 </button>
             </div>
@@ -898,6 +1099,9 @@
                     <h3 class="font-black text-sm text-white">Bet Tracker Pro - Gestor de Apuestas</h3>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="openBoxTransactionsModal('DEPOSIT')" class="bg-sky-500/20 border border-sky-500/40 text-sky-300 hover:bg-sky-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
+                        <i class="fa-solid fa-money-bill-transfer"></i> Depósitos / Retiros
+                    </button>
                     <button onclick="toggleKellyMonteCarloModal(true)" class="bg-purple-500/20 border border-purple-500/40 text-purple-300 hover:bg-purple-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
                         <i class="fa-solid fa-dice"></i> Kelly vs Varianza (MC)
                     </button>
@@ -1013,9 +1217,14 @@
 
                 <!-- GRÁFICA DE CURVA DE BENEFICIOS (P&L) -->
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-slate-300">Curva de Beneficios (P&L de Apuestas Cerradas)</span>
-                        <span class="text-[10px] text-emerald-400 font-bold" id="pnlStatusText">Evolución del Bankroll</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <span class="text-xs font-bold text-slate-300">Curva de Rendimiento y Movimientos de Caja (P&amp;L + Depósitos/Retiros)</span>
+                        <div class="flex items-center gap-3 text-[10px]">
+                            <span class="flex items-center gap-1 text-emerald-400 font-bold"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Apuesta</span>
+                            <span class="flex items-center gap-1 text-sky-400 font-bold"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span> Depósito</span>
+                            <span class="flex items-center gap-1 text-amber-400 font-bold"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Retiro</span>
+                            <span class="text-[10px] text-emerald-400 font-bold hidden sm:inline" id="pnlStatusText">| Evolución del Bankroll</span>
+                        </div>
                     </div>
                     <div class="h-36 w-full">
                         <canvas id="pnlChart"></canvas>
@@ -1993,6 +2202,8 @@
         let kmcCurrentMode = 'parametric';
         let bankrollsData = [];
         let activeBankrollId = 'default_bankroll';
+        let boxTransactionsLog = [];
+        let currentBoxTxType = 'DEPOSIT';
         let betLogData = [];
         let parallelBetLogData = [];
         let currentCalculatedProbs = {};
@@ -2010,6 +2221,7 @@
 
         window.onload = function() {
             loadBankrollsFromStorage();
+            loadBoxTransactionsFromStorage();
             loadBetLogFromStorage();
             loadParallelBetLogFromStorage();
             populateLeagueDropdowns();
@@ -2278,22 +2490,7 @@
             document.getElementById('logFairOdds').value = jointFairOdds.toFixed(2);
             document.getElementById('logBookieOdds').value = jointFairOdds.toFixed(2);
 
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            let initialBank = activeBankObj.initial;
-            let totalProfit = 0;
-            let pendingRiskCalc = 0;
-
-            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') {
-                    pendingRiskCalc += s;
-                } else if (bet.status === 'WON') totalProfit += s * (o - 1);
-                else if (bet.status === 'LOST') totalProfit -= s;
-                else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
-                else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
-            });
-            const dynamicBankroll = initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc;
+            const dynamicBankroll = getActiveAvailableBankroll();
             const stakePct = parseFloat(document.getElementById('globalStakePct').value) || 2.0;
             let calculatedStake = Math.max(1, Math.round(Math.max(0, dynamicBankroll) * (stakePct / 100)));
 
@@ -2574,8 +2771,10 @@
                 try { 
                     bankrollsData = JSON.parse(stored); 
                     bankrollsData.forEach(b => {
+                        if (b.totalDeposited === undefined) b.totalDeposited = 0;
                         if (b.totalWithdrawn === undefined) b.totalWithdrawn = 0;
                         if (!b.withdrawLog) b.withdrawLog = [];
+                        if (!b.boxTransactionsLog) b.boxTransactionsLog = [];
                         if (!b.leaguesData || Object.keys(b.leaguesData).length === 0) {
                             b.leaguesData = sharedLeagues && Object.keys(sharedLeagues).length > 0 
                                 ? { ...sharedLeagues }
@@ -2597,8 +2796,10 @@
                         id: 'default_bankroll', 
                         name: 'Bankroll Principal', 
                         initial: 1000, 
+                        totalDeposited: 0,
                         totalWithdrawn: 0, 
                         withdrawLog: [],
+                        boxTransactionsLog: [],
                         leaguesData: defaultLeagues
                     }
                 ];
@@ -2612,9 +2813,90 @@
             }
         }
 
+        function loadBoxTransactionsFromStorage() {
+            const rawTx = localStorage.getItem('boxTransactionsLog') || localStorage.getItem('poisson_vip_box_transactions');
+            if (rawTx) {
+                try {
+                    const parsed = JSON.parse(rawTx);
+                    if (Array.isArray(parsed)) boxTransactionsLog = parsed;
+                } catch(e) { boxTransactionsLog = []; }
+            }
+
+            // Sincronizar movimientos previos guardados dentro de cada bankroll o migrar withdrawLog legado sin duplicar
+            bankrollsData.forEach(b => {
+                if (Array.isArray(b.boxTransactionsLog) && b.boxTransactionsLog.length > 0) {
+                    b.boxTransactionsLog.forEach(tx => {
+                        if (!boxTransactionsLog.some(existing => existing.id === tx.id)) {
+                            boxTransactionsLog.push(tx);
+                        }
+                    });
+                }
+
+                const existingForBank = boxTransactionsLog.filter(tx => (tx.bankrollId || bankrollsData[0].id) === b.id);
+                if (existingForBank.length === 0 && Array.isArray(b.withdrawLog) && b.withdrawLog.length > 0) {
+                    let runningBal = parseFloat(b.initial) || 1000;
+                    b.withdrawLog.forEach((w, idx) => {
+                        const amt = parseFloat(w.amount) || 0;
+                        if (amt > 0) {
+                            runningBal = Math.max(0, runningBal - amt);
+                            const migratedTx = {
+                                id: 'legacy_wd_' + b.id + '_' + idx,
+                                bankrollId: b.id,
+                                bankrollName: b.name,
+                                date: w.date || new Date().toISOString().slice(0, 10),
+                                timestamp: Date.now() - ((b.withdrawLog.length - idx) * 60000),
+                                type: 'WITHDRAW',
+                                validationMode: 'PROFIT',
+                                amount: amt,
+                                concept: 'Retiro 50% de Utilidad',
+                                resultingBalance: runningBal
+                            };
+                            boxTransactionsLog.push(migratedTx);
+                        }
+                    });
+                }
+            });
+
+            syncBankrollTotalsFromBoxTransactions();
+            saveBoxTransactionsToStorage();
+        }
+
+        function syncBankrollTotalsFromBoxTransactions() {
+            bankrollsData.forEach(b => {
+                const txForBank = boxTransactionsLog.filter(tx => (tx.bankrollId || bankrollsData[0].id) === b.id);
+                b.boxTransactionsLog = txForBank;
+                if (txForBank.length > 0) {
+                    let sumDep = 0;
+                    let sumWd = 0;
+                    txForBank.forEach(tx => {
+                        const amt = parseFloat(tx.amount) || 0;
+                        if (tx.type === 'DEPOSIT') sumDep += amt;
+                        else if (tx.type === 'WITHDRAW') sumWd += amt;
+                    });
+                    b.totalDeposited = sumDep;
+                    b.totalWithdrawn = sumWd;
+                } else {
+                    b.totalDeposited = parseFloat(b.totalDeposited) || 0;
+                    b.totalWithdrawn = parseFloat(b.totalWithdrawn) || 0;
+                }
+            });
+        }
+
+        function saveBoxTransactionsToStorage() {
+            syncBankrollTotalsFromBoxTransactions();
+            try {
+                localStorage.setItem('boxTransactionsLog', JSON.stringify(boxTransactionsLog));
+                localStorage.setItem('poisson_vip_box_transactions', JSON.stringify(boxTransactionsLog));
+                localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
+            } catch(e) {}
+        }
+
         function saveBankrollsToStorage() {
+            syncBankrollTotalsFromBoxTransactions();
             localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
             localStorage.setItem('poisson_vip_active_bankroll', activeBankrollId);
+            localStorage.setItem('boxTransactionsLog', JSON.stringify(boxTransactionsLog));
+            localStorage.setItem('poisson_vip_box_transactions', JSON.stringify(boxTransactionsLog));
 
             // Keep shared league registry up-to-date
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
@@ -2629,6 +2911,83 @@
                     localStorage.setItem('poisson_vip_shared_leagues', JSON.stringify(shared));
                 } catch(e) {}
             }
+        }
+
+        function getBankrollFinancialSummary(bankId = activeBankrollId) {
+            const bankObj = bankrollsData.find(b => b.id === bankId) || bankrollsData[0];
+            if (!bankObj) {
+                return {
+                    initial: 1000,
+                    totalDeposited: 0,
+                    totalWithdrawn: 0,
+                    withdrawnFromProfit: 0,
+                    totalProfitClosed: 0,
+                    pendingRisk: 0,
+                    netProfitAvailable: 0,
+                    settledBalance: 1000,
+                    availableBalance: 1000
+                };
+            }
+            const initial = parseFloat(bankObj.initial) || 1000;
+            const txList = boxTransactionsLog.filter(tx => (tx.bankrollId || bankrollsData[0].id) === bankObj.id);
+
+            let totalDeposited = 0;
+            let totalWithdrawn = 0;
+            let withdrawnFromProfit = 0;
+
+            if (txList.length > 0) {
+                txList.forEach(tx => {
+                    const amt = parseFloat(tx.amount) || 0;
+                    if (tx.type === 'DEPOSIT') {
+                        totalDeposited += amt;
+                    } else if (tx.type === 'WITHDRAW') {
+                        totalWithdrawn += amt;
+                        if (tx.validationMode !== 'BANKROLL') {
+                            withdrawnFromProfit += amt;
+                        }
+                    }
+                });
+            } else {
+                totalDeposited = parseFloat(bankObj.totalDeposited) || 0;
+                totalWithdrawn = parseFloat(bankObj.totalWithdrawn) || 0;
+                withdrawnFromProfit = totalWithdrawn;
+            }
+
+            let totalProfitClosed = 0;
+            let pendingRisk = 0;
+
+            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === bankObj.id).forEach(bet => {
+                const stake = parseFloat(bet.stake) || 0;
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                if (bet.status === 'PENDING') {
+                    pendingRisk += stake;
+                } else if (bet.status === 'WON') {
+                    totalProfitClosed += stake * (odds - 1);
+                } else if (bet.status === 'LOST') {
+                    totalProfitClosed -= stake;
+                } else if (bet.status === 'HALF_WON') {
+                    totalProfitClosed += (stake / 2) * (odds - 1);
+                } else if (bet.status === 'HALF_LOST') {
+                    totalProfitClosed -= (stake / 2);
+                }
+            });
+
+            const netProfitAvailable = Math.max(0, totalProfitClosed - withdrawnFromProfit);
+            const settledBalance = initial + totalDeposited + totalProfitClosed - totalWithdrawn;
+            const availableBalance = settledBalance - pendingRisk;
+
+            return {
+                bankObj,
+                initial,
+                totalDeposited,
+                totalWithdrawn,
+                withdrawnFromProfit,
+                totalProfitClosed,
+                pendingRisk,
+                netProfitAvailable,
+                settledBalance,
+                availableBalance
+            };
         }
 
         function getCurrentBankrollLeagues() {
@@ -2787,8 +3146,10 @@
                 id: newId, 
                 name, 
                 initial, 
+                totalDeposited: 0,
                 totalWithdrawn: 0, 
                 withdrawLog: [],
+                boxTransactionsLog: [],
                 leaguesData: inheritedLeagues
             });
             activeBankrollId = newId;
@@ -2813,6 +3174,7 @@
             if (confirm("¿Estás seguro de eliminar este Bankroll y sus apuestas asociadas?")) {
                 bankrollsData = bankrollsData.filter(b => b.id !== id);
                 betLogData = betLogData.filter(b => b.bankrollId !== id);
+                boxTransactionsLog = boxTransactionsLog.filter(tx => tx.bankrollId !== id);
                 if (activeBankrollId === id) {
                     activeBankrollId = bankrollsData[0].id;
                 }
@@ -2831,33 +3193,44 @@
             const bankObj = bankrollsData.find(b => b.id === bankId);
             if (!bankObj) return;
 
-            let totalProfit = 0;
-            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === bankId).forEach(bet => {
-                const stake = parseFloat(bet.stake) || 0;
-                const odds = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'WON') totalProfit += stake * (odds - 1);
-                else if (bet.status === 'LOST') totalProfit -= stake;
-                else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
-                else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
-            });
+            const fin = getBankrollFinancialSummary(bankId);
 
-            const netProfitAvailable = totalProfit - (bankObj.totalWithdrawn || 0);
-
-            if (netProfitAvailable <= 0) {
+            if (fin.netProfitAvailable <= 0) {
                 showToast("No hay utilidad neta disponible para retirar en esta caja.");
                 return;
             }
 
-            const amountToWithdraw = netProfitAvailable * 0.5;
+            const amountToWithdraw = +(fin.netProfitAvailable * 0.5).toFixed(2);
+            if (amountToWithdraw > fin.availableBalance) {
+                showToast("Fondos comprometidos en apuestas pendientes. Liquídalas antes de retirar.");
+                return;
+            }
+
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const resultingBal = +(fin.availableBalance - amountToWithdraw).toFixed(2);
 
             if (!bankObj.withdrawLog) bankObj.withdrawLog = [];
             bankObj.withdrawLog.push({
-                date: new Date().toISOString().slice(0, 10),
+                date: todayStr,
                 amount: amountToWithdraw,
-                profitBasis: netProfitAvailable
+                profitBasis: fin.netProfitAvailable
             });
-            bankObj.totalWithdrawn = (bankObj.totalWithdrawn || 0) + amountToWithdraw;
 
+            const txEntry = {
+                id: 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                bankrollId: bankObj.id,
+                bankrollName: bankObj.name,
+                date: todayStr,
+                timestamp: Date.now(),
+                type: 'WITHDRAW',
+                validationMode: 'PROFIT',
+                amount: amountToWithdraw,
+                concept: 'Retiro Rápido 50% de Utilidad Neta',
+                resultingBalance: resultingBal
+            };
+            boxTransactionsLog.push(txEntry);
+
+            saveBoxTransactionsToStorage();
             saveBankrollsToStorage();
             renderBankrollManagerList();
             updateTrackerMetrics();
@@ -2871,25 +3244,18 @@
             let html = '';
             bankrollsData.forEach(b => {
                 const isCurrent = b.id === activeBankrollId;
-
-                let totalProfit = 0;
-                betLogData.filter(bt => (bt.bankrollId || bankrollsData[0].id) === b.id).forEach(bet => {
-                    const stake = parseFloat(bet.stake) || 0;
-                    const odds = parseFloat(bet.bookieOdds) || 1;
-                    if (bet.status === 'WON') totalProfit += stake * (odds - 1);
-                    else if (bet.status === 'LOST') totalProfit -= stake;
-                    else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
-                    else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
-                });
-                const netProfit = totalProfit - (b.totalWithdrawn || 0);
+                const fin = getBankrollFinancialSummary(b.id);
+                const netProfit = fin.netProfitAvailable;
                 const halfProfit = Math.max(0, netProfit * 0.5);
+                const txList = boxTransactionsLog.filter(tx => (tx.bankrollId || bankrollsData[0].id) === b.id);
 
                 let withdrawHistoryHtml = '';
-                if (b.withdrawLog && b.withdrawLog.length > 0) {
-                    withdrawHistoryHtml = `<div class="mt-2 pt-1 border-t border-slate-800 text-[9px] text-slate-400 space-y-0.5">
-                        <span class="font-bold text-emerald-400">Historial de Retiros (Total: $${(b.totalWithdrawn || 0).toFixed(2)}):</span>`;
-                    b.withdrawLog.forEach((w, idx) => {
-                        withdrawHistoryHtml += `<div class="flex justify-between"><span>• [${w.date}] Retiro 50% utilidad</span><span class="text-emerald-300 font-bold">+$${w.amount.toFixed(2)}</span></div>`;
+                if (txList.length > 0) {
+                    withdrawHistoryHtml = `<div class="mt-2 pt-1 border-t border-slate-800 text-[9px] text-slate-400 space-y-0.5 max-h-24 overflow-y-auto">
+                        <span class="font-bold text-sky-400">Movimientos de Caja (Dep: +$${fin.totalDeposited.toFixed(2)} | Ret: -$${fin.totalWithdrawn.toFixed(2)}):</span>`;
+                    txList.slice().reverse().slice(0, 5).forEach(tx => {
+                        const isDep = tx.type === 'DEPOSIT';
+                        withdrawHistoryHtml += `<div class="flex justify-between"><span>• [${tx.date}] ${tx.concept || (isDep ? 'Depósito' : 'Retiro')}</span><span class="${isDep ? 'text-sky-300' : 'text-amber-300'} font-bold">${isDep ? '+$' : '-$'}${ parseFloat(tx.amount).toFixed(2)} (Saldo: $${parseFloat(tx.resultingBalance || 0).toFixed(2)})</span></div>`;
                     });
                     withdrawHistoryHtml += `</div>`;
                 }
@@ -2899,7 +3265,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <span class="font-bold text-white block">${b.name} ${isCurrent ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded ml-1">Activo</span>' : ''}</span>
-                                <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Profit Neto: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
+                                <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Disp: <b class="text-white">$${fin.availableBalance.toFixed(2)}</b> | Utilidad Disp: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
                             </div>
                             <div class="flex items-center gap-1.5">
                                 ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
@@ -2912,15 +3278,430 @@
                                 <span class="block text-[8px] uppercase font-bold text-slate-400">Retirar 50% de Utilidad</span>
                                 <span class="text-xs font-black text-emerald-400">$${halfProfit.toFixed(2)}</span>
                             </div>
-                            <button onclick="withdrawHalfProfit('${b.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-3 py-1.5 rounded-lg transition-all shadow flex items-center gap-1">
-                                <i class="fa-solid fa-money-bill-transfer"></i> Retirar 50%
-                            </button>
+                            <div class="flex items-center gap-1.5">
+                                <button onclick="activeBankrollId='${b.id}'; populateBankrollDropdowns(); updateTrackerMetrics(); toggleBankrollManagerModal(false); openBoxTransactionsModal('DEPOSIT');" class="bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 font-black text-[10px] px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1">
+                                    <i class="fa-solid fa-plus-minus"></i> Depósito / Retiro
+                                </button>
+                                <button onclick="withdrawHalfProfit('${b.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-3 py-1.5 rounded-lg transition-all shadow flex items-center gap-1">
+                                    <i class="fa-solid fa-money-bill-transfer"></i> Retirar 50%
+                                </button>
+                            </div>
                         </div>
                         ${withdrawHistoryHtml}
                     </div>
                 `;
             });
             container.innerHTML = html;
+        }
+
+        // =========================================================================
+        // GESTIÓN PROFESIONAL DE DEPÓSITOS Y RETIROS DE CAJA (boxTransactionsLog)
+        // =========================================================================
+
+        function openBoxTransactionsModal(defaultType = 'DEPOSIT') {
+            currentBoxTxType = defaultType === 'WITHDRAW' ? 'WITHDRAW' : 'DEPOSIT';
+            const dateInput = document.getElementById('boxTxDate');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().slice(0, 10);
+            }
+            const amountInput = document.getElementById('boxTxAmount');
+            if (amountInput) amountInput.value = '';
+            const conceptInput = document.getElementById('boxTxConcept');
+            if (conceptInput) conceptInput.value = '';
+
+            setBoxTransactionType(currentBoxTxType);
+            renderBoxTransactionsModal();
+            toggleBoxTransactionsModal(true);
+        }
+
+        function toggleBoxTransactionsModal(show) {
+            const modal = document.getElementById('boxTransactionsModal');
+            if (!modal) return;
+            if (show) {
+                renderBoxTransactionsModal();
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function setBoxTransactionType(type) {
+            currentBoxTxType = type === 'WITHDRAW' ? 'WITHDRAW' : 'DEPOSIT';
+            const btnDep = document.getElementById('btnTxTypeDeposit');
+            const btnWd = document.getElementById('btnTxTypeWithdraw');
+            const wdValidBox = document.getElementById('boxWithdrawValidationContainer');
+            const submitBtn = document.getElementById('btnSubmitBoxTx');
+            const amountInput = document.getElementById('boxTxAmount');
+
+            if (currentBoxTxType === 'DEPOSIT') {
+                if (btnDep) btnDep.className = "py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-md";
+                if (btnWd) btnWd.className = "py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+                if (wdValidBox) wdValidBox.classList.add('hidden');
+                if (submitBtn) {
+                    submitBtn.className = "w-full py-2.5 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2";
+                    submitBtn.innerHTML = `<i class="fa-solid fa-arrow-down-to-bracket"></i> Confirmar Depósito Externo en Caja`;
+                }
+                if (amountInput) amountInput.className = "w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-emerald-400 font-black text-center focus:outline-none focus:border-emerald-500";
+            } else {
+                if (btnWd) btnWd.className = "py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 bg-amber-500 text-slate-950 shadow-md";
+                if (btnDep) btnDep.className = "py-2 rounded-lg text-xs font-black transition-all flex items-center justify-center gap-1.5 text-slate-400 hover:text-white";
+                if (wdValidBox) wdValidBox.classList.remove('hidden');
+                if (submitBtn) {
+                    submitBtn.className = "w-full py-2.5 bg-gradient-to-r from-amber-500 via-amber-600 to-orange-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2";
+                    submitBtn.innerHTML = `<i class="fa-solid fa-arrow-up-from-bracket"></i> Confirmar Retiro de Fondos`;
+                }
+                if (amountInput) amountInput.className = "w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-amber-400 font-black text-center focus:outline-none focus:border-amber-500";
+            }
+
+            renderBoxQuickAmounts();
+            onBoxTransactionFormChange();
+        }
+
+        function getSelectedWithdrawValidationMode() {
+            const checked = document.querySelector('input[name="boxWithdrawValidationMode"]:checked');
+            return checked ? checked.value : 'PROFIT';
+        }
+
+        function renderBoxQuickAmounts() {
+            const container = document.getElementById('boxQuickAmountsButtons');
+            const label = document.getElementById('boxQuickAmountsLabel');
+            if (!container) return;
+
+            const fin = getBankrollFinancialSummary(activeBankrollId);
+
+            if (currentBoxTxType === 'DEPOSIT') {
+                if (label) label.innerText = "Depósitos Rápidos:";
+                const presets = [50, 100, 250, 500, 1000];
+                container.innerHTML = presets.map(amt => `
+                    <button type="button" onclick="setQuickBoxTxAmount(${amt}, 'Inyección de Capital')" class="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-black text-[10px] transition-all active:scale-95">
+                        +$${amt}
+                    </button>
+                `).join('');
+            } else {
+                const mode = getSelectedWithdrawValidationMode();
+                if (mode === 'PROFIT') {
+                    if (label) label.innerText = "Retirar % de Utilidad Neta:";
+                    const availProfit = Math.max(0, fin.netProfitAvailable);
+                    const p25 = +(availProfit * 0.25).toFixed(2);
+                    const p50 = +(availProfit * 0.50).toFixed(2);
+                    const p100 = +(availProfit * 1.00).toFixed(2);
+                    container.innerHTML = `
+                        <button type="button" onclick="setQuickBoxTxAmount(${p25}, 'Retiro 25% Utilidad Neta')" class="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-black text-[10px] transition-all active:scale-95">
+                            25% Utilidad ($${p25.toFixed(2)})
+                        </button>
+                        <button type="button" onclick="setQuickBoxTxAmount(${p50}, 'Retiro 50% Utilidad Neta')" class="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-200 font-black text-[10px] transition-all active:scale-95">
+                            50% Utilidad ($${p50.toFixed(2)})
+                        </button>
+                        <button type="button" onclick="setQuickBoxTxAmount(${p100}, 'Retiro 100% Utilidad Neta')" class="px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-black text-[10px] transition-all active:scale-95">
+                            100% Utilidad ($${p100.toFixed(2)})
+                        </button>
+                    `;
+                } else {
+                    if (label) label.innerText = "Retirar % del Bankroll Disponible:";
+                    const availBank = Math.max(0, fin.availableBalance);
+                    const b10 = +(availBank * 0.10).toFixed(2);
+                    const b25 = +(availBank * 0.25).toFixed(2);
+                    const b50 = +(availBank * 0.50).toFixed(2);
+                    const bMax = +(availBank * 1.00).toFixed(2);
+                    container.innerHTML = `
+                        <button type="button" onclick="setQuickBoxTxAmount(${b10}, 'Retiro 10% Bankroll')" class="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-black text-[10px] transition-all active:scale-95">
+                            10% ($${b10.toFixed(2)})
+                        </button>
+                        <button type="button" onclick="setQuickBoxTxAmount(${b25}, 'Retiro 25% Bankroll')" class="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-black text-[10px] transition-all active:scale-95">
+                            25% ($${b25.toFixed(2)})
+                        </button>
+                        <button type="button" onclick="setQuickBoxTxAmount(${b50}, 'Retiro 50% Bankroll')" class="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 font-black text-[10px] transition-all active:scale-95">
+                            50% ($${b50.toFixed(2)})
+                        </button>
+                        <button type="button" onclick="setQuickBoxTxAmount(${bMax}, 'Retiro Total Disponible')" class="px-2 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 font-black text-[10px] transition-all active:scale-95">
+                            Máx ($${bMax.toFixed(2)})
+                        </button>
+                    `;
+                }
+            }
+        }
+
+        function setQuickBoxTxAmount(amount, defaultConcept) {
+            const amountInput = document.getElementById('boxTxAmount');
+            const conceptInput = document.getElementById('boxTxConcept');
+            if (amountInput) amountInput.value = Math.max(0, amount).toFixed(2);
+            if (conceptInput && !conceptInput.value.trim() && defaultConcept) {
+                conceptInput.value = defaultConcept;
+            }
+            onBoxTransactionFormChange();
+        }
+
+        function onBoxTransactionFormChange() {
+            const fin = getBankrollFinancialSummary(activeBankrollId);
+            const rawAmt = parseFloat(document.getElementById('boxTxAmount')?.value) || 0;
+            const mode = getSelectedWithdrawValidationMode();
+            const limitLabel = document.getElementById('boxWithdrawLimitLabel');
+            const previewBanner = document.getElementById('boxTxPreviewBanner');
+            const previewText = document.getElementById('boxTxPreviewText');
+            const previewIcon = document.getElementById('boxTxPreviewIcon');
+            const resultingEl = document.getElementById('boxTxResultingBalancePreview');
+
+            renderBoxQuickAmounts();
+
+            if (currentBoxTxType === 'WITHDRAW' && limitLabel) {
+                const maxAllowed = mode === 'PROFIT' ? Math.min(fin.netProfitAvailable, Math.max(0, fin.availableBalance)) : Math.max(0, fin.availableBalance);
+                limitLabel.innerText = mode === 'PROFIT'
+                    ? `Máx. por Utilidad Neta: $${maxAllowed.toFixed(2)}`
+                    : `Máx. por Bankroll Disp.: $${maxAllowed.toFixed(2)}`;
+            }
+
+            if (rawAmt <= 0) {
+                if (previewBanner) previewBanner.className = "bg-slate-950/90 border border-slate-800 px-3 py-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs";
+                if (previewIcon) previewIcon.className = "fa-solid fa-circle-info text-sky-400";
+                if (previewText) previewText.innerText = "Ingresa un monto mayor a $0.00 para calcular el saldo resultante.";
+                if (resultingEl) {
+                    resultingEl.innerText = `$${fin.availableBalance.toFixed(2)}`;
+                    resultingEl.className = "text-xs font-black text-white";
+                }
+                return;
+            }
+
+            if (currentBoxTxType === 'DEPOSIT') {
+                const resulting = fin.availableBalance + rawAmt;
+                if (previewBanner) previewBanner.className = "bg-emerald-950/30 border border-emerald-500/40 px-3 py-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs";
+                if (previewIcon) previewIcon.className = "fa-solid fa-circle-check text-emerald-400";
+                if (previewText) previewText.innerHTML = `Depósito externo válido de <b class="text-emerald-300">+$${rawAmt.toFixed(2)}</b>. Incrementará tu saldo disponible inmediatamente.`;
+                if (resultingEl) {
+                    resultingEl.innerText = `$${resulting.toFixed(2)}`;
+                    resultingEl.className = "text-xs font-black text-emerald-400";
+                }
+            } else {
+                const maxByProfit = Math.max(0, fin.netProfitAvailable);
+                const maxByBank = Math.max(0, fin.availableBalance);
+                const resulting = fin.availableBalance - rawAmt;
+
+                if (mode === 'PROFIT' && rawAmt > maxByProfit + 0.009) {
+                    if (previewBanner) previewBanner.className = "bg-rose-950/40 border border-rose-500/50 px-3 py-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs";
+                    if (previewIcon) previewIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
+                    if (previewText) previewText.innerHTML = `<b class="text-rose-300">Validación rechazada:</b> El retiro ($${rawAmt.toFixed(2)}) supera tu Utilidad Neta disponible ($${maxByProfit.toFixed(2)}). Cambia a "Contra Bankroll Total" si deseas retirar capital.`;
+                    if (resultingEl) {
+                        resultingEl.innerText = `$${resulting.toFixed(2)}`;
+                        resultingEl.className = "text-xs font-black text-rose-400";
+                    }
+                } else if (rawAmt > maxByBank + 0.009) {
+                    if (previewBanner) previewBanner.className = "bg-rose-950/40 border border-rose-500/50 px-3 py-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs";
+                    if (previewIcon) previewIcon.className = "fa-solid fa-triangle-exclamation text-rose-400";
+                    if (previewText) previewText.innerHTML = `<b class="text-rose-300">Fondos insuficientes:</b> El monto ($${rawAmt.toFixed(2)}) excede el Saldo Disponible actual ($${maxByBank.toFixed(2)}).`;
+                    if (resultingEl) {
+                        resultingEl.innerText = `$${resulting.toFixed(2)}`;
+                        resultingEl.className = "text-xs font-black text-rose-400";
+                    }
+                } else {
+                    if (previewBanner) previewBanner.className = "bg-amber-950/30 border border-amber-500/40 px-3 py-2 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs";
+                    if (previewIcon) previewIcon.className = "fa-solid fa-circle-check text-amber-400";
+                    if (previewText) previewText.innerHTML = `Retiro válido de <b class="text-amber-300">-$${rawAmt.toFixed(2)}</b> (${mode === 'PROFIT' ? 'Validado contra Utilidad Neta' : 'Validado contra Bankroll Total'}).`;
+                    if (resultingEl) {
+                        resultingEl.innerText = `$${resulting.toFixed(2)}`;
+                        resultingEl.className = "text-xs font-black text-amber-300";
+                    }
+                }
+            }
+        }
+
+        function submitBoxTransaction() {
+            const fin = getBankrollFinancialSummary(activeBankrollId);
+            const bankObj = fin.bankObj;
+            if (!bankObj) return;
+
+            const dateVal = document.getElementById('boxTxDate')?.value || new Date().toISOString().slice(0, 10);
+            const rawAmt = parseFloat(document.getElementById('boxTxAmount')?.value);
+            const rawConcept = (document.getElementById('boxTxConcept')?.value || '').trim();
+            const mode = getSelectedWithdrawValidationMode();
+
+            if (isNaN(rawAmt) || rawAmt <= 0) {
+                showToast("Ingresa un monto válido mayor a $0.00.");
+                return;
+            }
+
+            const amount = +rawAmt.toFixed(2);
+
+            if (currentBoxTxType === 'WITHDRAW') {
+                const maxByProfit = Math.max(0, fin.netProfitAvailable);
+                const maxByBank = Math.max(0, fin.availableBalance);
+
+                if (mode === 'PROFIT' && amount > maxByProfit + 0.009) {
+                    showToast(`Retiro excede Utilidad Neta disponible ($${maxByProfit.toFixed(2)}).`);
+                    return;
+                }
+                if (amount > maxByBank + 0.009) {
+                    showToast(`Retiro excede el Saldo Disponible actual ($${maxByBank.toFixed(2)}).`);
+                    return;
+                }
+            }
+
+            const balanceBefore = +fin.availableBalance.toFixed(2);
+            const resultingBalance = currentBoxTxType === 'DEPOSIT'
+                ? +(balanceBefore + amount).toFixed(2)
+                : +(balanceBefore - amount).toFixed(2);
+
+            const defaultConcept = currentBoxTxType === 'DEPOSIT'
+                ? 'Depósito Externo de Capital'
+                : (mode === 'PROFIT' ? 'Retiro de Utilidad Neta' : 'Retiro de Fondos de Caja');
+
+            const newTx = {
+                id: 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                bankrollId: bankObj.id,
+                bankrollName: bankObj.name,
+                date: dateVal,
+                timestamp: Date.now(),
+                type: currentBoxTxType,
+                validationMode: currentBoxTxType === 'DEPOSIT' ? 'EXTERNAL' : mode,
+                amount: amount,
+                concept: rawConcept || defaultConcept,
+                balanceBefore: balanceBefore,
+                resultingBalance: resultingBalance
+            };
+
+            boxTransactionsLog.push(newTx);
+
+            if (currentBoxTxType === 'WITHDRAW') {
+                if (!bankObj.withdrawLog) bankObj.withdrawLog = [];
+                bankObj.withdrawLog.push({
+                    txId: newTx.id,
+                    date: dateVal,
+                    amount: amount,
+                    profitBasis: fin.netProfitAvailable
+                });
+            }
+
+            saveBoxTransactionsToStorage();
+            saveBankrollsToStorage();
+            updateTrackerMetrics();
+            renderBankrollManagerList();
+            renderBoxTransactionsModal();
+
+            const amountInput = document.getElementById('boxTxAmount');
+            const conceptInput = document.getElementById('boxTxConcept');
+            if (amountInput) amountInput.value = '';
+            if (conceptInput) conceptInput.value = '';
+            onBoxTransactionFormChange();
+
+            showToast(
+                currentBoxTxType === 'DEPOSIT'
+                    ? `¡Depósito de +$${amount.toFixed(2)} registrado! Nuevo saldo: $${resultingBalance.toFixed(2)}`
+                    : `¡Retiro de -$${amount.toFixed(2)} registrado! Nuevo saldo: $${resultingBalance.toFixed(2)}`
+            );
+        }
+
+        function deleteBoxTransaction(txId) {
+            const tx = boxTransactionsLog.find(t => t.id === txId);
+            if (!tx) return;
+            if (!confirm(`¿Deseas eliminar este ${tx.type === 'DEPOSIT' ? 'depósito' : 'retiro'} de $${parseFloat(tx.amount).toFixed(2)} y recalcular el saldo de la caja?`)) {
+                return;
+            }
+            boxTransactionsLog = boxTransactionsLog.filter(t => t.id !== txId);
+            const bankObj = bankrollsData.find(b => b.id === tx.bankrollId);
+            if (bankObj && Array.isArray(bankObj.withdrawLog)) {
+                bankObj.withdrawLog = bankObj.withdrawLog.filter(w => w.txId !== txId);
+            }
+            saveBoxTransactionsToStorage();
+            saveBankrollsToStorage();
+            updateTrackerMetrics();
+            renderBankrollManagerList();
+            renderBoxTransactionsModal();
+            onBoxTransactionFormChange();
+            showToast("Movimiento de caja eliminado y saldo sincronizado.");
+        }
+
+        function renderBoxTransactionsModal() {
+            const fin = getBankrollFinancialSummary(activeBankrollId);
+            const bankObj = fin.bankObj;
+            if (!bankObj) return;
+
+            const badge = document.getElementById('boxTxModalBankBadge');
+            if (badge) badge.innerText = bankObj.name;
+
+            const kpiInit = document.getElementById('boxKpiInitial');
+            const kpiDep = document.getElementById('boxKpiDeposits');
+            const kpiWd = document.getElementById('boxKpiWithdrawals');
+            const kpiProf = document.getElementById('boxKpiNetProfitAvail');
+            const kpiAvail = document.getElementById('boxKpiAvailableBalance');
+
+            if (kpiInit) kpiInit.innerText = `$${fin.initial.toFixed(2)}`;
+            if (kpiDep) kpiDep.innerText = `+$${fin.totalDeposited.toFixed(2)}`;
+            if (kpiWd) kpiWd.innerText = `-$${fin.totalWithdrawn.toFixed(2)}`;
+            if (kpiProf) kpiProf.innerText = `$${fin.netProfitAvailable.toFixed(2)}`;
+            if (kpiAvail) kpiAvail.innerText = `$${fin.availableBalance.toFixed(2)}`;
+
+            const txList = boxTransactionsLog
+                .filter(tx => (tx.bankrollId || bankrollsData[0].id) === bankObj.id)
+                .slice()
+                .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            const countBadge = document.getElementById('boxTxCountBadge');
+            if (countBadge) countBadge.innerText = `${txList.length} ${txList.length === 1 ? 'movimiento' : 'movimientos'}`;
+
+            const tbody = document.getElementById('boxTransactionsTableBody');
+            if (!tbody) return;
+
+            if (txList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500 italic">No hay depósitos ni retiros registrados en esta caja todavía.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            txList.forEach(tx => {
+                const isDep = tx.type === 'DEPOSIT';
+                const amt = parseFloat(tx.amount) || 0;
+                const resBal = parseFloat(tx.resultingBalance) || 0;
+                const typeBadge = isDep
+                    ? `<span class="bg-sky-500/20 text-sky-300 border border-sky-500/40 px-2 py-0.5 rounded-full font-black text-[9px]"><i class="fa-solid fa-arrow-down mr-1"></i>DEPÓSITO</span>`
+                    : `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-black text-[9px]"><i class="fa-solid fa-arrow-up mr-1"></i>RETIRO</span>`;
+                const modeSub = isDep
+                    ? 'Inyección Externa'
+                    : (tx.validationMode === 'BANKROLL' ? 'Contra Bankroll Total' : 'Contra Utilidad Neta');
+
+                html += `
+                    <tr class="${isDep ? 'bg-sky-950/10' : 'bg-amber-950/10'}">
+                        <td class="p-1.5 text-center font-mono text-slate-300">${tx.date || '-'}</td>
+                        <td class="p-1.5 text-center">${typeBadge}</td>
+                        <td class="p-1.5">
+                            <span class="font-bold text-white block">${tx.concept || '-'}</span>
+                            <span class="text-[8px] text-slate-400">${modeSub}</span>
+                        </td>
+                        <td class="p-1.5 text-center font-black ${isDep ? 'text-sky-400' : 'text-amber-400'}">
+                            ${isDep ? '+$' : '-$'}${amt.toFixed(2)}
+                        </td>
+                        <td class="p-1.5 text-center font-black text-emerald-300">
+                            $${resBal.toFixed(2)}
+                        </td>
+                        <td class="p-1.5 text-center">
+                            <button onclick="deleteBoxTransaction('${tx.id}')" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 rounded hover:bg-rose-950/50 transition-all" title="Eliminar movimiento y revertir saldo">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function exportBoxTransactionsCSV() {
+            const fin = getBankrollFinancialSummary(activeBankrollId);
+            const bankObj = fin.bankObj;
+            const txList = boxTransactionsLog.filter(tx => (tx.bankrollId || bankrollsData[0].id) === bankObj.id);
+            if (txList.length === 0) {
+                showToast("No hay movimientos de caja registrados para exportar.");
+                return;
+            }
+            let csv = "Fecha,Caja,Tipo,Modo_Validacion,Concepto,Monto,Saldo_Resultante\n";
+            txList.forEach(tx => {
+                csv += `"${tx.date}","${tx.bankrollName || bankObj.name}","${tx.type}","${tx.validationMode || ''}","${(tx.concept || '').replace(/"/g, '""')}",${parseFloat(tx.amount || 0).toFixed(2)},${parseFloat(tx.resultingBalance || 0).toFixed(2)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `movimientos_caja_${bankObj.id}_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Historial de caja exportado a CSV.");
         }
 
         function onLeagueSelectChange() {
@@ -3036,21 +3817,7 @@
                 return;
             }
 
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            let initialBank = activeBankObj.initial;
-            let totalProfit = 0;
-            let pendingRiskCalc = 0;
-            
-            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
-                const stake = parseFloat(bet.stake) || 0;
-                const odds = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') pendingRiskCalc += stake;
-                else if (bet.status === 'WON') totalProfit += stake * (odds - 1);
-                else if (bet.status === 'LOST') totalProfit -= stake;
-                else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
-                else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
-            });
-            const currentBankroll = Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc);
+            const currentBankroll = getActiveAvailableBankroll();
 
             const b = bookieOdds - 1;
             const q = 1 - prob;
@@ -3116,20 +3883,7 @@
             document.getElementById('logFairOdds').value = fairOdds;
             document.getElementById('logBookieOdds').value = fairOdds;
             
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            let initialBank = activeBankObj.initial;
-            let totalProfit = 0;
-            let pendingRiskCalc = 0;
-            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') pendingRiskCalc += s;
-                else if (bet.status === 'WON') totalProfit += s * (o - 1);
-                else if (bet.status === 'LOST') totalProfit -= s;
-                else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
-                else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
-            });
-            const dynamicBankroll = initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc;
+            const dynamicBankroll = getActiveAvailableBankroll();
             const stakePct = parseFloat(document.getElementById('globalStakePct').value) || 2.0;
             let calculatedStake = Math.max(1, Math.round(Math.max(0, dynamicBankroll) * (stakePct / 100)));
 
@@ -3497,8 +4251,10 @@
 
         function updateTrackerMetrics() {
     const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-    const initialBank = activeBankObj.initial;
-    const totalWithdrawn = activeBankObj.totalWithdrawn || 0;
+    const fin = getBankrollFinancialSummary(activeBankrollId);
+    const initialBank = fin.initial;
+    const totalDeposited = fin.totalDeposited;
+    const totalWithdrawn = fin.totalWithdrawn;
     
     const selectedMarketFilter = document.getElementById('marketFilterSelect') ? document.getElementById('marketFilterSelect').value : 'ALL';
     const selectedSelectionFilter = document.getElementById('selectionFilterSelect') ? document.getElementById('selectionFilterSelect').value : 'ALL';
@@ -3510,7 +4266,6 @@
     let countClosed = 0;
     let wonCount = 0;
 
-    const currentBankrollArr = [initialBank];
     const currentBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
     
     const filteredBets = currentBankBets.filter(b => {
@@ -3520,8 +4275,10 @@
     });
 
     const cronoBets = filteredBets.slice().reverse();
+    const timelineEvents = [];
+    let betSeqIdx = 0;
 
-    // 1. Bucle original: Solo calcula métricas financieras y visuales
+    // 1. Bucle original: Calcula métricas financieras y prepara eventos cronológicos para la gráfica
     cronoBets.forEach(bet => {
         const stake = parseFloat(bet.stake) || 0;
         const odds = parseFloat(bet.bookieOdds) || 1;
@@ -3531,6 +4288,7 @@
             countPending++;
         } else {
             countClosed++;
+            betSeqIdx++;
             let pnl = 0;
             if (bet.status === 'WON') {
                 pnl = stake * (odds - 1);
@@ -3551,18 +4309,72 @@
             }
 
             totalProfitClosed += pnl;
-            const lastBank = currentBankrollArr[currentBankrollArr.length - 1];
-            const nextBank = lastBank + pnl;
-            currentBankrollArr.push(nextBank);
+            timelineEvents.push({
+                eventType: 'BET',
+                date: bet.date || '1970-01-01',
+                timestamp: typeof bet.id === 'number' ? bet.id : 0,
+                seq: betSeqIdx,
+                delta: pnl,
+                label: `#${betSeqIdx}`,
+                title: `${bet.match || 'Partido'} (${bet.selection || bet.market || 'Pick'})`,
+                detail: `${pnl >= 0 ? '+$' : '-$'}${Math.abs(pnl).toFixed(2)} (${bet.status})`
+            });
         }
+    });
+
+    // Integrar Movimientos de Caja (Depósitos y Retiros) en la línea de tiempo del Bankroll
+    const activeBoxTxs = boxTransactionsLog.filter(tx => (tx.bankrollId || bankrollsData[0].id) === activeBankrollId);
+    activeBoxTxs.forEach((tx, txIdx) => {
+        const amt = parseFloat(tx.amount) || 0;
+        if (amt > 0) {
+            const isDep = tx.type === 'DEPOSIT';
+            timelineEvents.push({
+                eventType: isDep ? 'DEPOSIT' : 'WITHDRAW',
+                date: tx.date || '1970-01-01',
+                timestamp: tx.timestamp || 0,
+                seq: 10000 + txIdx,
+                delta: isDep ? amt : -amt,
+                label: isDep ? `📥 Dep` : `📤 Ret`,
+                title: `${isDep ? 'Depósito Externo' : 'Retiro de Caja'}: ${tx.concept || ''}`,
+                detail: `${isDep ? '+$' : '-$'}${amt.toFixed(2)}`
+            });
+        }
+    });
+
+    timelineEvents.sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        if (a.timestamp && b.timestamp && a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
+        return a.seq - b.seq;
+    });
+
+    const currentBankrollArr = [{
+        y: initialBank,
+        label: 'Inicio',
+        eventType: 'START',
+        title: `Capital Inicial (${activeBankObj.name})`,
+        detail: `$${initialBank.toFixed(2)}`,
+        date: ''
+    }];
+
+    let runningChartBank = initialBank;
+    timelineEvents.forEach(ev => {
+        runningChartBank = +(runningChartBank + ev.delta).toFixed(2);
+        currentBankrollArr.push({
+            y: runningChartBank,
+            label: ev.label,
+            eventType: ev.eventType,
+            title: ev.title,
+            detail: ev.detail,
+            date: ev.date
+        });
     });
 
     // 2. NUEVO BUCLE: Cálculo independiente de Racha y Drawdown global (Ignora los filtros de la UI)
     const globalCronoBets = currentBankBets.slice().reverse();
     let currentStreakCount = 0;
     let streakType = 'NONE';
-    let globalPeakBank = initialBank;
-    let currentGlobalBank = initialBank;
+    let globalPeakBank = initialBank + totalDeposited - totalWithdrawn;
+    let currentGlobalBank = initialBank + totalDeposited - totalWithdrawn;
 
     globalCronoBets.forEach(bet => {
         if (bet.status !== 'PENDING' && bet.status !== 'VOID') {
@@ -3591,12 +4403,24 @@
     const currentDrawdownVal = globalPeakBank > currentGlobalBank ? globalPeakBank - currentGlobalBank : 0;
     const currentDDPct = globalPeakBank > 0 ? (currentDrawdownVal / globalPeakBank) * 100 : 0;
 
-    // --- RESTO DE LA INTERFAZ ---
-    const currentBankroll = initialBank + totalProfitClosed - totalWithdrawn - totalRiskPending;
+    // --- RESTO DE LA INTERFAZ (Sincronizado con Depósitos y Retiros) ---
+    const currentBankroll = fin.availableBalance;
     const yieldVal = totalStakedClosed > 0 ? (totalProfitClosed / totalStakedClosed) * 100 : 0;
     const winRateVal = countClosed > 0 ? (wonCount / countClosed) * 100 : 0;
 
     document.getElementById('summaryBankroll').innerText = `$${currentBankroll.toFixed(2)}`;
+    const sumInitEl = document.getElementById('summaryInitialCapital');
+    if (sumInitEl) sumInitEl.innerText = `$${initialBank.toFixed(0)}`;
+    const sumDepEl = document.getElementById('summaryTotalDeposits');
+    if (sumDepEl) sumDepEl.innerText = `+$${totalDeposited.toFixed(2)}`;
+    const sumWdEl = document.getElementById('summaryTotalWithdrawals');
+    if (sumWdEl) sumWdEl.innerText = `-$${totalWithdrawn.toFixed(2)}`;
+
+    const pnlStatusEl = document.getElementById('pnlStatusText');
+    if (pnlStatusEl) {
+        pnlStatusEl.innerText = `| Saldo Caja: $${currentBankroll.toFixed(2)} (Dep: +$${totalDeposited.toFixed(0)} / Ret: -$${totalWithdrawn.toFixed(0)})`;
+    }
+
     const sumProfitEl = document.getElementById('summaryProfit');
     sumProfitEl.innerText = (totalProfitClosed >= 0 ? '+$' : '-$') + Math.abs(totalProfitClosed).toFixed(2);
     sumProfitEl.className = totalProfitClosed >= 0 ? "text-xs font-black text-emerald-400" : "text-xs font-black text-rose-400";
@@ -3873,21 +4697,8 @@
         let kmcOpenedFromBetModal = false;
 
         function getActiveAvailableBankroll() {
-            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
-            if (!activeBankObj) return 1000;
-            let initialBank = parseFloat(activeBankObj.initial) || 1000;
-            let totalProfit = 0;
-            let pendingRiskCalc = 0;
-            betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(bet => {
-                const s = parseFloat(bet.stake) || 0;
-                const o = parseFloat(bet.bookieOdds) || 1;
-                if (bet.status === 'PENDING') pendingRiskCalc += s;
-                else if (bet.status === 'WON') totalProfit += s * (o - 1);
-                else if (bet.status === 'LOST') totalProfit -= s;
-                else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
-                else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
-            });
-            return Math.max(10, initialBank + totalProfit - (activeBankObj.totalWithdrawn || 0) - pendingRiskCalc);
+            const fin = getBankrollFinancialSummary(activeBankrollId);
+            return Math.max(10, fin.availableBalance);
         }
 
         function toggleKellyMonteCarloModal(show, fromBetModal = false) {
@@ -5250,7 +6061,28 @@
             const ctx = document.getElementById('pnlChart').getContext('2d');
             if (pnlChartInstance) pnlChartInstance.destroy();
 
-            const labels = bankHistory.map((_, i) => i === 0 ? 'Inicio' : `#${i}`);
+            const normalizedPoints = (bankHistory || []).map((pt, i) => {
+                if (typeof pt === 'object' && pt !== null) return pt;
+                return {
+                    y: parseFloat(pt) || 0,
+                    label: i === 0 ? 'Inicio' : `#${i}`,
+                    eventType: i === 0 ? 'START' : 'BET',
+                    title: i === 0 ? 'Capital Inicial' : `Apuesta #${i}`,
+                    detail: ''
+                };
+            });
+
+            const labels = normalizedPoints.map(pt => pt.label);
+            const dataValues = normalizedPoints.map(pt => pt.y);
+            const pointBgColors = normalizedPoints.map(pt => {
+                if (pt.eventType === 'DEPOSIT') return '#38bdf8';
+                if (pt.eventType === 'WITHDRAW') return '#fbbf24';
+                return '#10b981';
+            });
+            const pointRadii = normalizedPoints.map(pt => {
+                if (pt.eventType === 'DEPOSIT' || pt.eventType === 'WITHDRAW') return 5;
+                return 3;
+            });
 
             pnlChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -5258,18 +6090,39 @@
                     labels: labels,
                     datasets: [{
                         label: 'Bankroll ($)',
-                        data: bankHistory,
+                        data: dataValues,
                         borderColor: '#10b981',
                         backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        pointBackgroundColor: pointBgColors,
+                        pointBorderColor: pointBgColors,
+                        pointRadius: pointRadii,
+                        pointHoverRadius: 6,
                         fill: true,
-                        tension: 0.3,
-                        pointRadius: 3
+                        tension: 0.3
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: function(items) {
+                                    if (!items || !items.length) return '';
+                                    const idx = items[0].dataIndex;
+                                    const pt = normalizedPoints[idx];
+                                    return pt ? `${pt.title}${pt.date ? ' [' + pt.date + ']' : ''}` : '';
+                                },
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    const pt = normalizedPoints[idx];
+                                    const balStr = `Saldo Caja: $${Number(context.parsed.y).toFixed(2)}`;
+                                    return (pt && pt.detail) ? `${pt.detail} | ${balStr}` : balStr;
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
                         y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } }
