@@ -2864,63 +2864,141 @@
             showToast(`¡Retiro registrado! 50% de utilidad: $${amountToWithdraw.toFixed(2)}`);
         }
 
+        // 1. Renderizado Pro de la Lista de Bankrolls
         function renderBankrollManagerList() {
             const container = document.getElementById('bankrollsListContainer');
             if (!container) return;
-
+            
             let html = '';
-            bankrollsData.forEach(b => {
-                const isCurrent = b.id === activeBankrollId;
-
+            bankrollsData.forEach((b) => {
+                // Cálculo de variables actuales
                 let totalProfit = 0;
-                betLogData.filter(bt => (bt.bankrollId || bankrollsData[0].id) === b.id).forEach(bet => {
-                    const stake = parseFloat(bet.stake) || 0;
-                    const odds = parseFloat(bet.bookieOdds) || 1;
-                    if (bet.status === 'WON') totalProfit += stake * (odds - 1);
-                    else if (bet.status === 'LOST') totalProfit -= stake;
-                    else if (bet.status === 'HALF_WON') totalProfit += (stake / 2) * (odds - 1);
-                    else if (bet.status === 'HALF_LOST') totalProfit -= (stake / 2);
+                let pendingRiskCalc = 0;
+                
+                betLogData.filter(bet => (bet.bankrollId || bankrollsData[0].id) === b.id).forEach(bet => {
+                    const s = parseFloat(bet.stake) || 0;
+                    const o = parseFloat(bet.bookieOdds) || 1;
+                    if (bet.status === 'PENDING') pendingRiskCalc += s;
+                    else if (bet.status === 'WON') totalProfit += s * (o - 1);
+                    else if (bet.status === 'LOST') totalProfit -= s;
+                    else if (bet.status === 'HALF_WON') totalProfit += (s / 2) * (o - 1);
+                    else if (bet.status === 'HALF_LOST') totalProfit -= (s / 2);
                 });
-                const netProfit = totalProfit - (b.totalWithdrawn || 0);
-                const halfProfit = Math.max(0, netProfit * 0.5);
-
-                let withdrawHistoryHtml = '';
-                if (b.withdrawLog && b.withdrawLog.length > 0) {
-                    withdrawHistoryHtml = `<div class="mt-2 pt-1 border-t border-slate-800 text-[9px] text-slate-400 space-y-0.5">
-                        <span class="font-bold text-emerald-400">Historial de Retiros (Total: $${(b.totalWithdrawn || 0).toFixed(2)}):</span>`;
-                    b.withdrawLog.forEach((w, idx) => {
-                        withdrawHistoryHtml += `<div class="flex justify-between"><span>• [${w.date}] Retiro 50% utilidad</span><span class="text-emerald-300 font-bold">+$${w.amount.toFixed(2)}</span></div>`;
-                    });
-                    withdrawHistoryHtml += `</div>`;
-                }
-
+                
+                // Compatibilidad segura hacia atrás (si no existe totalDeposited, se asume 0)
+                let totalDeposited = b.totalDeposited || 0;
+                let totalWithdrawn = b.totalWithdrawn || 0;
+                
+                let currentBalance = b.initial + totalDeposited + totalProfit - totalWithdrawn;
+                let isActive = b.id === activeBankrollId;
+                
                 html += `
-                    <div class="bg-slate-900/70 p-3 rounded-xl border ${isCurrent ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-800'} space-y-2 text-xs">
-                        <div class="flex items-center justify-between">
+                    <div class="bg-slate-900/80 p-3 rounded-xl border ${isActive ? 'border-emerald-500 shadow-md shadow-emerald-500/10' : 'border-slate-800'}">
+                        <div class="flex justify-between items-start mb-2">
                             <div>
-                                <span class="font-bold text-white block">${b.name} ${isCurrent ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.2 rounded ml-1">Activo</span>' : ''}</span>
-                                <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Profit Neto: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs font-black text-white">${b.name}</h4>
+                                    ${isActive ? '<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[8px] uppercase font-bold border border-emerald-500/30">Activo</span>' : ''}
+                                </div>
+                                <div class="flex items-center gap-2 mt-1 text-[9px] font-bold">
+                                    <span class="text-slate-400">Inic: $${b.initial.toFixed(2)}</span>
+                                    <span class="text-indigo-400">Dep: +$${totalDeposited.toFixed(2)}</span>
+                                    <span class="text-amber-400">Ret: -$${totalWithdrawn.toFixed(2)}</span>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-1.5">
-                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
-                                <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                            <div class="text-right">
+                                <span class="text-sm font-black ${currentBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}">$${currentBalance.toFixed(2)}</span>
+                                <span class="block text-[8px] uppercase font-bold text-slate-500">Saldo Disponible</span>
                             </div>
                         </div>
-
-                        <div class="flex items-center justify-between bg-slate-900/90 p-2 rounded-lg border border-emerald-500/30">
-                            <div>
-                                <span class="block text-[8px] uppercase font-bold text-slate-400">Retirar 50% de Utilidad</span>
-                                <span class="text-xs font-black text-emerald-400">$${halfProfit.toFixed(2)}</span>
-                            </div>
-                            <button onclick="withdrawHalfProfit('${b.id}')" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] px-3 py-1.5 rounded-lg transition-all shadow flex items-center gap-1">
-                                <i class="fa-solid fa-money-bill-transfer"></i> Retirar 50%
+                        
+                        <div class="flex gap-2 mt-2.5">
+                            <button onclick="openTransactionModal('${b.id}', 'deposit', ${currentBalance})" class="flex-1 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-[10px] font-black py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                                <i class="fa-solid fa-arrow-down"></i> Depositar
+                            </button>
+                            <button onclick="openTransactionModal('${b.id}', 'withdraw', ${currentBalance})" class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[10px] font-black py-1.5 rounded-lg transition-all flex items-center justify-center gap-1 active:scale-95">
+                                <i class="fa-solid fa-arrow-up"></i> Retirar
                             </button>
                         </div>
-                        ${withdrawHistoryHtml}
                     </div>
                 `;
             });
+            
             container.innerHTML = html;
+        }
+
+        // 2. Controladores del Modal de Transacciones
+        function toggleTransactionModal(show) {
+            const modal = document.getElementById('transactionModal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        function openTransactionModal(bankrollId, type, currentBalance) {
+            const b = bankrollsData.find(x => x.id === bankrollId);
+            if (!b) return;
+
+            document.getElementById('transactionBankrollId').value = bankrollId;
+            document.getElementById('transactionType').value = type;
+            document.getElementById('transactionBankrollName').innerText = b.name;
+            document.getElementById('transactionCurrentBalance').innerText = `$${currentBalance.toFixed(2)}`;
+            document.getElementById('transactionAmount').value = '';
+
+            const title = document.getElementById('transactionModalTitle');
+            const icon = document.getElementById('transactionIcon');
+            const btn = document.getElementById('transactionConfirmBtn');
+
+            if (type === 'deposit') {
+                title.innerText = 'Realizar Depósito';
+                icon.className = 'fa-solid fa-arrow-down text-indigo-400 text-base';
+                btn.className = 'bg-indigo-500 hover:bg-indigo-600 text-white font-black text-xs px-4 py-2 rounded-xl shadow-lg transition-all';
+                btn.innerText = 'Confirmar Depósito';
+            } else {
+                title.innerText = 'Realizar Retiro';
+                icon.className = 'fa-solid fa-arrow-up text-amber-400 text-base';
+                btn.className = 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl shadow-lg transition-all';
+                btn.innerText = 'Confirmar Retiro';
+            }
+
+            toggleTransactionModal(true);
+        }
+
+        function processTransaction() {
+            const bankrollId = document.getElementById('transactionBankrollId').value;
+            const type = document.getElementById('transactionType').value;
+            const amountInput = document.getElementById('transactionAmount');
+            const amount = parseFloat(amountInput.value);
+
+            if (isNaN(amount) || amount <= 0) {
+                showToast("Por favor, introduce un monto válido mayor a 0.");
+                return;
+            }
+
+            const bIndex = bankrollsData.findIndex(x => x.id === bankrollId);
+            if (bIndex === -1) return;
+
+            // Retrocompatibilidad segura si las propiedades no existen
+            if (bankrollsData[bIndex].totalDeposited === undefined) bankrollsData[bIndex].totalDeposited = 0;
+            if (bankrollsData[bIndex].totalWithdrawn === undefined) bankrollsData[bIndex].totalWithdrawn = 0;
+            if (bankrollsData[bIndex].withdrawLog === undefined) bankrollsData[bIndex].withdrawLog = [];
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+
+            if (type === 'deposit') {
+                bankrollsData[bIndex].totalDeposited += amount;
+                bankrollsData[bIndex].withdrawLog.push({ type: 'DEPOSIT', amount: amount, date: dateStr });
+                showToast(`+$${amount.toFixed(2)} depositados en ${bankrollsData[bIndex].name}`);
+            } else if (type === 'withdraw') {
+                bankrollsData[bIndex].totalWithdrawn += amount;
+                bankrollsData[bIndex].withdrawLog.push({ type: 'WITHDRAW', amount: amount, date: dateStr });
+                showToast(`-$${amount.toFixed(2)} retirados de ${bankrollsData[bIndex].name}`);
+            }
+
+            // Guardar cambios en el storage y recargar los módulos afectados
+            saveBankrollsToStorage();
+            renderBankrollManagerList();
+            updateTrackerMetrics(); 
+            toggleTransactionModal(false);
         }
 
         function onLeagueSelectChange() {
@@ -5972,5 +6050,38 @@ document.getElementById('rhoValueDisplay').innerText = rho.toFixed(2);
             });
         }
     </script>
+    <!-- MODAL DE DEPÓSITOS Y RETIROS -->
+    <div id="transactionModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[80] hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-sm rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i id="transactionIcon" class="fa-solid fa-money-bill-transfer text-emerald-400 text-base"></i>
+                    <h3 class="font-black text-sm text-white" id="transactionModalTitle">Gestión de Capital</h3>
+                </div>
+                <button onclick="toggleTransactionModal(false)" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-4">
+                <input type="hidden" id="transactionBankrollId">
+                <input type="hidden" id="transactionType">
+                
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-center">
+                    <span class="block text-[10px] uppercase font-bold text-slate-400">Bankroll Seleccionado</span>
+                    <span class="text-sm font-black text-white" id="transactionBankrollName">Caja</span>
+                    <div class="mt-2 text-xs font-bold text-emerald-400">Saldo Actual: <span id="transactionCurrentBalance">$0.00</span></div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Monto de la Transacción ($)</label>
+                    <input type="number" id="transactionAmount" min="1" step="1" placeholder="Ej. 100" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-black text-center focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end gap-2">
+                <button onclick="toggleTransactionModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all">Cancelar</button>
+                <button onclick="processTransaction()" id="transactionConfirmBtn" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl shadow-lg transition-all">Confirmar</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
