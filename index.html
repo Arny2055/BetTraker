@@ -74,9 +74,6 @@
                 <button onclick="toggleParallelTrackerModal(true)" class="bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-book-bookmark"></i> Bitácora Paralela
                 </button>
-                <button onclick="toggleLeagueStatsModal(true)" class="bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
-                    <i class="fa-solid fa-chart-simple"></i> Perfil Ligas
-                </button>
                 <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-database"></i> Ligas
                 </button>
@@ -191,26 +188,66 @@
             </div>
         </section>
 
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <!-- 🆕 NUEVA SECCIÓN: PERFIL ESTADÍSTICO DE LIGAS            -->
-        <!-- ═══════════════════════════════════════════════════════════ -->
-        <section class="glass-card rounded-2xl p-3 space-y-2.5 border border-purple-500/40 bg-gradient-to-r from-slate-900 via-purple-950/20 to-slate-900">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <!-- ============================================================ -->
+        <!-- NUEVA SECCIÓN: ANÁLISIS GLOBAL DE LIGA (PROMEDIOS GF)         -->
+        <!-- ============================================================ -->
+        <section class="glass-card rounded-2xl p-3.5 space-y-2.5 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-chart-simple text-purple-400 text-xs"></i>
-                    <span class="text-xs font-black text-slate-200 uppercase tracking-wide">Perfil Estadístico Liga</span>
+                    <i class="fa-solid fa-globe text-emerald-400 text-xs"></i>
+                    <h2 class="font-extrabold text-xs text-white">Análisis Global de Liga (Promedios GF)</h2>
                 </div>
-                <button onclick="toggleLeagueStatsModal(true)" class="text-[9px] font-bold text-purple-400 bg-purple-500/10 hover:bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30 flex items-center gap-1 transition-all active:scale-95">
-                    <i class="fa-solid fa-gear"></i> Gestionar
-                </button>
+                <span id="leagueAvgBadge" class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Promedios Reales</span>
             </div>
-            <select id="leagueProfileSelect" onchange="renderLeagueProfileRecommendation()" class="w-full bg-inputBg border border-purple-500/40 rounded-xl px-2.5 py-1.5 text-xs font-extrabold text-purple-300 focus:outline-none focus:border-purple-500">
-                <option value="">-- Seleccionar Liga para ver recomendaciones --</option>
-            </select>
-            <div id="leagueProfileRecommendations" class="space-y-2">
-                <p class="text-slate-500 text-[11px] italic text-center py-2">Selecciona una liga arriba para ver qué mercados son rentables.</p>
+            <div class="grid grid-cols-2 gap-2 text-center">
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-emerald-500/30">
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">λ Local (GF prom. Home)</span>
+                    <span class="text-sm font-black text-emerald-400" id="leagueAvgHomeGF">0.000</span>
+                </div>
+                <div class="bg-slate-900/90 p-2 rounded-xl border border-rose-500/30">
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">λ Visitante (GF prom. Away)</span>
+                    <span class="text-sm font-black text-rose-400" id="leagueAvgAwayGF">0.000</span>
+                </div>
             </div>
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/30">
+                    <div class="flex justify-between items-center"><span class="text-xs font-black text-white">OVER 2.5</span><span class="text-[9px] text-slate-400">Liga</span></div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-lg font-black text-emerald-400" id="leaguePctOver25">0.0%</span>
+                        <span class="text-xs font-black text-gold-400" id="leagueOddsOver25">@0.00</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="leagueBarOver25" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                </div>
+                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-center"><span class="text-xs font-black text-slate-300">UNDER 2.5</span><span class="text-[9px] text-slate-400">Liga</span></div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-lg font-black text-slate-300" id="leaguePctUnder25">0.0%</span>
+                        <span class="text-xs font-black text-slate-300" id="leagueOddsUnder25">@0.00</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="leagueBarUnder25" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                </div>
+                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-gold-500/30">
+                    <div class="flex justify-between items-center"><span class="text-xs font-black text-white">BTTS SÍ</span><span class="text-[9px] text-slate-400">Liga</span></div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-lg font-black text-gold-400" id="leaguePctBttsYes">0.0%</span>
+                        <span class="text-xs font-black text-gold-400" id="leagueOddsBttsYes">@0.00</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="leagueBarBttsYes" class="bg-gold-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                </div>
+                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                    <div class="flex justify-between items-center"><span class="text-xs font-black text-slate-300">BTTS NO</span><span class="text-[9px] text-slate-400">Liga</span></div>
+                    <div class="flex items-baseline justify-between mt-1">
+                        <span class="text-lg font-black text-slate-300" id="leaguePctBttsNo">0.0%</span>
+                        <span class="text-xs font-black text-slate-300" id="leagueOddsBttsNo">@0.00</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="leagueBarBttsNo" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                </div>
+            </div>
+            <div id="leagueAvgTeamsInfo" class="text-[9px] text-slate-400 italic text-center">Selecciona una liga para ver los promedios globales.</div>
         </section>
+        <!-- ============================================================ -->
+        <!-- FIN NUEVA SECCIÓN                                             -->
+        <!-- ============================================================ -->
 
         <section class="glass-card rounded-2xl p-3.5 space-y-3">
             <div class="grid grid-cols-2 gap-2.5">
@@ -464,69 +501,6 @@
             <p class="font-bold text-slate-400">Poisson VIP Pro - Modelador & Bet Tracker</p>
             <p>Cuotas justas calculadas sin margen comercial.</p>
         </footer>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════ -->
-    <!-- 🆕 NUEVO MODAL: GESTOR DE PERFILES DE LIGAS               -->
-    <!-- ═══════════════════════════════════════════════════════════ -->
-    <div id="leagueStatsModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-3">
-        <div class="glass-card w-full max-w-3xl max-h-[94vh] rounded-2xl border border-purple-500/40 flex flex-col shadow-2xl overflow-hidden">
-            <div class="p-3.5 bg-slate-900/90 border-b border-purple-500/30 flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 via-indigo-600 to-emerald-400 flex items-center justify-center text-white shadow-lg shadow-purple-500/20"><i class="fa-solid fa-chart-simple text-sm"></i></div>
-                    <div>
-                        <h3 class="font-black text-sm text-white">Gestor de Perfiles de Ligas</h3>
-                        <p class="text-[10px] text-slate-400">Carga ligas y consulta qué mercados son rentables</p>
-                    </div>
-                </div>
-                <button onclick="toggleLeagueStatsModal(false)" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-2.5">
-                    <div class="flex justify-between items-center">
-                        <label class="text-xs font-bold text-purple-400 flex items-center gap-1.5"><i class="fa-solid fa-paste"></i> Pegar Liga(s)</label>
-                        <span class="text-[9px] text-slate-400">Separa con " | " o TAB o coma</span>
-                    </div>
-                    <div class="bg-slate-950/60 border border-slate-800 p-2 rounded-lg">
-                        <p class="text-[9px] text-slate-400 font-bold mb-1">Formato (13 columnas):</p>
-                        <pre class="text-[8px] text-purple-300 font-mono leading-tight overflow-x-auto">Liga | GP | Local% | Empate% | Visita% | Goles | HG | AG | O0.5% | O1.5% | O2.5% | O3.5% | BTTS%</pre>
-                        <p class="text-[9px] text-slate-400 mt-1">Ejemplo:</p>
-                        <pre class="text-[8px] text-emerald-300 font-mono leading-tight overflow-x-auto">Premier League | 95 | 42 | 27 | 31 | 2.68 | 1.52 | 1.17 | 94 | 75 | 46 | 31 | 48</pre>
-                    </div>
-                    <textarea id="leagueStatsRawInput" rows="4" placeholder="Pega aquí las ligas (una por línea)..." class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-purple-500"></textarea>
-                    <button onclick="parseAndSaveLeagueProfiles()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-black text-xs py-2 rounded-xl shadow-md flex items-center justify-center gap-1.5 active:scale-95">
-                        <i class="fa-solid fa-floppy-disk"></i> Procesar y Guardar
-                    </button>
-                </div>
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-extrabold text-slate-200">Ligas Registradas</span>
-                        <span id="leagueStatsCountBadge" class="text-[10px] font-bold text-purple-400 bg-purple-950/80 border border-purple-500/30 px-2 py-0.5 rounded-full">0 ligas</span>
-                    </div>
-                    <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 max-h-72">
-                        <table class="w-full text-[10px] text-left border-collapse excel-table">
-                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
-                                <tr>
-                                    <th class="p-1.5">Liga</th>
-                                    <th class="p-1.5 text-center">GP</th>
-                                    <th class="p-1.5 text-center bg-amber-950/40 text-amber-300">O2.5</th>
-                                    <th class="p-1.5 text-center bg-purple-950/40 text-purple-300">BTTS</th>
-                                    <th class="p-1.5 text-center">Veredicto</th>
-                                    <th class="p-1.5 text-center">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leagueStatsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            <div class="p-3 bg-slate-900/90 border-t border-purple-500/30 flex items-center justify-between">
-                <button onclick="resetLeagueProfilesToDefault()" class="bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1 active:scale-95">
-                    <i class="fa-solid fa-rotate-left"></i> Restaurar Defaults
-                </button>
-                <button onclick="toggleLeagueStatsModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button>
-            </div>
-        </div>
     </div>
 
     <!-- MODAL ADMINISTRACIÓN BANKROLLS -->
@@ -1132,29 +1106,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 19	JEF United	7	0	2	5	8	17	-9	2	0.29
 20	Avispa Fukuoka	6	0	0	6	4	15	-11	0	0.00`;
 
-        // 🆕 PERFILES DE LIGAS (Top Leagues)
-        const DEFAULT_LEAGUE_PROFILES = [
-            { name: "Premier League", country: "ENG", gp: 95, homeW: 42, draw: 27, awayW: 31, goals: 2.68, hg: 1.52, ag: 1.17, over05: 94, over15: 75, over25: 46, over35: 31, btts: 48 },
-            { name: "Bundesliga", country: "GER", gp: 78, homeW: 50, draw: 22, awayW: 28, goals: 3.51, hg: 2.14, ag: 1.37, over05: 92, over15: 81, over25: 71, over35: 53, btts: 60 },
-            { name: "Eredivisie", country: "NED", gp: 104, homeW: 35, draw: 28, awayW: 38, goals: 3.82, hg: 1.83, ag: 1.99, over05: 99, over15: 88, over25: 71, over35: 61, btts: 69 },
-            { name: "Serie A", country: "ITA", gp: 106, homeW: 47, draw: 17, awayW: 36, goals: 3.13, hg: 1.61, ag: 1.52, over05: 98, over15: 86, over25: 60, over35: 32, btts: 58 },
-            { name: "LaLiga", country: "SPA", gp: 114, homeW: 44, draw: 26, awayW: 30, goals: 2.95, hg: 1.65, ag: 1.30, over05: 90, over15: 76, over25: 57, over35: 33, btts: 57 },
-            { name: "Ligue 1", country: "FRA", gp: 84, homeW: 49, draw: 23, awayW: 29, goals: 3.00, hg: 1.69, ag: 1.31, over05: 93, over15: 79, over25: 58, over35: 36, btts: 60 },
-            { name: "Liga Portugal", country: "POR", gp: 93, homeW: 41, draw: 22, awayW: 38, goals: 2.63, hg: 1.28, ag: 1.35, over05: 95, over15: 72, over25: 53, over35: 32, btts: 46 },
-            { name: "Super Lig", country: "TUR", gp: 96, homeW: 48, draw: 17, awayW: 35, goals: 3.00, hg: 1.71, ag: 1.29, over05: 95, over15: 78, over25: 59, over35: 32, btts: 47 },
-            { name: "Brasileirão Série A", country: "BRA", gp: 339, homeW: 49, draw: 27, awayW: 24, goals: 2.67, hg: 1.54, ag: 1.13, over05: 94, over15: 78, over25: 51, over35: 26, btts: 59 },
-            { name: "MLS", country: "USA", gp: 510, homeW: 46, draw: 25, awayW: 29, goals: 3.25, hg: 1.84, ag: 1.41, over05: 95, over15: 83, over25: 64, over35: 41, btts: 64 },
-            { name: "J1 League", country: "JAP", gp: 140, homeW: 44, draw: 24, awayW: 31, goals: 2.95, hg: 1.61, ag: 1.34, over05: 94, over15: 80, over25: 57, over35: 36, btts: 55 },
-            { name: "Eliteserien", country: "NOR", gp: 201, homeW: 50, draw: 19, awayW: 31, goals: 3.27, hg: 1.86, ag: 1.41, over05: 97, over15: 87, over25: 64, over35: 38, btts: 60 },
-            { name: "Allsvenskan", country: "SWE", gp: 219, homeW: 40, draw: 24, awayW: 36, goals: 2.86, hg: 1.56, ag: 1.30, over05: 95, over15: 79, over25: 53, over35: 29, btts: 51 },
-            { name: "Ekstraklasa", country: "POL", gp: 121, homeW: 50, draw: 22, awayW: 28, goals: 2.97, hg: 1.68, ag: 1.29, over05: 92, over15: 83, over25: 61, over35: 33, btts: 65 },
-            { name: "Championship", country: "ENG", gp: 180, homeW: 43, draw: 26, awayW: 31, goals: 2.96, hg: 1.66, ag: 1.30, over05: 94, over15: 78, over25: 62, over35: 37, btts: 62 },
-            { name: "Liga MX", country: "MEX", gp: 141, homeW: 38, draw: 26, awayW: 36, goals: 3.04, hg: 1.59, ag: 1.45, over05: 96, over15: 80, over25: 54, over35: 35, btts: 61 },
-            { name: "2. Bundesliga", country: "GER", gp: 99, homeW: 47, draw: 27, awayW: 25, goals: 2.99, hg: 1.76, ag: 1.23, over05: 94, over15: 77, over25: 58, over35: 31, btts: 57 }
-        ];
-        const LEAGUE_PROFILES_STORAGE_KEY = 'poisson_vip_league_profiles';
-        let leagueProfiles = [];
-
         let chartInstance = null;
         let pnlChartInstance = null;
         let calibrationChartInstance = null;
@@ -1185,264 +1136,16 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             loadBoxTransactionsFromStorage();
             loadBetLogFromStorage();
             loadParallelBetLogFromStorage();
-            loadLeagueProfilesFromStorage();
             populateLeagueDropdowns();
             populateBankrollDropdowns();
             updateTeamSelectors();
             calculatePoisson();
+            calculateLeagueAverages();  // NUEVA LLAMADA
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             updateParallelTrackerMetrics();
             renderParlayBuilder();
         };
-
-        // ═══════════════════════════════════════════════════════════
-        // 🆕 GESTIÓN DE PERFILES DE LIGAS
-        // ═══════════════════════════════════════════════════════════
-        function loadLeagueProfilesFromStorage() {
-            const stored = localStorage.getItem(LEAGUE_PROFILES_STORAGE_KEY);
-            if (stored) {
-                try { leagueProfiles = JSON.parse(stored); } catch(e) { leagueProfiles = []; }
-            }
-            if (!leagueProfiles || leagueProfiles.length === 0) {
-                leagueProfiles = JSON.parse(JSON.stringify(DEFAULT_LEAGUE_PROFILES));
-                saveLeagueProfilesToStorage();
-            }
-            populateLeagueProfileSelect();
-        }
-
-        function saveLeagueProfilesToStorage() {
-            localStorage.setItem(LEAGUE_PROFILES_STORAGE_KEY, JSON.stringify(leagueProfiles));
-        }
-
-        function populateLeagueProfileSelect() {
-            const sel = document.getElementById('leagueProfileSelect');
-            if (!sel) return;
-            const current = sel.value;
-            sel.innerHTML = '<option value="">-- Seleccionar Liga para ver recomendaciones --</option>';
-            const sorted = leagueProfiles.slice().sort((a, b) => a.name.localeCompare(b.name));
-            sorted.forEach(p => {
-                const label = p.country ? `${p.name} (${p.country})` : p.name;
-                sel.add(new Option(label, p.name));
-            });
-            if (current) sel.value = current;
-        }
-
-        function toggleLeagueStatsModal(show) {
-            const m = document.getElementById('leagueStatsModal');
-            if (!m) return;
-            if (show) { renderLeagueStatsTable(); m.classList.remove('hidden'); }
-            else m.classList.add('hidden');
-        }
-
-        function parseAndSaveLeagueProfiles() {
-            const raw = document.getElementById('leagueStatsRawInput').value.trim();
-            if (!raw) { showToast("Pega al menos una liga."); return; }
-            const lines = raw.split(/\r?\n/).filter(l => l.trim());
-            let added = 0;
-            lines.forEach(line => {
-                let parts = line.split('|').map(s => s.trim());
-                if (parts.length < 13) parts = line.split('\t').map(s => s.trim());
-                if (parts.length < 13) parts = line.split(',').map(s => s.trim());
-                if (parts.length >= 13) {
-                    const profile = {
-                        name: parts[0],
-                        country: (parts[1] && isNaN(parseFloat(parts[1]))) ? parts[1] : '',
-                        gp: parseFloat(parts[1]) || 0,
-                        homeW: parseFloat(parts[2]) || 0,
-                        draw: parseFloat(parts[3]) || 0,
-                        awayW: parseFloat(parts[4]) || 0,
-                        goals: parseFloat(parts[5]) || 0,
-                        hg: parseFloat(parts[6]) || 0,
-                        ag: parseFloat(parts[7]) || 0,
-                        over05: parseFloat(String(parts[8]).replace('%','')) || 0,
-                        over15: parseFloat(String(parts[9]).replace('%','')) || 0,
-                        over25: parseFloat(String(parts[10]).replace('%','')) || 0,
-                        over35: parseFloat(String(parts[11]).replace('%','')) || 0,
-                        btts: parseFloat(String(parts[12]).replace('%','')) || 0
-                    };
-                    if (!profile.name || isNaN(profile.gp)) return;
-                    const existing = leagueProfiles.findIndex(p => p.name.toLowerCase() === profile.name.toLowerCase());
-                    if (existing >= 0) leagueProfiles[existing] = profile;
-                    else leagueProfiles.push(profile);
-                    added++;
-                }
-            });
-            if (added === 0) { showToast("No se pudieron parsear ligas. Verifica el formato."); return; }
-            saveLeagueProfilesToStorage();
-            populateLeagueProfileSelect();
-            renderLeagueStatsTable();
-            document.getElementById('leagueStatsRawInput').value = '';
-            showToast(`¡${added} liga(s) procesada(s)!`);
-        }
-
-        function renderLeagueStatsTable() {
-            const tbody = document.getElementById('leagueStatsTableBody');
-            const badge = document.getElementById('leagueStatsCountBadge');
-            if (!tbody) return;
-            if (badge) badge.innerText = `${leagueProfiles.length} ligas`;
-            if (leagueProfiles.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Sin ligas registradas.</td></tr>`;
-                return;
-            }
-            const sorted = leagueProfiles.slice().sort((a, b) => a.name.localeCompare(b.name));
-            let html = '';
-            sorted.forEach(p => {
-                const recs = getLeagueRecommendations(p);
-                const bestMarket = getBestMarketLabel(recs);
-                html += `
-                    <tr>
-                        <td class="p-1.5 font-bold text-white">${p.name} <span class="text-[8px] text-slate-400">(${p.country || '-'})</span></td>
-                        <td class="p-1.5 text-center text-slate-300">${p.gp}</td>
-                        <td class="p-1.5 text-center font-bold text-amber-300">${p.over25}%</td>
-                        <td class="p-1.5 text-center font-bold text-purple-300">${p.btts}%</td>
-                        <td class="p-1.5 text-center">${bestMarket}</td>
-                        <td class="p-1.5 text-center"><button onclick="deleteLeagueProfile('${p.name.replace(/'/g, "\\'")}')" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        function getBestMarketLabel(recs) {
-            if (recs.overRating === 'excellent') return `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[8px] font-black">OVER 2.5</span>`;
-            if (recs.underRating === 'excellent') return `<span class="bg-sky-500/20 text-sky-300 border border-sky-500/40 px-1.5 py-0.5 rounded text-[8px] font-black">UNDER 2.5</span>`;
-            if (recs.bttsYesRating === 'excellent') return `<span class="bg-gold-500/20 text-gold-300 border border-gold-500/40 px-1.5 py-0.5 rounded text-[8px] font-black">BTTS SÍ</span>`;
-            if (recs.bttsNoRating === 'excellent') return `<span class="bg-purple-500/20 text-purple-300 border border-purple-500/40 px-1.5 py-0.5 rounded text-[8px] font-black">BTTS NO</span>`;
-            if (recs.overRating === 'good') return `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded text-[8px] font-bold">Over (bueno)</span>`;
-            if (recs.underRating === 'good') return `<span class="bg-sky-500/10 text-sky-400 border border-sky-500/20 px-1.5 py-0.5 rounded text-[8px] font-bold">Under (bueno)</span>`;
-            if (recs.bttsYesRating === 'good') return `<span class="bg-gold-500/10 text-gold-400 border border-gold-500/20 px-1.5 py-0.5 rounded text-[8px] font-bold">BTTS Sí (bueno)</span>`;
-            if (recs.bttsNoRating === 'good') return `<span class="bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded text-[8px] font-bold">BTTS No (bueno)</span>`;
-            return `<span class="text-slate-400 text-[8px] font-bold">Sin edge</span>`;
-        }
-
-        function deleteLeagueProfile(name) {
-            if (!confirm(`¿Eliminar el perfil de "${name}"?`)) return;
-            leagueProfiles = leagueProfiles.filter(p => p.name !== name);
-            saveLeagueProfilesToStorage();
-            populateLeagueProfileSelect();
-            renderLeagueStatsTable();
-            renderLeagueProfileRecommendation();
-            showToast("Perfil eliminado.");
-        }
-
-        function resetLeagueProfilesToDefault() {
-            if (!confirm("¿Restaurar todos los perfiles a los valores por defecto? Se perderán los personalizados.")) return;
-            leagueProfiles = JSON.parse(JSON.stringify(DEFAULT_LEAGUE_PROFILES));
-            saveLeagueProfilesToStorage();
-            populateLeagueProfileSelect();
-            renderLeagueStatsTable();
-            renderLeagueProfileRecommendation();
-            showToast("Perfiles restaurados.");
-        }
-
-        function getLeagueRecommendations(profile) {
-            const over25 = profile.over25 || 0;
-            const btts = profile.btts || 0;
-            const overRating = over25 >= 68 ? 'excellent' : (over25 >= 58 ? 'good' : (over25 >= 50 ? 'neutral' : 'avoid'));
-            const underRating = over25 <= 45 ? 'excellent' : (over25 <= 52 ? 'good' : (over25 <= 60 ? 'neutral' : 'avoid'));
-            const bttsYesRating = btts >= 65 ? 'excellent' : (btts >= 55 ? 'good' : (btts >= 48 ? 'neutral' : 'avoid'));
-            const bttsNoRating = btts <= 45 ? 'excellent' : (btts <= 52 ? 'good' : (btts <= 60 ? 'neutral' : 'avoid'));
-            return { overRating, underRating, bttsYesRating, bttsNoRating };
-        }
-
-        function getRatingBadge(rating) {
-            const colors = {
-                excellent: { bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', text: 'text-emerald-300', icon: '🥇', label: 'EXCELENTE' },
-                good: { bg: 'bg-sky-500/20', border: 'border-sky-500/50', text: 'text-sky-300', icon: '🥈', label: 'BUENO' },
-                neutral: { bg: 'bg-amber-500/20', border: 'border-amber-500/50', text: 'text-amber-300', icon: '⚠️', label: 'NEUTRO' },
-                avoid: { bg: 'bg-rose-500/20', border: 'border-rose-500/50', text: 'text-rose-300', icon: '❌', label: 'EVITAR' }
-            };
-            const c = colors[rating] || colors.neutral;
-            return `<span class="${c.bg} ${c.text} border ${c.border} text-[8px] font-black px-1.5 py-0.5 rounded-full whitespace-nowrap">${c.icon} ${c.label}</span>`;
-        }
-
-        function renderLeagueProfileRecommendation() {
-            const sel = document.getElementById('leagueProfileSelect');
-            const container = document.getElementById('leagueProfileRecommendations');
-            if (!sel || !container) return;
-            const selectedName = sel.value;
-            if (!selectedName) {
-                container.innerHTML = '<p class="text-slate-500 text-[11px] italic text-center py-2">Selecciona una liga arriba para ver qué mercados son rentables.</p>';
-                return;
-            }
-            const profile = leagueProfiles.find(p => p.name === selectedName);
-            if (!profile) return;
-            const recs = getLeagueRecommendations(profile);
-            const underPct = (100 - profile.over25).toFixed(0);
-            const bttsNoPct = (100 - profile.btts).toFixed(0);
-            const overFairOdds = (100 / Math.max(1, profile.over25)).toFixed(2);
-            const underFairOdds = (100 / Math.max(1, (100 - profile.over25))).toFixed(2);
-            const bttsFairOdds = (100 / Math.max(1, profile.btts)).toFixed(2);
-            const bttsNoFairOdds = (100 / Math.max(1, (100 - profile.btts))).toFixed(2);
-
-            let bestMarkets = [];
-            if (recs.overRating === 'excellent') bestMarkets.push(`<b class="text-emerald-400">Over 2.5</b> (${profile.over25}%)`);
-            if (recs.underRating === 'excellent') bestMarkets.push(`<b class="text-sky-400">Under 2.5</b> (${underPct}%)`);
-            if (recs.bttsYesRating === 'excellent') bestMarkets.push(`<b class="text-gold-400">BTTS SÍ</b> (${profile.btts}%)`);
-            if (recs.bttsNoRating === 'excellent') bestMarkets.push(`<b class="text-purple-400">BTTS NO</b> (${bttsNoPct}%)`);
-            let suggestion = '';
-            if (bestMarkets.length > 0) {
-                suggestion = `Esta liga es <b>ideal</b> para: ${bestMarkets.join(', ')}. Prioriza estos mercados al analizar partidos.`;
-            } else {
-                let goodMarkets = [];
-                if (recs.overRating === 'good') goodMarkets.push(`<b class="text-emerald-400">Over 2.5</b>`);
-                if (recs.underRating === 'good') goodMarkets.push(`<b class="text-sky-400">Under 2.5</b>`);
-                if (recs.bttsYesRating === 'good') goodMarkets.push(`<b class="text-gold-400">BTTS SÍ</b>`);
-                if (recs.bttsNoRating === 'good') goodMarkets.push(`<b class="text-purple-400">BTTS NO</b>`);
-                if (goodMarkets.length > 0) {
-                    suggestion = `Esta liga es <b>buena</b> para: ${goodMarkets.join(', ')}. Considera estos mercados con análisis de equipos específicos.`;
-                } else {
-                    suggestion = `Esta liga no tiene tendencia clara. Sé selectivo y analiza solo partidos con contraste fuerte entre equipos.`;
-                }
-            }
-
-            container.innerHTML = `
-                <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 grid grid-cols-3 gap-2 text-center text-[10px]">
-                    <div><span class="block text-[8px] uppercase font-bold text-slate-400">GP</span><span class="text-xs font-black text-white">${profile.gp}</span></div>
-                    <div><span class="block text-[8px] uppercase font-bold text-slate-400">Goles/Partido</span><span class="text-xs font-black text-white">${profile.goals}</span></div>
-                    <div><span class="block text-[8px] uppercase font-bold text-slate-400">HG / AG</span><span class="text-xs font-black text-white">${profile.hg} / ${profile.ag}</span></div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border ${recs.overRating === 'excellent' ? 'border-emerald-500/60' : recs.overRating === 'good' ? 'border-emerald-500/40' : 'border-slate-800'} space-y-1">
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[10px] font-black text-emerald-400">OVER 2.5</span>
-                            ${getRatingBadge(recs.overRating)}
-                        </div>
-                        <span class="text-lg font-black text-white block">${profile.over25}%</span>
-                        <span class="text-[9px] text-slate-400 block">Cuota justa @${overFairOdds}</span>
-                    </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border ${recs.underRating === 'excellent' ? 'border-sky-500/60' : recs.underRating === 'good' ? 'border-sky-500/40' : 'border-slate-800'} space-y-1">
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[10px] font-black text-sky-400">UNDER 2.5</span>
-                            ${getRatingBadge(recs.underRating)}
-                        </div>
-                        <span class="text-lg font-black text-white block">${underPct}%</span>
-                        <span class="text-[9px] text-slate-400 block">Cuota justa @${underFairOdds}</span>
-                    </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border ${recs.bttsYesRating === 'excellent' ? 'border-gold-500/60' : recs.bttsYesRating === 'good' ? 'border-gold-500/40' : 'border-slate-800'} space-y-1">
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[10px] font-black text-gold-400">BTTS SÍ</span>
-                            ${getRatingBadge(recs.bttsYesRating)}
-                        </div>
-                        <span class="text-lg font-black text-white block">${profile.btts}%</span>
-                        <span class="text-[9px] text-slate-400 block">Cuota justa @${bttsFairOdds}</span>
-                    </div>
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border ${recs.bttsNoRating === 'excellent' ? 'border-purple-500/60' : recs.bttsNoRating === 'good' ? 'border-purple-500/40' : 'border-slate-800'} space-y-1">
-                        <div class="flex justify-between items-center gap-1">
-                            <span class="text-[10px] font-black text-purple-400">BTTS NO</span>
-                            ${getRatingBadge(recs.bttsNoRating)}
-                        </div>
-                        <span class="text-lg font-black text-white block">${bttsNoPct}%</span>
-                        <span class="text-[9px] text-slate-400 block">Cuota justa @${bttsNoFairOdds}</span>
-                    </div>
-                </div>
-                <div class="bg-slate-900/70 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                    <div class="flex items-center gap-1.5 text-[10px] font-black text-purple-300 uppercase"><i class="fa-solid fa-lightbulb"></i> Sugerencia</div>
-                    <p class="text-[11px] text-slate-300 leading-snug">${suggestion}</p>
-                </div>
-            `;
-        }
 
         function showToast(message) {
             const container = document.getElementById('toastContainer');
@@ -1763,6 +1466,66 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         // ============================================================
+        // NUEVA FUNCIÓN: PROMEDIOS GLOBALES DE LIGA
+        // ============================================================
+        function calculateLeagueAverages() {
+            const selectActive = document.getElementById('activeLeagueSelect');
+            if (!selectActive) return;
+            const activeLeague = selectActive.value;
+            const leagues = getCurrentBankrollLeagues();
+            const teams = leagues[activeLeague] || [];
+
+            if (!teams || teams.length === 0) {
+                const ids = ['leagueAvgHomeGF','leagueAvgAwayGF','leaguePctOver25','leagueOddsOver25','leaguePctUnder25','leagueOddsUnder25','leaguePctBttsYes','leagueOddsBttsYes','leaguePctBttsNo','leagueOddsBttsNo'];
+                ids.forEach(id => { const el = document.getElementById(id); if (el) el.innerText = id.includes('Pct') ? '0.0%' : (id.includes('Odds') ? '@0.00' : '0.000'); });
+                ['leagueBarOver25','leagueBarUnder25','leagueBarBttsYes','leagueBarBttsNo'].forEach(id => { const el = document.getElementById(id); if (el) el.style.width = '0%'; });
+                const infoEl = document.getElementById('leagueAvgTeamsInfo');
+                if (infoEl) infoEl.innerText = 'No hay equipos en la liga seleccionada.';
+                return;
+            }
+
+            let totalHomeGF = 0, homeCount = 0;
+            let totalAwayGF = 0, awayCount = 0;
+
+            teams.forEach(t => {
+                if (t.home && t.home.mp > 0 && isFinite(t.home.gfAvg)) { totalHomeGF += t.home.gfAvg; homeCount++; }
+                if (t.away && t.away.mp > 0 && isFinite(t.away.gfAvg)) { totalAwayGF += t.away.gfAvg; awayCount++; }
+            });
+
+            const avgHomeGF = homeCount > 0 ? totalHomeGF / homeCount : 0;
+            const avgAwayGF = awayCount > 0 ? totalAwayGF / awayCount : 0;
+
+            document.getElementById('leagueAvgHomeGF').innerText = avgHomeGF.toFixed(3);
+            document.getElementById('leagueAvgAwayGF').innerText = avgAwayGF.toFixed(3);
+
+            // Calcular probabilidades vía Poisson con estos λ
+            let probOver25 = 0, probUnder25 = 0, probBttsYes = 0, probBttsNo = 0;
+            for (let i = 0; i <= 10; i++) {
+                for (let j = 0; j <= 10; j++) {
+                    const p = poissonProb(i, avgHomeGF) * poissonProb(j, avgAwayGF);
+                    if ((i + j) > 2.5) probOver25 += p; else probUnder25 += p;
+                    if (i > 0 && j > 0) probBttsYes += p; else probBttsNo += p;
+                }
+            }
+
+            document.getElementById('leaguePctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
+            document.getElementById('leagueOddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
+            document.getElementById('leagueBarOver25').style.width = (probOver25 * 100).toFixed(1) + '%';
+            document.getElementById('leaguePctUnder25').innerText = (probUnder25 * 100).toFixed(1) + '%';
+            document.getElementById('leagueOddsUnder25').innerText = '@' + (1 / Math.max(0.001, probUnder25)).toFixed(2);
+            document.getElementById('leagueBarUnder25').style.width = (probUnder25 * 100).toFixed(1) + '%';
+            document.getElementById('leaguePctBttsYes').innerText = (probBttsYes * 100).toFixed(1) + '%';
+            document.getElementById('leagueOddsBttsYes').innerText = '@' + (1 / Math.max(0.001, probBttsYes)).toFixed(2);
+            document.getElementById('leagueBarBttsYes').style.width = (probBttsYes * 100).toFixed(1) + '%';
+            document.getElementById('leaguePctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
+            document.getElementById('leagueOddsBttsNo').innerText = '@' + (1 / Math.max(0.001, probBttsNo)).toFixed(2);
+            document.getElementById('leagueBarBttsNo').style.width = (probBttsNo * 100).toFixed(1) + '%';
+
+            const infoEl = document.getElementById('leagueAvgTeamsInfo');
+            if (infoEl) infoEl.innerText = `Liga: ${activeLeague} | ${teams.length} equipos procesados (Home: ${homeCount} | Away: ${awayCount}).`;
+        }
+
+        // ============================================================
         // BANKROLLS / STORAGE
         // ============================================================
         function loadBankrollsFromStorage() {
@@ -1944,6 +1707,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             saveBankrollsToStorage();
             populateLeagueDropdowns();
             updateTeamSelectors();
+            calculateLeagueAverages();  // NUEVA LLAMADA
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             showToast("Caja activa cambiada.");
@@ -1972,6 +1736,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             populateBankrollDropdowns();
             populateLeagueDropdowns();
             updateTeamSelectors();
+            calculateLeagueAverages();  // NUEVA LLAMADA
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             nameInput.value = '';
@@ -1991,6 +1756,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 populateBankrollDropdowns();
                 populateLeagueDropdowns();
                 updateTeamSelectors();
+                calculateLeagueAverages();  // NUEVA LLAMADA
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
                 showToast("Bankroll eliminado.");
@@ -2048,7 +1814,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                                 <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Disp: <b class="text-white">$${fin.availableBalance.toFixed(2)}</b> | Utilidad: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); calculateLeagueAverages(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
                                 <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
@@ -2304,7 +2070,11 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast("CSV exportado.");
         }
 
-        function onLeagueSelectChange() { updateTeamSelectors(); calculatePoisson(); }
+        function onLeagueSelectChange() { 
+            updateTeamSelectors(); 
+            calculateLeagueAverages();  // NUEVA LLAMADA
+            calculatePoisson(); 
+        }
 
         // ============================================================
         // SELECTORES DE EQUIPOS
@@ -2340,6 +2110,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const team = teams.find(t => t.name === selectedName);
             if (!team) return;
 
+            // Home usa stats de Home table | Away usa stats de Away table
             const stats = side === 'home' ? team.home : team.away;
             const fallback = { gfAvg: 0, gaAvg: 0 };
             const s = stats || fallback;
@@ -3790,6 +3561,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (selectActive) selectActive.value = leagueName;
             if (selectModal) selectModal.value = leagueName;
             updateTeamSelectors();
+            calculateLeagueAverages();  // NUEVA LLAMADA
             renderModalLeagueTable();
             showToast(`¡Liga "${leagueName}" cargada con ${parsedTeams.length} equipos!`);
             rawEl.value = '';
@@ -3808,6 +3580,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     saveBankrollsToStorage();
                     populateLeagueDropdowns();
                     updateTeamSelectors();
+                    calculateLeagueAverages();  // NUEVA LLAMADA
                     renderModalLeagueTable();
                     showToast("Liga eliminada.");
                 }
@@ -3879,6 +3652,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const agf = parseFloat(document.getElementById('awayGf').value) || 0;
             const agc = parseFloat(document.getElementById('awayGc').value) || 0;
 
+            // Media Geométrica: sqrt(GF × GC) - evita falsos Over
             let lambdaHome = Math.sqrt(Math.max(0, hgf * agc)) || 0;
             let lambdaAway = Math.sqrt(Math.max(0, agf * hgc)) || 0;
 
