@@ -244,7 +244,43 @@
         </section>
 
         <!-- ============================================================ -->
-        <!-- NUEVA SECCIÓN: ¿DÓNDE BUSCAR VALUE? (LIGA vs PARTIDO)         -->
+        <!-- NUEVA SECCIÓN: SEASON SUMMARY (DATOS REALES DE LA LIGA)      -->
+        <!-- ============================================================ -->
+        <section class="glass-card rounded-2xl p-3.5 space-y-2.5 border border-blue-500/40 bg-gradient-to-r from-slate-900 via-blue-950/20 to-slate-900">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-chart-bar text-blue-400 text-xs"></i>
+                    <h2 class="font-extrabold text-xs text-white">Season Summary (Datos Reales)</h2>
+                </div>
+                <span id="seasonSummaryBadge" class="text-[9px] font-black bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-md border border-blue-500/20">Sin Datos</span>
+            </div>
+            <details class="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden group">
+                <summary class="p-2.5 cursor-pointer flex items-center justify-between text-[11px] font-black text-blue-300 select-none">
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-paste text-blue-400"></i><span>Pegar / Cargar Season Summary</span></div>
+                    <i class="fa-solid fa-chevron-down text-blue-400 text-xs transition-transform group-open:rotate-180"></i>
+                </summary>
+                <div class="p-2.5 pt-0 space-y-2">
+                    <p class="text-[9px] text-slate-400 italic">Pega el bloque completo de "Season summary" (copiado de cualquier web de stats). Se procesará y guardará automáticamente para la liga activa. <b class="text-blue-300">Esta es la frecuencia REAL que la casa usa como ancla, no el Poisson teórico.</b></p>
+                    <textarea id="seasonSummaryInput" rows="7" placeholder="Pega aquí el Season Summary completo de la liga activa..." class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[10px] font-mono text-slate-200 focus:outline-none focus:border-blue-500"></textarea>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="parseSeasonSummary()" class="bg-blue-500 hover:bg-blue-600 text-slate-950 font-black text-xs py-1.5 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                        <button onclick="clearSeasonSummary()" class="bg-slate-800 hover:bg-slate-700 text-rose-300 font-black text-xs py-1.5 px-3 rounded-xl flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can"></i> Borrar Liga</button>
+                    </div>
+                </div>
+            </details>
+            <div id="seasonSummaryGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+            <div id="seasonSummaryExtra" class="hidden space-y-1.5 bg-slate-900/40 p-2.5 rounded-xl border border-slate-800/70"></div>
+            <div class="bg-slate-950/60 border border-slate-800 p-2 rounded-lg text-[9px] text-slate-400 italic">
+                <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i>
+                <b class="text-blue-300">¿Para qué sirve?</b> Estos son los % empíricos que la casa mira como ancla. Cuando están cargados, la sección "¿Dónde Buscar Value?" los usa <b class="text-emerald-400">en lugar del Poisson teórico</b> para detectar el desajuste liga↔partido.
+            </div>
+        </section>
+        <!-- ============================================================ -->
+        <!-- FIN NUEVA SECCIÓN                                             -->
+        <!-- ============================================================ -->
+
+        <!-- ============================================================ -->
+        <!-- ¿DÓNDE BUSCAR VALUE? (LIGA vs PARTIDO)                        -->
         <!-- ============================================================ -->
         <section class="glass-card rounded-2xl p-3.5 space-y-3 border border-purple-500/40 bg-gradient-to-r from-slate-900 via-purple-950/20 to-slate-900">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
@@ -261,7 +297,7 @@
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Liga</span>
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Liga <span id="valueLookupSourceOU" class="text-[7px] font-black text-blue-400"></span></span>
                         <span id="valueLookupLeagueOU" class="text-[10px] font-black text-white block mt-0.5">-</span>
                     </div>
                     <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
@@ -282,7 +318,7 @@
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
-                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Liga</span>
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Liga <span id="valueLookupSourceBTTS" class="text-[7px] font-black text-blue-400"></span></span>
                         <span id="valueLookupLeagueBTTS" class="text-[10px] font-black text-white block mt-0.5">-</span>
                     </div>
                     <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
@@ -302,7 +338,7 @@
             </div>
         </section>
         <!-- ============================================================ -->
-        <!-- FIN NUEVA SECCIÓN                                             -->
+        <!-- FIN SECCIÓN                                                   -->
         <!-- ============================================================ -->
 
         <section class="glass-card rounded-2xl p-3.5 space-y-3">
@@ -1197,6 +1233,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             updateTeamSelectors();
             calculatePoisson();
             calculateLeagueAverages();
+            renderSeasonSummary();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             updateParallelTrackerMetrics();
@@ -1412,6 +1449,160 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             calculatePoisson();
         }
 
+        // ============================================================
+        // PARSER SEASON SUMMARY (Frecuencias REALES)
+        // ============================================================
+        function parseSeasonSummary() {
+            const input = document.getElementById('seasonSummaryInput').value;
+            if (!input || !input.trim()) { showToast("Pega el Season Summary primero."); return; }
+
+            const data = {};
+            const patterns = {
+                matchesPlayed: /(\d+)\s*matches played/i,
+                homeWin: /Home:\s*([\d.]+)%/i,
+                draws: /Draws:\s*([\d.]+)%/i,
+                awayWin: /Away:\s*([\d.]+)%/i,
+                totalGoals: /Total goals:\s*(\d+)/i,
+                goalsPerMatch: /Goals per match:\s*([\d.]+)/i,
+                homeGoalsPerMatch: /Home goals\/match:\s*([\d.]+)/i,
+                awayGoalsPerMatch: /Away goals\/match:\s*([\d.]+)/i,
+                over15: /Over 1\.5 goals:\s*([\d.]+)%/i,
+                over25: /Over 2\.5 goals:\s*([\d.]+)%/i,
+                over35: /Over 3\.5 goals:\s*([\d.]+)%/i,
+                bttsYes: /Both teams scored:\s*([\d.]+)%/i,
+                homeScoredFirst: /Home team scored first:\s*([\d.]+)%/i,
+                noGoal: /No goal scored:\s*([\d.]+)%/i,
+                awayScoredFirst: /Away team scored first:\s*([\d.]+)%/i,
+                homeFirstGoalMinute: /Avg minute home team scored first:\s*([\d.]+)/i,
+                awayFirstGoalMinute: /Avg minute away team scored first:\s*([\d.]+)/i,
+                ppgAfterScoringFirst: /Points Per Game after scoring first:\s*([\d.]+)/i,
+                ppgAfterConcedingFirst: /Points Per Game after conceding first:\s*([\d.]+)/i,
+                leadDefendingHome: /Lead-defending rate at home:\s*([\d.]+)%/i,
+                leadDefendingAway: /Lead-defending rate away:\s*([\d.]+)%/i,
+                equalizingHome: /Equalizing rate at home:\s*([\d.]+)%/i,
+                equalizingAway: /Equalizing rate away:\s*([\d.]+)%/i,
+                homeLeadDuration: /Home team lead duration:\s*([\d.]+)%/i,
+                teamsLevel: /Teams level in goals:\s*([\d.]+)%/i,
+                awayLeadDuration: /Away team lead duration:\s*([\d.]+)%/i
+            };
+
+            Object.keys(patterns).forEach(key => {
+                const match = input.match(patterns[key]);
+                if (match) data[key] = parseFloat(match[1]);
+            });
+
+            if (Object.keys(data).length === 0) { showToast("No se pudo parsear el Season Summary."); return; }
+
+            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            if (!activeBankObj.seasonSummaries) activeBankObj.seasonSummaries = {};
+            activeBankObj.seasonSummaries[activeLeague] = data;
+            saveBankrollsToStorage();
+            renderSeasonSummary();
+            calculateValueLookup();
+            document.getElementById('seasonSummaryInput').value = '';
+            showToast(`✓ Season Summary guardado para "${activeLeague}"`);
+        }
+
+        function clearSeasonSummary() {
+            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            if (!activeBankObj.seasonSummaries || !activeBankObj.seasonSummaries[activeLeague]) { showToast("No hay datos que borrar para esta liga."); return; }
+            if (!confirm(`¿Borrar el Season Summary de "${activeLeague}"?`)) return;
+            delete activeBankObj.seasonSummaries[activeLeague];
+            saveBankrollsToStorage();
+            renderSeasonSummary();
+            calculateValueLookup();
+            showToast("Season Summary borrado.");
+        }
+
+        function renderSeasonSummary() {
+            const grid = document.getElementById('seasonSummaryGrid');
+            const extra = document.getElementById('seasonSummaryExtra');
+            const badge = document.getElementById('seasonSummaryBadge');
+            if (!grid) return;
+
+            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            const data = (activeBankObj && activeBankObj.seasonSummaries && activeBankObj.seasonSummaries[activeLeague]) || null;
+
+            if (!data) {
+                grid.innerHTML = `<div class="col-span-2 sm:col-span-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800 text-center text-[10px] text-slate-400 italic">Sin Season Summary para esta liga. Pega los datos arriba.</div>`;
+                if (badge) { badge.innerText = 'Sin Datos'; badge.className = "text-[9px] font-black bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700"; }
+                if (extra) extra.classList.add('hidden');
+                return;
+            }
+
+            if (badge) {
+                badge.innerText = `✓ Real${data.matchesPlayed ? ` (${data.matchesPlayed} PJ)` : ''}`;
+                badge.className = "text-[9px] font-black bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-md border border-blue-500/40";
+            }
+
+            const items = [
+                { label: 'Over 1.5', val: data.over15, suffix: '%', color: 'emerald' },
+                { label: 'Over 2.5', val: data.over25, suffix: '%', color: 'emerald' },
+                { label: 'Over 3.5', val: data.over35, suffix: '%', color: 'emerald' },
+                { label: 'BTTS Sí', val: data.bttsYes, suffix: '%', color: 'gold' },
+                { label: 'Home', val: data.homeWin, suffix: '%', color: 'emerald' },
+                { label: 'Draw', val: data.draws, suffix: '%', color: 'slate' },
+                { label: 'Away', val: data.awayWin, suffix: '%', color: 'rose' },
+                { label: 'Goles/Partido', val: data.goalsPerMatch, suffix: '', color: 'blue', decimals: 2 },
+                { label: 'GF Local/m', val: data.homeGoalsPerMatch, suffix: '', color: 'emerald', decimals: 2 },
+                { label: 'GF Visit/m', val: data.awayGoalsPerMatch, suffix: '', color: 'rose', decimals: 2 }
+            ];
+
+            const colorMap = {
+                emerald: { text: 'text-emerald-400', border: 'border-emerald-500/30' },
+                gold: { text: 'text-gold-400', border: 'border-gold-500/30' },
+                rose: { text: 'text-rose-400', border: 'border-rose-500/30' },
+                slate: { text: 'text-slate-300', border: 'border-slate-500/30' },
+                blue: { text: 'text-blue-400', border: 'border-blue-500/30' }
+            };
+
+            grid.innerHTML = items.map(item => {
+                const c = colorMap[item.color];
+                let valStr = '-';
+                if (item.val !== undefined && !isNaN(item.val)) {
+                    const dec = item.suffix === '%' ? 1 : (item.decimals || 2);
+                    valStr = `${item.val.toFixed(dec)}${item.suffix}`;
+                }
+                return `<div class="bg-slate-900/90 p-2 rounded-xl border ${c.border} text-center">
+                    <span class="block text-[8px] uppercase text-slate-400 font-bold">${item.label}</span>
+                    <span class="text-sm font-black ${c.text}">${valStr}</span>
+                </div>`;
+            }).join('');
+
+            // Extra stats: First Goal Impact
+            const hasExtras = data.homeScoredFirst !== undefined || data.ppgAfterScoringFirst !== undefined || data.leadDefendingHome !== undefined;
+            if (hasExtras && extra) {
+                extra.classList.remove('hidden');
+                const extras = [
+                    { label: 'Home anota 1º', val: data.homeScoredFirst, suffix: '%' },
+                    { label: 'Sin goles', val: data.noGoal, suffix: '%' },
+                    { label: 'Away anota 1º', val: data.awayScoredFirst, suffix: '%' },
+                    { label: 'PPG al anotar 1º', val: data.ppgAfterScoringFirst, suffix: '' },
+                    { label: 'PPG al recibir 1º', val: data.ppgAfterConcedingFirst, suffix: '' },
+                    { label: 'Lead Def Home', val: data.leadDefendingHome, suffix: '%' },
+                    { label: 'Lead Def Away', val: data.leadDefendingAway, suffix: '%' },
+                    { label: 'Equalizing Home', val: data.equalizingHome, suffix: '%' },
+                    { label: 'Equalizing Away', val: data.equalizingAway, suffix: '%' },
+                    { label: 'Home Lead Dur.', val: data.homeLeadDuration, suffix: '%' },
+                    { label: 'Teams Level', val: data.teamsLevel, suffix: '%' },
+                    { label: 'Away Lead Dur.', val: data.awayLeadDuration, suffix: '%' }
+                ].filter(e => e.val !== undefined && !isNaN(e.val));
+
+                extra.innerHTML = `<div class="text-[9px] font-black text-blue-300 uppercase tracking-wide mb-1"><i class="fa-solid fa-futbol mr-1"></i> First Goal Impact & Context</div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        ${extras.map(e => `<div class="bg-slate-950/70 px-1.5 py-1 rounded border border-slate-800 flex justify-between items-center gap-1">
+                            <span class="text-[8px] text-slate-400 font-bold truncate">${e.label}</span>
+                            <span class="text-[10px] font-black text-blue-300">${e.val.toFixed(e.suffix === '%' ? 1 : 2)}${e.suffix}</span>
+                        </div>`).join('')}
+                    </div>`;
+            } else if (extra) {
+                extra.classList.add('hidden');
+            }
+        }
+
         function normalizeTeamKey(name) {
             return name.trim().replace(/\s+/g, ' ').toLowerCase();
         }
@@ -1578,9 +1769,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         // ============================================================
-        // NUEVA FUNCIÓN: ¿DÓNDE BUSCAR VALUE?
-        // Aplica la regla: target = opuesto de la liga.
-        // Fuerte si partido contradice liga, Moderada si confirma.
+        // ¿DÓNDE BUSCAR VALUE? — Prefiere datos REALES del Season Summary
         // ============================================================
         function calculateValueLookup() {
             const hgf = parseFloat(document.getElementById('homeGf').value) || 0;
@@ -1589,11 +1778,24 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const agc = parseFloat(document.getElementById('awayGc').value) || 0;
             const noMatchData = (hgf + hgc + agf + agc) === 0;
 
+            // Preferir Season Summary real si existe
+            const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
+            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const realData = (activeBankObj && activeBankObj.seasonSummaries && activeBankObj.seasonSummaries[activeLeague]) || null;
+
             // ============ O/U 2.5 ============
             const leaguePctOver25Text = document.getElementById('leaguePctOver25').innerText;
-            const leagueOver25 = parseFloat(leaguePctOver25Text) / 100 || 0;
+            let leagueOver25 = parseFloat(leaguePctOver25Text) / 100 || 0;
+            let sourceOU = 'Poisson';
+            let hasLeagueDataOU = leagueOver25 > 0;
+
+            if (realData && realData.over25 && realData.over25 > 0) {
+                leagueOver25 = realData.over25 / 100;
+                sourceOU = 'Real';
+                hasLeagueDataOU = true;
+            }
+
             const matchOver25 = currentCalculatedProbs.probOver25 || 0;
-            const hasLeagueDataOU = leagueOver25 > 0;
 
             let leagueLabelOU = '-';
             let matchLabelOU = '-';
@@ -1647,12 +1849,22 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('valueLookupBadgeOU').innerText = badgeTextOU;
             document.getElementById('valueLookupBadgeOU').className = badgeClassOU;
             document.getElementById('valueLookupResultOU').className = resultBorderOU;
+            const sourceElOU = document.getElementById('valueLookupSourceOU');
+            if (sourceElOU) sourceElOU.innerText = hasLeagueDataOU ? `[${sourceOU}]` : '';
 
             // ============ BTTS ============
             const leaguePctBttsYesText = document.getElementById('leaguePctBttsYes').innerText;
-            const leagueBttsYes = parseFloat(leaguePctBttsYesText) / 100 || 0;
+            let leagueBttsYes = parseFloat(leaguePctBttsYesText) / 100 || 0;
+            let sourceBTTS = 'Poisson';
+            let hasLeagueDataBTTS = leagueBttsYes > 0;
+
+            if (realData && realData.bttsYes && realData.bttsYes > 0) {
+                leagueBttsYes = realData.bttsYes / 100;
+                sourceBTTS = 'Real';
+                hasLeagueDataBTTS = true;
+            }
+
             const matchBttsYes = currentCalculatedProbs.probBttsYes || 0;
-            const hasLeagueDataBTTS = leagueBttsYes > 0;
 
             let leagueLabelBTTS = '-';
             let matchLabelBTTS = '-';
@@ -1706,6 +1918,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('valueLookupBadgeBTTS').innerText = badgeTextBTTS;
             document.getElementById('valueLookupBadgeBTTS').className = badgeClassBTTS;
             document.getElementById('valueLookupResultBTTS').className = resultBorderBTTS;
+            const sourceElBTTS = document.getElementById('valueLookupSourceBTTS');
+            if (sourceElBTTS) sourceElBTTS.innerText = hasLeagueDataBTTS ? `[${sourceBTTS}]` : '';
         }
 
         function loadBankrollsFromStorage() {
@@ -1718,6 +1932,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         if (b.totalWithdrawn === undefined) b.totalWithdrawn = 0;
                         if (!b.withdrawLog) b.withdrawLog = [];
                         if (!b.boxTransactionsLog) b.boxTransactionsLog = [];
+                        if (!b.seasonSummaries) b.seasonSummaries = {};
                         if (!b.leaguesData || Object.keys(b.leaguesData).length === 0) {
                             b.leaguesData = { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) };
                         }
@@ -1733,6 +1948,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     totalWithdrawn: 0,
                     withdrawLog: [],
                     boxTransactionsLog: [],
+                    seasonSummaries: {},
                     leaguesData: { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) }
                 }];
                 saveBankrollsToStorage();
@@ -1888,6 +2104,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             populateLeagueDropdowns();
             updateTeamSelectors();
             calculateLeagueAverages();
+            renderSeasonSummary();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             showToast("Caja activa cambiada.");
@@ -1908,7 +2125,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const newId = 'bankroll_' + Date.now();
             bankrollsData.push({
                 id: newId, name, initial, totalDeposited: 0, totalWithdrawn: 0,
-                withdrawLog: [], boxTransactionsLog: [],
+                withdrawLog: [], boxTransactionsLog: [], seasonSummaries: {},
                 leaguesData: { [DEFAULT_LEAGUE_NAME]: parseRawLeagueData(DEFAULT_RAW_DATA) }
             });
             activeBankrollId = newId;
@@ -1917,6 +2134,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             populateLeagueDropdowns();
             updateTeamSelectors();
             calculateLeagueAverages();
+            renderSeasonSummary();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             nameInput.value = '';
@@ -1937,6 +2155,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 populateLeagueDropdowns();
                 updateTeamSelectors();
                 calculateLeagueAverages();
+                renderSeasonSummary();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
                 showToast("Bankroll eliminado.");
@@ -1994,7 +2213,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                                 <span class="text-[10px] text-slate-400">Inicial: $${b.initial.toFixed(2)} | Disp: <b class="text-white">$${fin.availableBalance.toFixed(2)}</b> | Utilidad: <span class="${netProfit >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}">$${netProfit.toFixed(2)}</span></span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); calculateLeagueAverages(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
+                                ${!isCurrent ? `<button onclick="activeBankrollId='${b.id}'; saveBankrollsToStorage(); populateBankrollDropdowns(); populateLeagueDropdowns(); updateTeamSelectors(); calculateLeagueAverages(); renderSeasonSummary(); updateMarketFilterDropdown(); updateTrackerMetrics(); toggleBankrollManagerModal(false);" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-bold text-[10px]">Seleccionar</button>` : ''}
                                 <button onclick="deleteBankroll('${b.id}')" class="px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 rounded font-bold text-[10px]"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
@@ -2252,7 +2471,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function onLeagueSelectChange() { 
             updateTeamSelectors(); 
-            calculateLeagueAverages();  
+            calculateLeagueAverages();
+            renderSeasonSummary();
             calculatePoisson(); 
         }
 
@@ -3738,6 +3958,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (selectModal) selectModal.value = leagueName;
             updateTeamSelectors();
             calculateLeagueAverages();
+            renderSeasonSummary();
             renderModalLeagueTable();
             showToast(`¡Liga "${leagueName}" cargada con ${parsedTeams.length} equipos!`);
             rawEl.value = '';
@@ -3753,10 +3974,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (activeBankObj && activeBankObj.leaguesData && activeBankObj.leaguesData[targetLeague]) {
                 if (confirm(`¿Eliminar la liga "${targetLeague}"?`)) {
                     delete activeBankObj.leaguesData[targetLeague];
+                    if (activeBankObj.seasonSummaries) delete activeBankObj.seasonSummaries[targetLeague];
                     saveBankrollsToStorage();
                     populateLeagueDropdowns();
                     updateTeamSelectors();
                     calculateLeagueAverages();
+                    renderSeasonSummary();
                     renderModalLeagueTable();
                     showToast("Liga eliminada.");
                 }
@@ -3910,7 +4133,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             renderMatrix(matrix);
             renderGoalsChart(homeProbs, awayProbs);
 
-            // NUEVA LLAMADA: actualizar recomendación de value tras recalcular
             calculateValueLookup();
         }
 
