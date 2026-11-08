@@ -1092,7 +1092,9 @@
             populateBankrollDropdowns();
             updateTeamSelectors();
             updateWeightLabels();
-            updateRhoDisplay();
+            // FIX #1: NO llamar a updateRhoDisplay() aquí.
+            // Esa función activa rhoManualOverride=true y bloquea el auto-ρ.
+            // calculatePoisson() ya inicializa el display y el slider con el ρ automático.
             calculatePoisson();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
@@ -1278,7 +1280,6 @@
                         <div class="truncate pr-2"><span class="text-[9px] text-slate-400 block">${item.match}</span><span class="font-bold text-white">${item.market}: <span class="text-gold-400">${item.selection}</span></span></div>
                         <div class="flex items-center gap-2 shrink-0">
                             <span class="text-[10px] font-black text-emerald-400">@${item.fairOdds.toFixed(2)}</span>
-                            <!-- FIX #7: Icono corregido -->
                             <button onclick="removeFromparlay(${idx})" class="text-rose-400 hover:text-rose-300 px-1"><i class="fa-solid fa-xmark"></i></button>
                         </div>
                     </div>
@@ -1874,6 +1875,10 @@
             }
         }
 
+        // FIX #2: withdrawHalfProfit
+        //  - Guardia contra $0.00 / centavos
+        //  - Usar settledBalance (caja real) para la auditoría
+        //  - NO escribir en bankObj.withdrawLog (dato legacy sin txId)
         function withdrawHalfProfit(bankId) {
             const bankObj = bankrollsData.find(b => b.id === bankId);
             if (!bankObj) return;
@@ -1882,14 +1887,16 @@
             if (fin.netProfitAvailable <= 0) { showToast("No hay utilidad neta disponible."); return; }
 
             const amountToWithdraw = +(fin.netProfitAvailable * 0.5).toFixed(2);
+            // FIX #2a: guardia contra $0.00 / centavos
+            if (amountToWithdraw <= 0.01) { showToast("Utilidad insuficiente para retirar (mínimo $0.01)."); return; }
             if (amountToWithdraw > fin.availableBalance) { showToast("Fondos comprometidos en apuestas pendientes."); return; }
 
             const todayStr = new Date().toISOString().slice(0, 10);
-            const resultingBal = +(fin.availableBalance - amountToWithdraw).toFixed(2);
+            // FIX #2b: usar settledBalance (caja real) para la auditoría
+            const resultingBal = +(fin.settledBalance - amountToWithdraw).toFixed(2);
 
-            if (!bankObj.withdrawLog) bankObj.withdrawLog = [];
-            bankObj.withdrawLog.push({ date: todayStr, amount: amountToWithdraw, profitBasis: fin.netProfitAvailable });
-
+            // FIX #2c: NO escribir en bankObj.withdrawLog (dato legacy sin txId).
+            // Toda la auditoría vive en boxTransactionsLog.
             boxTransactionsLog.push({
                 id: 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                 bankrollId: bankObj.id, bankrollName: bankObj.name,
@@ -2139,7 +2146,9 @@
                 if (amount > maxByBank + 0.009) { showToast(`Excede saldo disponible ($${maxByBank.toFixed(2)}).`); return; }
             }
 
-            const balanceBefore = +fin.availableBalance.toFixed(2);
+            // FIX #3: usar settledBalance (saldo real de caja, sin descontar riesgo pendiente)
+            // para que la auditoría no cambie cuando se liquidan apuestas pendientes.
+            const balanceBefore = +fin.settledBalance.toFixed(2);
             const resultingBalance = currentBoxTxType === 'DEPOSIT' ? +(balanceBefore + amount).toFixed(2) : +(balanceBefore - amount).toFixed(2);
             const defaultConcept = currentBoxTxType === 'DEPOSIT' ? 'Depósito Externo de Capital' : (mode === 'PROFIT' ? 'Retiro de Utilidad Neta' : 'Retiro de Fondos de Caja');
 
