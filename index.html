@@ -188,9 +188,6 @@
             </div>
         </section>
 
-        <!-- ============================================================ -->
-        <!-- NUEVA SECCIÓN: ANÁLISIS GLOBAL DE LIGA (PROMEDIOS GF)         -->
-        <!-- ============================================================ -->
         <section class="glass-card rounded-2xl p-3.5 space-y-2.5 border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900">
             <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                 <div class="flex items-center gap-2">
@@ -244,6 +241,65 @@
                 </div>
             </div>
             <div id="leagueAvgTeamsInfo" class="text-[9px] text-slate-400 italic text-center">Selecciona una liga para ver los promedios globales.</div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- NUEVA SECCIÓN: ¿DÓNDE BUSCAR VALUE? (LIGA vs PARTIDO)         -->
+        <!-- ============================================================ -->
+        <section class="glass-card rounded-2xl p-3.5 space-y-3 border border-purple-500/40 bg-gradient-to-r from-slate-900 via-purple-950/20 to-slate-900">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-compass text-purple-400 text-xs"></i>
+                    <h2 class="font-extrabold text-xs text-white">¿Dónde Buscar Value? (Liga vs Partido)</h2>
+                </div>
+                <span class="text-[9px] font-black bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded-md border border-purple-500/20">Regla del Value</span>
+            </div>
+            <div class="space-y-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-fire mr-1"></i> Over / Under 2.5</span>
+                    <span id="valueLookupBadgeOU" class="text-[8px] font-black bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">Sin datos</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Liga</span>
+                        <span id="valueLookupLeagueOU" class="text-[10px] font-black text-white block mt-0.5">-</span>
+                    </div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Partido</span>
+                        <span id="valueLookupMatchOU" class="text-[10px] font-black text-white block mt-0.5">-</span>
+                    </div>
+                    <div id="valueLookupResultOU" class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="block text-[8px] uppercase font-bold text-purple-300">Buscar</span>
+                        <span id="valueLookupTargetOU" class="text-[10px] font-black text-slate-400 block mt-0.5">-</span>
+                    </div>
+                </div>
+                <p id="valueLookupReasonOU" class="text-[9px] text-slate-400 italic text-center leading-relaxed">Selecciona un partido para ver la recomendación.</p>
+            </div>
+            <div class="space-y-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex justify-between items-center">
+                    <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-arrows-retweet mr-1"></i> BTTS (Ambos Anotan)</span>
+                    <span id="valueLookupBadgeBTTS" class="text-[8px] font-black bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">Sin datos</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Liga</span>
+                        <span id="valueLookupLeagueBTTS" class="text-[10px] font-black text-white block mt-0.5">-</span>
+                    </div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Partido</span>
+                        <span id="valueLookupMatchBTTS" class="text-[10px] font-black text-white block mt-0.5">-</span>
+                    </div>
+                    <div id="valueLookupResultBTTS" class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="block text-[8px] uppercase font-bold text-purple-300">Buscar</span>
+                        <span id="valueLookupTargetBTTS" class="text-[10px] font-black text-slate-400 block mt-0.5">-</span>
+                    </div>
+                </div>
+                <p id="valueLookupReasonBTTS" class="text-[9px] text-slate-400 italic text-center leading-relaxed">Selecciona un partido para ver la recomendación.</p>
+            </div>
+            <div class="bg-slate-950/60 border border-slate-800 p-2 rounded-lg text-[9px] text-slate-400 italic">
+                <i class="fa-solid fa-lightbulb text-gold-400 mr-1"></i>
+                <b>Recordatorio:</b> Solo apuesta si el <b class="text-emerald-400">EV es positivo</b>. La recomendación te dice <b>dónde mirar</b>, no si apostar.
+            </div>
         </section>
         <!-- ============================================================ -->
         <!-- FIN NUEVA SECCIÓN                                             -->
@@ -1140,7 +1196,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             populateBankrollDropdowns();
             updateTeamSelectors();
             calculatePoisson();
-            calculateLeagueAverages();  // NUEVA LLAMADA
+            calculateLeagueAverages();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             updateParallelTrackerMetrics();
@@ -1356,9 +1412,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             calculatePoisson();
         }
 
-        // ============================================================
-        // PARSER DE TABLAS HOME + AWAY
-        // ============================================================
         function normalizeTeamKey(name) {
             return name.trim().replace(/\s+/g, ' ').toLowerCase();
         }
@@ -1465,9 +1518,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             return teams;
         }
 
-        // ============================================================
-        // NUEVA FUNCIÓN: PROMEDIOS GLOBALES DE LIGA
-        // ============================================================
         function calculateLeagueAverages() {
             const selectActive = document.getElementById('activeLeagueSelect');
             if (!selectActive) return;
@@ -1481,6 +1531,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 ['leagueBarOver25','leagueBarUnder25','leagueBarBttsYes','leagueBarBttsNo'].forEach(id => { const el = document.getElementById(id); if (el) el.style.width = '0%'; });
                 const infoEl = document.getElementById('leagueAvgTeamsInfo');
                 if (infoEl) infoEl.innerText = 'No hay equipos en la liga seleccionada.';
+                calculateValueLookup();
                 return;
             }
 
@@ -1498,7 +1549,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('leagueAvgHomeGF').innerText = avgHomeGF.toFixed(3);
             document.getElementById('leagueAvgAwayGF').innerText = avgAwayGF.toFixed(3);
 
-            // Calcular probabilidades vía Poisson con estos λ
             let probOver25 = 0, probUnder25 = 0, probBttsYes = 0, probBttsNo = 0;
             for (let i = 0; i <= 10; i++) {
                 for (let j = 0; j <= 10; j++) {
@@ -1523,11 +1573,141 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             const infoEl = document.getElementById('leagueAvgTeamsInfo');
             if (infoEl) infoEl.innerText = `Liga: ${activeLeague} | ${teams.length} equipos procesados (Home: ${homeCount} | Away: ${awayCount}).`;
+
+            calculateValueLookup();
         }
 
         // ============================================================
-        // BANKROLLS / STORAGE
+        // NUEVA FUNCIÓN: ¿DÓNDE BUSCAR VALUE?
+        // Aplica la regla: target = opuesto de la liga.
+        // Fuerte si partido contradice liga, Moderada si confirma.
         // ============================================================
+        function calculateValueLookup() {
+            const hgf = parseFloat(document.getElementById('homeGf').value) || 0;
+            const hgc = parseFloat(document.getElementById('homeGc').value) || 0;
+            const agf = parseFloat(document.getElementById('awayGf').value) || 0;
+            const agc = parseFloat(document.getElementById('awayGc').value) || 0;
+            const noMatchData = (hgf + hgc + agf + agc) === 0;
+
+            // ============ O/U 2.5 ============
+            const leaguePctOver25Text = document.getElementById('leaguePctOver25').innerText;
+            const leagueOver25 = parseFloat(leaguePctOver25Text) / 100 || 0;
+            const matchOver25 = currentCalculatedProbs.probOver25 || 0;
+            const hasLeagueDataOU = leagueOver25 > 0;
+
+            let leagueLabelOU = '-';
+            let matchLabelOU = '-';
+            let targetLabelOU = '-';
+            let reasonTextOU = 'Selecciona una liga y un partido para ver la recomendación.';
+            let badgeTextOU = 'Sin datos';
+            let badgeClassOU = 'text-[8px] font-black bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700';
+            let targetClassOU = 'text-[10px] font-black text-slate-400 block mt-0.5';
+            let resultBorderOU = 'bg-slate-950/80 p-2 rounded-lg border border-slate-800';
+
+            if (hasLeagueDataOU) {
+                const leagueClassOU = leagueOver25 > 0.5 ? 'Over' : 'Under';
+                leagueLabelOU = `${leagueClassOU} (${(leagueOver25*100).toFixed(1)}%)`;
+
+                if (!noMatchData && matchOver25 > 0 && matchOver25 < 1) {
+                    const matchClassOU = matchOver25 > 0.5 ? 'Over' : 'Under';
+                    matchLabelOU = `${matchClassOU} (${(matchOver25*100).toFixed(1)}%)`;
+
+                    const targetIsOver = leagueClassOU === 'Under';
+                    targetLabelOU = targetIsOver ? 'OVER 2.5' : 'UNDER 2.5';
+                    targetClassOU = targetIsOver ? 'text-[10px] font-black text-emerald-400 block mt-0.5' : 'text-[10px] font-black text-slate-300 block mt-0.5';
+
+                    const deviationOU = Math.abs(matchOver25 - leagueOver25) * 100;
+
+                    if (leagueClassOU !== matchClassOU) {
+                        badgeTextOU = 'Fuerte';
+                        badgeClassOU = 'text-[8px] font-black bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/40';
+                        resultBorderOU = 'bg-emerald-950/40 p-2 rounded-lg border border-emerald-500/50';
+                        reasonTextOU = `Liga ${leagueClassOU} contradice al partido ${matchClassOU}. El mercado se ancla a la liga → value en ${targetLabelOU} (lado del partido). Busca EV ≥5%.`;
+                    } else {
+                        badgeTextOU = 'Moderada';
+                        badgeClassOU = 'text-[8px] font-black bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/40';
+                        resultBorderOU = 'bg-amber-950/40 p-2 rounded-lg border border-amber-500/50';
+                        reasonTextOU = `Liga y partido coinciden en ${leagueClassOU}. La masa apuesta ese lado → busca ${targetLabelOU} si está inflado. Exige EV ≥8%.`;
+                        if (deviationOU >= 10) {
+                            reasonTextOU += ` Desviación ${deviationOU.toFixed(1)}pp: el mismo lado también podría tener value.`;
+                        }
+                    }
+                } else {
+                    matchLabelOU = '?';
+                    targetLabelOU = 'Carga partido';
+                    reasonTextOU = 'Ingresa GF/GC del local y visitante para ver la recomendación.';
+                }
+            }
+
+            document.getElementById('valueLookupLeagueOU').innerText = leagueLabelOU;
+            document.getElementById('valueLookupMatchOU').innerText = matchLabelOU;
+            document.getElementById('valueLookupTargetOU').innerText = targetLabelOU;
+            document.getElementById('valueLookupTargetOU').className = targetClassOU;
+            document.getElementById('valueLookupReasonOU').innerText = reasonTextOU;
+            document.getElementById('valueLookupBadgeOU').innerText = badgeTextOU;
+            document.getElementById('valueLookupBadgeOU').className = badgeClassOU;
+            document.getElementById('valueLookupResultOU').className = resultBorderOU;
+
+            // ============ BTTS ============
+            const leaguePctBttsYesText = document.getElementById('leaguePctBttsYes').innerText;
+            const leagueBttsYes = parseFloat(leaguePctBttsYesText) / 100 || 0;
+            const matchBttsYes = currentCalculatedProbs.probBttsYes || 0;
+            const hasLeagueDataBTTS = leagueBttsYes > 0;
+
+            let leagueLabelBTTS = '-';
+            let matchLabelBTTS = '-';
+            let targetLabelBTTS = '-';
+            let reasonTextBTTS = 'Selecciona una liga y un partido para ver la recomendación.';
+            let badgeTextBTTS = 'Sin datos';
+            let badgeClassBTTS = 'text-[8px] font-black bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700';
+            let targetClassBTTS = 'text-[10px] font-black text-slate-400 block mt-0.5';
+            let resultBorderBTTS = 'bg-slate-950/80 p-2 rounded-lg border border-slate-800';
+
+            if (hasLeagueDataBTTS) {
+                const leagueClassBTTS = leagueBttsYes > 0.5 ? 'Sí' : 'No';
+                leagueLabelBTTS = `${leagueClassBTTS} (${(leagueBttsYes*100).toFixed(1)}%)`;
+
+                if (!noMatchData && matchBttsYes > 0 && matchBttsYes < 1) {
+                    const matchClassBTTS = matchBttsYes > 0.5 ? 'Sí' : 'No';
+                    matchLabelBTTS = `${matchClassBTTS} (${(matchBttsYes*100).toFixed(1)}%)`;
+
+                    const targetIsYes = leagueClassBTTS === 'No';
+                    targetLabelBTTS = targetIsYes ? 'BTTS SÍ' : 'BTTS NO';
+                    targetClassBTTS = targetIsYes ? 'text-[10px] font-black text-gold-400 block mt-0.5' : 'text-[10px] font-black text-slate-300 block mt-0.5';
+
+                    const deviationBTTS = Math.abs(matchBttsYes - leagueBttsYes) * 100;
+
+                    if (leagueClassBTTS !== matchClassBTTS) {
+                        badgeTextBTTS = 'Fuerte';
+                        badgeClassBTTS = 'text-[8px] font-black bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/40';
+                        resultBorderBTTS = 'bg-emerald-950/40 p-2 rounded-lg border border-emerald-500/50';
+                        reasonTextBTTS = `Liga ${leagueClassBTTS} contradice al partido ${matchClassBTTS}. El mercado se ancla a la liga → value en ${targetLabelBTTS} (lado del partido). Busca EV ≥5%.`;
+                    } else {
+                        badgeTextBTTS = 'Moderada';
+                        badgeClassBTTS = 'text-[8px] font-black bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded border border-amber-500/40';
+                        resultBorderBTTS = 'bg-amber-950/40 p-2 rounded-lg border border-amber-500/50';
+                        reasonTextBTTS = `Liga y partido coinciden en ${leagueClassBTTS}. La masa apuesta ese lado → busca ${targetLabelBTTS} si está inflado. Exige EV ≥8%.`;
+                        if (deviationBTTS >= 10) {
+                            reasonTextBTTS += ` Desviación ${deviationBTTS.toFixed(1)}pp: el mismo lado también podría tener value.`;
+                        }
+                    }
+                } else {
+                    matchLabelBTTS = '?';
+                    targetLabelBTTS = 'Carga partido';
+                    reasonTextBTTS = 'Ingresa GF/GC del local y visitante para ver la recomendación.';
+                }
+            }
+
+            document.getElementById('valueLookupLeagueBTTS').innerText = leagueLabelBTTS;
+            document.getElementById('valueLookupMatchBTTS').innerText = matchLabelBTTS;
+            document.getElementById('valueLookupTargetBTTS').innerText = targetLabelBTTS;
+            document.getElementById('valueLookupTargetBTTS').className = targetClassBTTS;
+            document.getElementById('valueLookupReasonBTTS').innerText = reasonTextBTTS;
+            document.getElementById('valueLookupBadgeBTTS').innerText = badgeTextBTTS;
+            document.getElementById('valueLookupBadgeBTTS').className = badgeClassBTTS;
+            document.getElementById('valueLookupResultBTTS').className = resultBorderBTTS;
+        }
+
         function loadBankrollsFromStorage() {
             const stored = localStorage.getItem('poisson_vip_bankrolls');
             if (stored) {
@@ -1707,7 +1887,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             saveBankrollsToStorage();
             populateLeagueDropdowns();
             updateTeamSelectors();
-            calculateLeagueAverages();  // NUEVA LLAMADA
+            calculateLeagueAverages();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             showToast("Caja activa cambiada.");
@@ -1736,7 +1916,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             populateBankrollDropdowns();
             populateLeagueDropdowns();
             updateTeamSelectors();
-            calculateLeagueAverages();  // NUEVA LLAMADA
+            calculateLeagueAverages();
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             nameInput.value = '';
@@ -1756,7 +1936,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 populateBankrollDropdowns();
                 populateLeagueDropdowns();
                 updateTeamSelectors();
-                calculateLeagueAverages();  // NUEVA LLAMADA
+                calculateLeagueAverages();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
                 showToast("Bankroll eliminado.");
@@ -2072,13 +2252,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function onLeagueSelectChange() { 
             updateTeamSelectors(); 
-            calculateLeagueAverages();  // NUEVA LLAMADA
+            calculateLeagueAverages();  
             calculatePoisson(); 
         }
 
-        // ============================================================
-        // SELECTORES DE EQUIPOS
-        // ============================================================
         function updateTeamSelectors() {
             const selectActive = document.getElementById('activeLeagueSelect');
             if (!selectActive) return;
@@ -2110,7 +2287,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const team = teams.find(t => t.name === selectedName);
             if (!team) return;
 
-            // Home usa stats de Home table | Away usa stats de Away table
             const stats = side === 'home' ? team.home : team.away;
             const fallback = { gfAvg: 0, gaAvg: 0 };
             const s = stats || fallback;
@@ -3561,7 +3737,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (selectActive) selectActive.value = leagueName;
             if (selectModal) selectModal.value = leagueName;
             updateTeamSelectors();
-            calculateLeagueAverages();  // NUEVA LLAMADA
+            calculateLeagueAverages();
             renderModalLeagueTable();
             showToast(`¡Liga "${leagueName}" cargada con ${parsedTeams.length} equipos!`);
             rawEl.value = '';
@@ -3580,7 +3756,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     saveBankrollsToStorage();
                     populateLeagueDropdowns();
                     updateTeamSelectors();
-                    calculateLeagueAverages();  // NUEVA LLAMADA
+                    calculateLeagueAverages();
                     renderModalLeagueTable();
                     showToast("Liga eliminada.");
                 }
@@ -3643,16 +3819,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             detailsContainer.innerHTML = detailsHtml;
         }
 
-        // ============================================================
-        // CÁLCULO PRINCIPAL: MEDIA GEOMÉTRICA
-        // ============================================================
         function calculatePoisson() {
             const hgf = parseFloat(document.getElementById('homeGf').value) || 0;
             const hgc = parseFloat(document.getElementById('homeGc').value) || 0;
             const agf = parseFloat(document.getElementById('awayGf').value) || 0;
             const agc = parseFloat(document.getElementById('awayGc').value) || 0;
 
-            // Media Geométrica: sqrt(GF × GC) - evita falsos Over
             let lambdaHome = Math.sqrt(Math.max(0, hgf * agc)) || 0;
             let lambdaAway = Math.sqrt(Math.max(0, agf * hgc)) || 0;
 
@@ -3737,6 +3909,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             });
             renderMatrix(matrix);
             renderGoalsChart(homeProbs, awayProbs);
+
+            // NUEVA LLAMADA: actualizar recomendación de value tras recalcular
+            calculateValueLookup();
         }
 
         function renderDynamicOverUnder(matrix) {
