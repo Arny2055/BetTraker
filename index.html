@@ -398,6 +398,21 @@
                     <p class="text-base font-black text-emerald-400" id="valAwayLambda">0.000</p>
                 </div>
             </div>
+
+            <!-- ========== NUEVO: EXPLICACIÓN DE INTERVALOS DE CONFIANZA ========== -->
+            <details class="bg-slate-900/60 rounded-xl border border-indigo-500/30 overflow-hidden group mt-2">
+                <summary class="p-2.5 cursor-pointer flex items-center justify-between text-[10px] font-bold text-indigo-300 select-none">
+                    <div class="flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i><span>¿Qué son los Intervalos de Confianza (IC90)?</span></div>
+                    <i class="fa-solid fa-chevron-down text-indigo-400 text-xs transition-transform group-open:rotate-180"></i>
+                </summary>
+                <div class="p-2.5 pt-0 text-[10px] text-slate-400 leading-relaxed space-y-1.5">
+                    <p>El modelo calcula una probabilidad central (ej: <b class="text-emerald-400">Over 2.5 = 58.3%</b>), pero esa cifra es una estimación. El <b class="text-white">IC90</b> muestra el rango donde estaría la probabilidad "verdadera" con 90% de confianza.</p>
+                    <p><b class="text-emerald-300">Ejemplo:</b> si dice <span class="font-mono text-emerald-400">IC90: 52.1% – 64.2%</span>, significa que si el modelo fuera correcto y repitiéramos la temporada muchas veces, en 9 de cada 10 casos la probabilidad real caería en ese rango.</p>
+                    <p><b class="text-amber-300">Uso en apuestas:</b> si el límite inferior del IC está por debajo del umbral que necesitas para tu cuota (ej: necesitas 55% y el IC inferior es 51%), hay <b>alta incertidumbre</b>. Considera reducir stake o descartar la apuesta. Si el IC es estrecho (ej: 57% – 60%), tienes buena confianza en la estimación.</p>
+                    <p class="text-[9px] text-slate-500 italic pt-1 border-t border-slate-800/50">El ancho del IC depende del número de partidos jugados por cada equipo. A más partidos, más confianza y más estrecho el rango. Si ingresas GF/GC manualmente sin seleccionar equipos, se asume n=10 por defecto.</p>
+                </div>
+            </details>
+            <!-- ========== FIN NUEVO ========== -->
         </section>
 
         <!-- ============================================================ -->
@@ -556,14 +571,20 @@
             <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                     <div class="flex items-center gap-2"><i class="fa-solid fa-fire text-emerald-400 text-xs"></i><h2 class="font-extrabold text-xs text-white">Mercado Over / Under 2.5 FT</h2></div>
-                    <span class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Mercado Clave</span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[8px] font-black bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded-md border border-indigo-500/20" title="Intervalos de Confianza al 90%">IC90</span>
+                        <span class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Mercado Clave</span>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/30 neon-emerald-glow flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center"><span class="text-xs font-black text-white">OVER 2.5</span><span class="text-[9px] text-slate-400">&gt; 2.5 Goles</span></div>
                             <div class="flex items-baseline justify-between mt-1">
-                                <span class="text-xl font-black text-emerald-400" id="pctOver25">0.0%</span>
+                                <div class="flex flex-col">
+                                    <span class="text-xl font-black text-emerald-400" id="pctOver25">0.0%</span>
+                                    <span class="text-[8px] font-mono text-emerald-500/70 leading-tight" id="ciOver25">IC90: -</span>
+                                </div>
                                 <div class="text-right"><span class="block text-[8px] text-slate-400 uppercase font-bold">Cuota Justa</span><span class="text-xs font-black text-gold-400" id="oddsOver25">@0.00</span></div>
                             </div>
                             <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="barOver25" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
@@ -577,7 +598,10 @@
                         <div>
                             <div class="flex justify-between items-center"><span class="text-xs font-black text-slate-300">UNDER 2.5</span><span class="text-[9px] text-slate-400">&lt; 2.5 Goles</span></div>
                             <div class="flex items-baseline justify-between mt-1">
-                                <span class="text-xl font-black text-slate-300" id="pctUnder25">0.0%</span>
+                                <div class="flex flex-col">
+                                    <span class="text-xl font-black text-slate-300" id="pctUnder25">0.0%</span>
+                                    <span class="text-[8px] font-mono text-slate-500/70 leading-tight" id="ciUnder25">IC90: -</span>
+                                </div>
                                 <div class="text-right"><span class="block text-[8px] text-slate-400 uppercase font-bold">Cuota Justa</span><span class="text-xs font-black text-slate-300" id="oddsUnder25">@0.00</span></div>
                             </div>
                             <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="barUnder25" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
@@ -593,13 +617,17 @@
             <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                     <div class="flex items-center gap-2"><i class="fa-solid fa-arrows-retweet text-gold-400 text-xs"></i><h2 class="font-extrabold text-xs text-white">Ambos Equipos Anotan (BTTS)</h2></div>
+                    <span class="text-[8px] font-black bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded-md border border-indigo-500/20" title="Intervalos de Confianza al 90%">IC90</span>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-gold-500/30 neon-gold-glow flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center"><span class="text-xs font-black text-white">BTTS SÍ</span><span class="text-[9px] text-slate-400">Sí Anotan</span></div>
                             <div class="flex items-baseline justify-between mt-1">
-                                <span class="text-xl font-black text-gold-400" id="pctBttsYes">0.0%</span>
+                                <div class="flex flex-col">
+                                    <span class="text-xl font-black text-gold-400" id="pctBttsYes">0.0%</span>
+                                    <span class="text-[8px] font-mono text-gold-500/70 leading-tight" id="ciBttsYes">IC90: -</span>
+                                </div>
                                 <div class="text-right"><span class="block text-[8px] text-slate-400 uppercase font-bold">Cuota Justa</span><span class="text-xs font-black text-gold-400" id="oddsBttsYes">@0.00</span></div>
                             </div>
                             <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="barBttsYes" class="bg-gold-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
@@ -613,7 +641,10 @@
                         <div>
                             <div class="flex justify-between items-center"><span class="text-xs font-black text-slate-300">BTTS NO</span><span class="text-[9px] text-slate-400">No Anotan</span></div>
                             <div class="flex items-baseline justify-between mt-1">
-                                <span class="text-xl font-black text-slate-300" id="pctBttsNo">0.0%</span>
+                                <div class="flex flex-col">
+                                    <span class="text-xl font-black text-slate-300" id="pctBttsNo">0.0%</span>
+                                    <span class="text-[8px] font-mono text-slate-500/70 leading-tight" id="ciBttsNo">IC90: -</span>
+                                </div>
                                 <div class="text-right"><span class="block text-[8px] text-slate-400 uppercase font-bold">Cuota Justa</span><span class="text-xs font-black text-slate-300" id="oddsBttsNo">@0.00</span></div>
                             </div>
                             <div class="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden"><div id="barBttsNo" class="bg-slate-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div></div>
@@ -637,12 +668,14 @@
             <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                     <div class="flex items-center gap-2"><i class="fa-solid fa-pie-chart text-blue-400 text-xs"></i><h2 class="font-extrabold text-xs text-white">Mercado 1X2 Principal</h2></div>
+                    <span class="text-[8px] font-black bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded-md border border-indigo-500/20" title="Intervalos de Confianza al 90%">IC90</span>
                 </div>
                 <div class="grid grid-cols-3 gap-2 text-center">
                     <div class="bg-slate-900/90 p-2 rounded-xl border border-slate-800 flex flex-col justify-between">
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase truncate" id="name1x2Home">Local</p>
                             <p class="text-base font-black text-emerald-400 my-0.5" id="pct1x2Home">0.0%</p>
+                            <p class="text-[7px] font-mono text-emerald-500/70" id="ciHomeWin">IC90: -</p>
                             <p class="text-[10px] font-black text-gold-400" id="odds1x2Home">@0.00</p>
                         </div>
                         <div class="grid grid-cols-2 gap-1 mt-2">
@@ -654,6 +687,7 @@
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Empate (X)</p>
                             <p class="text-base font-black text-slate-200 my-0.5" id="pct1x2Draw">0.0%</p>
+                            <p class="text-[7px] font-mono text-slate-400/70" id="ciDraw">IC90: -</p>
                             <p class="text-[10px] font-black text-slate-300" id="odds1x2Draw">@0.00</p>
                         </div>
                         <div class="grid grid-cols-2 gap-1 mt-2">
@@ -665,6 +699,7 @@
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase truncate" id="name1x2Away">Visitante</p>
                             <p class="text-base font-black text-rose-400 my-0.5" id="pct1x2Away">0.0%</p>
+                            <p class="text-[7px] font-mono text-rose-500/70" id="ciAwayWin">IC90: -</p>
                             <p class="text-[10px] font-black text-gold-400" id="odds1x2Away">@0.00</p>
                         </div>
                         <div class="grid grid-cols-2 gap-1 mt-2">
@@ -4419,6 +4454,113 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function modifiedBesselI(k, z) { let s = 0; const kAbs = Math.abs(k); for (let m = 0; m < 40; m++) s += Math.pow(z / 2, kAbs + 2 * m) / (factorial(m) * factorial(kAbs + m)); return s; }
         function skellamProb(k, l1, l2) { if (l1 <= 0 || l2 <= 0) return 0; return Math.exp(-(l1 + l2)) * Math.pow(l1 / l2, k / 2) * modifiedBesselI(k, 2 * Math.sqrt(l1 * l2)); }
 
+        // ============================================================
+        // NUEVO: FUNCIONES PARA INTERVALOS DE CONFIANZA
+        // ============================================================
+        function sampleNormal(mean, std) {
+            let u = 0, v = 0;
+            while (u === 0) u = Math.random();
+            while (v === 0) v = Math.random();
+            return mean + std * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+        }
+
+        function getPercentiles(arr) {
+            const sorted = arr.slice().sort((a, b) => a - b);
+            const n = sorted.length;
+            if (n === 0) return { p10: 0, p50: 0, p90: 0 };
+            return {
+                p10: sorted[Math.floor(n * 0.10)],
+                p50: sorted[Math.floor(n * 0.50)],
+                p90: sorted[Math.floor(n * 0.90)]
+            };
+        }
+
+        function computeProbsFromLambdas(lh, la, rho) {
+            const homeProbs = [], awayProbs = [];
+            for (let i = 0; i <= 6; i++) {
+                homeProbs[i] = poissonProb(i, lh);
+                awayProbs[i] = poissonProb(i, la);
+            }
+            let homeWin = 0, draw = 0, awayWin = 0;
+            let over25 = 0, under25 = 0, bttsYes = 0, bttsNo = 0;
+            for (let i = 0; i <= 6; i++) {
+                for (let j = 0; j <= 6; j++) {
+                    let p = homeProbs[i] * awayProbs[j];
+                    if (rho !== 0) {
+                        if (i === 0 && j === 0) p *= (1 - lh * la * rho);
+                        else if (i === 1 && j === 0) p *= (1 + la * rho);
+                        else if (i === 0 && j === 1) p *= (1 + lh * rho);
+                        else if (i === 1 && j === 1) p *= (1 - rho);
+                    }
+                    if (i > j) homeWin += p;
+                    else if (i === j) draw += p;
+                    else awayWin += p;
+                    if ((i + j) > 2.5) over25 += p; else under25 += p;
+                    if (i > 0 && j > 0) bttsYes += p; else bttsNo += p;
+                }
+            }
+            return { homeWin, draw, awayWin, over25, under25, bttsYes, bttsNo };
+        }
+
+        function getCurrentMatchMp() {
+            const activeLeague = document.getElementById('activeLeagueSelect').value;
+            const leagues = getCurrentBankrollLeagues();
+            const teams = leagues[activeLeague] || [];
+            const homeName = document.getElementById('homeName').value.trim();
+            const awayName = document.getElementById('awayName').value.trim();
+            let mpHome = 0, mpAway = 0;
+            if (homeName) {
+                const team = teams.find(t => t.name === homeName);
+                if (team && team.home && team.home.mp > 0) mpHome = team.home.mp;
+            }
+            if (awayName) {
+                const team = teams.find(t => t.name === awayName);
+                if (team && team.away && team.away.mp > 0) mpAway = team.away.mp;
+            }
+            return { mpHome, mpAway };
+        }
+
+        function calculateProbabilityCI(lambdaHome, lambdaAway, mpHome, mpAway, rho, numSims) {
+            numSims = numSims || 300;
+            const nHome = mpHome > 0 ? mpHome : 10;
+            const nAway = mpAway > 0 ? mpAway : 10;
+            const seHome = Math.sqrt(Math.max(0, lambdaHome) / nHome);
+            const seAway = Math.sqrt(Math.max(0, lambdaAway) / nAway);
+            const sims = { homeWin: [], draw: [], awayWin: [], over25: [], under25: [], bttsYes: [], bttsNo: [] };
+            for (let s = 0; s < numSims; s++) {
+                const lh = Math.max(0.01, sampleNormal(lambdaHome, seHome));
+                const la = Math.max(0.01, sampleNormal(lambdaAway, seAway));
+                const p = computeProbsFromLambdas(lh, la, rho);
+                sims.homeWin.push(p.homeWin);
+                sims.draw.push(p.draw);
+                sims.awayWin.push(p.awayWin);
+                sims.over25.push(p.over25);
+                sims.under25.push(p.under25);
+                sims.bttsYes.push(p.bttsYes);
+                sims.bttsNo.push(p.bttsNo);
+            }
+            return {
+                homeWin: getPercentiles(sims.homeWin),
+                draw: getPercentiles(sims.draw),
+                awayWin: getPercentiles(sims.awayWin),
+                over25: getPercentiles(sims.over25),
+                under25: getPercentiles(sims.under25),
+                bttsYes: getPercentiles(sims.bttsYes),
+                bttsNo: getPercentiles(sims.bttsNo)
+            };
+        }
+
+        function formatCI(ciObj, isEmpty) {
+            if (isEmpty || !ciObj) return 'IC90: -';
+            const p10 = (ciObj.p10 * 100).toFixed(1);
+            const p90 = (ciObj.p90 * 100).toFixed(1);
+            return `IC90: ${p10}% – ${p90}%`;
+        }
+
+        // ============================================================
+        // FIN NUEVO IC
+        // ============================================================
+
         function calculateSkellamAnalysis(lambdaHome, lambdaAway) {
             let probHomeWin = 0, probDraw = 0, probAwayWin = 0;
             const diffProbs = {};
@@ -4502,19 +4644,37 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             currentCalculatedProbs = { probHomeWin, probDraw, probAwayWin, probOver25, probUnder25, probBttsYes, probBttsNo };
 
+            // ============================================================
+            // NUEVO: CALCULAR INTERVALOS DE CONFIANZA AL 90%
+            // ============================================================
+            const noMatchData = (lambdaHome + lambdaAway) === 0;
+            let ciData = null;
+            try {
+                const mp = getCurrentMatchMp();
+                ciData = calculateProbabilityCI(lambdaHome, lambdaAway, mp.mpHome, mp.mpAway, rho);
+                currentCalculatedProbs.ci = ciData;
+            } catch(e) {
+                console.warn("CI calculation error:", e);
+            }
+            // ============================================================
+
             document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
             document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
             document.getElementById('barOver25').style.width = (probOver25 * 100).toFixed(1) + '%';
+            document.getElementById('ciOver25').innerText = formatCI(ciData ? ciData.over25 : null, noMatchData);
             document.getElementById('pctUnder25').innerText = (probUnder25 * 100).toFixed(1) + '%';
             document.getElementById('oddsUnder25').innerText = '@' + (1 / Math.max(0.001, probUnder25)).toFixed(2);
             document.getElementById('barUnder25').style.width = (probUnder25 * 100).toFixed(1) + '%';
+            document.getElementById('ciUnder25').innerText = formatCI(ciData ? ciData.under25 : null, noMatchData);
             renderDynamicOverUnder(matrix);
             document.getElementById('pctBttsYes').innerText = (probBttsYes * 100).toFixed(1) + '%';
             document.getElementById('oddsBttsYes').innerText = '@' + (1 / Math.max(0.001, probBttsYes)).toFixed(2);
             document.getElementById('barBttsYes').style.width = (probBttsYes * 100).toFixed(1) + '%';
+            document.getElementById('ciBttsYes').innerText = formatCI(ciData ? ciData.bttsYes : null, noMatchData);
             document.getElementById('pctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
             document.getElementById('oddsBttsNo').innerText = '@' + (1 / Math.max(0.001, probBttsNo)).toFixed(2);
             document.getElementById('barBttsNo').style.width = (probBttsNo * 100).toFixed(1) + '%';
+            document.getElementById('ciBttsNo').innerText = formatCI(ciData ? ciData.bttsNo : null, noMatchData);
 
             const homeName = document.getElementById('homeName').value || 'Local';
             const awayName = document.getElementById('awayName').value || 'Visitante';
@@ -4522,10 +4682,13 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('name1x2Away').innerText = awayName;
             document.getElementById('pct1x2Home').innerText = (probHomeWin * 100).toFixed(1) + '%';
             document.getElementById('odds1x2Home').innerText = '@' + (1 / Math.max(0.001, probHomeWin)).toFixed(2);
+            document.getElementById('ciHomeWin').innerText = formatCI(ciData ? ciData.homeWin : null, noMatchData);
             document.getElementById('pct1x2Draw').innerText = (probDraw * 100).toFixed(1) + '%';
             document.getElementById('odds1x2Draw').innerText = '@' + (1 / Math.max(0.001, probDraw)).toFixed(2);
+            document.getElementById('ciDraw').innerText = formatCI(ciData ? ciData.draw : null, noMatchData);
             document.getElementById('pct1x2Away').innerText = (probAwayWin * 100).toFixed(1) + '%';
             document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.001, probAwayWin)).toFixed(2);
+            document.getElementById('ciAwayWin').innerText = formatCI(ciData ? ciData.awayWin : null, noMatchData);
 
             exactScores.sort((a, b) => b.prob - a.prob);
             const top3 = exactScores.slice(0, 3);
