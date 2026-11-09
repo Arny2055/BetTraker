@@ -7,6 +7,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
@@ -82,6 +83,10 @@
                 </button>
                 <button onclick="toggleLeagueModal(true)" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-database"></i> Ligas
+                </button>
+                <span id="syncIndicator" class="hidden text-[9px] font-bold px-2 py-1 rounded-lg border"></span>
+                <button onclick="toggleAuthModal(true)" id="authButton" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                    <i class="fa-solid fa-user"></i> <span id="authButtonLabel">Login</span>
                 </button>
             </div>
         </header>
@@ -1497,7 +1502,445 @@ GP W D L GF GA GD Pts PPG
         </div>
     </div>
 
+    <!-- MODAL AUTENTICACIÓN SUPABASE -->
+    <div id="authModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[80] hidden flex items-center justify-center p-3">
+        <div class="glass-card w-full max-w-md rounded-2xl border border-emerald-500/40 flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-3.5 bg-slate-900/90 border-b border-emerald-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-2"><i class="fa-solid fa-cloud text-emerald-400 text-base"></i><h3 class="font-black text-sm text-white" id="authModalTitle">Sincronización con la Nube</h3></div>
+                <button onclick="toggleAuthModal(false)" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-4 space-y-3 overflow-y-auto" id="authLoggedOutPanel">
+                <div class="bg-sky-950/30 border border-sky-500/30 p-2.5 rounded-xl text-[11px] text-slate-300 space-y-1">
+                    <p class="font-bold text-sky-300 flex items-center gap-1.5"><i class="fa-solid fa-circle-info"></i> Sincronización en la nube</p>
+                    <p class="text-slate-400">Inicia sesión o crea una cuenta para sincronizar tus cajas, apuestas y movimientos en todos tus dispositivos. Tus datos actuales de localStorage se subirán automáticamente al primer inicio de sesión.</p>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1">Correo electrónico</label>
+                    <input type="email" id="authEmail" placeholder="tu@email.com" autocomplete="email" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-[10px] font-bold text-slate-400 mb-1">Contraseña (mín. 6 caracteres)</label>
+                    <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" class="w-full bg-inputBg border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="signInUser()" class="py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</button>
+                    <button onclick="signUpUser()" class="py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-black text-xs rounded-xl border border-slate-700 flex items-center justify-center gap-1.5"><i class="fa-solid fa-user-plus"></i> Registrarse</button>
+                </div>
+                <p class="text-[9px] text-slate-500 italic text-center">Tus datos locales NUNCA se borran: siguen en localStorage como respaldo.</p>
+            </div>
+            <div class="p-4 space-y-3 overflow-y-auto hidden" id="authLoggedInPanel">
+                <div class="bg-emerald-950/30 border border-emerald-500/40 p-3 rounded-xl text-xs space-y-1">
+                    <p class="font-bold text-emerald-300 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Sesión iniciada</p>
+                    <p class="text-[11px] text-slate-300 break-all" id="authUserEmail">—</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="manualSyncNow()" class="py-2.5 bg-sky-500 hover:bg-sky-600 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-cloud-arrow-up"></i> Sincronizar</button>
+                    <button onclick="signOutUser()" class="py-2.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-black text-xs rounded-xl flex items-center justify-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+                </div>
+                <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-[10px] text-slate-400 space-y-1">
+                    <p class="font-bold text-slate-300">Estado de sincronización:</p>
+                    <p id="authSyncStatusText">— Todo sincronizado.</p>
+                </div>
+            </div>
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end"><button onclick="toggleAuthModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button></div>
+        </div>
+    </div>
+
     <script>
+        // ============================================================
+        // SUPABASE CONFIGURATION
+        // ============================================================
+        const SUPABASE_URL = 'https://djvjhtkvghxnwlmaldiz.supabase.co';
+        const SUPABASE_KEY = 'TU_PUBLISHABLE_KEY_AQUI'; // Pega tu anon/publishable key
+
+        let supabaseClient = null;
+        let currentUser = null;
+        let supabaseSyncTimeout = null;
+        let hasDoneInitialSync = false;
+
+        try {
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            } else {
+                console.warn('Supabase SDK no cargado.');
+            }
+        } catch(e) {
+            console.warn('Supabase init error:', e);
+        }
+
+        function setSyncStatus(status) {
+            const el = document.getElementById('syncIndicator');
+            if (!el) return;
+            if (status === 'synced') {
+                el.className = 'text-[9px] font-bold px-2 py-1 rounded-lg border bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+                el.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Sync';
+            } else if (status === 'syncing') {
+                el.className = 'text-[9px] font-bold px-2 py-1 rounded-lg border bg-sky-500/20 text-sky-300 border-sky-500/40';
+                el.innerHTML = '<i class="fa-solid fa-cloud-arrow-up animate-pulse"></i> Sync...';
+            } else if (status === 'error') {
+                el.className = 'text-[9px] font-bold px-2 py-1 rounded-lg border bg-rose-500/20 text-rose-300 border-rose-500/40';
+                el.innerHTML = '<i class="fa-solid fa-cloud-exclamation"></i> Error';
+            } else {
+                el.className = 'text-[9px] font-bold px-2 py-1 rounded-lg border bg-slate-800 text-slate-400 border-slate-700';
+                el.innerHTML = '<i class="fa-solid fa-cloud"></i> Offline';
+            }
+            el.classList.remove('hidden');
+            const statusText = document.getElementById('authSyncStatusText');
+            if (statusText) {
+                const map = {
+                    synced: '✅ Sincronizado con Supabase.',
+                    syncing: '⏳ Sincronizando...',
+                    error: '⚠️ Error de sincronización. Se reintentará.',
+                    offline: '📴 Sin sesión. Datos solo en localStorage.'
+                };
+                statusText.innerText = map[status] || '—';
+            }
+        }
+
+        function updateAuthUI() {
+            const btnLabel = document.getElementById('authButtonLabel');
+            const loggedOut = document.getElementById('authLoggedOutPanel');
+            const loggedIn = document.getElementById('authLoggedInPanel');
+            const userEmail = document.getElementById('authUserEmail');
+            if (currentUser) {
+                if (btnLabel) btnLabel.innerText = 'Cuenta';
+                if (loggedOut) loggedOut.classList.add('hidden');
+                if (loggedIn) loggedIn.classList.remove('hidden');
+                if (userEmail) userEmail.innerText = currentUser.email || '—';
+                setSyncStatus('synced');
+            } else {
+                if (btnLabel) btnLabel.innerText = 'Login';
+                if (loggedOut) loggedOut.classList.remove('hidden');
+                if (loggedIn) loggedIn.classList.add('hidden');
+                setSyncStatus('offline');
+            }
+        }
+
+        function toggleAuthModal(show) {
+            const m = document.getElementById('authModal');
+            if (!m) return;
+            if (show) { updateAuthUI(); m.classList.remove('hidden'); }
+            else m.classList.add('hidden');
+        }
+
+        async function signUpUser() {
+            if (!supabaseClient) { showToast('Supabase no está configurado. Revisa las claves.'); return; }
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            if (!email || password.length < 6) { showToast('Email válido y contraseña ≥6 caracteres.'); return; }
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('¡Cuenta creada! Revisa tu correo si se pide confirmación.');
+            document.getElementById('authPassword').value = '';
+        }
+
+        async function signInUser() {
+            if (!supabaseClient) { showToast('Supabase no está configurado.'); return; }
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            if (!email || !password) { showToast('Introduce email y contraseña.'); return; }
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) { showToast('Error: ' + error.message); return; }
+            showToast('¡Bienvenido!');
+            document.getElementById('authPassword').value = '';
+            toggleAuthModal(false);
+        }
+
+        async function signOutUser() {
+            if (!supabaseClient) return;
+            await supabaseClient.auth.signOut();
+            showToast('Sesión cerrada. Los datos siguen en localStorage.');
+        }
+
+        async function manualSyncNow() {
+            if (!currentUser) { showToast('Inicia sesión primero.'); return; }
+            setSyncStatus('syncing');
+            try {
+                await pushAllToSupabase();
+                setSyncStatus('synced');
+                showToast('Sincronización completada.');
+            } catch(e) {
+                console.warn(e);
+                setSyncStatus('error');
+                showToast('Error al sincronizar.');
+            }
+        }
+
+        // Convert local object → supabase row
+        function bankrollToRow(b) {
+            return {
+                id: String(b.id),
+                user_id: currentUser.id,
+                name: b.name || 'Bankroll',
+                initial: b.initial || 0,
+                total_deposited: b.totalDeposited || 0,
+                total_withdrawn: b.totalWithdrawn || 0,
+                leagues_data: b.leaguesData || {},
+                season_summaries: b.seasonSummaries || {}
+            };
+        }
+
+        function rowToBankroll(r) {
+            return {
+                id: r.id,
+                name: r.name,
+                initial: parseFloat(r.initial) || 1000,
+                totalDeposited: parseFloat(r.total_deposited) || 0,
+                totalWithdrawn: parseFloat(r.total_withdrawn) || 0,
+                withdrawLog: [],
+                boxTransactionsLog: [],
+                seasonSummaries: r.season_summaries || {},
+                leaguesData: r.leagues_data || {}
+            };
+        }
+
+        function betToRow(b) {
+            return {
+                id: String(b.id),
+                user_id: currentUser.id,
+                bankroll_id: String(b.bankrollId || ''),
+                is_parlay: !!b.isParlay,
+                date: b.date || null,
+                league: b.league || null,
+                match: b.match || null,
+                market: b.market || null,
+                selection: b.selection || null,
+                prob: parseFloat(b.prob) || 0,
+                fair_odds: parseFloat(b.fairOdds) || 0,
+                bookie_odds: parseFloat(b.bookieOdds) || 0,
+                ev: parseFloat(b.ev) || 0,
+                stake: parseFloat(b.stake) || 0,
+                bookmaker: b.bookmaker || null,
+                status: b.status || 'PENDING',
+                in_parallel: !!b.inParallel
+            };
+        }
+
+        function rowToBet(r) {
+            return {
+                id: isNaN(Number(r.id)) ? r.id : Number(r.id),
+                bankrollId: r.bankroll_id,
+                isParlay: r.is_parlay,
+                date: r.date,
+                league: r.league,
+                match: r.match,
+                market: r.market,
+                selection: r.selection,
+                prob: r.prob,
+                fairOdds: r.fair_odds,
+                bookieOdds: r.bookie_odds,
+                ev: r.ev,
+                stake: r.stake,
+                bookmaker: r.bookmaker,
+                status: r.status,
+                inParallel: r.in_parallel
+            };
+        }
+
+        function txToRow(t) {
+            return {
+                id: String(t.id),
+                user_id: currentUser.id,
+                bankroll_id: String(t.bankrollId || ''),
+                bankroll_name: t.bankrollName || '',
+                date: t.date || null,
+                timestamp: t.timestamp || Date.now(),
+                type: t.type,
+                validation_mode: t.validationMode || null,
+                amount: parseFloat(t.amount) || 0,
+                concept: t.concept || '',
+                balance_before: parseFloat(t.balanceBefore) || 0,
+                resulting_balance: parseFloat(t.resultingBalance) || 0
+            };
+        }
+
+        function rowToTx(r) {
+            return {
+                id: r.id,
+                bankrollId: r.bankroll_id,
+                bankrollName: r.bankroll_name,
+                date: r.date,
+                timestamp: Number(r.timestamp) || 0,
+                type: r.type,
+                validationMode: r.validation_mode,
+                amount: r.amount,
+                concept: r.concept,
+                balanceBefore: r.balance_before,
+                resultingBalance: r.resulting_balance
+            };
+        }
+
+        async function pushAllToSupabase() {
+            if (!currentUser || !supabaseClient) return;
+            setSyncStatus('syncing');
+
+            // BANKROLLS
+            if (bankrollsData.length > 0) {
+                const { error } = await supabaseClient.from('bankrolls').upsert(bankrollsData.map(bankrollToRow), { onConflict: 'id' });
+                if (error) throw error;
+            }
+
+            // BETS
+            if (betLogData.length > 0) {
+                const { error } = await supabaseClient.from('bets').upsert(betLogData.map(betToRow), { onConflict: 'id' });
+                if (error) throw error;
+            }
+
+            // PARALLEL BETS
+            if (parallelBetLogData.length > 0) {
+                const { error } = await supabaseClient.from('parallel_bets').upsert(parallelBetLogData.map(betToRow), { onConflict: 'id' });
+                if (error) throw error;
+            }
+
+            // BOX TRANSACTIONS
+            if (boxTransactionsLog.length > 0) {
+                const { error } = await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
+                if (error) throw error;
+            }
+
+            setSyncStatus('synced');
+        }
+
+        function scheduleSupabaseSync() {
+            if (!currentUser || !supabaseClient) return;
+            if (supabaseSyncTimeout) clearTimeout(supabaseSyncTimeout);
+            supabaseSyncTimeout = setTimeout(async () => {
+                try {
+                    await pushAllToSupabase();
+                } catch(e) {
+                    console.warn('Supabase push error:', e);
+                    setSyncStatus('error');
+                }
+            }, 2000);
+        }
+
+        // Merge remote into local (add remote-only items, don't overwrite local)
+        async function pullFromSupabase() {
+            if (!currentUser || !supabaseClient) return;
+
+            const [bankRes, betRes, pBetRes, txRes] = await Promise.all([
+                supabaseClient.from('bankrolls').select('*').eq('user_id', currentUser.id),
+                supabaseClient.from('bets').select('*').eq('user_id', currentUser.id),
+                supabaseClient.from('parallel_bets').select('*').eq('user_id', currentUser.id),
+                supabaseClient.from('box_transactions').select('*').eq('user_id', currentUser.id)
+            ]);
+
+            if (bankRes.data && bankRes.data.length > 0) {
+                bankRes.data.forEach(r => {
+                    if (!bankrollsData.find(b => String(b.id) === String(r.id))) {
+                        bankrollsData.push(rowToBankroll(r));
+                    }
+                });
+            }
+
+            if (betRes.data && betRes.data.length > 0) {
+                betRes.data.forEach(r => {
+                    if (!betLogData.find(b => String(b.id) === String(r.id))) {
+                        betLogData.push(rowToBet(r));
+                    }
+                });
+            }
+
+            if (pBetRes.data && pBetRes.data.length > 0) {
+                pBetRes.data.forEach(r => {
+                    if (!parallelBetLogData.find(b => String(b.id) === String(r.id))) {
+                        parallelBetLogData.push(rowToBet(r));
+                    }
+                });
+            }
+
+            if (txRes.data && txRes.data.length > 0) {
+                txRes.data.forEach(r => {
+                    if (!boxTransactionsLog.find(t => String(t.id) === String(r.id))) {
+                        boxTransactionsLog.push(rowToTx(r));
+                    }
+                });
+            }
+
+            // Persist merged data to localStorage too
+            try {
+                localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
+                localStorage.setItem('poisson_vip_betlog', JSON.stringify(betLogData));
+                localStorage.setItem('poisson_vip_parallel_betlog', JSON.stringify(parallelBetLogData));
+                localStorage.setItem('boxTransactionsLog', JSON.stringify(boxTransactionsLog));
+                localStorage.setItem('poisson_vip_box_transactions', JSON.stringify(boxTransactionsLog));
+            } catch(e) {}
+
+            // Refresh UI
+            try {
+                populateBankrollDropdowns();
+                populateLeagueDropdowns();
+                updateTeamSelectors();
+                calculateLeagueAverages();
+                renderSeasonSummary();
+                updateMarketFilterDropdown();
+                updateTrackerMetrics();
+                updateParallelTrackerMetrics();
+            } catch(e) { console.warn('UI refresh after pull:', e); }
+        }
+
+        async function initialSyncOnLogin() {
+            if (!currentUser || !supabaseClient || hasDoneInitialSync) return;
+            hasDoneInitialSync = true;
+            setSyncStatus('syncing');
+            try {
+                // 1) Push local data first (preserve what user had in localStorage)
+                await pushAllToSupabase();
+                // 2) Then pull remote-only items (from other devices)
+                await pullFromSupabase();
+                setSyncStatus('synced');
+                showToast('☁️ Sincronización inicial completada.');
+            } catch(e) {
+                console.warn('Initial sync error:', e);
+                setSyncStatus('error');
+                showToast('Sync inicial con errores. Reintenta con "Sincronizar".');
+            }
+        }
+
+        async function deleteFromSupabase(table, id) {
+            if (!currentUser || !supabaseClient) return;
+            try {
+                await supabaseClient.from(table).delete().eq('id', String(id)).eq('user_id', currentUser.id);
+            } catch(e) { console.warn('Delete error:', e); }
+        }
+
+        async function deleteAllFromSupabase(table, filterCol, filterVal) {
+            if (!currentUser || !supabaseClient) return;
+            try {
+                await supabaseClient.from(table).delete().eq('user_id', currentUser.id).eq(filterCol, filterVal);
+            } catch(e) { console.warn('Delete all error:', e); }
+        }
+
+        // Auth state listener
+        if (supabaseClient) {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session && session.user) {
+                    const isNewUser = !currentUser;
+                    currentUser = session.user;
+                    updateAuthUI();
+                    if (isNewUser) setTimeout(() => initialSyncOnLogin(), 200);
+                } else if (event === 'INITIAL_SESSION') {
+                    if (session && session.user) {
+                        currentUser = session.user;
+                        updateAuthUI();
+                        setTimeout(() => initialSyncOnLogin(), 300);
+                    } else {
+                        updateAuthUI();
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    hasDoneInitialSync = false;
+                    updateAuthUI();
+                }
+            });
+        } else {
+            document.addEventListener('DOMContentLoaded', () => updateAuthUI());
+        }
+
+        // ============================================================
+        // END SUPABASE CONFIGURATION
+        // ============================================================
+
         const DEFAULT_LEAGUE_NAME = "J1 League (Japón)";
         const DEFAULT_RAW_DATA = `Home table
 GP	W	D	L	GF	GA	GD	Pts	PPG
@@ -1570,7 +2013,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         let parlaySelections = [];
         let kmcOpenedFromBetModal = false;
 
-        // Backtesting state
         let backtestChartInstance = null;
         let backtestDdChartInstance = null;
         let backtestResults = null;
@@ -2474,6 +2916,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 localStorage.setItem('poisson_vip_box_transactions', JSON.stringify(boxTransactionsLog));
                 localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
             } catch(e) {}
+            if (typeof scheduleSupabaseSync === 'function') scheduleSupabaseSync();
         }
 
         function saveBankrollsToStorage() {
@@ -2482,6 +2925,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             localStorage.setItem('poisson_vip_active_bankroll', activeBankrollId);
             localStorage.setItem('boxTransactionsLog', JSON.stringify(boxTransactionsLog));
             localStorage.setItem('poisson_vip_box_transactions', JSON.stringify(boxTransactionsLog));
+            if (typeof scheduleSupabaseSync === 'function') scheduleSupabaseSync();
         }
 
         function getBankrollFinancialSummary(bankId = activeBankrollId) {
@@ -2547,6 +2991,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function saveBetLogToStorage() {
             localStorage.setItem('poisson_vip_betlog', JSON.stringify(betLogData));
             localStorage.setItem('poisson_vip_stakepct', document.getElementById('globalStakePct').value);
+            if (typeof scheduleSupabaseSync === 'function') scheduleSupabaseSync();
         }
 
         function loadParallelBetLogFromStorage() {
@@ -2554,7 +2999,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (stored) { try { parallelBetLogData = JSON.parse(stored); } catch(e) { parallelBetLogData = []; } }
         }
 
-        function saveParallelBetLogToStorage() { localStorage.setItem('poisson_vip_parallel_betlog', JSON.stringify(parallelBetLogData)); }
+        function saveParallelBetLogToStorage() {
+            localStorage.setItem('poisson_vip_parallel_betlog', JSON.stringify(parallelBetLogData));
+            if (typeof scheduleSupabaseSync === 'function') scheduleSupabaseSync();
+        }
 
         function populateLeagueDropdowns() {
             const selectActive = document.getElementById('activeLeagueSelect');
@@ -2645,6 +3093,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 renderSeasonSummary();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
+                // Supabase cascade delete
+                if (typeof deleteFromSupabase === 'function') {
+                    deleteFromSupabase('bankrolls', id);
+                    deleteAllFromSupabase('bets', 'bankroll_id', String(id));
+                    deleteAllFromSupabase('box_transactions', 'bankroll_id', String(id));
+                }
                 showToast("Bankroll eliminado.");
             }
         }
@@ -2903,6 +3357,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             renderBankrollManagerList();
             renderBoxTransactionsModal();
             onBoxTransactionFormChange();
+            if (typeof deleteFromSupabase === 'function') deleteFromSupabase('box_transactions', txId);
             showToast("Movimiento eliminado.");
         }
 
@@ -3159,7 +3614,14 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function deleteBetFromLog(index) {
             const betToRemove = betLogData[index];
-            if (betToRemove) { parallelBetLogData = parallelBetLogData.filter(b => b.id !== betToRemove.id); saveParallelBetLogToStorage(); }
+            if (betToRemove) {
+                parallelBetLogData = parallelBetLogData.filter(b => b.id !== betToRemove.id);
+                saveParallelBetLogToStorage();
+                if (typeof deleteFromSupabase === 'function') {
+                    deleteFromSupabase('bets', betToRemove.id);
+                    deleteFromSupabase('parallel_bets', betToRemove.id);
+                }
+            }
             betLogData.splice(index, 1);
             saveBetLogToStorage();
             updateMarketFilterDropdown();
@@ -3178,6 +3640,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
                 updateParallelTrackerMetrics();
+                if (typeof deleteAllFromSupabase === 'function' && currentUser) {
+                    activeIds.forEach(id => { deleteFromSupabase('bets', id); deleteFromSupabase('parallel_bets', id); });
+                }
                 showToast("Historial vaciado.");
             }
         }
@@ -3256,10 +3721,25 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             tableBody.innerHTML = html;
         }
 
-        function deleteParallelBet(index) { parallelBetLogData.splice(index, 1); saveParallelBetLogToStorage(); updateParallelTrackerMetrics(); showToast("Apuesta eliminada."); }
+        function deleteParallelBet(index) {
+            const removed = parallelBetLogData[index];
+            parallelBetLogData.splice(index, 1);
+            saveParallelBetLogToStorage();
+            updateParallelTrackerMetrics();
+            if (removed && typeof deleteFromSupabase === 'function') deleteFromSupabase('parallel_bets', removed.id);
+            showToast("Apuesta eliminada.");
+        }
 
         function clearParallelLogHistory() {
-            if (confirm("¿Vaciar toda la bitácora paralela?")) { parallelBetLogData = []; saveParallelBetLogToStorage(); updateParallelTrackerMetrics(); showToast("Vaciada."); }
+            if (confirm("¿Vaciar toda la bitácora paralela?")) {
+                parallelBetLogData = [];
+                saveParallelBetLogToStorage();
+                updateParallelTrackerMetrics();
+                if (typeof deleteAllFromSupabase === 'function' && currentUser) {
+                    try { supabaseClient.from('parallel_bets').delete().eq('user_id', currentUser.id); } catch(e) {}
+                }
+                showToast("Vaciada.");
+            }
         }
 
         function exportParallelBetsCSV() {
@@ -4916,7 +5396,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             const strategies = [];
 
-            // 1. Flat
             strategies.push(runBacktestStrategy({
                 name: 'Stake Plano',
                 desc: `$${flatStakeVal} por apuesta`,
@@ -4924,7 +5403,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 stakeFn: () => flatStakeVal
             }));
 
-            // 2. % Bankroll
             strategies.push(runBacktestStrategy({
                 name: `% Bankroll (${pctStake}%)`,
                 desc: `${pctStake}% del bankroll actual`,
@@ -4932,7 +5410,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 stakeFn: (bank) => bank * (pctStake / 100)
             }));
 
-            // 3. Kelly fraccional
             strategies.push(runBacktestStrategy({
                 name: `Kelly ${kellyFraction}x`,
                 desc: `Kelly fraccional ${kellyFraction}x sobre prob+cuota`,
@@ -4948,10 +5425,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 }
             }));
 
-            // Filtro EV+
             const evBets = bets.filter(b => parseFloat(b.ev || 0) >= minEv);
 
-            // 4. EV+ Flat
             strategies.push(runBacktestStrategy({
                 name: `EV≥${minEv}% + Flat`,
                 desc: `EV mínimo ${minEv}%, stake plano $${flatStakeVal}`,
@@ -4959,7 +5434,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 stakeFn: () => flatStakeVal
             }));
 
-            // 5. EV+ % Bankroll
             strategies.push(runBacktestStrategy({
                 name: `EV≥${minEv}% + ${pctStake}%`,
                 desc: `EV mínimo ${minEv}%, ${pctStake}% bankroll`,
@@ -4967,7 +5441,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 stakeFn: (bank) => bank * (pctStake / 100)
             }));
 
-            // 6. EV+ Kelly
             strategies.push(runBacktestStrategy({
                 name: `EV≥${minEv}% + Kelly ${kellyFraction}x`,
                 desc: `EV mínimo ${minEv}%, Kelly ${kellyFraction}x`,
