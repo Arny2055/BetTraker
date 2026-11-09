@@ -1533,14 +1533,16 @@ GP W D L GF GA GD Pts PPG
                     <p class="font-bold text-emerald-300 flex items-center gap-1.5"><i class="fa-solid fa-circle-check"></i> Sesión iniciada</p>
                     <p class="text-[11px] text-slate-300 break-all" id="authUserEmail">—</p>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="manualSyncNow()" class="py-2.5 bg-sky-500 hover:bg-sky-600 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-cloud-arrow-up"></i> Sincronizar</button>
-                    <button onclick="signOutUser()" class="py-2.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-black text-xs rounded-xl flex items-center justify-center gap-1.5"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="manualSyncNow()" class="py-2.5 bg-sky-500 hover:bg-sky-600 text-slate-950 font-black text-[11px] rounded-xl shadow-md flex items-center justify-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> Subir</button>
+                    <button onclick="forcePullFromCloud()" class="py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[11px] rounded-xl shadow-md flex items-center justify-center gap-1"><i class="fa-solid fa-cloud-arrow-down"></i> Descargar</button>
+                    <button onclick="signOutUser()" class="py-2.5 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-black text-[11px] rounded-xl flex items-center justify-center gap-1"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
                 </div>
                 <div class="bg-slate-900/80 border border-slate-800 p-2.5 rounded-xl text-[10px] text-slate-400 space-y-1">
                     <p class="font-bold text-slate-300">Estado de sincronización:</p>
                     <p id="authSyncStatusText">— Todo sincronizado.</p>
                 </div>
+                <p class="text-[9px] text-slate-500 italic text-center">"Subir" hace merge (seguro). "Descargar" reemplaza local con la nube (usa esto en un navegador nuevo).</p>
             </div>
             <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end"><button onclick="toggleAuthModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button></div>
         </div>
@@ -1551,7 +1553,7 @@ GP W D L GF GA GD Pts PPG
         // SUPABASE CONFIGURATION
         // ============================================================
         const SUPABASE_URL = 'https://djvjhtkvghxnwlmaldiz.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_UrdIPeKXpOlKJkXkWDSy1Q_2P5Ui44c'; // Pega tu anon/publishable key
+        const SUPABASE_KEY = 'sb_publishable_UrdIPeKXpOlKJkXkWDSy1Q_2P5Ui44c';
 
         let supabaseClient = null;
         let currentUser = null;
@@ -1652,10 +1654,32 @@ GP W D L GF GA GD Pts PPG
             showToast('Sesión cerrada. Los datos siguen en localStorage.');
         }
 
+        // ⭐ NUEVO: detecta si localStorage está en "estado por defecto" (navegador fresco)
+        function hasLocalMeaningfulData() {
+            if (betLogData.length > 0) return true;
+            if (boxTransactionsLog.length > 0) return true;
+            if (parallelBetLogData.length > 0) return true;
+            const hasNonDefault = bankrollsData.some(b =>
+                b.id !== 'default_bankroll' ||
+                (b.totalDeposited || 0) > 0 ||
+                (b.totalWithdrawn || 0) > 0
+            );
+            if (hasNonDefault) return true;
+            const def = bankrollsData.find(b => b.id === 'default_bankroll');
+            if (def) {
+                if ((def.initial || 1000) !== 1000) return true;
+                const keys = Object.keys(def.leaguesData || {});
+                if (keys.length > 1) return true;
+            }
+            return false;
+        }
+
+        // ⭐ MODIFICADO: "Subir" ahora hace merge (pull + push) — nunca sobrescribe con vacío
         async function manualSyncNow() {
             if (!currentUser) { showToast('Inicia sesión primero.'); return; }
             setSyncStatus('syncing');
             try {
+                await pullFromSupabase(false);
                 await pushAllToSupabase();
                 setSyncStatus('synced');
                 showToast('Sincronización completada.');
@@ -1663,6 +1687,26 @@ GP W D L GF GA GD Pts PPG
                 console.warn(e);
                 setSyncStatus('error');
                 showToast('Error al sincronizar.');
+            }
+        }
+
+        // ⭐ NUEVO: "Descargar" fuerza reemplazo total desde la nube
+        async function forcePullFromCloud() {
+            if (!currentUser) { showToast('Inicia sesión primero.'); return; }
+            if (!confirm('Esto reemplazará tus datos locales con los de la nube. ¿Continuar?')) return;
+            setSyncStatus('syncing');
+            try {
+                bankrollsData = [];
+                betLogData = [];
+                parallelBetLogData = [];
+                boxTransactionsLog = [];
+                await pullFromSupabase(true);
+                setSyncStatus('synced');
+                showToast('✅ Datos descargados desde la nube.');
+            } catch(e) {
+                console.warn(e);
+                setSyncStatus('error');
+                showToast('Error al descargar.');
             }
         }
 
@@ -1774,25 +1818,21 @@ GP W D L GF GA GD Pts PPG
             if (!currentUser || !supabaseClient) return;
             setSyncStatus('syncing');
 
-            // BANKROLLS
             if (bankrollsData.length > 0) {
                 const { error } = await supabaseClient.from('bankrolls').upsert(bankrollsData.map(bankrollToRow), { onConflict: 'id' });
                 if (error) throw error;
             }
 
-            // BETS
             if (betLogData.length > 0) {
                 const { error } = await supabaseClient.from('bets').upsert(betLogData.map(betToRow), { onConflict: 'id' });
                 if (error) throw error;
             }
 
-            // PARALLEL BETS
             if (parallelBetLogData.length > 0) {
                 const { error } = await supabaseClient.from('parallel_bets').upsert(parallelBetLogData.map(betToRow), { onConflict: 'id' });
                 if (error) throw error;
             }
 
-            // BOX TRANSACTIONS
             if (boxTransactionsLog.length > 0) {
                 const { error } = await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
                 if (error) throw error;
@@ -1814,8 +1854,8 @@ GP W D L GF GA GD Pts PPG
             }, 2000);
         }
 
-        // Merge remote into local (add remote-only items, don't overwrite local)
-        async function pullFromSupabase() {
+        // ⭐ MODIFICADO: acepta preferRemote para reemplazar local en navegador fresco
+        async function pullFromSupabase(preferRemote = false) {
             if (!currentUser || !supabaseClient) return;
 
             const [bankRes, betRes, pBetRes, txRes] = await Promise.all([
@@ -1825,39 +1865,65 @@ GP W D L GF GA GD Pts PPG
                 supabaseClient.from('box_transactions').select('*').eq('user_id', currentUser.id)
             ]);
 
+            // BANKROLLS
             if (bankRes.data && bankRes.data.length > 0) {
                 bankRes.data.forEach(r => {
-                    if (!bankrollsData.find(b => String(b.id) === String(r.id))) {
-                        bankrollsData.push(rowToBankroll(r));
+                    const rb = rowToBankroll(r);
+                    const idx = bankrollsData.findIndex(b => String(b.id) === String(rb.id));
+                    if (idx >= 0) {
+                        if (preferRemote) {
+                            const localBank = bankrollsData[idx];
+                            bankrollsData[idx] = {
+                                ...rb,
+                                withdrawLog: localBank.withdrawLog || [],
+                                boxTransactionsLog: localBank.boxTransactionsLog || []
+                            };
+                        }
+                    } else {
+                        bankrollsData.push(rb);
                     }
                 });
             }
 
+            // BETS
             if (betRes.data && betRes.data.length > 0) {
-                betRes.data.forEach(r => {
-                    if (!betLogData.find(b => String(b.id) === String(r.id))) {
-                        betLogData.push(rowToBet(r));
-                    }
-                });
+                if (preferRemote) {
+                    betLogData = betRes.data.map(rowToBet);
+                } else {
+                    betRes.data.forEach(r => {
+                        if (!betLogData.find(b => String(b.id) === String(r.id))) {
+                            betLogData.push(rowToBet(r));
+                        }
+                    });
+                }
             }
 
+            // PARALLEL BETS
             if (pBetRes.data && pBetRes.data.length > 0) {
-                pBetRes.data.forEach(r => {
-                    if (!parallelBetLogData.find(b => String(b.id) === String(r.id))) {
-                        parallelBetLogData.push(rowToBet(r));
-                    }
-                });
+                if (preferRemote) {
+                    parallelBetLogData = pBetRes.data.map(rowToBet);
+                } else {
+                    pBetRes.data.forEach(r => {
+                        if (!parallelBetLogData.find(b => String(b.id) === String(r.id))) {
+                            parallelBetLogData.push(rowToBet(r));
+                        }
+                    });
+                }
             }
 
+            // BOX TRANSACTIONS
             if (txRes.data && txRes.data.length > 0) {
-                txRes.data.forEach(r => {
-                    if (!boxTransactionsLog.find(t => String(t.id) === String(r.id))) {
-                        boxTransactionsLog.push(rowToTx(r));
-                    }
-                });
+                if (preferRemote) {
+                    boxTransactionsLog = txRes.data.map(rowToTx);
+                } else {
+                    txRes.data.forEach(r => {
+                        if (!boxTransactionsLog.find(t => String(t.id) === String(r.id))) {
+                            boxTransactionsLog.push(rowToTx(r));
+                        }
+                    });
+                }
             }
 
-            // Persist merged data to localStorage too
             try {
                 localStorage.setItem('poisson_vip_bankrolls', JSON.stringify(bankrollsData));
                 localStorage.setItem('poisson_vip_betlog', JSON.stringify(betLogData));
@@ -1866,7 +1932,6 @@ GP W D L GF GA GD Pts PPG
                 localStorage.setItem('poisson_vip_box_transactions', JSON.stringify(boxTransactionsLog));
             } catch(e) {}
 
-            // Refresh UI
             try {
                 populateBankrollDropdowns();
                 populateLeagueDropdowns();
@@ -1879,21 +1944,30 @@ GP W D L GF GA GD Pts PPG
             } catch(e) { console.warn('UI refresh after pull:', e); }
         }
 
+        // ⭐ MODIFICADO: detecta navegador vacío y descarga en lugar de sobrescribir la nube
         async function initialSyncOnLogin() {
             if (!currentUser || !supabaseClient || hasDoneInitialSync) return;
             hasDoneInitialSync = true;
             setSyncStatus('syncing');
             try {
-                // 1) Push local data first (preserve what user had in localStorage)
-                await pushAllToSupabase();
-                // 2) Then pull remote-only items (from other devices)
-                await pullFromSupabase();
+                const localIsEmpty = !hasLocalMeaningfulData();
+                console.log('[Sync] localIsEmpty =', localIsEmpty);
+
+                if (localIsEmpty) {
+                    // Navegador fresco: la nube manda, solo descargar
+                    await pullFromSupabase(true);
+                } else {
+                    // Hay datos locales reales: merge + subir
+                    await pullFromSupabase(false);
+                    await pushAllToSupabase();
+                }
+
                 setSyncStatus('synced');
                 showToast('☁️ Sincronización inicial completada.');
             } catch(e) {
                 console.warn('Initial sync error:', e);
                 setSyncStatus('error');
-                showToast('Sync inicial con errores. Reintenta con "Sincronizar".');
+                showToast('Sync inicial con errores. Usa "Subir" o "Descargar".');
             }
         }
 
@@ -1911,7 +1985,6 @@ GP W D L GF GA GD Pts PPG
             } catch(e) { console.warn('Delete all error:', e); }
         }
 
-        // Auth state listener
         if (supabaseClient) {
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' && session && session.user) {
@@ -3093,7 +3166,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 renderSeasonSummary();
                 updateMarketFilterDropdown();
                 updateTrackerMetrics();
-                // Supabase cascade delete
                 if (typeof deleteFromSupabase === 'function') {
                     deleteFromSupabase('bankrolls', id);
                     deleteAllFromSupabase('bets', 'bankroll_id', String(id));
