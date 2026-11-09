@@ -71,6 +71,9 @@
                 <button onclick="toggleKellyMonteCarloModal(true)" class="bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-dice"></i> Kelly MC
                 </button>
+                <button onclick="toggleBacktestingModal(true)" class="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                    <i class="fa-solid fa-flask-vial"></i> Backtesting
+                </button>
                 <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
                 </button>
@@ -399,7 +402,6 @@
                 </div>
             </div>
 
-            <!-- ========== NUEVO: EXPLICACIÓN DE INTERVALOS DE CONFIANZA ========== -->
             <details class="bg-slate-900/60 rounded-xl border border-indigo-500/30 overflow-hidden group mt-2">
                 <summary class="p-2.5 cursor-pointer flex items-center justify-between text-[10px] font-bold text-indigo-300 select-none">
                     <div class="flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-indigo-400"></i><span>¿Qué son los Intervalos de Confianza (IC90)?</span></div>
@@ -412,7 +414,6 @@
                     <p class="text-[9px] text-slate-500 italic pt-1 border-t border-slate-800/50">El ancho del IC depende del número de partidos jugados por cada equipo. A más partidos, más confianza y más estrecho el rango. Si ingresas GF/GC manualmente sin seleccionar equipos, se asume n=10 por defecto.</p>
                 </div>
             </details>
-            <!-- ========== FIN NUEVO ========== -->
         </section>
 
         <!-- ============================================================ -->
@@ -433,7 +434,6 @@
                     <span id="contextDataBadge" class="text-[9px] font-black bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">Sin datos</span>
                 </div>
 
-                <!-- Perfil de Goles -->
                 <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-fire mr-1"></i> Perfil de Goles</span>
@@ -456,7 +456,6 @@
                     <p id="profileGoalsReason" class="text-[9px] text-slate-400 italic text-center leading-relaxed">Selecciona un partido para ver el contexto.</p>
                 </div>
 
-                <!-- Perfil BTTS -->
                 <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-arrows-retweet mr-1"></i> Ambos Equipos Anotan (BTTS)</span>
@@ -479,7 +478,6 @@
                     <p id="profileBttsReason" class="text-[9px] text-slate-400 italic text-center leading-relaxed">Selecciona un partido para ver el contexto.</p>
                 </div>
 
-                <!-- Perfil de Inicio / Primer Gol -->
                 <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-flag-checkered mr-1"></i> Inicio del Partido / Primer Gol</span>
@@ -502,7 +500,6 @@
                     <p id="profileStartReason" class="text-[9px] text-slate-400 italic text-center leading-relaxed">Selecciona un partido para ver el contexto.</p>
                 </div>
 
-                <!-- Perfil 1X2 (Ventaja Local/Visitante) -->
                 <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-trophy mr-1"></i> Ventaja Local / Visitante</span>
@@ -525,7 +522,6 @@
                     <p id="profile1x2Reason" class="text-[9px] text-slate-400 italic text-center leading-relaxed">Selecciona un partido para ver el contexto.</p>
                 </div>
 
-                <!-- Impacto del Primer Gol (opcional, solo si hay datos) -->
                 <div id="profileFirstGoalImpactBox" class="hidden bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-bullseye mr-1"></i> Impacto del Primer Gol</span>
@@ -543,7 +539,6 @@
                     <p id="profileFirstGoalReason" class="text-[9px] text-slate-400 italic text-center leading-relaxed">-</p>
                 </div>
 
-                <!-- Ritmo esperado -->
                 <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 space-y-2">
                     <div class="flex justify-between items-center">
                         <span class="text-[10px] font-black text-purple-300 uppercase tracking-wide"><i class="fa-solid fa-gauge-high mr-1"></i> Ritmo Esperado del Partido</span>
@@ -965,7 +960,6 @@
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center"><span class="text-[9px] uppercase font-bold text-slate-400 block">Win Rate</span><span class="text-sm font-black text-emerald-400 block mt-1" id="dashWinRate">0.0%</span></div>
                 </div>
 
-                <!-- ========== NUEVO: ESTADÍSTICAS AVANZADAS DE BITÁCORA ========== -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/30 text-center">
                         <span class="text-[9px] uppercase font-bold text-indigo-300 block"><i class="fa-solid fa-scale-balanced mr-1"></i>Cuota Promedio</span>
@@ -1001,7 +995,6 @@
                         <span class="text-sm font-black text-white block mt-1" id="dashTotalBets">0</span>
                     </div>
                 </div>
-                <!-- ========== FIN NUEVO ========== -->
 
                 <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none"><div class="flex items-center gap-1.5"><i class="fa-solid fa-trophy text-gold-400 text-xs"></i><span class="text-xs font-black text-white uppercase">Rendimiento por Liga</span></div><div class="flex items-center gap-2"><span id="leaguePerformanceBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Desglose</span><i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i></div></summary>
@@ -1273,6 +1266,114 @@
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- MODAL BACKTESTING (NUEVO)                                     -->
+    <!-- ============================================================ -->
+    <div id="backtestingModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[75] hidden flex items-center justify-center p-2 sm:p-4">
+        <div class="glass-card w-full max-w-5xl max-h-[96vh] rounded-2xl border border-cyan-500/40 flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-3.5 bg-slate-900/90 border-b border-cyan-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 via-sky-500 to-emerald-400 flex items-center justify-center text-slate-950 shadow-lg shadow-cyan-500/20">
+                        <i class="fa-solid fa-flask-vial text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-white flex items-center gap-2">Backtesting <span class="text-[9px] bg-cyan-500/20 text-cyan-300 font-extrabold px-2 py-0.5 rounded-full border border-cyan-500/30">Estrategias</span></h3>
+                        <p class="text-[10px] text-slate-400">Prueba tus estrategias sobre el historial real de apuestas.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportBacktestCSV()" class="bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30 text-xs font-bold px-2.5 py-1 rounded-xl flex items-center gap-1"><i class="fa-solid fa-file-csv"></i> CSV</button>
+                    <button onclick="toggleBacktestingModal(false)" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+                </div>
+            </div>
+            <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
+                <div class="bg-slate-900/90 p-3 rounded-2xl border border-cyan-500/30 space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                        <span class="text-xs font-black text-white uppercase"><i class="fa-solid fa-sliders text-cyan-400 mr-1"></i> Configuración</span>
+                        <span class="text-[9px] text-slate-400">Filtros aplican solo a apuestas cerradas</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Bankroll Inicial</label><input type="number" id="btStartBankroll" value="1000" step="50" min="10" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white font-black text-center"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Stake Plano ($)</label><input type="number" id="btFlatStake" value="20" step="5" min="1" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-black text-center"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">% Bankroll</label><input type="number" id="btPctStake" value="2" step="0.5" min="0.1" max="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-indigo-400 font-black text-center"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Kelly (fracción)</label><select id="btKellyFrac" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-purple-300 font-black"><option value="0.10">0.10x</option><option value="0.25" selected>0.25x</option><option value="0.50">0.50x</option><option value="0.75">0.75x</option><option value="1.00">1.00x</option></select></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">EV mínimo (%)</label><input type="number" id="btMinEv" value="0" step="1" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-gold-400 font-black text-center"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cuota mín</label><input type="number" id="btMinOdds" value="1.01" step="0.01" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-300 font-black text-center"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cuota máx</label><input type="number" id="btMaxOdds" value="100" step="1" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-300 font-black text-center"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Mercado</label><select id="btMarketFilter" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-200 font-black"><option value="ALL">Todos</option></select></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Fecha desde</label><input type="date" id="btDateFrom" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white font-black"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Fecha hasta</label><input type="date" id="btDateTo" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-white font-black"></div>
+                        <label class="col-span-2 flex items-center gap-2 bg-slate-950/60 p-2 rounded-xl border border-slate-800 cursor-pointer text-[11px] text-slate-300"><input type="checkbox" id="btIncludeVoid" class="accent-cyan-500"><span>Incluir apuestas Nulas (VOID)</span></label>
+                    </div>
+                    <button onclick="runBacktest()" class="w-full py-2.5 bg-gradient-to-r from-cyan-500 via-sky-500 to-emerald-500 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 active:scale-95"><i class="fa-solid fa-play"></i> EJECUTAR BACKTESTING</button>
+                </div>
+
+                <div id="btBestStrategy" class="hidden bg-gradient-to-r from-cyan-950/50 via-slate-900/90 to-emerald-950/50 border border-cyan-500/40 p-3 rounded-2xl text-sm text-center text-slate-200"></div>
+
+                <div id="btResultsSection" class="hidden space-y-3">
+                    <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                            <span class="text-xs font-black text-white uppercase"><i class="fa-solid fa-table-cells text-cyan-400 mr-1"></i> Comparativa de Estrategias</span>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 max-h-72">
+                            <table class="w-full text-[10px] text-left border-collapse excel-table">
+                                <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md">
+                                    <tr>
+                                        <th class="p-1.5">Estrategia</th>
+                                        <th class="p-1.5 text-center">Bets</th>
+                                        <th class="p-1.5 text-center bg-emerald-950/40 text-emerald-300">Bankroll</th>
+                                        <th class="p-1.5 text-center">ROI</th>
+                                        <th class="p-1.5 text-center">Yield</th>
+                                        <th class="p-1.5 text-center">WR</th>
+                                        <th class="p-1.5 text-center bg-amber-950/30 text-amber-300">Max DD</th>
+                                        <th class="p-1.5 text-center">PF</th>
+                                        <th class="p-1.5 text-center">Sharpe</th>
+                                        <th class="p-1.5 text-center">Rachas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="btResultsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
+                            </table>
+                        </div>
+                        <p class="text-[9px] text-slate-500 italic">PF = Profit Factor. Sharpe ≈ anualizado. Rachas muestra mayor racha W/L.</p>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300">Curva de Equity Comparativa</span>
+                        </div>
+                        <div class="h-56 w-full"><canvas id="btEquityChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300">Curva de Drawdown (%)</span>
+                        </div>
+                        <div class="h-44 w-full"><canvas id="btDrawdownChart"></canvas></div>
+                    </div>
+
+                    <div class="bg-slate-900/70 border border-slate-800 p-3 rounded-2xl text-xs text-slate-300 space-y-2">
+                        <div class="flex items-center gap-2 text-cyan-400 font-extrabold"><i class="fa-solid fa-graduation-cap text-base"></i><span>Interpretación</span></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] text-slate-400">
+                            <div><p><b class="text-white">ROI:</b> Rentabilidad total sobre bankroll inicial.</p><p><b class="text-white">Yield:</b> Rentabilidad sobre total apostado (más relevante).</p><p><b class="text-white">Max DD:</b> Caída máxima desde pico. Bajo = mejor.</p></div>
+                            <div><p><b class="text-white">Sharpe:</b> Retorno ajustado a volatilidad. >1 bueno, >2 excelente.</p><p><b class="text-white">Profit Factor:</b> Ganancia bruta / pérdida bruta. >1.5 sólido.</p><p><b class="text-white">Rachas:</b> Picos de wins/losses consecutivos.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="btNoDataMsg" class="hidden text-center p-4 bg-amber-950/30 border border-amber-500/40 rounded-xl text-xs text-amber-200">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> No hay apuestas cerradas con los filtros actuales.
+                </div>
+            </div>
+            <div class="p-3 bg-slate-900/90 border-t border-cyan-500/30 flex items-center justify-between">
+                <span class="text-[10px] text-slate-400 hidden sm:inline"><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Backtest sobre datos reales de tu bitácora.</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="runBacktest()" class="bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1"><i class="fa-solid fa-play"></i> Ejecutar</button>
+                    <button onclick="toggleBacktestingModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL REGISTRAR APUESTA -->
     <div id="logBetModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-[60] hidden flex items-center justify-center p-3">
         <div class="glass-card w-full max-w-md max-h-[94vh] rounded-2xl border border-slate-700 flex flex-col shadow-2xl overflow-hidden">
@@ -1468,6 +1569,11 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         let parlaySelections = [];
         let kmcOpenedFromBetModal = false;
+
+        // Backtesting state
+        let backtestChartInstance = null;
+        let backtestDdChartInstance = null;
+        let backtestResults = null;
 
         function scrollToSection(id) {
             const el = document.getElementById(id);
@@ -2043,9 +2149,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             calculateValueLookup();
         }
 
-        // ============================================================
-        // PERFIL DEL PARTIDO — CONTEXTO (no recomendación de apuesta)
-        // ============================================================
         function calculateValueLookup() {
             const hgf = parseFloat(document.getElementById('homeGf').value) || 0;
             const hgc = parseFloat(document.getElementById('homeGc').value) || 0;
@@ -2068,7 +2171,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 }
             }
 
-            // =================== PERFIL DE GOLES ===================
             let leagueOver25 = parseFloat(document.getElementById('leaguePctOver25').innerText) / 100 || 0;
             let sourceOU = 'Modelo';
             if (realData && realData.over25 && realData.over25 > 0) {
@@ -2129,7 +2231,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('profileGoalsBadge').className = goalsBadgeClass;
             document.getElementById('profileGoalsResultBox').className = goalsResultBorder;
 
-            // =================== PERFIL BTTS ===================
             let leagueBttsYes = parseFloat(document.getElementById('leaguePctBttsYes').innerText) / 100 || 0;
             let sourceBTTS = 'Modelo';
             if (realData && realData.bttsYes && realData.bttsYes > 0) {
@@ -2184,7 +2285,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('profileBttsBadge').className = bttsBadgeClass;
             document.getElementById('profileBttsResultBox').className = bttsResultBorder;
 
-            // =================== PERFIL DE INICIO (First Goal) ===================
             const profileStartBadge = document.getElementById('profileStartBadge');
             const homeFirst = (realData && realData.homeScoredFirst !== undefined) ? realData.homeScoredFirst : null;
             const awayFirst = (realData && realData.awayScoredFirst !== undefined) ? realData.awayScoredFirst : null;
@@ -2214,7 +2314,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 document.getElementById('profileStartReason').innerText = 'El Season Summary no incluye datos de primer gol. Se puede enriquecer pegando esos campos.';
             }
 
-            // =================== PERFIL 1X2 ===================
             const profile1x2Badge = document.getElementById('profile1x2Badge');
             const homeWinReal = (realData && realData.homeWin !== undefined) ? realData.homeWin : null;
             const drawReal = (realData && realData.draws !== undefined) ? realData.draws : null;
@@ -2244,7 +2343,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 document.getElementById('profile1x2Reason').innerText = 'Sin Season Summary cargado. Carga los datos para ver esta información.';
             }
 
-            // =================== IMPACTO DEL PRIMER GOL ===================
             const firstGoalBox = document.getElementById('profileFirstGoalImpactBox');
             const ppgScoring = (realData && realData.ppgAfterScoringFirst !== undefined) ? realData.ppgAfterScoringFirst : null;
             const ppgConceding = (realData && realData.ppgAfterConcedingFirst !== undefined) ? realData.ppgAfterConcedingFirst : null;
@@ -2266,7 +2364,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 firstGoalBox.classList.add('hidden');
             }
 
-            // =================== RITMO DEL PARTIDO ===================
             const profilePaceBadge = document.getElementById('profilePaceBadge');
             const profilePaceReason = document.getElementById('profilePaceReason');
             const lambdaHomeVal = parseFloat(document.getElementById('valHomeLambda').innerText) || 0;
@@ -3352,9 +3449,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             updateLeaguePerformanceTable(filteredBets);
             updateBestEvRangeAnalysis(filteredBets);
 
-            // ============================================================
-            // ESTADÍSTICAS AVANZADAS DE BITÁCORA (NUEVO)
-            // ============================================================
             let sumOdds = 0, countOdds = 0, maxOddsVal = 0, minOddsVal = Infinity;
             let sumProb = 0, sumEv = 0, sumStake = 0, totalStakedAll = 0;
             let weightedOddsNum = 0, weightedOddsDen = 0;
@@ -3399,9 +3493,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (dashTotalStakedEl) dashTotalStakedEl.innerText = '$' + totalStakedAll.toFixed(2);
             const dashTotalBetsEl = document.getElementById('dashTotalBets');
             if (dashTotalBetsEl) dashTotalBetsEl.innerText = filteredBets.length;
-            // ============================================================
-            // FIN ESTADÍSTICAS AVANZADAS
-            // ============================================================
 
             const streakLabel = streakType === 'LOSS' ? `🔥 ${currentStreakCount} Derrotas` : (streakType === 'WIN' ? `⭐ ${currentStreakCount} Victorias` : 'Neutral');
             if (document.getElementById('statCurrentStreak')) document.getElementById('statCurrentStreak').innerText = streakLabel;
@@ -4454,9 +4545,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function modifiedBesselI(k, z) { let s = 0; const kAbs = Math.abs(k); for (let m = 0; m < 40; m++) s += Math.pow(z / 2, kAbs + 2 * m) / (factorial(m) * factorial(kAbs + m)); return s; }
         function skellamProb(k, l1, l2) { if (l1 <= 0 || l2 <= 0) return 0; return Math.exp(-(l1 + l2)) * Math.pow(l1 / l2, k / 2) * modifiedBesselI(k, 2 * Math.sqrt(l1 * l2)); }
 
-        // ============================================================
-        // NUEVO: FUNCIONES PARA INTERVALOS DE CONFIANZA
-        // ============================================================
         function sampleNormal(mean, std) {
             let u = 0, v = 0;
             while (u === 0) u = Math.random();
@@ -4557,10 +4645,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             return `IC90: ${p10}% – ${p90}%`;
         }
 
-        // ============================================================
-        // FIN NUEVO IC
-        // ============================================================
-
         function calculateSkellamAnalysis(lambdaHome, lambdaAway) {
             let probHomeWin = 0, probDraw = 0, probAwayWin = 0;
             const diffProbs = {};
@@ -4644,9 +4728,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             currentCalculatedProbs = { probHomeWin, probDraw, probAwayWin, probOver25, probUnder25, probBttsYes, probBttsNo };
 
-            // ============================================================
-            // NUEVO: CALCULAR INTERVALOS DE CONFIANZA AL 90%
-            // ============================================================
             const noMatchData = (lambdaHome + lambdaAway) === 0;
             let ciData = null;
             try {
@@ -4656,7 +4737,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             } catch(e) {
                 console.warn("CI calculation error:", e);
             }
-            // ============================================================
 
             document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
             document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
@@ -4753,6 +4833,388 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 ]},
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } }, scales: { x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } } } }
             });
+        }
+
+        // ============================================================
+        // ============ BACKTESTING MODULE (NUEVO) ===================
+        // ============================================================
+
+        function toggleBacktestingModal(show) {
+            const m = document.getElementById('backtestingModal');
+            if (show) {
+                initBacktestDefaults();
+                m.classList.remove('hidden');
+            } else {
+                m.classList.add('hidden');
+            }
+        }
+
+        function initBacktestDefaults() {
+            const fin = getBankrollFinancialSummary(activeBankrollId);
+            const startInput = document.getElementById('btStartBankroll');
+            if (startInput) startInput.value = Math.round(fin.initial || 1000);
+
+            const marketSel = document.getElementById('btMarketFilter');
+            if (marketSel) {
+                const markets = new Set();
+                betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).forEach(b => {
+                    if (b.market) markets.add(b.market);
+                });
+                marketSel.innerHTML = '<option value="ALL">Todos</option>';
+                markets.forEach(m => marketSel.add(new Option(m, m)));
+            }
+
+            const dates = betLogData
+                .filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId && b.date && b.status !== 'PENDING')
+                .map(b => b.date).sort();
+            const fromEl = document.getElementById('btDateFrom');
+            const toEl = document.getElementById('btDateTo');
+            if (dates.length > 0) {
+                if (fromEl) fromEl.value = dates[0];
+                if (toEl) toEl.value = dates[dates.length - 1];
+            }
+        }
+
+        function runBacktest() {
+            const startBank = parseFloat(document.getElementById('btStartBankroll').value) || 1000;
+            const flatStakeVal = parseFloat(document.getElementById('btFlatStake').value) || 20;
+            const pctStake = parseFloat(document.getElementById('btPctStake').value) || 2;
+            const kellyFraction = parseFloat(document.getElementById('btKellyFrac').value) || 0.25;
+            const minEv = parseFloat(document.getElementById('btMinEv').value) || 0;
+            const minOdds = parseFloat(document.getElementById('btMinOdds').value) || 1.01;
+            const maxOdds = parseFloat(document.getElementById('btMaxOdds').value) || 100;
+            const marketFilter = document.getElementById('btMarketFilter').value;
+            const dateFrom = document.getElementById('btDateFrom').value;
+            const dateTo = document.getElementById('btDateTo').value;
+            const includeVoid = document.getElementById('btIncludeVoid').checked;
+
+            let bets = betLogData.filter(b => {
+                if ((b.bankrollId || bankrollsData[0].id) !== activeBankrollId) return false;
+                if (b.status === 'PENDING') return false;
+                if (b.status === 'VOID' && !includeVoid) return false;
+                if (marketFilter !== 'ALL' && b.market !== marketFilter) return false;
+                const odds = parseFloat(b.bookieOdds) || 1;
+                if (odds < minOdds || odds > maxOdds) return false;
+                if (b.date) {
+                    if (dateFrom && b.date < dateFrom) return false;
+                    if (dateTo && b.date > dateTo) return false;
+                }
+                return true;
+            }).slice().sort((a, b) => {
+                if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
+                return (a.id || 0) - (b.id || 0);
+            });
+
+            if (bets.length === 0) {
+                document.getElementById('btResultsSection').classList.add('hidden');
+                document.getElementById('btBestStrategy').classList.add('hidden');
+                document.getElementById('btNoDataMsg').classList.remove('hidden');
+                backtestResults = null;
+                return;
+            }
+            document.getElementById('btNoDataMsg').classList.add('hidden');
+
+            const strategies = [];
+
+            // 1. Flat
+            strategies.push(runBacktestStrategy({
+                name: 'Stake Plano',
+                desc: `$${flatStakeVal} por apuesta`,
+                bets, startBank,
+                stakeFn: () => flatStakeVal
+            }));
+
+            // 2. % Bankroll
+            strategies.push(runBacktestStrategy({
+                name: `% Bankroll (${pctStake}%)`,
+                desc: `${pctStake}% del bankroll actual`,
+                bets, startBank,
+                stakeFn: (bank) => bank * (pctStake / 100)
+            }));
+
+            // 3. Kelly fraccional
+            strategies.push(runBacktestStrategy({
+                name: `Kelly ${kellyFraction}x`,
+                desc: `Kelly fraccional ${kellyFraction}x sobre prob+cuota`,
+                bets, startBank,
+                stakeFn: (bank, bet) => {
+                    const p = (parseFloat(bet.prob) || 0) / 100;
+                    const o = parseFloat(bet.bookieOdds) || 1;
+                    const b = o - 1;
+                    if (b <= 0 || p <= 0) return 0;
+                    const fullKelly = (p * b - (1 - p)) / b;
+                    if (fullKelly <= 0) return 0;
+                    return Math.max(0, bank * fullKelly * kellyFraction);
+                }
+            }));
+
+            // Filtro EV+
+            const evBets = bets.filter(b => parseFloat(b.ev || 0) >= minEv);
+
+            // 4. EV+ Flat
+            strategies.push(runBacktestStrategy({
+                name: `EV≥${minEv}% + Flat`,
+                desc: `EV mínimo ${minEv}%, stake plano $${flatStakeVal}`,
+                bets: evBets, startBank,
+                stakeFn: () => flatStakeVal
+            }));
+
+            // 5. EV+ % Bankroll
+            strategies.push(runBacktestStrategy({
+                name: `EV≥${minEv}% + ${pctStake}%`,
+                desc: `EV mínimo ${minEv}%, ${pctStake}% bankroll`,
+                bets: evBets, startBank,
+                stakeFn: (bank) => bank * (pctStake / 100)
+            }));
+
+            // 6. EV+ Kelly
+            strategies.push(runBacktestStrategy({
+                name: `EV≥${minEv}% + Kelly ${kellyFraction}x`,
+                desc: `EV mínimo ${minEv}%, Kelly ${kellyFraction}x`,
+                bets: evBets, startBank,
+                stakeFn: (bank, bet) => {
+                    const p = (parseFloat(bet.prob) || 0) / 100;
+                    const o = parseFloat(bet.bookieOdds) || 1;
+                    const b = o - 1;
+                    if (b <= 0 || p <= 0) return 0;
+                    const fullKelly = (p * b - (1 - p)) / b;
+                    if (fullKelly <= 0) return 0;
+                    return Math.max(0, bank * fullKelly * kellyFraction);
+                }
+            }));
+
+            backtestResults = { strategies, startBank, totalBets: bets.length, evBetsCount: evBets.length };
+            renderBacktestResults();
+            showToast("Backtest ejecutado.");
+        }
+
+        function runBacktestStrategy(config) {
+            const { name, desc, bets, startBank, stakeFn } = config;
+            let bank = startBank;
+            let peak = startBank;
+            let maxDD = 0, maxDDPct = 0;
+            let totalStaked = 0, totalProfit = 0;
+            let wins = 0, losses = 0, voids = 0;
+            let profitFactorNum = 0, profitFactorDen = 0;
+            const equityCurve = [startBank];
+            const drawdownCurve = [0];
+            let currentWinStreak = 0, currentLossStreak = 0;
+            let maxWinStreak = 0, maxLossStreak = 0;
+            const returns = [];
+
+            for (const bet of bets) {
+                const odds = parseFloat(bet.bookieOdds) || 1;
+                const stake = Math.max(0, stakeFn(bank, bet));
+                const realStake = Math.min(stake, bank);
+
+                let pnl = 0;
+                if (bet.status === 'WON') {
+                    pnl = realStake * (odds - 1);
+                    wins++;
+                    profitFactorNum += pnl;
+                    currentWinStreak++;
+                    currentLossStreak = 0;
+                    if (currentWinStreak > maxWinStreak) maxWinStreak = currentWinStreak;
+                } else if (bet.status === 'LOST') {
+                    pnl = -realStake;
+                    losses++;
+                    profitFactorDen += realStake;
+                    currentLossStreak++;
+                    currentWinStreak = 0;
+                    if (currentLossStreak > maxLossStreak) maxLossStreak = currentLossStreak;
+                } else if (bet.status === 'HALF_WON') {
+                    pnl = (realStake / 2) * (odds - 1);
+                    wins += 0.5;
+                    profitFactorNum += pnl;
+                    currentWinStreak++;
+                    currentLossStreak = 0;
+                } else if (bet.status === 'HALF_LOST') {
+                    pnl = -(realStake / 2);
+                    losses += 0.5;
+                    profitFactorDen += (realStake / 2);
+                    currentLossStreak++;
+                    currentWinStreak = 0;
+                } else if (bet.status === 'VOID') {
+                    voids++;
+                }
+
+                if (bank > 0) returns.push((bank + pnl - bank) / bank);
+                bank += pnl;
+                totalStaked += realStake;
+                totalProfit += pnl;
+                if (bank > peak) peak = bank;
+                const dd = peak - bank;
+                const ddPct = peak > 0 ? (dd / peak) * 100 : 0;
+                if (ddPct > maxDDPct) { maxDDPct = ddPct; maxDD = dd; }
+                equityCurve.push(bank);
+                drawdownCurve.push(-ddPct);
+            }
+
+            const closedCount = wins + losses;
+            const winRate = closedCount > 0 ? (wins / closedCount) * 100 : 0;
+            const roi = ((bank - startBank) / startBank) * 100;
+            const yieldVal = totalStaked > 0 ? (totalProfit / totalStaked) * 100 : 0;
+            const profitFactor = profitFactorDen > 0 ? profitFactorNum / profitFactorDen : (profitFactorNum > 0 ? Infinity : 0);
+
+            const meanRet = returns.length > 0 ? returns.reduce((a, b) => a + b, 0) / returns.length : 0;
+            const varRet = returns.length > 0 ? returns.reduce((a, b) => a + Math.pow(b - meanRet, 2), 0) / returns.length : 0;
+            const stdRet = Math.sqrt(varRet);
+            const sharpe = stdRet > 0 ? (meanRet / stdRet) * Math.sqrt(Math.min(returns.length, 252)) : 0;
+
+            return {
+                name, desc,
+                finalBank: bank,
+                pnl: bank - startBank,
+                roi, yield: yieldVal, winRate,
+                totalBets: bets.length,
+                wins, losses, voids,
+                totalStaked,
+                maxDD, maxDDPct,
+                profitFactor,
+                sharpe,
+                maxWinStreak, maxLossStreak,
+                equityCurve,
+                drawdownCurve
+            };
+        }
+
+        function renderBacktestResults() {
+            if (!backtestResults) return;
+            const { strategies } = backtestResults;
+
+            let bestIdx = 0;
+            let bestScore = -Infinity;
+            strategies.forEach((s, i) => {
+                const score = s.roi - (s.maxDDPct * 1.2);
+                if (score > bestScore) { bestScore = score; bestIdx = i; }
+            });
+            const best = strategies[bestIdx];
+            const bestEl = document.getElementById('btBestStrategy');
+            bestEl.innerHTML = `🏆 <b class="text-cyan-300">${best.name}</b> — ROI ${best.roi.toFixed(1)}% &nbsp;|&nbsp; DD -${best.maxDDPct.toFixed(1)}% &nbsp;|&nbsp; Yield ${best.yield.toFixed(1)}% &nbsp;|&nbsp; PF ${isFinite(best.profitFactor) ? best.profitFactor.toFixed(2) : '∞'}`;
+            bestEl.classList.remove('hidden');
+
+            const tbody = document.getElementById('btResultsTableBody');
+            let html = '';
+            strategies.forEach((s, idx) => {
+                const isBest = (idx === bestIdx);
+                const pnlClass = s.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                const roiClass = s.roi >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                const pfClass = !isFinite(s.profitFactor) ? 'text-gold-400' : (s.profitFactor >= 1.5 ? 'text-emerald-400' : (s.profitFactor >= 1 ? 'text-gold-400' : 'text-rose-400'));
+                const ddClass = s.maxDDPct > 40 ? 'text-rose-400' : (s.maxDDPct > 20 ? 'text-amber-400' : 'text-emerald-400');
+                const sharpeClass = s.sharpe >= 2 ? 'text-emerald-400' : (s.sharpe >= 1 ? 'text-gold-400' : 'text-slate-400');
+                html += `<tr class="${isBest ? 'bg-cyan-950/30' : ''}">
+                    <td class="p-1.5 font-bold text-white">${isBest ? '🏆 ' : ''}${s.name}<span class="block text-[8px] text-slate-400 font-normal">${s.desc}</span></td>
+                    <td class="p-1.5 text-center font-bold text-slate-300">${s.totalBets}</td>
+                    <td class="p-1.5 text-center font-black ${pnlClass}">$${s.finalBank.toFixed(2)}</td>
+                    <td class="p-1.5 text-center font-black ${roiClass}">${s.roi >= 0 ? '+' : ''}${s.roi.toFixed(1)}%</td>
+                    <td class="p-1.5 text-center font-bold ${s.yield >= 0 ? 'text-gold-400' : 'text-rose-400'}">${s.yield.toFixed(1)}%</td>
+                    <td class="p-1.5 text-center font-bold text-indigo-300">${s.winRate.toFixed(1)}%</td>
+                    <td class="p-1.5 text-center font-bold ${ddClass}">-${s.maxDDPct.toFixed(1)}%</td>
+                    <td class="p-1.5 text-center font-bold ${pfClass}">${isFinite(s.profitFactor) ? s.profitFactor.toFixed(2) : '∞'}</td>
+                    <td class="p-1.5 text-center font-bold ${sharpeClass}">${s.sharpe.toFixed(2)}</td>
+                    <td class="p-1.5 text-center text-[10px]"><span class="text-emerald-400">${s.maxWinStreak}W</span> / <span class="text-rose-400">${s.maxLossStreak}L</span></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            renderBacktestEquityChart(strategies);
+            renderBacktestDrawdownChart(strategies);
+
+            document.getElementById('btResultsSection').classList.remove('hidden');
+        }
+
+        function renderBacktestEquityChart(strategies) {
+            const ctx = document.getElementById('btEquityChart').getContext('2d');
+            if (backtestChartInstance) backtestChartInstance.destroy();
+            const maxLen = Math.max(...strategies.map(s => s.equityCurve.length));
+            const labels = Array.from({ length: maxLen }, (_, i) => i === 0 ? 'Inicio' : `#${i}`);
+            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1'];
+            const datasets = strategies.map((s, idx) => {
+                const data = s.equityCurve.slice();
+                while (data.length < maxLen) data.push(data[data.length - 1]);
+                return {
+                    label: s.name,
+                    data,
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: 'transparent',
+                    tension: 0.2,
+                    pointRadius: 0,
+                    borderWidth: 2
+                };
+            });
+            backtestChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { labels: { color: '#cbd5e1', font: { size: 9, weight: 'bold' } } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 8 }, maxTicksLimit: 10 }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+
+        function renderBacktestDrawdownChart(strategies) {
+            const ctx = document.getElementById('btDrawdownChart').getContext('2d');
+            if (backtestDdChartInstance) backtestDdChartInstance.destroy();
+            const maxLen = Math.max(...strategies.map(s => s.drawdownCurve.length));
+            const labels = Array.from({ length: maxLen }, (_, i) => i === 0 ? '0' : `${i}`);
+            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1'];
+            const datasets = strategies.map((s, idx) => {
+                const data = s.drawdownCurve.slice();
+                while (data.length < maxLen) data.push(data[data.length - 1]);
+                return {
+                    label: s.name,
+                    data,
+                    borderColor: colors[idx % colors.length],
+                    backgroundColor: idx === 0 ? 'rgba(6, 182, 212, 0.08)' : 'transparent',
+                    tension: 0.2,
+                    pointRadius: 0,
+                    borderWidth: 1.5,
+                    fill: idx === 0
+                };
+            });
+            backtestDdChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 8 }, maxTicksLimit: 10 }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', font: { size: 9 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.05)' }, max: 0 }
+                    }
+                }
+            });
+        }
+
+        function exportBacktestCSV() {
+            if (!backtestResults) { showToast("Ejecuta un backtest primero."); return; }
+            const { strategies, startBank } = backtestResults;
+            let csv = `# BACKTEST - ${new Date().toISOString().slice(0,10)}\n# Bankroll inicial: $${startBank}\n\n`;
+            csv += "Estrategia,Descripcion,Apuestas,Bankroll_Final,PnL,ROI_Pct,Yield_Pct,WinRate_Pct,MaxDD_Pct,ProfitFactor,Sharpe,MaxWinStreak,MaxLossStreak\n";
+            strategies.forEach(s => {
+                csv += `"${s.name}","${s.desc}",${s.totalBets},${s.finalBank.toFixed(2)},${s.pnl.toFixed(2)},${s.roi.toFixed(2)},${s.yield.toFixed(2)},${s.winRate.toFixed(2)},${s.maxDDPct.toFixed(2)},${isFinite(s.profitFactor)?s.profitFactor.toFixed(2):'INF'},${s.sharpe.toFixed(3)},${s.maxWinStreak},${s.maxLossStreak}\n`;
+            });
+            csv += `\n# EQUITY CURVES (por apuesta)\n# Estrategia`;
+            const maxLen = Math.max(...strategies.map(s => s.equityCurve.length));
+            for (let i = 0; i < maxLen; i++) csv += `,${i}`;
+            csv += '\n';
+            strategies.forEach(s => {
+                csv += `"${s.name}"`;
+                for (let i = 0; i < maxLen; i++) {
+                    csv += `,${i < s.equityCurve.length ? s.equityCurve[i].toFixed(2) : ''}`;
+                }
+                csv += '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a"); link.href = url; link.download = `backtest_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            showToast("Backtest CSV exportado.");
         }
     </script>
 </body>
