@@ -1964,6 +1964,7 @@ GP W D L GF GA GD Pts PPG
 
                 setSyncStatus('synced');
                 showToast('☁️ Sincronización inicial completada.');
+                startAutoSync();
             } catch(e) {
                 console.warn('Initial sync error:', e);
                 setSyncStatus('error');
@@ -1985,6 +1986,47 @@ GP W D L GF GA GD Pts PPG
             } catch(e) { console.warn('Delete all error:', e); }
         }
 
+        // ⭐ NUEVO: AUTO-SYNC — propaga deletes, updates y nuevas apuestas entre dispositivos
+        let autoSyncTimer = null;
+        let autoSyncInProgress = false;
+
+        function startAutoSync() {
+            stopAutoSync();
+            autoSyncTimer = setInterval(runAutoSync, 45000);
+            console.log('[AutoSync] iniciado (cada 45s)');
+        }
+
+        function stopAutoSync() {
+            if (autoSyncTimer) { clearInterval(autoSyncTimer); autoSyncTimer = null; }
+            console.log('[AutoSync] detenido');
+        }
+
+        async function runAutoSync() {
+            if (!currentUser || !supabaseClient) return;
+            if (document.hidden) return;
+            if (autoSyncInProgress) return;
+            autoSyncInProgress = true;
+            try {
+                if (bankrollsData.length) await supabaseClient.from('bankrolls').upsert(bankrollsData.map(bankrollToRow), { onConflict: 'id' });
+                if (betLogData.length) await supabaseClient.from('bets').upsert(betLogData.map(betToRow), { onConflict: 'id' });
+                if (parallelBetLogData.length) await supabaseClient.from('parallel_bets').upsert(parallelBetLogData.map(betToRow), { onConflict: 'id' });
+                if (boxTransactionsLog.length) await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
+
+                await pullFromSupabase(true);
+            } catch(e) {
+                console.warn('[AutoSync] error:', e);
+            } finally {
+                autoSyncInProgress = false;
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && currentUser) {
+                console.log('[AutoSync] visibilitychange → sincronizando');
+                runAutoSync();
+            }
+        });
+
         if (supabaseClient) {
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 if (event === 'SIGNED_IN' && session && session.user) {
@@ -2003,6 +2045,7 @@ GP W D L GF GA GD Pts PPG
                 } else if (event === 'SIGNED_OUT') {
                     currentUser = null;
                     hasDoneInitialSync = false;
+                    stopAutoSync();
                     updateAuthUI();
                 }
             });
