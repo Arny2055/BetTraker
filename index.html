@@ -929,6 +929,45 @@
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center"><span class="text-[9px] uppercase font-bold text-slate-400 block">Yield</span><span class="text-sm font-black text-gold-400 block mt-1" id="dashYield">0.0%</span></div>
                     <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center"><span class="text-[9px] uppercase font-bold text-slate-400 block">Win Rate</span><span class="text-sm font-black text-emerald-400 block mt-1" id="dashWinRate">0.0%</span></div>
                 </div>
+
+                <!-- ========== NUEVO: ESTADÍSTICAS AVANZADAS DE BITÁCORA ========== -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/30 text-center">
+                        <span class="text-[9px] uppercase font-bold text-indigo-300 block"><i class="fa-solid fa-scale-balanced mr-1"></i>Cuota Promedio</span>
+                        <span class="text-sm font-black text-indigo-400 block mt-1" id="dashAvgOdds">@0.00</span>
+                        <span class="text-[8px] text-slate-500 block" id="dashAvgOddsWeighted">Pond: @0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block"><i class="fa-solid fa-percent mr-1"></i>Prob. Promedio</span>
+                        <span class="text-sm font-black text-white block mt-1" id="dashAvgProb">0.0%</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block"><i class="fa-solid fa-bullseye mr-1"></i>EV Promedio</span>
+                        <span class="text-sm font-black text-emerald-400 block mt-1" id="dashAvgEv">+0.0%</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block"><i class="fa-solid fa-coins mr-1"></i>Stake Promedio</span>
+                        <span class="text-sm font-black text-white block mt-1" id="dashAvgStake">$0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/20 text-center">
+                        <span class="text-[9px] uppercase font-bold text-emerald-400 block"><i class="fa-solid fa-arrow-up mr-1"></i>Cuota Máxima</span>
+                        <span class="text-sm font-black text-emerald-400 block mt-1" id="dashMaxOdds">@0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-rose-500/20 text-center">
+                        <span class="text-[9px] uppercase font-bold text-rose-400 block"><i class="fa-solid fa-arrow-down mr-1"></i>Cuota Mínima</span>
+                        <span class="text-sm font-black text-rose-400 block mt-1" id="dashMinOdds">@0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-gold-400 block"><i class="fa-solid fa-money-bill-wave mr-1"></i>Total Apostado</span>
+                        <span class="text-sm font-black text-gold-400 block mt-1" id="dashTotalStaked">$0.00</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 text-center">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block"><i class="fa-solid fa-list-ol mr-1"></i>Total Apuestas</span>
+                        <span class="text-sm font-black text-white block mt-1" id="dashTotalBets">0</span>
+                    </div>
+                </div>
+                <!-- ========== FIN NUEVO ========== -->
+
                 <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none"><div class="flex items-center gap-1.5"><i class="fa-solid fa-trophy text-gold-400 text-xs"></i><span class="text-xs font-black text-white uppercase">Rendimiento por Liga</span></div><div class="flex items-center gap-2"><span id="leaguePerformanceBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Desglose</span><i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i></div></summary>
                     <div class="p-3 pt-0"><div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60"><table class="w-full text-[10px] text-left border-collapse excel-table"><thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md"><tr><th class="p-1.5">Liga</th><th class="p-1.5 text-center">Bets</th><th class="p-1.5 text-center">WR</th><th class="p-1.5 text-center">Yield</th><th class="p-1.5 text-center">P&L</th></tr></thead><tbody id="leaguePerformanceTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody></table></div></div>
@@ -3277,6 +3316,57 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             updateLeaguePerformanceTable(filteredBets);
             updateBestEvRangeAnalysis(filteredBets);
+
+            // ============================================================
+            // ESTADÍSTICAS AVANZADAS DE BITÁCORA (NUEVO)
+            // ============================================================
+            let sumOdds = 0, countOdds = 0, maxOddsVal = 0, minOddsVal = Infinity;
+            let sumProb = 0, sumEv = 0, sumStake = 0, totalStakedAll = 0;
+            let weightedOddsNum = 0, weightedOddsDen = 0;
+            filteredBets.forEach(b => {
+                const o = parseFloat(b.bookieOdds) || 0;
+                const p = parseFloat(b.prob) || 0;
+                const e = parseFloat(b.ev) || 0;
+                const s = parseFloat(b.stake) || 0;
+                if (o > 0) {
+                    sumOdds += o; countOdds++;
+                    if (o > maxOddsVal) maxOddsVal = o;
+                    if (o < minOddsVal) minOddsVal = o;
+                }
+                sumProb += p; sumEv += e; sumStake += s; totalStakedAll += s;
+                if (o > 0 && s > 0) { weightedOddsNum += o * s; weightedOddsDen += s; }
+            });
+            if (minOddsVal === Infinity) minOddsVal = 0;
+            const avgOddsVal = countOdds > 0 ? sumOdds / countOdds : 0;
+            const avgProbVal = filteredBets.length > 0 ? sumProb / filteredBets.length : 0;
+            const avgEvVal = filteredBets.length > 0 ? sumEv / filteredBets.length : 0;
+            const avgStakeVal = filteredBets.length > 0 ? sumStake / filteredBets.length : 0;
+            const weightedAvgOddsVal = weightedOddsDen > 0 ? weightedOddsNum / weightedOddsDen : 0;
+
+            const dashAvgOddsEl = document.getElementById('dashAvgOdds');
+            if (dashAvgOddsEl) dashAvgOddsEl.innerText = avgOddsVal > 0 ? '@' + avgOddsVal.toFixed(2) : '@0.00';
+            const dashAvgOddsWEl = document.getElementById('dashAvgOddsWeighted');
+            if (dashAvgOddsWEl) dashAvgOddsWEl.innerText = 'Pond: ' + (weightedAvgOddsVal > 0 ? '@' + weightedAvgOddsVal.toFixed(2) : '@0.00');
+            const dashAvgProbEl = document.getElementById('dashAvgProb');
+            if (dashAvgProbEl) dashAvgProbEl.innerText = avgProbVal.toFixed(1) + '%';
+            const dashAvgEvEl = document.getElementById('dashAvgEv');
+            if (dashAvgEvEl) {
+                dashAvgEvEl.innerText = (avgEvVal >= 0 ? '+' : '') + avgEvVal.toFixed(1) + '%';
+                dashAvgEvEl.className = avgEvVal >= 0 ? "text-sm font-black text-emerald-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
+            }
+            const dashAvgStakeEl = document.getElementById('dashAvgStake');
+            if (dashAvgStakeEl) dashAvgStakeEl.innerText = '$' + avgStakeVal.toFixed(2);
+            const dashMaxOddsEl = document.getElementById('dashMaxOdds');
+            if (dashMaxOddsEl) dashMaxOddsEl.innerText = maxOddsVal > 0 ? '@' + maxOddsVal.toFixed(2) : '@0.00';
+            const dashMinOddsEl = document.getElementById('dashMinOdds');
+            if (dashMinOddsEl) dashMinOddsEl.innerText = minOddsVal > 0 ? '@' + minOddsVal.toFixed(2) : '@0.00';
+            const dashTotalStakedEl = document.getElementById('dashTotalStaked');
+            if (dashTotalStakedEl) dashTotalStakedEl.innerText = '$' + totalStakedAll.toFixed(2);
+            const dashTotalBetsEl = document.getElementById('dashTotalBets');
+            if (dashTotalBetsEl) dashTotalBetsEl.innerText = filteredBets.length;
+            // ============================================================
+            // FIN ESTADÍSTICAS AVANZADAS
+            // ============================================================
 
             const streakLabel = streakType === 'LOSS' ? `🔥 ${currentStreakCount} Derrotas` : (streakType === 'WIN' ? `⭐ ${currentStreakCount} Victorias` : 'Neutral');
             if (document.getElementById('statCurrentStreak')) document.getElementById('statCurrentStreak').innerText = streakLabel;
