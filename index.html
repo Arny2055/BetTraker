@@ -536,14 +536,14 @@
 
             <details class="glass-card rounded-2xl border border-indigo-500/40 overflow-hidden group shadow-lg">
                 <summary class="p-3 cursor-pointer flex items-center justify-between font-black text-xs text-indigo-300 select-none bg-indigo-950/40">
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-arrows-left-right-to-line text-indigo-400"></i><span>Hándicap Asiático Dinámico</span></div>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-arrows-left-right-to-line text-indigo-400"></i><span>Hándicap Asiático Dinámico (Ajuste Underdog)</span></div>
                     <i class="fa-solid fa-chevron-down text-indigo-400 text-xs transition-transform group-open:rotate-180"></i>
                 </summary>
                 <div class="p-3.5 space-y-3">
-                    <p class="text-[10px] text-slate-300">Calcula dinámicamente la <b>línea de Hándicap Asiático justa</b> (donde la probabilidad se aproxima al <b>50%</b>) según el modelo 1x2 derivado del Poisson y Dixon-Coles.</p>
+                    <p class="text-[10px] text-slate-300">Calcula dinámicamente la <b>línea de Hándicap Asiático justa</b> ajustada automáticamente al <b class="text-amber-300">underdog</b> según el modelo Poisson/Skellam. La línea se orienta siempre desde la perspectiva del equipo menos favorito (mayor λ del rival), garantizando una cuota justa cercana a <b>@2.00</b>.</p>
                     <div class="grid grid-cols-3 gap-2 text-center" id="skellamSummaryContainer"></div>
                     <div class="space-y-2 pt-1">
-                        <div class="text-[10px] font-black text-indigo-300 uppercase tracking-wide">Líneas de Hándicap Asiático (Probabilidad Implícita):</div>
+                        <div class="text-[10px] font-black text-indigo-300 uppercase tracking-wide">Líneas de Hándicap Asiático (Perspectiva Underdog):</div>
                         <div class="space-y-1.5" id="skellamDetailsContainer"></div>
                     </div>
                 </div>
@@ -1357,7 +1357,6 @@ GP W D L GF GA GD Pts PPG
         let supabaseSyncTimeout = null;
         let hasDoneInitialSync = false;
 
-        // ⭐ NEW: Tracking de IDs recién borrados + pausa de auto-sync
         let recentlyDeletedIds = new Set();
         let autoSyncPaused = false;
 
@@ -1668,7 +1667,6 @@ GP W D L GF GA GD Pts PPG
             }, 2000);
         }
 
-        // ⭐ ACTUALIZADO: filtra IDs recién borrados para que no reaparezcan
         async function pullFromSupabase(preferRemote = false) {
             if (!currentUser || !supabaseClient) return;
 
@@ -1679,7 +1677,6 @@ GP W D L GF GA GD Pts PPG
                 supabaseClient.from('box_transactions').select('*').eq('user_id', currentUser.id)
             ]);
 
-            // BANKROLLS
             if (bankRes.data && bankRes.data.length > 0) {
                 const filtered = bankRes.data.filter(r => !isDeleted(r.id));
                 filtered.forEach(r => {
@@ -1700,7 +1697,6 @@ GP W D L GF GA GD Pts PPG
                 });
             }
 
-            // BETS
             if (betRes.data && betRes.data.length > 0) {
                 const filtered = betRes.data.filter(r => !isDeleted(r.id));
                 if (preferRemote) {
@@ -1714,7 +1710,6 @@ GP W D L GF GA GD Pts PPG
                 }
             }
 
-            // PARALLEL BETS
             if (pBetRes.data && pBetRes.data.length > 0) {
                 const filtered = pBetRes.data.filter(r => !isDeleted(r.id));
                 if (preferRemote) {
@@ -1728,7 +1723,6 @@ GP W D L GF GA GD Pts PPG
                 }
             }
 
-            // BOX TRANSACTIONS
             if (txRes.data && txRes.data.length > 0) {
                 const filtered = txRes.data.filter(r => !isDeleted(r.id));
                 if (preferRemote) {
@@ -1789,10 +1783,9 @@ GP W D L GF GA GD Pts PPG
             }
         }
 
-        // ⭐ ACTUALIZADO: ahora marca el ID como borrado ANTES del delete y devuelve status
         async function deleteFromSupabase(table, id) {
             if (!currentUser || !supabaseClient) return { success: false, reason: 'no_auth' };
-            markDeleted(id); // evita que el pull lo vuelva a traer
+            markDeleted(id);
             try {
                 const { error } = await supabaseClient.from(table).delete().eq('id', String(id)).eq('user_id', currentUser.id);
                 if (error) {
@@ -1821,7 +1814,6 @@ GP W D L GF GA GD Pts PPG
             }
         }
 
-        // ⭐ NEW: AUTO-SYNC — respeta la pausa durante operaciones críticas
         let autoSyncTimer = null;
         let autoSyncInProgress = false;
 
@@ -2613,7 +2605,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast(`¡Caja "${name}" creada!`);
         }
 
-        // ⭐ ACTUALIZADO: await en deletes de Supabase
         async function deleteBankroll(id) {
             if (bankrollsData.length <= 1) { showToast("Debes conservar al menos un Bankroll."); return; }
             if (!confirm("¿Eliminar este Bankroll y sus apuestas?")) return;
@@ -2891,7 +2882,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast(currentBoxTxType === 'DEPOSIT' ? `¡Depósito +$${amount.toFixed(2)}!` : `¡Retiro -$${amount.toFixed(2)}!`);
         }
 
-        // ⭐ ACTUALIZADO: await en delete de transacción
         async function deleteBoxTransaction(txId) {
             const tx = boxTransactionsLog.find(t => t.id === txId);
             if (!tx) return;
@@ -3170,7 +3160,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast(sendToParallel ? "¡Guardada en ambas bitácoras!" : "¡Guardada!");
         }
 
-        // ⭐ ACTUALIZADO: deleteBetFromLog con await + error real
         async function deleteBetFromLog(index) {
             const betToRemove = betLogData[index];
             if (!betToRemove) return;
@@ -3199,7 +3188,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast("Apuesta eliminada.");
         }
 
-        // ⭐ ACTUALIZADO: clearBetLogHistory con await
         async function clearBetLogHistory() {
             if (!confirm("¿Borrar el historial de apuestas de este Bankroll?")) return;
             const activeIds = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId).map(b => b.id);
@@ -3301,7 +3289,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             tableBody.innerHTML = html;
         }
 
-        // ⭐ ACTUALIZADO: deleteParallelBet con await
         async function deleteParallelBet(index) {
             const removed = parallelBetLogData[index];
             if (!removed) return;
@@ -3325,7 +3312,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast("Apuesta eliminada.");
         }
 
-        // ⭐ ACTUALIZADO: clearParallelLogHistory con await
         async function clearParallelLogHistory() {
             if (!confirm("¿Vaciar toda la bitácora paralela?")) return;
 
@@ -4727,11 +4713,17 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         // ============================================================
-        // HÁNDICAP ASIÁTICO DINÁMICO (reemplaza Skellam display)
+        // HÁNDICAP ASIÁTICO DINÁMICO - AJUSTADO AL UNDERDOG (Poisson)
         // ============================================================
         function calculateAsianHandicapAnalysis(lambdaHome, lambdaAway) {
             const homeName = document.getElementById('homeName').value || 'Local';
             const awayName = document.getElementById('awayName').value || 'Visitante';
+
+            // ⭐ Determinar favorito y UNDERDOG según los λ Poisson
+            const homeIsUnderdog = lambdaHome <= lambdaAway;
+            const underdogName = homeIsUnderdog ? homeName : awayName;
+            const favoriteName = homeIsUnderdog ? awayName : homeName;
+            const underdogRole = homeIsUnderdog ? 'Local (Underdog)' : 'Visitante (Underdog)';
 
             // Helper: outcome de una línea individual para un diff dado
             function outcomeForLine(diff, line) {
@@ -4741,7 +4733,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 return 0;                     // push
             }
 
-            // Computa las probabilidades fullWin/halfWin/push/halfLoss/fullLoss de una línea
+            // Computa probabilidades fullWin/halfWin/push/halfLoss/fullLoss de una línea
             function computeHandicapOutcome(line) {
                 const pct = Math.round(Math.abs(line) * 100) % 100;
                 const isQuarter = (pct === 25 || pct === 75);
@@ -4760,7 +4752,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         else if (sum === 1) halfWin += p;
                         else if (sum === -1) halfLoss += p;
                         else if (sum === -2) fullLoss += p;
-                        // sum === 0 no debería ocurrir en cuartos estándar
                     } else {
                         const r = outcomeForLine(k, line);
                         if (r === 1) fullWin += p;
@@ -4769,29 +4760,28 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     }
                 }
 
-                // Probabilidad efectiva (que da la cuota justa al hacer 1/P)
                 let effProb;
                 if (halfWin === 0 && halfLoss === 0 && push === 0) {
-                    effProb = fullWin; // línea .5 (sin push)
+                    effProb = fullWin;
                 } else if (halfWin === 0 && halfLoss === 0) {
                     const denom = fullWin + fullLoss;
-                    effProb = denom > 0 ? fullWin / denom : 0; // entera con push
+                    effProb = denom > 0 ? fullWin / denom : 0;
                 } else {
                     const num = fullWin + 0.5 * halfWin;
                     const den = fullWin + 0.5 * halfWin + 0.5 * halfLoss + fullLoss;
-                    effProb = den > 0 ? num / den : 0; // cuarto
+                    effProb = den > 0 ? num / den : 0;
                 }
                 return { fullWin, halfWin, push, halfLoss, fullLoss, effProb };
             }
 
-            // Líneas candidatas: -2 a +2 en pasos de 0.25
+            // Líneas candidatas: -2 a +2 en pasos de 0.25 (perspectiva HOME)
             const lines = [];
             for (let l = -2; l <= 2; l += 0.25) lines.push(+l.toFixed(2));
 
             const results = {};
             lines.forEach(line => { results[line] = computeHandicapOutcome(line); });
 
-            // Encontrar la línea "justa" (más cercana a P=50%)
+            // Encontrar línea "justa" (más cercana a P=50% desde HOME)
             let bestLine = 0;
             let bestDist = Infinity;
             lines.forEach(line => {
@@ -4800,64 +4790,82 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             });
 
             const bestResult = results[bestLine];
-            const bestOdds = bestResult.effProb > 0 ? (1 / bestResult.effProb) : 99.0;
+
+            // ⭐ Convertir a línea del UNDERDOG
+            // Si home es underdog: la línea del underdog = bestLine (home perspective)
+            // Si away es underdog: la línea del underdog = -bestLine (invertida)
+            const underdogFairLine = homeIsUnderdog ? bestLine : -bestLine;
+            const underdogFairProbRaw = homeIsUnderdog ? bestResult.effProb : (1 - bestResult.effProb);
+            const underdogFairProb = (isNaN(underdogFairProbRaw) || !isFinite(underdogFairProbRaw)) ? 0 : underdogFairProbRaw;
+            const underdogFairOdds = underdogFairProb > 0 ? (1 / underdogFairProb) : 99.0;
 
             function lineStr(line) {
                 if (Math.abs(line) < 0.001) return '0 (Empate Anula)';
                 return line > 0 ? `+${line}` : `${line}`;
             }
 
-            // ----- Resumen (3 tarjetas) -----
+            // ----- Resumen (3 tarjetas) — UNDERDOG AJUSTADO -----
             const summaryContainer = document.getElementById('skellamSummaryContainer');
             if (summaryContainer) {
                 summaryContainer.innerHTML = `
                     <div class="bg-slate-900/90 p-2 rounded-xl border border-emerald-500/40">
-                        <span class="block text-[8px] uppercase font-bold text-emerald-400">Línea Justa Dinámica</span>
-                        <span class="text-[11px] font-black text-white block truncate">${homeName} ${lineStr(bestLine)}</span>
-                        <span class="text-[9px] text-slate-400 block">P(win): ${(bestResult.effProb * 100).toFixed(1)}%</span>
+                        <span class="block text-[8px] uppercase font-bold text-emerald-400">Hándicap Underdog</span>
+                        <span class="text-[11px] font-black text-white block truncate">${underdogName} ${lineStr(underdogFairLine)}</span>
+                        <span class="text-[9px] text-slate-400 block">${underdogRole} • P: ${(underdogFairProb * 100).toFixed(1)}%</span>
                     </div>
                     <div class="bg-slate-900/90 p-2 rounded-xl border border-gold-500/40">
                         <span class="block text-[8px] uppercase font-bold text-gold-400">Cuota Justa AH</span>
-                        <span class="text-sm font-black text-gold-400 block">@${bestOdds.toFixed(2)}</span>
+                        <span class="text-sm font-black text-gold-400 block">@${underdogFairOdds.toFixed(2)}</span>
                         <span class="text-[9px] text-slate-400 block">${bestResult.push > 0.001 ? 'Push: ' + (bestResult.push * 100).toFixed(1) + '%' : 'Sin push'}</span>
                     </div>
                     <div class="bg-slate-900/90 p-2 rounded-xl border border-indigo-500/40">
-                        <span class="block text-[8px] uppercase font-bold text-indigo-400">Balance</span>
-                        <span class="text-sm font-black text-indigo-300 block">${(Math.abs(bestResult.effProb - 0.5) * 100).toFixed(1)}%</span>
-                        <span class="text-[9px] text-slate-400 block">Desvío del 50%</span>
+                        <span class="block text-[8px] uppercase font-bold text-indigo-400">Favorito (Poisson)</span>
+                        <span class="text-[11px] font-black text-rose-300 block truncate">${favoriteName}</span>
+                        <span class="text-[9px] text-slate-400 block">λ ${(homeIsUnderdog ? lambdaAway : lambdaHome).toFixed(2)}</span>
                     </div>
                 `;
             }
 
-            // ----- Detalle: lista de líneas -----
+            // ----- Detalle: lista de líneas (perspectiva UNDERDOG) -----
             const detailsContainer = document.getElementById('skellamDetailsContainer');
             let detailsHtml = '';
 
             lines.forEach(line => {
                 const r = results[line];
-                const isBest = Math.abs(line - bestLine) < 0.001;
-                const odds = r.effProb > 0 ? (1 / r.effProb) : 99.0;
+                // Convertir a perspectiva del underdog
+                const underdogLine = homeIsUnderdog ? line : -line;
+                const underdogEffRaw = homeIsUnderdog ? r.effProb : (1 - r.effProb);
+                const underdogEff = (isNaN(underdogEffRaw) || !isFinite(underdogEffRaw)) ? 0 : underdogEffRaw;
+
+                const isBest = Math.abs(underdogLine - underdogFairLine) < 0.001;
+                const odds = underdogEff > 0 ? (1 / underdogEff) : 99.0;
                 const bgClass = isBest ? 'bg-emerald-950/50 border-emerald-500/60' : 'bg-slate-900/70 border-slate-800';
                 const star = isBest ? ' ⭐' : '';
 
                 let pushInfo = '';
                 if (r.push > 0.001) pushInfo = ` | Push: ${(r.push * 100).toFixed(1)}%`;
-                else if (r.halfWin > 0.001 || r.halfLoss > 0.001) pushInfo = ` | ½W: ${(r.halfWin * 100).toFixed(1)}% | ½L: ${(r.halfLoss * 100).toFixed(1)}%`;
+                else if (r.halfWin > 0.001 || r.halfLoss > 0.001) {
+                    // Para away underdog, halfWin y halfLoss se invierten
+                    if (homeIsUnderdog) {
+                        pushInfo = ` | ½W: ${(r.halfWin * 100).toFixed(1)}% | ½L: ${(r.halfLoss * 100).toFixed(1)}%`;
+                    } else {
+                        pushInfo = ` | ½W: ${(r.halfLoss * 100).toFixed(1)}% | ½L: ${(r.halfWin * 100).toFixed(1)}%`;
+                    }
+                }
 
-                const selLabel = `${homeName} ${lineStr(line)}`;
+                const selLabel = `${underdogName} ${lineStr(underdogLine)}`;
                 const selSafe = selLabel.replace(/'/g, '');
-                const pct = isNaN(r.effProb) ? 0 : r.effProb;
 
                 detailsHtml += `
                     <div class="flex justify-between items-center ${bgClass} px-2.5 py-1.5 rounded-xl border text-xs">
                         <div class="pr-2 min-w-0">
                             <span class="font-bold text-white block truncate">${selLabel}${star}</span>
-                            <span class="text-[9px] text-indigo-400 font-semibold">Prob: ${(pct * 100).toFixed(1)}%${pushInfo}</span>
+                            <span class="text-[9px] text-indigo-400 font-semibold">Prob: ${(underdogEff * 100).toFixed(1)}%${pushInfo}</span>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
                             <span class="text-xs font-black text-gold-400">@${odds.toFixed(2)}</span>
-                            <button onclick="openLogBetModal('Hándicap Asiático', '${selSafe}', ${pct})" class="py-1 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[9px] font-bold rounded border border-emerald-500/30">Sencilla</button>
-                            <button onclick="addToParlayBuilder('Hándicap Asiático', '${selSafe}', ${pct})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/30">Parlay</button>
+                            <button onclick="openLogBetModal('Hándicap Asiático', '${selSafe}', ${underdogEff})" class="py-1 px-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[9px] font-bold rounded border border-emerald-500/30">Sencilla</button>
+                            <button onclick="addToParlayBuilder('Hándicap Asiático', '${selSafe}', ${underdogEff})" class="py-1 px-1.5 bg-gold-500/10 hover:bg-gold-500/20 text-gold-400 text-[9px] font-bold rounded border border-gold-500/30">Parlay</button>
                         </div>
                     </div>
                 `;
