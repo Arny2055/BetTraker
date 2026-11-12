@@ -1267,21 +1267,30 @@
                         <label class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-paste"></i> Pegar Tablas (Home + Away)</label>
                         <span class="text-[9px] text-slate-400">Detecta "Home table" / "Away table"</span>
                     </div>
-                    <textarea id="rawInput" rows="7" placeholder="Pega aquí las tablas completas con secciones 'Home table' y 'Away table'..." class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+                    <textarea id="rawInput" rows="7" placeholder="Pega aquí las tablas. Soporta: (1) Home/Away table clásico o (2) formato nuevo Match/Scope/GP/PPG/GA/GF/Stats con ■, Played: y líneas home N / away N." class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
                     <div class="bg-slate-950/60 border border-slate-800 p-2 rounded-lg">
-                        <p class="text-[9px] text-slate-400 font-bold mb-1">Formato esperado:</p>
-                        <pre class="text-[9px] text-emerald-300 font-mono leading-tight">Home table
+                        <p class="text-[9px] text-slate-400 font-bold mb-1">Formatos soportados:</p>
+                        <pre class="text-[9px] text-emerald-300 font-mono leading-tight">[A] Home table / Away table
 GP W D L GF GA GD Pts PPG
-1  Team  8  6 1 1 17 5  +12 19 2.38
-...
+1  Team  8  6 1 1 17 5 +12 19 2.38
 
-Away table
-GP W D L GF GA GD Pts PPG
-1  Team  7  5 2 0 19 3  +16 17 2.43
-...</pre>
+[B] Nuevo formato (Match/Scope/GP/PPG/GA/GF/Stats):
+■
+Liga - Nombre
+Played: 104 | Avg Goals: 2.46
+Match Scope GP PPG GA GF Stats
+11:00
+Home Team
+Away Team
+home  2
+0.00
+2.50  0.50  stats
+away  2
+1.50
+2.00  1.50</pre>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="text" id="leagueNameInput" placeholder="Nombre de la Liga" class="bg-inputBg border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                        <input type="text" id="leagueNameInput" placeholder="Nombre de la Liga (opcional)" class="bg-inputBg border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
                         <button onclick="parseAndSaveLeague()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs py-1.5 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-floppy-disk"></i> Procesar y Guardar</button>
                     </div>
                 </div>
@@ -2097,7 +2106,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         // PARLAY CON CORRELACIÓN DE MERCADOS DEL MISMO PARTIDO
         // ============================================================
 
-        // Evalúa si una selección se cumple para un marcador (h, a)
         function satisfiedH(h, a, sel) {
             if (!sel.marketType) return false;
             switch (sel.marketType) {
@@ -2131,7 +2139,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
         }
 
-        // Calcula probabilidad conjunta real (correlación intra-partido + producto inter-partido)
         function computeParlayJointProbability(selections) {
             const byMatch = {};
             selections.forEach(s => {
@@ -2332,6 +2339,159 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function normalizeTeamKey(name) {
             return name.trim().replace(/\s+/g, ' ').toLowerCase();
+        }
+
+        // ============================================================
+        // PARSER PARA FORMATO "MATCH / SCOPE / GP / PPG / GA / GF / STATS"
+        // (Estilo UEFA Nations League, CAF Africa Cup, etc.)
+        // ============================================================
+        function parseStatVal(s) {
+            if (s === undefined || s === null || s === '' || s === '-') return null;
+            const v = parseFloat(s);
+            return isNaN(v) ? null : v;
+        }
+
+        function parseMatchScopedFormat(rawText) {
+            if (!rawText) return null;
+
+            const hasHomeScope = /^[ \t]*home[ \t]+\d/mi.test(rawText);
+            const hasAwayScope = /^[ \t]*away[ \t]+\d/mi.test(rawText);
+            const hasPlayedMarker = /^[ \t]*Played:\s*\d+/mi.test(rawText);
+            const hasMatchHeader = /Match\s+Scope\s+GP\s+PPG\s+GA\s+GF/i.test(rawText);
+
+            if (!hasHomeScope || !hasAwayScope) return null;
+            if (!hasPlayedMarker && !hasMatchHeader) return null;
+
+            const lines = rawText.split(/\r?\n/);
+
+            let startIdx = 0;
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim().startsWith('■')) { startIdx = i + 1; break; }
+            }
+            let endIdx = lines.length;
+            for (let i = startIdx; i < lines.length; i++) {
+                if (lines[i].trim().startsWith('■')) { endIdx = i; break; }
+            }
+
+            const leagueNameLines = [];
+            let dataStart = endIdx;
+            for (let i = startIdx; i < endIdx; i++) {
+                const l = lines[i].trim();
+                if (/^Played:/i.test(l)) { dataStart = i + 1; continue; }
+                if (/Match\s+Scope\s+GP/i.test(l)) { dataStart = i + 1; break; }
+                if (l && !l.startsWith('■')) leagueNameLines.push(l);
+            }
+            const leagueName = leagueNameLines.join(' ').trim();
+
+            const matches = [];
+            let i = dataStart;
+
+            while (i < endIdx) {
+                const line = lines[i].trim();
+                if (!line) { i++; continue; }
+
+                if (!/^\d{1,2}:\d{1,2}$/.test(line)) { i++; continue; }
+                const time = line;
+
+                let j = i + 1;
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                const homeName = lines[j].trim();
+                j++;
+
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                const awayName = lines[j].trim();
+                j++;
+
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                const homeMatch = lines[j].match(/home[ \t]+(\d+)/i);
+                if (!homeMatch) { i = j + 1; continue; }
+                const homeGP = parseInt(homeMatch[1]);
+                j++;
+
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                j++;
+
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                const homeParts = lines[j].split(/[ \t]+/).filter(s => s.trim().length > 0);
+                j++;
+                const homeGA = parseStatVal(homeParts[0]);
+                const homeGF = parseStatVal(homeParts[1]);
+
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                const awayMatch = lines[j].match(/away[ \t]+(\d+)/i);
+                if (!awayMatch) { i = j + 1; continue; }
+                const awayGP = parseInt(awayMatch[1]);
+                j++;
+
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                j++;
+
+                while (j < endIdx && !lines[j].trim()) j++;
+                if (j >= endIdx) break;
+                const awayParts = lines[j].split(/[ \t]+/).filter(s => s.trim().length > 0);
+                j++;
+                const awayGA = parseStatVal(awayParts[0]);
+                const awayGF = parseStatVal(awayParts[1]);
+
+                matches.push({ homeName, awayName, homeGP, homeGF, homeGA, awayGP, awayGF, awayGA });
+                i = j;
+            }
+
+            if (matches.length === 0) return null;
+
+            const teamsMap = {};
+            let posCounter = 0;
+
+            matches.forEach(m => {
+                const homeKey = normalizeTeamKey(m.homeName);
+                const awayKey = normalizeTeamKey(m.awayName);
+
+                if (!teamsMap[homeKey]) {
+                    posCounter++;
+                    teamsMap[homeKey] = {
+                        name: m.homeName, pos: posCounter,
+                        home: { mp: 0, gf: 0, ga: 0, gfAvg: 0, gaAvg: 0 },
+                        away: { mp: 0, gf: 0, ga: 0, gfAvg: 0, gaAvg: 0 }
+                    };
+                }
+                if (!teamsMap[awayKey]) {
+                    posCounter++;
+                    teamsMap[awayKey] = {
+                        name: m.awayName, pos: posCounter,
+                        home: { mp: 0, gf: 0, ga: 0, gfAvg: 0, gaAvg: 0 },
+                        away: { mp: 0, gf: 0, ga: 0, gfAvg: 0, gaAvg: 0 }
+                    };
+                }
+
+                if (m.homeGP > 0 && m.homeGF !== null && m.homeGA !== null) {
+                    teamsMap[homeKey].home = {
+                        mp: m.homeGP,
+                        gf: +(m.homeGF * m.homeGP).toFixed(2),
+                        ga: +(m.homeGA * m.homeGP).toFixed(2),
+                        gfAvg: m.homeGF,
+                        gaAvg: m.homeGA
+                    };
+                }
+                if (m.awayGP > 0 && m.awayGF !== null && m.awayGA !== null) {
+                    teamsMap[awayKey].away = {
+                        mp: m.awayGP,
+                        gf: +(m.awayGF * m.awayGP).toFixed(2),
+                        ga: +(m.awayGA * m.awayGP).toFixed(2),
+                        gfAvg: m.awayGF,
+                        gaAvg: m.awayGA
+                    };
+                }
+            });
+
+            const teams = Object.values(teamsMap).sort((a, b) => a.pos - b.pos);
+            return { leagueName, teams };
         }
 
         function parseTeamTable(lines) {
@@ -4656,9 +4816,22 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const nameEl = document.getElementById('leagueNameInput');
             if (!rawEl) return;
             const rawText = rawEl.value;
-            const leagueName = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : "Nueva Liga Importada";
-            const parsedTeams = parseRawLeagueData(rawText);
-            if (parsedTeams.length === 0) { showToast("No se pudieron parsear equipos. Verifica formato."); return; }
+
+            // Intentar primero el nuevo formato (Match/Scope/GP/PPG/GA/GF/Stats)
+            let parsedTeams = null;
+            let detectedName = '';
+            const newFormatResult = parseMatchScopedFormat(rawText);
+            if (newFormatResult && newFormatResult.teams && newFormatResult.teams.length > 0) {
+                parsedTeams = newFormatResult.teams;
+                detectedName = newFormatResult.leagueName || '';
+            } else {
+                // Formato clásico (Home table / Away table)
+                parsedTeams = parseRawLeagueData(rawText);
+            }
+
+            const leagueName = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : (detectedName || "Nueva Liga Importada");
+
+            if (!parsedTeams || parsedTeams.length === 0) { showToast("No se pudieron parsear equipos. Verifica formato."); return; }
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             if (!activeBankObj.leaguesData) activeBankObj.leaguesData = {};
             activeBankObj.leaguesData[leagueName] = parsedTeams;
@@ -4823,9 +4996,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             return `IC90: ${p10}% – ${p90}%`;
         }
 
-        // ============================================================
-        // HÁNDICAP ASIÁTICO DINÁMICO - AJUSTADO AL UNDERDOG (Poisson)
-        // ============================================================
         function calculateAsianHandicapAnalysis(lambdaHome, lambdaAway) {
             const homeName = document.getElementById('homeName').value || 'Local';
             const awayName = document.getElementById('awayName').value || 'Visitante';
@@ -5070,7 +5240,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.001, probAwayWin)).toFixed(2);
             document.getElementById('ciAwayWin').innerText = formatCI(ciData ? ciData.awayWin : null, noMatchData);
 
-            // Guardar matriz para correlación de parlay del mismo partido
             matchMatrices[`${homeName} vs ${awayName}`] = { matrix, lambdaHome, lambdaAway, rho };
 
             exactScores.sort((a, b) => b.prob - a.prob);
@@ -5087,15 +5256,11 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             updateNavMatchLabel();
 
-            // Si hay parlay con selecciones de este partido, recalcular
             if (parlaySelections.some(s => s.match === `${homeName} vs ${awayName}`)) {
                 renderParlayBuilder();
             }
         }
 
-        // ============================================================
-        // REVISIÓN DINÁMICA OVER / UNDER — LÍNEAS ASIÁTICAS (0.5 – 3.5)
-        // ============================================================
         function renderDynamicOverUnder(matrix) {
             const lines = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5];
             const container = document.getElementById('dynamicOuContainer');
@@ -5211,7 +5376,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                                     <span class="text-slate-300 font-black">UNDER</span>
                                     <span class="text-slate-200 font-black">${pctUnder}% <span class="text-slate-400">@${oddsUnder}</span></span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-1">
+                                <div class="grid grid-cols-1 gap-1">
                                     <button onclick="openLogBetModal('Over / Under Goles (Asiático)', '${selUnderSafe}', ${probUnder})" class="py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[8px] font-bold rounded">Sencilla</button>
                                     <button onclick="addToParlayBuilder('Over / Under Goles (Asiático)', '${selUnderSafe}', ${probUnder}, {marketType:'ou_asis', side:'under', line:${line}})" class="py-0.5 bg-slate-800 hover:bg-slate-700 text-gold-400 text-[8px] font-bold rounded">Parlay</button>
                                 </div>
@@ -5255,10 +5420,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10, weight: 'bold' } } } }, scales: { x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255, 255, 255, 0.05)' } } } }
             });
         }
-
-        // ============================================================
-        // ============ BACKTESTING MODULE ============================
-        // ============================================================
 
         function toggleBacktestingModal(show) {
             const m = document.getElementById('backtestingModal');
