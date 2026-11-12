@@ -1264,24 +1264,35 @@
             <div class="p-3.5 space-y-4 overflow-y-auto flex-1">
                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2.5">
                     <div class="flex justify-between items-center">
-                        <label class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-paste"></i> Pegar Tablas (Home + Away)</label>
-                        <span class="text-[9px] text-slate-400">Detecta "Home table" / "Away table"</span>
+                        <label class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-paste"></i> Pegar Tablas</label>
+                        <span class="text-[9px] text-slate-400">Auto-detecta formato</span>
                     </div>
-                    <textarea id="rawInput" rows="7" placeholder="Pega aquí las tablas completas con secciones 'Home table' y 'Away table'..." class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
+                    <textarea id="rawInput" rows="7" placeholder="Pega aquí las tablas. Soporta: (1) Home table / Away table, o (2) formato 'Match Scope GP PPG GA GF Stats' (con bloques por partido)." class="w-full bg-inputBg border border-slate-700/80 rounded-xl p-2 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-emerald-500"></textarea>
                     <div class="bg-slate-950/60 border border-slate-800 p-2 rounded-lg">
-                        <p class="text-[9px] text-slate-400 font-bold mb-1">Formato esperado:</p>
-                        <pre class="text-[9px] text-emerald-300 font-mono leading-tight">Home table
+                        <p class="text-[9px] text-slate-400 font-bold mb-1">Formatos soportados:</p>
+                        <div class="space-y-1">
+                            <div>
+                                <span class="text-[8px] text-emerald-400 font-bold">FORMATO 1 (Home/Away tables):</span>
+                                <pre class="text-[8px] text-emerald-300 font-mono leading-tight">Home table
 GP W D L GF GA GD Pts PPG
-1  Team  8  6 1 1 17 5  +12 19 2.38
-...
-
-Away table
-GP W D L GF GA GD Pts PPG
-1  Team  7  5 2 0 19 3  +16 17 2.43
-...</pre>
+1  Team  8  6 1 1 17 5  +12 19 2.38</pre>
+                            </div>
+                            <div>
+                                <span class="text-[8px] text-amber-400 font-bold">FORMATO 2 (Match Scope GP PPG GA GF Stats):</span>
+                                <pre class="text-[8px] text-amber-300 font-mono leading-tight">BRAZIL -
+Serie B
+Played: 370 | Avg Goals: 2.35 (1.34 home, 1.02 away)
+Match  Scope  GP  PPG  GA   GF   Stats
+16:00
+Londrina
+Nautico
+home   18   1.11   1.28   1.39   stats
+away   18   0.89   1.61   1.11</pre>
+                            </div>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="text" id="leagueNameInput" placeholder="Nombre de la Liga" class="bg-inputBg border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
+                        <input type="text" id="leagueNameInput" placeholder="Nombre de la Liga (opcional)" class="bg-inputBg border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
                         <button onclick="parseAndSaveLeague()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs py-1.5 px-3 rounded-xl shadow-md flex items-center justify-center gap-1.5"><i class="fa-solid fa-floppy-disk"></i> Procesar y Guardar</button>
                     </div>
                 </div>
@@ -2434,6 +2445,127 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             teams.sort((x, y) => (x.pos || 999) - (y.pos || 999));
             return teams;
+        }
+
+        // ------------------------------------------------------------
+        // NUEVO FORMATO: "Match  Scope  GP  PPG  GA  GF  Stats"
+        // ------------------------------------------------------------
+        function isNewTableFormat(rawText) {
+            const lines = rawText.split(/\r?\n/);
+            for (const line of lines) {
+                const normalized = line.replace(/\t+/g, ' ').replace(/\s+/g, ' ').trim();
+                if (/^Match\s+Scope\s+GP\s+PPG\s+GA\s+GF\s+Stats$/i.test(normalized)) return true;
+            }
+            return false;
+        }
+
+        function addTeamStats(leagueObj, teamName, side, gp, gfAvg, gaAvg, ppg) {
+            const key = normalizeTeamKey(teamName);
+            const { teamsByKey, order } = leagueObj;
+            if (!teamsByKey[key]) {
+                teamsByKey[key] = {
+                    name: teamName,
+                    displayName: teamName,
+                    pos: 999,
+                    home: null,
+                    away: null
+                };
+                order.push(key);
+            }
+            teamsByKey[key][side] = {
+                mp: gp,
+                gf: gfAvg * gp,
+                ga: gaAvg * gp,
+                gfAvg: gfAvg,
+                gaAvg: gaAvg,
+                ppg: ppg || 0
+            };
+        }
+
+        function parseNewFormatLeague(rawText) {
+            const lines = rawText.split(/\r?\n/);
+            const leagues = {};
+            let currentLeagueName = null;
+            let i = 0;
+
+            while (i < lines.length) {
+                const trimmed = lines[i].trim();
+                const normalizedHeader = trimmed.replace(/\t+/g, ' ').replace(/\s+/g, ' ');
+                if (/^Match\s+Scope\s+GP\s+PPG\s+GA\s+GF\s+Stats$/i.test(normalizedHeader)) {
+                    let leagueName = null;
+                    for (let j = i - 1; j >= Math.max(0, i - 6); j--) {
+                        const l = lines[j].trim();
+                        if (!l) continue;
+                        if (/^Played\s*:/i.test(l)) continue;
+                        if (/^[A-Z]{2,}(\s+[A-Z]+)*\s*-\s*$/i.test(l)) continue;
+                        if (/^[a-z]{2}-[a-z]{2,}$/i.test(l)) continue;
+                        if (!/^[A-Za-z]/.test(l)) continue;
+                        leagueName = l;
+                        break;
+                    }
+                    if (!leagueName) leagueName = `League ${Object.keys(leagues).length + 1}`;
+
+                    let unique = leagueName, s = 2;
+                    while (leagues[unique]) { unique = `${leagueName} (${s++})`; }
+                    currentLeagueName = unique;
+                    leagues[currentLeagueName] = { teamsByKey: {}, order: [] };
+                    i++;
+                    continue;
+                }
+
+                if (currentLeagueName && /^\d{1,2}:\d{2,3}$/.test(trimmed) && (i + 8 < lines.length)) {
+                    const homeName   = lines[i + 1].trim();
+                    const awayName   = lines[i + 2].trim();
+                    const homeRow    = lines[i + 3].trim();
+                    const homePpgStr = lines[i + 4].trim();
+                    const homeGagf   = lines[i + 5].trim();
+                    const awayRow    = lines[i + 6].trim();
+                    const awayPpgStr = lines[i + 7].trim();
+                    const awayGagf   = lines[i + 8].trim();
+
+                    const homeMatch = homeRow.match(/^home\s+(\d+)/i);
+                    const awayMatch = awayRow.match(/^away\s+(\d+)/i);
+
+                    if (homeMatch && awayMatch && homeName && awayName) {
+                        const homeGp = parseInt(homeMatch[1]);
+                        const awayGp = parseInt(awayMatch[1]);
+                        const homePpg = parseFloat(homePpgStr);
+                        const awayPpg = parseFloat(awayPpgStr);
+
+                        const hp = homeGagf.split(/\s+/).filter(Boolean);
+                        const ap = awayGagf.split(/\s+/).filter(Boolean);
+
+                        if (hp.length >= 2 && ap.length >= 2) {
+                            const homeGa = parseFloat(hp[0]), homeGf = parseFloat(hp[1]);
+                            const awayGa = parseFloat(ap[0]), awayGf = parseFloat(ap[1]);
+
+                            if (!isNaN(homeGp) && !isNaN(homeGa) && !isNaN(homeGf) && homeGp > 0) {
+                                addTeamStats(leagues[currentLeagueName], homeName, 'home', homeGp, homeGf, homeGa, homePpg);
+                            }
+                            if (!isNaN(awayGp) && !isNaN(awayGa) && !isNaN(awayGf) && awayGp > 0) {
+                                addTeamStats(leagues[currentLeagueName], awayName, 'away', awayGp, awayGf, awayGa, awayPpg);
+                            }
+                            i += 9;
+                            continue;
+                        }
+                    }
+                }
+                i++;
+            }
+
+            const result = {};
+            for (const name in leagues) {
+                const { teamsByKey } = leagues[name];
+                const teams = Object.keys(teamsByKey).map(k => teamsByKey[k]);
+                teams.sort((a, b) => {
+                    const ptsA = ((a.home?.ppg || 0) * (a.home?.mp || 0)) + ((a.away?.ppg || 0) * (a.away?.mp || 0));
+                    const ptsB = ((b.home?.ppg || 0) * (b.home?.mp || 0)) + ((b.away?.ppg || 0) * (b.away?.mp || 0));
+                    return ptsB - ptsA;
+                });
+                teams.forEach((t, idx) => { t.pos = idx + 1; });
+                result[name] = teams;
+            }
+            return result;
         }
 
         function calculateLeagueAverages() {
@@ -4655,19 +4787,61 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const rawEl = document.getElementById('rawInput');
             const nameEl = document.getElementById('leagueNameInput');
             if (!rawEl) return;
+
             const rawText = rawEl.value;
-            const leagueName = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : "Nueva Liga Importada";
-            const parsedTeams = parseRawLeagueData(rawText);
-            if (parsedTeams.length === 0) { showToast("No se pudieron parsear equipos. Verifica formato."); return; }
+            const userLeagueName = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : "";
+            if (!rawText.trim()) { showToast("Pega los datos primero."); return; }
+
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             if (!activeBankObj.leaguesData) activeBankObj.leaguesData = {};
+
+            // ---------- FORMATO NUEVO ----------
+            if (isNewTableFormat(rawText)) {
+                const leaguesMap = parseNewFormatLeague(rawText);
+                const leagueNames = Object.keys(leaguesMap).filter(n => leaguesMap[n].length > 0);
+                if (leagueNames.length === 0) {
+                    showToast("Formato detectado pero no se parsearon equipos. Verifica el formato.");
+                    return;
+                }
+
+                let lastSaved = null;
+                if (leagueNames.length === 1 && userLeagueName) {
+                    activeBankObj.leaguesData[userLeagueName] = leaguesMap[leagueNames[0]];
+                    lastSaved = userLeagueName;
+                } else {
+                    leagueNames.forEach(n => {
+                        activeBankObj.leaguesData[n] = leaguesMap[n];
+                        lastSaved = n;
+                    });
+                }
+
+                saveBankrollsToStorage();
+                populateLeagueDropdowns();
+                const selActive = document.getElementById('activeLeagueSelect');
+                const selModal  = document.getElementById('modalLeagueSelect');
+                if (selActive && lastSaved) selActive.value = lastSaved;
+                if (selModal  && lastSaved) selModal.value  = lastSaved;
+                updateTeamSelectors();
+                calculateLeagueAverages();
+                renderModalLeagueTable();
+
+                const totalTeams = leagueNames.reduce((s, n) => s + leaguesMap[n].length, 0);
+                showToast(`¡${leagueNames.length} liga(s) cargada(s) con ${totalTeams} equipos!`);
+                rawEl.value = '';
+                if (nameEl) nameEl.value = '';
+                return;
+            }
+
+            // ---------- FORMATO ANTIGUO (Home/Away tables) ----------
+            const leagueName = userLeagueName || "Nueva Liga Importada";
+            const parsedTeams = parseRawLeagueData(rawText);
+            if (parsedTeams.length === 0) { showToast("No se pudieron parsear equipos. Verifica formato."); return; }
+
             activeBankObj.leaguesData[leagueName] = parsedTeams;
             saveBankrollsToStorage();
             populateLeagueDropdowns();
-            const selectActive = document.getElementById('activeLeagueSelect');
-            const selectModal = document.getElementById('modalLeagueSelect');
-            if (selectActive) selectActive.value = leagueName;
-            if (selectModal) selectModal.value = leagueName;
+            document.getElementById('activeLeagueSelect').value = leagueName;
+            document.getElementById('modalLeagueSelect').value = leagueName;
             updateTeamSelectors();
             calculateLeagueAverages();
             renderModalLeagueTable();
