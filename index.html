@@ -808,6 +808,25 @@
                         <span class="text-[9px] uppercase font-bold text-slate-400 block"><i class="fa-solid fa-list-ol mr-1"></i>Total Apuestas</span>
                         <span class="text-sm font-black text-white block mt-1" id="dashTotalBets">0</span>
                     </div>
+                    <!-- === CLV KPI CARDS === -->
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-indigo-500/40 text-center">
+                        <span class="text-[9px] uppercase font-bold text-indigo-300 block"><i class="fa-solid fa-arrow-trend-up mr-1"></i>CLV Promedio</span>
+                        <span class="text-sm font-black text-indigo-400 block mt-1" id="dashAvgClv">-</span>
+                        <span class="text-[8px] text-slate-500 block" id="dashClvCount">0 con CLV</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-purple-500/40 text-center">
+                        <span class="text-[9px] uppercase font-bold text-purple-300 block"><i class="fa-solid fa-crosshairs mr-1"></i>Beat Close Line</span>
+                        <span class="text-sm font-black text-purple-400 block mt-1" id="dashBeatClvPct">-</span>
+                        <span class="text-[8px] text-slate-500 block">% con CLV+</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/20 text-center">
+                        <span class="text-[9px] uppercase font-bold text-emerald-400 block"><i class="fa-solid fa-trophy mr-1"></i>Mejor CLV</span>
+                        <span class="text-sm font-black text-emerald-400 block mt-1" id="dashBestClv">-</span>
+                    </div>
+                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-rose-500/20 text-center">
+                        <span class="text-[9px] uppercase font-bold text-rose-400 block"><i class="fa-solid fa-thumbs-down mr-1"></i>Peor CLV</span>
+                        <span class="text-sm font-black text-rose-400 block mt-1" id="dashWorstClv">-</span>
+                    </div>
                 </div>
 
                 <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
@@ -851,7 +870,7 @@
                         <div class="flex justify-between items-center px-1"><span class="text-xs font-extrabold text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-hourglass-half"></i> Pendientes</span><span class="text-[10px] font-bold text-slate-400" id="pendingSummaryText">Riesgo: $0.00</span></div>
                         <div class="overflow-x-auto rounded-xl border border-amber-500/30 bg-slate-900/60 max-h-60">
                             <table class="w-full text-[10px] text-left border-collapse excel-table">
-                                <thead class="bg-amber-950/40 text-amber-200 sticky top-0 font-extrabold shadow-md border-b border-amber-500/20"><tr><th class="p-1.5 text-center">Fecha</th><th class="p-1.5">Tipo / Liga</th><th class="p-1.5">Partido</th><th class="p-1.5 text-center">Prob.</th><th class="p-1.5 text-center">Cuota</th><th class="p-1.5 text-center">EV+</th><th class="p-1.5 text-center">Stake</th><th class="p-1.5 text-center">Retorno Pot.</th><th class="p-1.5 text-center">Resolver</th><th class="p-1.5 text-center">Acciones</th></tr></thead>
+                                <thead class="bg-amber-950/40 text-amber-200 sticky top-0 font-extrabold shadow-md border-b border-amber-500/20"><tr><th class="p-1.5 text-center">Fecha</th><th class="p-1.5">Tipo / Liga</th><th class="p-1.5">Partido</th><th class="p-1.5 text-center">Prob.</th><th class="p-1.5 text-center">Cuota</th><th class="p-1.5 text-center">EV+</th><th class="p-1.5 text-center bg-indigo-950/40 text-indigo-300">CLV</th><th class="p-1.5 text-center">Stake</th><th class="p-1.5 text-center">Retorno Pot.</th><th class="p-1.5 text-center">Resolver</th><th class="p-1.5 text-center">Acciones</th></tr></thead>
                                 <tbody id="pendingBetsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
                             </table>
                         </div>
@@ -860,7 +879,7 @@
                         <div class="flex justify-between items-center px-1"><span class="text-xs font-extrabold text-emerald-400 flex items-center gap-1.5"><i class="fa-solid fa-square-check"></i> Cerradas</span><span class="text-[10px] font-bold text-slate-400" id="closedSummaryText">Beneficio: $0.00</span></div>
                         <div class="overflow-x-auto rounded-xl border border-emerald-500/20 bg-slate-900/60 max-h-60">
                             <table class="w-full text-[10px] text-left border-collapse excel-table">
-                                <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md"><tr><th class="p-1.5 text-center">Fecha</th><th class="p-1.5">Tipo / Liga</th><th class="p-1.5">Partido</th><th class="p-1.5 text-center">Prob.</th><th class="p-1.5 text-center">Cuota</th><th class="p-1.5 text-center">EV+</th><th class="p-1.5 text-center">Stake</th><th class="p-1.5 text-center">Estado</th><th class="p-1.5 text-center">P&L</th><th class="p-1.5 text-center">Acciones</th></tr></thead>
+                                <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md"><tr><th class="p-1.5 text-center">Fecha</th><th class="p-1.5">Tipo / Liga</th><th class="p-1.5">Partido</th><th class="p-1.5 text-center">Prob.</th><th class="p-1.5 text-center">Cuota</th><th class="p-1.5 text-center">EV+</th><th class="p-1.5 text-center bg-indigo-950/40 text-indigo-300">CLV</th><th class="p-1.5 text-center">Stake</th><th class="p-1.5 text-center">Estado</th><th class="p-1.5 text-center">P&L</th><th class="p-1.5 text-center">Acciones</th></tr></thead>
                                 <tbody id="closedBetsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
                             </table>
                         </div>
@@ -898,7 +917,7 @@
                     <div class="flex justify-between items-center px-1"><span class="text-xs font-extrabold text-teal-300 flex items-center gap-1.5"><i class="fa-solid fa-list-check"></i> Registro</span><button onclick="clearParallelLogHistory()" class="text-[10px] text-rose-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-trash-can"></i> Vaciar</button></div>
                     <div class="overflow-x-auto rounded-xl border border-teal-500/30 bg-slate-900/60 max-h-72">
                         <table class="w-full text-[10px] text-left border-collapse excel-table">
-                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md"><tr><th class="p-1.5 text-center">Fecha</th><th class="p-1.5">Liga</th><th class="p-1.5">Partido</th><th class="p-1.5">Mercado</th><th class="p-1.5 text-center">Cuota</th><th class="p-1.5 text-center">Stake</th><th class="p-1.5 text-center">Estado</th><th class="p-1.5 text-center">P&L</th><th class="p-1.5 text-center">Acc.</th></tr></thead>
+                            <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md"><tr><th class="p-1.5 text-center">Fecha</th><th class="p-1.5">Liga</th><th class="p-1.5">Partido</th><th class="p-1.5">Mercado</th><th class="p-1.5 text-center">Cuota</th><th class="p-1.5 text-center bg-indigo-950/40 text-indigo-300">CLV</th><th class="p-1.5 text-center">Stake</th><th class="p-1.5 text-center">Estado</th><th class="p-1.5 text-center">P&L</th><th class="p-1.5 text-center">Acc.</th></tr></thead>
                             <tbody id="parallelBetsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
                         </table>
                     </div>
@@ -1208,6 +1227,17 @@
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Justa</label><input type="number" step="0.01" id="logFairOdds" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-gold-400 font-bold text-center"></div>
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Casa</label><input type="number" step="0.01" id="logBookieOdds" oninput="calculateLogEv()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-300 font-bold text-center"></div>
                 </div>
+                <!-- === CLV INPUT FIELD === -->
+                <div class="grid grid-cols-2 gap-2 bg-indigo-950/30 p-2 rounded-xl border border-indigo-500/30">
+                    <div>
+                        <label class="block text-[10px] font-bold text-indigo-300 mb-1"><i class="fa-solid fa-flag-checkered mr-1"></i>Cuota de Cierre <span class="text-slate-500 text-[8px] font-normal">(opcional)</span></label>
+                        <input type="number" step="0.01" id="logClosingOdds" oninput="calculateClvDisplay()" placeholder="Ej: 1.95" class="w-full bg-inputBg border border-indigo-500/40 rounded-xl px-2 py-1.5 text-xs text-indigo-300 font-bold text-center">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-indigo-300 mb-1"><i class="fa-solid fa-arrow-trend-up mr-1"></i>CLV <span class="text-slate-500 text-[8px] font-normal">(valor de cierre)</span></label>
+                        <span id="logClvDisplay" class="block text-sm font-black text-slate-400 text-center pt-1.5">-</span>
+                    </div>
+                </div>
                 <div id="valueTrapWarning" class="hidden text-[10px] bg-amber-950/50 border border-amber-500/40 text-amber-300 p-2 rounded-xl flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i><span><b>Atención:</b> Cuota con EV negativo o trampa de valor.</span>
                 </div>
@@ -1370,6 +1400,13 @@ GP W D L GF GA GD Pts PPG
 
         function isDeleted(id) {
             return recentlyDeletedIds.has(String(id));
+        }
+
+        // Helper: convierte valor a número nullable (para columnas opcionales en Supabase)
+        function toNullableNumber(v) {
+            if (v === undefined || v === null || v === '') return null;
+            const n = parseFloat(v);
+            return isNaN(n) ? null : n;
         }
 
         try {
@@ -1571,7 +1608,9 @@ GP W D L GF GA GD Pts PPG
                 stake: parseFloat(b.stake) || 0,
                 bookmaker: b.bookmaker || null,
                 status: b.status || 'PENDING',
-                in_parallel: !!b.inParallel
+                in_parallel: !!b.inParallel,
+                closing_odds: toNullableNumber(b.closingOdds),
+                clv: toNullableNumber(b.clv)
             };
         }
 
@@ -1592,7 +1631,9 @@ GP W D L GF GA GD Pts PPG
                 stake: r.stake,
                 bookmaker: r.bookmaker,
                 status: r.status,
-                inParallel: r.in_parallel
+                inParallel: r.in_parallel,
+                closingOdds: r.closing_odds,
+                clv: r.clv
             };
         }
 
@@ -1629,6 +1670,22 @@ GP W D L GF GA GD Pts PPG
             };
         }
 
+        // === Upsert defensivo: si las columnas CLV no existen en Supabase, reintenta sin ellas ===
+        async function upsertWithClvFallback(table, rows) {
+            let { error } = await supabaseClient.from(table).upsert(rows, { onConflict: 'id' });
+            if (error && /column|closing|clv/i.test(error.message || '')) {
+                console.warn(`[Sync] ${table}: columnas CLV no existen en Supabase, reintentando sin ellas.`);
+                const fallback = rows.map(r => {
+                    const c = { ...r };
+                    delete c.closing_odds;
+                    delete c.clv;
+                    return c;
+                });
+                ({ error } = await supabaseClient.from(table).upsert(fallback, { onConflict: 'id' }));
+            }
+            if (error) throw error;
+        }
+
         async function pushAllToSupabase() {
             if (!currentUser || !supabaseClient) return;
             setSyncStatus('syncing');
@@ -1637,17 +1694,12 @@ GP W D L GF GA GD Pts PPG
                 const { error } = await supabaseClient.from('bankrolls').upsert(bankrollsData.map(bankrollToRow), { onConflict: 'id' });
                 if (error) throw error;
             }
-
             if (betLogData.length > 0) {
-                const { error } = await supabaseClient.from('bets').upsert(betLogData.map(betToRow), { onConflict: 'id' });
-                if (error) throw error;
+                await upsertWithClvFallback('bets', betLogData.map(betToRow));
             }
-
             if (parallelBetLogData.length > 0) {
-                const { error } = await supabaseClient.from('parallel_bets').upsert(parallelBetLogData.map(betToRow), { onConflict: 'id' });
-                if (error) throw error;
+                await upsertWithClvFallback('parallel_bets', parallelBetLogData.map(betToRow));
             }
-
             if (boxTransactionsLog.length > 0) {
                 const { error } = await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
                 if (error) throw error;
@@ -1702,7 +1754,15 @@ GP W D L GF GA GD Pts PPG
             if (betRes.data && betRes.data.length > 0) {
                 const filtered = betRes.data.filter(r => !isDeleted(r.id));
                 if (preferRemote) {
-                    betLogData = filtered.map(rowToBet);
+                    betLogData = filtered.map(r => {
+                        const remote = rowToBet(r);
+                        const local = betLogData.find(b => String(b.id) === String(remote.id));
+                        if (local) {
+                            if (remote.closingOdds == null && local.closingOdds != null) remote.closingOdds = local.closingOdds;
+                            if (remote.clv == null && local.clv != null) remote.clv = local.clv;
+                        }
+                        return remote;
+                    });
                 } else {
                     filtered.forEach(r => {
                         if (!betLogData.find(b => String(b.id) === String(r.id))) {
@@ -1715,7 +1775,15 @@ GP W D L GF GA GD Pts PPG
             if (pBetRes.data && pBetRes.data.length > 0) {
                 const filtered = pBetRes.data.filter(r => !isDeleted(r.id));
                 if (preferRemote) {
-                    parallelBetLogData = filtered.map(rowToBet);
+                    parallelBetLogData = filtered.map(r => {
+                        const remote = rowToBet(r);
+                        const local = parallelBetLogData.find(b => String(b.id) === String(remote.id));
+                        if (local) {
+                            if (remote.closingOdds == null && local.closingOdds != null) remote.closingOdds = local.closingOdds;
+                            if (remote.clv == null && local.clv != null) remote.clv = local.clv;
+                        }
+                        return remote;
+                    });
                 } else {
                     filtered.forEach(r => {
                         if (!parallelBetLogData.find(b => String(b.id) === String(r.id))) {
@@ -1838,8 +1906,8 @@ GP W D L GF GA GD Pts PPG
             autoSyncInProgress = true;
             try {
                 if (bankrollsData.length) await supabaseClient.from('bankrolls').upsert(bankrollsData.map(bankrollToRow), { onConflict: 'id' });
-                if (betLogData.length) await supabaseClient.from('bets').upsert(betLogData.map(betToRow), { onConflict: 'id' });
-                if (parallelBetLogData.length) await supabaseClient.from('parallel_bets').upsert(parallelBetLogData.map(betToRow), { onConflict: 'id' });
+                if (betLogData.length) await upsertWithClvFallback('bets', betLogData.map(betToRow));
+                if (parallelBetLogData.length) await upsertWithClvFallback('parallel_bets', parallelBetLogData.map(betToRow));
                 if (boxTransactionsLog.length) await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
 
                 await pullFromSupabase(true);
@@ -2093,10 +2161,46 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         // ============================================================
+        // CLV — Closing Line Value
+        // ============================================================
+        // CLV% = (cuota_apostada / cuota_cierre − 1) × 100
+        //   CLV > 0 → batiste la línea de cierre (edge real demostrado)
+        //   CLV < 0 → cerraste peor que el mercado (señal de problema)
+        function calculateClvDisplay() {
+            const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
+            const closingOdds = parseFloat(document.getElementById('logClosingOdds').value) || 0;
+            const el = document.getElementById('logClvDisplay');
+            if (!el) return;
+            if (bookieOdds > 1 && closingOdds > 1) {
+                const clv = ((bookieOdds / closingOdds) - 1) * 100;
+                el.innerText = (clv >= 0 ? '+' : '') + clv.toFixed(2) + '%';
+                if (clv >= 2) el.className = 'block text-sm font-black text-emerald-400 text-center pt-1.5';
+                else if (clv >= 0) el.className = 'block text-sm font-black text-emerald-300 text-center pt-1.5';
+                else if (clv >= -2) el.className = 'block text-sm font-black text-amber-400 text-center pt-1.5';
+                else el.className = 'block text-sm font-black text-rose-400 text-center pt-1.5';
+            } else {
+                el.innerText = '-';
+                el.className = 'block text-sm font-black text-slate-400 text-center pt-1.5';
+            }
+        }
+
+        function getClvBadge(clvRaw) {
+            if (clvRaw === undefined || clvRaw === null || clvRaw === '') return { text: '-', cls: 'text-slate-500' };
+            const v = parseFloat(clvRaw);
+            if (isNaN(v)) return { text: '-', cls: 'text-slate-500' };
+            const text = (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+            let cls = 'text-slate-400';
+            if (v >= 2) cls = 'text-emerald-400';
+            else if (v >= 0) cls = 'text-emerald-300';
+            else if (v >= -2) cls = 'text-amber-400';
+            else cls = 'text-rose-400';
+            return { text, cls };
+        }
+
+        // ============================================================
         // PARLAY CON CORRELACIÓN DE MERCADOS DEL MISMO PARTIDO
         // ============================================================
 
-        // Evalúa si una selección se cumple para un marcador (h, a)
         function satisfiedH(h, a, sel) {
             if (!sel.marketType) return false;
             switch (sel.marketType) {
@@ -2130,7 +2234,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
         }
 
-        // Calcula probabilidad conjunta real (correlación intra-partido + producto inter-partido)
         function computeParlayJointProbability(selections) {
             const byMatch = {};
             selections.forEach(s => {
@@ -2281,6 +2384,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('logProb').value = (joint * 100).toFixed(2);
             document.getElementById('logFairOdds').value = jointFairOdds.toFixed(2);
             document.getElementById('logBookieOdds').value = jointFairOdds.toFixed(2);
+            document.getElementById('logClosingOdds').value = '';
+            calculateClvDisplay();
 
             const dynamicBankroll = getActiveAvailableBankroll();
             const stakePct = parseFloat(document.getElementById('globalStakePct').value) || 2.0;
@@ -3162,6 +3267,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const fairOdds = prob ? (1 / prob).toFixed(2) : '2.00';
             document.getElementById('logFairOdds').value = fairOdds;
             document.getElementById('logBookieOdds').value = fairOdds;
+            document.getElementById('logClosingOdds').value = '';
+            calculateClvDisplay();
             const dynamicBankroll = getActiveAvailableBankroll();
             const stakePct = parseFloat(document.getElementById('globalStakePct').value) || 2.0;
             document.getElementById('logStake').value = Math.max(1, Math.round(Math.max(0, dynamicBankroll) * (stakePct / 100)));
@@ -3189,6 +3296,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('logProb').value = item.prob;
             document.getElementById('logFairOdds').value = item.fairOdds;
             document.getElementById('logBookieOdds').value = item.bookieOdds;
+            document.getElementById('logClosingOdds').value = item.closingOdds || '';
+            calculateClvDisplay();
             document.getElementById('logStake').value = item.stake;
             document.getElementById('logBookmaker').value = item.bookmaker || "Bet365";
             document.getElementById('logStatus').value = item.status;
@@ -3214,6 +3323,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             else trapWarning.classList.add('hidden');
             const quickPanel = document.getElementById('betModalMcQuickPanel');
             if (quickPanel && !quickPanel.classList.contains('hidden')) runBetModalQuickMcSimulation(false);
+            // Recalcular CLV (la cuota de casa ha cambiado)
+            calculateClvDisplay();
         }
 
         function onLogStakeInputChange() {
@@ -3226,7 +3337,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const isParlay = document.getElementById('logIsParlay').value === "true";
             const prob = parseFloat(document.getElementById('logProb').value) || 0;
             const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 1.0;
+            const closingOdds = parseFloat(document.getElementById('logClosingOdds').value) || 0;
             const ev = ((prob / 100) * bookieOdds) - 1;
+            const clv = (closingOdds > 1 && bookieOdds > 1) ? ((bookieOdds / closingOdds - 1) * 100) : null;
             const parallelOption = document.getElementById('logParallelOption').value;
             const sendToParallel = (parallelOption === 'both');
             const betRecord = {
@@ -3245,7 +3358,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 stake: parseFloat(document.getElementById('logStake').value) || 10,
                 bookmaker: document.getElementById('logBookmaker').value,
                 status: document.getElementById('logStatus').value,
-                inParallel: sendToParallel
+                inParallel: sendToParallel,
+                closingOdds: closingOdds > 1 ? closingOdds.toFixed(2) : '',
+                clv: clv !== null ? clv.toFixed(2) : ''
             };
             if (index >= 0) {
                 betLogData[index] = betRecord;
@@ -3267,7 +3382,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             updateTrackerMetrics();
             updateParallelTrackerMetrics();
             toggleLogBetModal(false);
-            showToast(sendToParallel ? "¡Guardada en ambas bitácoras!" : "¡Guardada!");
+            if (clv !== null) {
+                const clvMsg = clv >= 0 ? `✅ CLV +${clv.toFixed(2)}% (batiste la línea)` : `⚠️ CLV ${clv.toFixed(2)}%`;
+                showToast(sendToParallel ? `Guardada en ambas bitácoras. ${clvMsg}` : `¡Guardada! ${clvMsg}`);
+            } else {
+                showToast(sendToParallel ? "¡Guardada en ambas bitácoras!" : "¡Guardada!");
+            }
         }
 
         async function deleteBetFromLog(index) {
@@ -3368,7 +3488,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             pNetEl.className = netProfit >= 0 ? "text-sm font-black text-teal-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1";
             document.getElementById('parallelYield').innerText = yieldVal.toFixed(1) + '%';
             document.getElementById('parallelWinRate').innerText = winRateVal.toFixed(1) + '%';
-            if (parallelBetLogData.length === 0) { tableBody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-slate-500 italic">Sin apuestas en paralela.</td></tr>`; return; }
+            if (parallelBetLogData.length === 0) { tableBody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500 italic">Sin apuestas en paralela.</td></tr>`; return; }
             let html = '';
             parallelBetLogData.forEach((bet, idx) => {
                 let pnl = 0;
@@ -3382,6 +3502,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (bet.status === 'WON') statusBadge = `<span class="text-emerald-400 font-bold">Ganada</span>`;
                 else if (bet.status === 'LOST') statusBadge = `<span class="text-rose-400 font-bold">Perdida</span>`;
                 else if (bet.status === 'VOID') statusBadge = `<span class="text-slate-400 font-bold">Nula</span>`;
+                const clvBadge = getClvBadge(bet.clv);
                 html += `
                     <tr>
                         <td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td>
@@ -3389,6 +3510,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         <td class="p-1.5 font-bold text-slate-300">${bet.match}</td>
                         <td class="p-1.5 font-bold text-teal-300">${bet.market} - ${bet.selection}</td>
                         <td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td>
+                        <td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td>
                         <td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td>
                         <td class="p-1.5 text-center">${statusBadge}</td>
                         <td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-teal-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}</td>
@@ -3443,8 +3565,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function exportParallelBetsCSV() {
             if (parallelBetLogData.length === 0) { showToast("Sin datos."); return; }
-            let csv = "Fecha,Liga,Partido,Mercado,Seleccion,Cuota,Stake,Estado\n";
-            parallelBetLogData.forEach(b => { csv += `"${b.date}","${b.league}","${b.match}","${b.market}","${b.selection}",${b.bookieOdds},${b.stake},"${b.status}"\n`; });
+            let csv = "Fecha,Liga,Partido,Mercado,Seleccion,Cuota,Cierre,CLV_Pct,Stake,Estado\n";
+            parallelBetLogData.forEach(b => { csv += `"${b.date}","${b.league}","${b.match}","${b.market}","${b.selection}",${b.bookieOdds},${b.closingOdds || ''},${b.clv || ''},${b.stake},"${b.status}"\n`; });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a"); link.href = url; link.download = `paralela_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
@@ -3672,6 +3794,54 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (dashTotalStakedEl) dashTotalStakedEl.innerText = '$' + totalStakedAll.toFixed(2);
             const dashTotalBetsEl = document.getElementById('dashTotalBets');
             if (dashTotalBetsEl) dashTotalBetsEl.innerText = filteredBets.length;
+
+            // === CLV KPI CARDS ===
+            let totalClv = 0, clvCount = 0, positiveClvCount = 0, bestClv = -Infinity, worstClv = Infinity;
+            filteredBets.forEach(b => {
+                const clvVal = parseFloat(b.clv);
+                if (!isNaN(clvVal) && b.clv !== '' && b.clv !== null) {
+                    totalClv += clvVal;
+                    clvCount++;
+                    if (clvVal > 0) positiveClvCount++;
+                    if (clvVal > bestClv) bestClv = clvVal;
+                    if (clvVal < worstClv) worstClv = clvVal;
+                }
+            });
+            const avgClv = clvCount > 0 ? totalClv / clvCount : 0;
+            const beatClvPct = clvCount > 0 ? (positiveClvCount / clvCount) * 100 : 0;
+
+            const dashAvgClvEl = document.getElementById('dashAvgClv');
+            if (dashAvgClvEl) {
+                if (clvCount > 0) {
+                    dashAvgClvEl.innerText = (avgClv >= 0 ? '+' : '') + avgClv.toFixed(2) + '%';
+                    dashAvgClvEl.className = avgClv >= 2 ? "text-sm font-black text-emerald-400 block mt-1" : (avgClv >= 0 ? "text-sm font-black text-emerald-300 block mt-1" : (avgClv >= -2 ? "text-sm font-black text-amber-400 block mt-1" : "text-sm font-black text-rose-400 block mt-1"));
+                } else {
+                    dashAvgClvEl.innerText = '-';
+                    dashAvgClvEl.className = "text-sm font-black text-slate-400 block mt-1";
+                }
+            }
+            const dashClvCountEl = document.getElementById('dashClvCount');
+            if (dashClvCountEl) dashClvCountEl.innerText = `${clvCount} con CLV`;
+            const dashBeatClvEl = document.getElementById('dashBeatClvPct');
+            if (dashBeatClvEl) {
+                if (clvCount > 0) {
+                    dashBeatClvEl.innerText = beatClvPct.toFixed(1) + '%';
+                    dashBeatClvEl.className = beatClvPct >= 55 ? "text-sm font-black text-emerald-400 block mt-1" : (beatClvPct >= 50 ? "text-sm font-black text-gold-400 block mt-1" : "text-sm font-black text-amber-400 block mt-1");
+                } else {
+                    dashBeatClvEl.innerText = '-';
+                    dashBeatClvEl.className = "text-sm font-black text-slate-400 block mt-1";
+                }
+            }
+            const dashBestClvEl = document.getElementById('dashBestClv');
+            if (dashBestClvEl) {
+                if (clvCount > 0 && isFinite(bestClv)) dashBestClvEl.innerText = '+' + bestClv.toFixed(2) + '%';
+                else dashBestClvEl.innerText = '-';
+            }
+            const dashWorstClvEl = document.getElementById('dashWorstClv');
+            if (dashWorstClvEl) {
+                if (clvCount > 0 && isFinite(worstClv)) dashWorstClvEl.innerText = worstClv.toFixed(2) + '%';
+                else dashWorstClvEl.innerText = '-';
+            }
 
             const streakLabel = streakType === 'LOSS' ? `🔥 ${currentStreakCount} Derrotas` : (streakType === 'WIN' ? `⭐ ${currentStreakCount} Victorias` : 'Neutral');
             if (document.getElementById('statCurrentStreak')) document.getElementById('statCurrentStreak').innerText = streakLabel;
@@ -4477,7 +4647,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     else if (bet.status === 'LOST') statusBadge = `<span class="text-rose-400 font-bold">Perdida (-$${stake.toFixed(2)})</span>`;
                     else if (bet.status === 'VOID') statusBadge = `<span class="text-slate-400 font-bold">Nula</span>`;
                     const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1.5 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
-                    html += `<div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-1 text-xs"><div class="flex justify-between items-center font-bold text-white"><span>${typeTag}${bet.match}</span><span class="text-[10px] text-slate-400">${bet.league}</span></div><div class="text-[11px] text-emerald-300 font-semibold">${bet.market} - ${bet.selection}</div><div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800"><span>Cuota @${bet.bookieOdds} | Stake $${bet.stake}</span>${statusBadge}</div></div>`;
+                    const clvBadge = getClvBadge(bet.clv);
+                    const clvLine = (bet.clv !== undefined && bet.clv !== '') ? `<span class="font-bold ${clvBadge.cls}">CLV ${clvBadge.text}</span> | ` : '';
+                    html += `<div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 space-y-1 text-xs"><div class="flex justify-between items-center font-bold text-white"><span>${typeTag}${bet.match}</span><span class="text-[10px] text-slate-400">${bet.league}</span></div><div class="text-[11px] text-emerald-300 font-semibold">${bet.market} - ${bet.selection}</div><div class="flex justify-between items-center text-[10px] pt-1 border-t border-slate-800"><span>Cuota @${bet.bookieOdds} | Stake $${bet.stake} | ${clvLine}${statusBadge}</span></div></div>`;
                 });
                 contentContainer.innerHTML = html;
             }
@@ -4497,7 +4669,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (bet.status === 'PENDING') pendingBets.push(betWithIndex);
                 else closedBets.push(betWithIndex);
             });
-            if (pendingBets.length === 0) pendingTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic">No hay apuestas pendientes.</td></tr>`;
+            if (pendingBets.length === 0) pendingTbody.innerHTML = `<tr><td colspan="11" class="p-3 text-center text-slate-500 italic">No hay apuestas pendientes.</td></tr>`;
             else {
                 let htmlP = '';
                 pendingBets.forEach(bet => {
@@ -4506,11 +4678,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     const potReturn = stake * odds;
                     const evVal = parseFloat(bet.ev) || 0;
                     const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
-                    htmlP += `<tr class="bg-amber-950/10 hover:bg-amber-900/20"><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center font-bold">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none"><option value="PENDING" selected>⌛ Pendiente</option><option value="WON">✅ Ganada</option><option value="LOST">❌ Perdida</option><option value="VOID">↩️ Nula</option><option value="HALF_WON">½ Ganada</option><option value="HALF_LOST">½ Perdida</option></select></td><td class="p-1.5 text-center"><button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    const clvBadge = getClvBadge(bet.clv);
+                    htmlP += `<tr class="bg-amber-950/10 hover:bg-amber-900/20"><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center font-bold">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none"><option value="PENDING" selected>⌛ Pendiente</option><option value="WON">✅ Ganada</option><option value="LOST">❌ Perdida</option><option value="VOID">↩️ Nula</option><option value="HALF_WON">½ Ganada</option><option value="HALF_LOST">½ Perdida</option></select></td><td class="p-1.5 text-center"><button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
                 pendingTbody.innerHTML = htmlP;
             }
-            if (closedBets.length === 0) closedTbody.innerHTML = `<tr><td colspan="10" class="p-3 text-center text-slate-500 italic">No hay apuestas liquidadas.</td></tr>`;
+            if (closedBets.length === 0) closedTbody.innerHTML = `<tr><td colspan="11" class="p-3 text-center text-slate-500 italic">No hay apuestas liquidadas.</td></tr>`;
             else {
                 let htmlC = '';
                 closedBets.forEach(bet => {
@@ -4523,7 +4696,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     else if (bet.status === 'HALF_LOST') pnl = -(stake / 2);
                     const evVal = parseFloat(bet.ev) || 0;
                     const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
-                    htmlC += `<tr><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none"><option value="PENDING">⌛ Pendiente</option><option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option><option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option><option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option><option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option><option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option></select></td><td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}</td><td class="p-1.5 text-center"><button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    const clvBadge = getClvBadge(bet.clv);
+                    htmlC += `<tr><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none"><option value="PENDING">⌛ Pendiente</option><option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option><option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option><option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option><option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option><option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option></select></td><td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}</td><td class="p-1.5 text-center"><button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
                 closedTbody.innerHTML = htmlC;
             }
@@ -4628,8 +4802,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function exportBetsCSV() {
             const activeBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0].id) === activeBankrollId);
             if (activeBankBets.length === 0) { showToast("Sin datos."); return; }
-            let csv = "Fecha,Es_Parlay,Liga,Partido,Mercado,Seleccion,Prob_Pct,Cuota_Justa,Cuota_Casa,EV_Pct,Stake,Casa,Estado\n";
-            activeBankBets.forEach(b => { csv += `"${b.date}",${b.isParlay || false},"${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.ev},${b.stake},"${b.bookmaker}","${b.status}"\n`; });
+            let csv = "Fecha,Es_Parlay,Liga,Partido,Mercado,Seleccion,Prob_Pct,Cuota_Justa,Cuota_Casa,Cuota_Cierre,CLV_Pct,EV_Pct,Stake,Casa,Estado\n";
+            activeBankBets.forEach(b => { csv += `"${b.date}",${b.isParlay || false},"${b.league}","${b.match}","${b.market}","${b.selection}",${b.prob},${b.fairOdds},${b.bookieOdds},${b.closingOdds || ''},${b.clv || ''},${b.ev},${b.stake},"${b.bookmaker}","${b.status}"\n`; });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a"); link.href = url; link.download = `bets_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
@@ -4822,9 +4996,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             return `IC90: ${p10}% – ${p90}%`;
         }
 
-        // ============================================================
-        // HÁNDICAP ASIÁTICO DINÁMICO - AJUSTADO AL UNDERDOG (Poisson)
-        // ============================================================
         function calculateAsianHandicapAnalysis(lambdaHome, lambdaAway) {
             const homeName = document.getElementById('homeName').value || 'Local';
             const awayName = document.getElementById('awayName').value || 'Visitante';
@@ -5069,7 +5240,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.001, probAwayWin)).toFixed(2);
             document.getElementById('ciAwayWin').innerText = formatCI(ciData ? ciData.awayWin : null, noMatchData);
 
-            // Guardar matriz para correlación de parlay del mismo partido
             matchMatrices[`${homeName} vs ${awayName}`] = { matrix, lambdaHome, lambdaAway, rho };
 
             exactScores.sort((a, b) => b.prob - a.prob);
@@ -5086,15 +5256,11 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             updateNavMatchLabel();
 
-            // Si hay parlay con selecciones de este partido, recalcular
             if (parlaySelections.some(s => s.match === `${homeName} vs ${awayName}`)) {
                 renderParlayBuilder();
             }
         }
 
-        // ============================================================
-        // REVISIÓN DINÁMICA OVER / UNDER — LÍNEAS ASIÁTICAS (0.5 – 3.5)
-        // ============================================================
         function renderDynamicOverUnder(matrix) {
             const lines = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5];
             const container = document.getElementById('dynamicOuContainer');
