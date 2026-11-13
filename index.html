@@ -1149,6 +1149,10 @@
                         <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Stake Plano ($)</label><input type="number" id="btFlatStake" value="20" step="5" min="1" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-black text-center"></div>
                         <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">% Bankroll</label><input type="number" id="btPctStake" value="2" step="0.5" min="0.1" max="20" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-indigo-400 font-black text-center"></div>
                         <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Kelly (fracción)</label><select id="btKellyFrac" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-purple-300 font-black"><option value="0.10">0.10x</option><option value="0.25" selected>0.25x</option><option value="0.50">0.50x</option><option value="0.75">0.75x</option><option value="1.00">1.00x</option></select></div>
+                        <!-- === ALEMBERT INPUTS === -->
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Alembert base ($)</label><input type="number" id="btAlembertBase" value="10" step="1" min="1" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-black text-center"></div>
+                        <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Alembert cap ($)</label><input type="number" id="btAlembertMax" value="100" step="5" min="10" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-rose-400 font-black text-center"></div>
+                        <!-- === END ALEMBERT INPUTS === -->
                         <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">EV mínimo (%)</label><input type="number" id="btMinEv" value="0" step="1" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-gold-400 font-black text-center"></div>
                         <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cuota mín</label><input type="number" id="btMinOdds" value="1.01" step="0.01" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-300 font-black text-center"></div>
                         <div><label class="block text-[9px] uppercase font-bold text-slate-400 mb-1">Cuota máx</label><input type="number" id="btMaxOdds" value="100" step="1" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-300 font-black text-center"></div>
@@ -1173,6 +1177,7 @@
                                     <tr>
                                         <th class="p-1.5">Estrategia</th>
                                         <th class="p-1.5 text-center">Bets</th>
+                                        <th class="p-1.5 text-center bg-purple-950/30 text-purple-300">Stake Máx</th>
                                         <th class="p-1.5 text-center bg-emerald-950/40 text-emerald-300">Bankroll</th>
                                         <th class="p-1.5 text-center">ROI</th>
                                         <th class="p-1.5 text-center">Yield</th>
@@ -1186,7 +1191,7 @@
                                 <tbody id="btResultsTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody>
                             </table>
                         </div>
-                        <p class="text-[9px] text-slate-500 italic">PF = Profit Factor. Sharpe ≈ anualizado. Rachas muestra mayor racha W/L.</p>
+                        <p class="text-[9px] text-slate-500 italic">PF = Profit Factor. Sharpe ≈ anualizado. Rachas muestra mayor racha W/L. Stake Máx refleja el pico de escalada (crítico en sistemas progresivos como Alembert).</p>
                     </div>
 
                     <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-2">
@@ -3397,7 +3402,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function onLogStakeInputChange() {
             const qp = document.getElementById('betModalMcQuickPanel');
-            if (qp && !qp.classList.contains('hidden')) runBetModalMcQuickSimulation(false);
+            if (qp && !qp.classList.contains('hidden')) runBetModalQuickMcSimulation(false);
         }
 
         function saveBetToLog() {
@@ -5698,6 +5703,30 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
         }
 
+        // ============================================================
+        // ALEMBERT — Progresión +1 unidad tras pérdida, −1 tras victoria
+        // (Factory stateful compatible con runBacktestStrategy)
+        // ============================================================
+        function createAlembertConfig(baseUnit, maxUnit) {
+            const minUnit = baseUnit;                    // piso: nunca baja de 1 unidad
+            const cap = Math.max(baseUnit * 2, maxUnit); // tope de seguridad
+            return {
+                name: `Alembert ($${baseUnit} base)`,
+                desc: `+$${baseUnit} pérdida / −$${baseUnit} victoria · cap $${cap}`,
+                stateInit: () => ({ currentStake: baseUnit, peakStake: baseUnit }),
+                stakeFn: (bank, bet, state) => Math.max(1, Math.min(state.currentStake, bank)),
+                onResult: (state, bet, status) => {
+                    if (status === 'WON' || status === 'HALF_WON') {
+                        state.currentStake = Math.max(minUnit, state.currentStake - baseUnit);
+                    } else if (status === 'LOST' || status === 'HALF_LOST') {
+                        state.currentStake = Math.min(cap, state.currentStake + baseUnit);
+                    }
+                    // VOID → sin cambio
+                    if (state.currentStake > state.peakStake) state.peakStake = state.currentStake;
+                }
+            };
+        }
+
         function runBacktest() {
             const startBank = parseFloat(document.getElementById('btStartBankroll').value) || 1000;
             const flatStakeVal = parseFloat(document.getElementById('btFlatStake').value) || 20;
@@ -5799,13 +5828,22 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 }
             }));
 
+            // === ALEMBERT (progresión +1/−1 con cap) ===
+            const alembertBase = Math.max(1, parseFloat(document.getElementById('btAlembertBase').value) || 10);
+            const alembertMax  = Math.max(alembertBase * 2, parseFloat(document.getElementById('btAlembertMax').value) || 100);
+            strategies.push(runBacktestStrategy({
+                ...createAlembertConfig(alembertBase, alembertMax),
+                bets, startBank
+            }));
+
             backtestResults = { strategies, startBank, totalBets: bets.length, evBetsCount: evBets.length };
             renderBacktestResults();
             showToast("Backtest ejecutado.");
         }
 
         function runBacktestStrategy(config) {
-            const { name, desc, bets, startBank, stakeFn } = config;
+            const { name, desc, bets, startBank, stakeFn, stateInit, onResult } = config;
+            const strategyState = stateInit ? stateInit() : {};
             let bank = startBank;
             let peak = startBank;
             let maxDD = 0, maxDDPct = 0;
@@ -5817,11 +5855,16 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             let currentWinStreak = 0, currentLossStreak = 0;
             let maxWinStreak = 0, maxLossStreak = 0;
             const returns = [];
+            let maxStakeUsed = 0;
+            const stakeHistory = [];
 
             for (const bet of bets) {
                 const odds = parseFloat(bet.bookieOdds) || 1;
-                const stake = Math.max(0, stakeFn(bank, bet));
+                const stake = Math.max(0, stakeFn(bank, bet, strategyState));
                 const realStake = Math.min(stake, bank);
+
+                if (realStake > maxStakeUsed) maxStakeUsed = realStake;
+                stakeHistory.push(realStake);
 
                 let pnl = 0;
                 if (bet.status === 'WON') {
@@ -5853,6 +5896,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 } else if (bet.status === 'VOID') {
                     voids++;
                 }
+
+                // Notifica al estado DESPUÉS de conocer el resultado (para progresiones)
+                if (onResult) onResult(strategyState, bet, bet.status, realStake, pnl, bank);
 
                 if (bank > 0) returns.push((bank + pnl - bank) / bank);
                 bank += pnl;
@@ -5890,7 +5936,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 sharpe,
                 maxWinStreak, maxLossStreak,
                 equityCurve,
-                drawdownCurve
+                drawdownCurve,
+                maxStake: maxStakeUsed,
+                avgStake: stakeHistory.length ? stakeHistory.reduce((a,b)=>a+b,0)/stakeHistory.length : 0,
+                strategyState
             };
         }
 
@@ -5921,6 +5970,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 html += `<tr class="${isBest ? 'bg-cyan-950/30' : ''}">
                     <td class="p-1.5 font-bold text-white">${isBest ? '🏆 ' : ''}${s.name}<span class="block text-[8px] text-slate-400 font-normal">${s.desc}</span></td>
                     <td class="p-1.5 text-center font-bold text-slate-300">${s.totalBets}</td>
+                    <td class="p-1.5 text-center font-bold text-purple-300">$${(s.maxStake || 0).toFixed(0)}</td>
                     <td class="p-1.5 text-center font-black ${pnlClass}">$${s.finalBank.toFixed(2)}</td>
                     <td class="p-1.5 text-center font-black ${roiClass}">${s.roi >= 0 ? '+' : ''}${s.roi.toFixed(1)}%</td>
                     <td class="p-1.5 text-center font-bold ${s.yield >= 0 ? 'text-gold-400' : 'text-rose-400'}">${s.yield.toFixed(1)}%</td>
@@ -5944,7 +5994,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (backtestChartInstance) backtestChartInstance.destroy();
             const maxLen = Math.max(...strategies.map(s => s.equityCurve.length));
             const labels = Array.from({ length: maxLen }, (_, i) => i === 0 ? 'Inicio' : `#${i}`);
-            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1'];
+            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#a855f7'];
             const datasets = strategies.map((s, idx) => {
                 const data = s.equityCurve.slice();
                 while (data.length < maxLen) data.push(data[data.length - 1]);
@@ -5978,7 +6028,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (backtestDdChartInstance) backtestDdChartInstance.destroy();
             const maxLen = Math.max(...strategies.map(s => s.drawdownCurve.length));
             const labels = Array.from({ length: maxLen }, (_, i) => i === 0 ? '0' : `${i}`);
-            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1'];
+            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#a855f7'];
             const datasets = strategies.map((s, idx) => {
                 const data = s.drawdownCurve.slice();
                 while (data.length < maxLen) data.push(data[data.length - 1]);
@@ -6012,9 +6062,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (!backtestResults) { showToast("Ejecuta un backtest primero."); return; }
             const { strategies, startBank } = backtestResults;
             let csv = `# BACKTEST - ${new Date().toISOString().slice(0,10)}\n# Bankroll inicial: $${startBank}\n\n`;
-            csv += "Estrategia,Descripcion,Apuestas,Bankroll_Final,PnL,ROI_Pct,Yield_Pct,WinRate_Pct,MaxDD_Pct,ProfitFactor,Sharpe,MaxWinStreak,MaxLossStreak\n";
+            csv += "Estrategia,Descripcion,Apuestas,StakeMax,Bankroll_Final,PnL,ROI_Pct,Yield_Pct,WinRate_Pct,MaxDD_Pct,ProfitFactor,Sharpe,MaxWinStreak,MaxLossStreak\n";
             strategies.forEach(s => {
-                csv += `"${s.name}","${s.desc}",${s.totalBets},${s.finalBank.toFixed(2)},${s.pnl.toFixed(2)},${s.roi.toFixed(2)},${s.yield.toFixed(2)},${s.winRate.toFixed(2)},${s.maxDDPct.toFixed(2)},${isFinite(s.profitFactor)?s.profitFactor.toFixed(2):'INF'},${s.sharpe.toFixed(3)},${s.maxWinStreak},${s.maxLossStreak}\n`;
+                csv += `"${s.name}","${s.desc}",${s.totalBets},${(s.maxStake || 0).toFixed(2)},${s.finalBank.toFixed(2)},${s.pnl.toFixed(2)},${s.roi.toFixed(2)},${s.yield.toFixed(2)},${s.winRate.toFixed(2)},${s.maxDDPct.toFixed(2)},${isFinite(s.profitFactor)?s.profitFactor.toFixed(2):'INF'},${s.sharpe.toFixed(3)},${s.maxWinStreak},${s.maxLossStreak}\n`;
             });
             csv += `\n# EQUITY CURVES (por apuesta)\n# Estrategia`;
             const maxLen = Math.max(...strategies.map(s => s.equityCurve.length));
