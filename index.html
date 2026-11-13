@@ -46,6 +46,11 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         html { scroll-behavior: smooth; }
+        @keyframes steamPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(1.12); }
+        }
+        .steam-against-icon { animation: steamPulse 1.4s ease-in-out infinite; }
     </style>
 </head>
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
@@ -849,6 +854,27 @@
                     </div>
                     <div class="h-36 w-full"><canvas id="pnlChart"></canvas></div>
                 </div>
+
+                <!-- === CLV ADVANCED CHART SECTION === -->
+                <div class="bg-slate-900/80 p-3 rounded-xl border border-indigo-500/40 space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-line text-indigo-400 text-xs"></i>
+                            <span class="text-xs font-bold text-indigo-300">Movimiento de Línea & CLV Acumulado</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-[10px]">
+                            <span class="flex items-center gap-1 text-indigo-400 font-bold"><span class="w-2 h-2 rounded-full bg-indigo-400 inline-block"></span> CLV por apuesta</span>
+                            <span class="flex items-center gap-1 text-fuchsia-400 font-bold"><span class="w-2 h-2 rounded-full bg-fuchsia-400 inline-block"></span> CLV acumulado</span>
+                        </div>
+                    </div>
+                    <div class="h-44 w-full"><canvas id="clvChart"></canvas></div>
+                    <div id="clvChartStats" class="grid grid-cols-3 gap-2 text-center text-[10px]"></div>
+                    <div id="clvPatternAlert" class="hidden text-[10px] bg-rose-950/60 border border-rose-500/50 text-rose-200 p-2 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-400 animate-pulse"></i>
+                        <span><b>⚠️ Patrón de Steam Against:</b> Las últimas apuestas muestran un CLV promedio negativo. La línea se está moviendo en tu contra sistemáticamente.</span>
+                    </div>
+                </div>
+
                 <details class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden group">
                     <summary class="p-3 cursor-pointer flex items-center justify-between font-bold text-xs text-white select-none"><div class="flex items-center gap-2"><i class="fa-solid fa-calendar-days text-emerald-400 text-xs"></i><span>Calendario Diario</span></div><i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform group-open:rotate-180"></i></summary>
                     <div class="p-3 pt-0 space-y-3">
@@ -1237,6 +1263,11 @@
                         <label class="block text-[10px] font-bold text-indigo-300 mb-1"><i class="fa-solid fa-arrow-trend-up mr-1"></i>CLV <span class="text-slate-500 text-[8px] font-normal">(valor de cierre)</span></label>
                         <span id="logClvDisplay" class="block text-sm font-black text-slate-400 text-center pt-1.5">-</span>
                     </div>
+                </div>
+                <!-- === VALUE TRAP / STEAM MOVE WARNING === -->
+                <div id="clvValueTrapWarning" class="hidden text-[10px] bg-rose-950/50 border border-rose-500/40 text-rose-300 p-2 rounded-xl flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-trend-down text-rose-400 text-sm steam-against-icon"></i>
+                    <span><b>⚠️ Value Trap / Steam Move:</b> <span id="clvValueTrapText">La línea se movió contra tu apuesta.</span></span>
                 </div>
                 <div id="valueTrapWarning" class="hidden text-[10px] bg-amber-950/50 border border-amber-500/40 text-amber-300 p-2 rounded-xl flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i><span><b>Atención:</b> Cuota con EV negativo o trampa de valor.</span>
@@ -2004,6 +2035,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         let chartInstance = null;
         let pnlChartInstance = null;
+        let clvChartInstance = null;
         let calibrationChartInstance = null;
         let flatStakeChartInstance = null;
         let kmcCurveChartInstance = null;
@@ -2170,7 +2202,11 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const bookieOdds = parseFloat(document.getElementById('logBookieOdds').value) || 0;
             const closingOdds = parseFloat(document.getElementById('logClosingOdds').value) || 0;
             const el = document.getElementById('logClvDisplay');
+            const trapWarn = document.getElementById('clvValueTrapWarning');
+            const trapText = document.getElementById('clvValueTrapText');
+
             if (!el) return;
+
             if (bookieOdds > 1 && closingOdds > 1) {
                 const clv = ((bookieOdds / closingOdds) - 1) * 100;
                 el.innerText = (clv >= 0 ? '+' : '') + clv.toFixed(2) + '%';
@@ -2178,9 +2214,33 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 else if (clv >= 0) el.className = 'block text-sm font-black text-emerald-300 text-center pt-1.5';
                 else if (clv >= -2) el.className = 'block text-sm font-black text-amber-400 text-center pt-1.5';
                 else el.className = 'block text-sm font-black text-rose-400 text-center pt-1.5';
+
+                // === VALUE TRAP / STEAM MOVE DETECTION ===
+                if (trapWarn && trapText) {
+                    const lineMovePct = ((closingOdds - bookieOdds) / bookieOdds) * 100;
+                    if (clv <= -5) {
+                        // Steam against: línea se movió drásticamente en contra del apostador
+                        trapWarn.className = 'text-[10px] bg-rose-950/60 border border-rose-500/60 text-rose-200 p-2 rounded-xl flex items-center gap-2';
+                        trapText.innerHTML = `La cuota de cierre subió <b>${Math.abs(lineMovePct).toFixed(1)}%</b> respecto a tu cuota de entrada (${bookieOdds.toFixed(2)} → ${closingOdds.toFixed(2)}). El mercado se alejó de tu pick: <b>CLV ${clv.toFixed(2)}%</b>.`;
+                        trapWarn.classList.remove('hidden');
+                    } else if (clv >= 5) {
+                        // Steam in favor
+                        trapWarn.className = 'text-[10px] bg-emerald-950/60 border border-emerald-500/50 text-emerald-200 p-2 rounded-xl flex items-center gap-2';
+                        trapText.innerHTML = `✅ <b>Steam Move a tu favor:</b> la cuota cerró más baja (${bookieOdds.toFixed(2)} → ${closingOdds.toFixed(2)}). Batiste el cierre con <b>CLV +${clv.toFixed(2)}%</b>.`;
+                        trapWarn.classList.remove('hidden');
+                    } else if (clv <= -2) {
+                        trapWarn.className = 'text-[10px] bg-amber-950/50 border border-amber-500/40 text-amber-300 p-2 rounded-xl flex items-center gap-2';
+                        trapText.innerHTML = `La línea se movió ligeramente en tu contra (${bookieOdds.toFixed(2)} → ${closingOdds.toFixed(2)}). CLV: ${clv.toFixed(2)}%.`;
+                        trapWarn.classList.remove('hidden');
+                    } else {
+                        trapWarn.classList.add('hidden');
+                        trapWarn.className = 'hidden text-[10px] bg-rose-950/50 border border-rose-500/40 text-rose-300 p-2 rounded-xl flex items-center gap-2';
+                    }
+                }
             } else {
                 el.innerText = '-';
                 el.className = 'block text-sm font-black text-slate-400 text-center pt-1.5';
+                if (trapWarn) trapWarn.classList.add('hidden');
             }
         }
 
@@ -2188,7 +2248,15 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (clvRaw === undefined || clvRaw === null || clvRaw === '') return { text: '-', cls: 'text-slate-500' };
             const v = parseFloat(clvRaw);
             if (isNaN(v)) return { text: '-', cls: 'text-slate-500' };
-            const text = (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+            let steamIcon = '';
+            if (v <= -5) {
+                steamIcon = ' <i class="fa-solid fa-arrow-trend-down text-rose-400 text-[10px] steam-against-icon" title="Steam Move en contra"></i>';
+            } else if (v <= -2) {
+                steamIcon = ' <i class="fa-solid fa-arrow-trend-down text-amber-400 text-[9px]" title="Línea en contra"></i>';
+            } else if (v >= 5) {
+                steamIcon = ' <i class="fa-solid fa-arrow-trend-up text-emerald-400 text-[9px]" title="Steam Move a favor"></i>';
+            }
+            const text = (v >= 0 ? '+' : '') + v.toFixed(2) + '%' + steamIcon;
             let cls = 'text-slate-400';
             if (v >= 2) cls = 'text-emerald-400';
             else if (v >= 0) cls = 'text-emerald-300';
@@ -3329,7 +3397,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function onLogStakeInputChange() {
             const qp = document.getElementById('betModalMcQuickPanel');
-            if (qp && !qp.classList.contains('hidden')) runBetModalQuickMcSimulation(false);
+            if (qp && !qp.classList.contains('hidden')) runBetModalMcQuickSimulation(false);
         }
 
         function saveBetToLog() {
@@ -3383,8 +3451,14 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             updateParallelTrackerMetrics();
             toggleLogBetModal(false);
             if (clv !== null) {
-                const clvMsg = clv >= 0 ? `✅ CLV +${clv.toFixed(2)}% (batiste la línea)` : `⚠️ CLV ${clv.toFixed(2)}%`;
-                showToast(sendToParallel ? `Guardada en ambas bitácoras. ${clvMsg}` : `¡Guardada! ${clvMsg}`);
+                if (clv <= -5) {
+                    showToast(`⚠️ STEAM AGAINST: CLV ${clv.toFixed(2)}% — línea en tu contra.`);
+                } else if (clv >= 5) {
+                    showToast(`✅ STEAM A FAVOR: CLV +${clv.toFixed(2)}% — batiste el cierre.`);
+                } else {
+                    const clvMsg = clv >= 0 ? `CLV +${clv.toFixed(2)}%` : `CLV ${clv.toFixed(2)}%`;
+                    showToast(sendToParallel ? `Guardada en ambas. ${clvMsg}` : `¡Guardada! ${clvMsg}`);
+                }
             } else {
                 showToast(sendToParallel ? "¡Guardada en ambas bitácoras!" : "¡Guardada!");
             }
@@ -3882,8 +3956,171 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             renderSeparatedBetsTables(filteredBets);
             renderCalendarView(filteredBets);
             renderPnlChart(currentBankrollArr);
+            renderClvChart(filteredBets);
             saveBankrollsToStorage();
             saveBetLogToStorage();
+        }
+
+        // ============================================================
+        // CLV ADVANCED CHART (por apuesta + acumulado + patrón)
+        // ============================================================
+        function renderClvChart(bets) {
+            const canvas = document.getElementById('clvChart');
+            const statsEl = document.getElementById('clvChartStats');
+            const patternEl = document.getElementById('clvPatternAlert');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            if (clvChartInstance) { clvChartInstance.destroy(); clvChartInstance = null; }
+
+            // Solo apuestas con CLV numérico
+            const betsWithClv = (bets || [])
+                .filter(b => b.clv !== undefined && b.clv !== null && b.clv !== '' && !isNaN(parseFloat(b.clv)))
+                .slice()
+                .sort((a, b) => {
+                    if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
+                    return (a.id || 0) - (b.id || 0);
+                });
+
+            if (betsWithClv.length === 0) {
+                // Estado vacío
+                clvChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: { labels: ['Sin datos'], datasets: [] },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { display: false } },
+                            y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                        }
+                    }
+                });
+                if (statsEl) statsEl.innerHTML = '<div class="col-span-3 text-slate-500 italic py-2">Ingresa cuotas de cierre en tus apuestas para ver el CLV acumulado.</div>';
+                if (patternEl) patternEl.classList.add('hidden');
+                return;
+            }
+
+            const labels = betsWithClv.map((b, i) => `#${i + 1}`);
+            const clvPerBet = betsWithClv.map(b => parseFloat(b.clv));
+            const cumulative = [];
+            let acc = 0;
+            clvPerBet.forEach(v => { acc += v; cumulative.push(+acc.toFixed(3)); });
+
+            const barColors = clvPerBet.map(v => v >= 0 ? 'rgba(16,185,129,0.65)' : 'rgba(244,63,94,0.65)');
+            const barBorders = clvPerBet.map(v => v >= 0 ? '#10b981' : '#f43f5e');
+
+            clvChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'CLV por apuesta (%)',
+                            data: clvPerBet,
+                            backgroundColor: barColors,
+                            borderColor: barBorders,
+                            borderWidth: 1,
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            label: 'CLV acumulado (%)',
+                            data: cumulative,
+                            type: 'line',
+                            borderColor: '#c084fc',
+                            backgroundColor: 'rgba(192,132,252,0.12)',
+                            fill: true,
+                            tension: 0.32,
+                            pointRadius: 2.5,
+                            pointBackgroundColor: '#c084fc',
+                            borderWidth: 2.2,
+                            yAxisID: 'y2',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 9, weight: 'bold' }, boxWidth: 10 } },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    if (!items || !items.length) return '';
+                                    const b = betsWithClv[items[0].dataIndex];
+                                    return b ? `${b.match || ''} [${b.date || ''}]` : '';
+                                },
+                                label: (context) => {
+                                    const b = betsWithClv[context.dataIndex];
+                                    if (context.dataset.yAxisID === 'y') {
+                                        return `${b ? `${b.selection || ''} @${b.bookieOdds} → ${b.closingOdds}` : ''} | CLV: ${context.parsed.y.toFixed(2)}%`;
+                                    }
+                                    return `CLV acumulado: ${context.parsed.y.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#64748b', font: { size: 8 }, maxTicksLimit: 20 }, grid: { display: false } },
+                        y: {
+                            position: 'left',
+                            ticks: { color: '#94a3b8', font: { size: 9 }, callback: v => v + '%' },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            title: { display: true, text: 'CLV por apuesta', color: '#94a3b8', font: { size: 9 } }
+                        },
+                        y2: {
+                            position: 'right',
+                            ticks: { color: '#c084fc', font: { size: 9 }, callback: v => v + '%' },
+                            grid: { display: false },
+                            title: { display: true, text: 'Acumulado', color: '#c084fc', font: { size: 9 } }
+                        }
+                    }
+                }
+            });
+
+            // === Stats Panel ===
+            const avgClv = clvPerBet.reduce((a, b) => a + b, 0) / clvPerBet.length;
+            const positiveCount = clvPerBet.filter(v => v > 0).length;
+            const positivePct = (positiveCount / clvPerBet.length) * 100;
+            const totalClv = cumulative[cumulative.length - 1];
+            const steamAgainstCount = clvPerBet.filter(v => v <= -5).length;
+            const steamInFavorCount = clvPerBet.filter(v => v >= 5).length;
+
+            if (statsEl) {
+                statsEl.innerHTML = `
+                    <div class="bg-slate-950/60 p-1.5 rounded-lg border border-indigo-500/30">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">CLV Promedio</span>
+                        <span class="font-black ${avgClv >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${avgClv >= 0 ? '+' : ''}${avgClv.toFixed(2)}%</span>
+                    </div>
+                    <div class="bg-slate-950/60 p-1.5 rounded-lg border border-fuchsia-500/30">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">CLV Acumulado</span>
+                        <span class="font-black ${totalClv >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${totalClv >= 0 ? '+' : ''}${totalClv.toFixed(1)}%</span>
+                    </div>
+                    <div class="bg-slate-950/60 p-1.5 rounded-lg border border-amber-500/30">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">Beat Close</span>
+                        <span class="font-black ${positivePct >= 55 ? 'text-emerald-400' : positivePct >= 50 ? 'text-gold-400' : 'text-amber-400'}">${positivePct.toFixed(0)}%</span>
+                    </div>
+                    <div class="bg-slate-950/60 p-1.5 rounded-lg border border-rose-500/30 col-span-3">
+                        <span class="block text-[8px] uppercase text-slate-400 font-bold">⚠️ Steam Against (CLV ≤ -5%)</span>
+                        <span class="font-black text-rose-400">${steamAgainstCount} apuestas</span>
+                        <span class="text-[9px] text-emerald-400 ml-2">✅ Steam a Favor: <b>${steamInFavorCount}</b></span>
+                    </div>
+                `;
+            }
+
+            // === Pattern Detection: últimas 5 apuestas con CLV promedio muy negativo ===
+            if (patternEl) {
+                const last5 = clvPerBet.slice(-5);
+                const avgLast5 = last5.length > 0 ? last5.reduce((a, b) => a + b, 0) / last5.length : 0;
+                if (last5.length >= 3 && avgLast5 <= -3) {
+                    patternEl.classList.remove('hidden');
+                } else {
+                    patternEl.classList.add('hidden');
+                }
+            }
         }
 
         function updateLeaguePerformanceTable(bankBets) {
