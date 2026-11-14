@@ -842,38 +842,53 @@
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none"><div class="flex items-center gap-1.5"><i class="fa-solid fa-chart-pie text-emerald-400 text-xs"></i><span class="text-xs font-black text-white uppercase">Rango EV Más Rentable</span></div><div class="flex items-center gap-2"><span id="bestEvRangeBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Sin datos</span><i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i></div></summary>
                     <div class="p-3 pt-0"><div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1" id="evRangesGridContainer"></div></div>
                 </details>
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                        <span class="text-xs font-bold text-slate-300">Curva P&L + Depósitos/Retiros</span>
-                        <div class="flex items-center gap-3 text-[10px]">
-                            <span class="flex items-center gap-1 text-emerald-400 font-bold"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Apuesta</span>
-                            <span class="flex items-center gap-1 text-sky-400 font-bold"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span> Dep.</span>
-                            <span class="flex items-center gap-1 text-amber-400 font-bold"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Ret.</span>
+
+                <!-- === CURVA P&L (DESPLEGABLE) === -->
+                <details class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden group" open ontoggle="onChartDetailsToggle(this)">
+                    <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-emerald-400 text-xs"></i>
+                            <span class="text-xs font-bold text-slate-300">Curva P&L + Depósitos/Retiros</span>
                             <span class="text-[10px] text-emerald-400 font-bold hidden sm:inline" id="pnlStatusText">| Bankroll</span>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-3 text-[10px]">
+                                <span class="flex items-center gap-1 text-emerald-400 font-bold"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> Apuesta</span>
+                                <span class="flex items-center gap-1 text-sky-400 font-bold"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span> Dep.</span>
+                                <span class="flex items-center gap-1 text-amber-400 font-bold"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Ret.</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i>
+                        </div>
+                    </summary>
+                    <div class="p-3 pt-0">
+                        <div class="h-36 w-full"><canvas id="pnlChart"></canvas></div>
                     </div>
-                    <div class="h-36 w-full"><canvas id="pnlChart"></canvas></div>
-                </div>
+                </details>
 
-                <!-- === CLV ADVANCED CHART SECTION === -->
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-indigo-500/40 space-y-2">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                        <div class="flex items-center gap-1.5">
+                <!-- === MOVIMIENTO DE LÍNEA & CLV (DESPLEGABLE) === -->
+                <details class="bg-slate-900/80 rounded-xl border border-indigo-500/40 overflow-hidden group" open ontoggle="onChartDetailsToggle(this)">
+                    <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
+                        <div class="flex items-center gap-2">
                             <i class="fa-solid fa-chart-line text-indigo-400 text-xs"></i>
                             <span class="text-xs font-bold text-indigo-300">Movimiento de Línea & CLV Acumulado</span>
                         </div>
-                        <div class="flex items-center gap-3 text-[10px]">
-                            <span class="flex items-center gap-1 text-indigo-400 font-bold"><span class="w-2 h-2 rounded-full bg-indigo-400 inline-block"></span> CLV por apuesta</span>
-                            <span class="flex items-center gap-1 text-fuchsia-400 font-bold"><span class="w-2 h-2 rounded-full bg-fuchsia-400 inline-block"></span> CLV acumulado</span>
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-3 text-[10px]">
+                                <span class="flex items-center gap-1 text-indigo-400 font-bold"><span class="w-2 h-2 rounded-full bg-indigo-400 inline-block"></span> CLV</span>
+                                <span class="flex items-center gap-1 text-fuchsia-400 font-bold"><span class="w-2 h-2 rounded-full bg-fuchsia-400 inline-block"></span> Acum.</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-indigo-400 text-xs transition-transform group-open:rotate-180"></i>
+                        </div>
+                    </summary>
+                    <div class="p-3 pt-0 space-y-2">
+                        <div class="h-44 w-full"><canvas id="clvChart"></canvas></div>
+                        <div id="clvChartStats" class="grid grid-cols-3 gap-2 text-center text-[10px]"></div>
+                        <div id="clvPatternAlert" class="hidden text-[10px] bg-rose-950/60 border border-rose-500/50 text-rose-200 p-2 rounded-xl flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-rose-400 animate-pulse"></i>
+                            <span><b>⚠️ Patrón de Steam Against:</b> Las últimas apuestas muestran un CLV promedio negativo. La línea se está moviendo en tu contra sistemáticamente.</span>
                         </div>
                     </div>
-                    <div class="h-44 w-full"><canvas id="clvChart"></canvas></div>
-                    <div id="clvChartStats" class="grid grid-cols-3 gap-2 text-center text-[10px]"></div>
-                    <div id="clvPatternAlert" class="hidden text-[10px] bg-rose-950/60 border border-rose-500/50 text-rose-200 p-2 rounded-xl flex items-center gap-2">
-                        <i class="fa-solid fa-triangle-exclamation text-rose-400 animate-pulse"></i>
-                        <span><b>⚠️ Patrón de Steam Against:</b> Las últimas apuestas muestran un CLV promedio negativo. La línea se está moviendo en tu contra sistemáticamente.</span>
-                    </div>
-                </div>
+                </details>
 
                 <details class="bg-slate-900/80 rounded-xl border border-slate-800 overflow-hidden group">
                     <summary class="p-3 cursor-pointer flex items-center justify-between font-bold text-xs text-white select-none"><div class="flex items-center gap-2"><i class="fa-solid fa-calendar-days text-emerald-400 text-xs"></i><span>Calendario Diario</span></div><i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform group-open:rotate-180"></i></summary>
@@ -2068,6 +2083,19 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         let backtestChartInstance = null;
         let backtestDdChartInstance = null;
         let backtestResults = null;
+
+        // ============================================================
+        // ✅ NUEVO HANDLER: resize de charts al abrir/cerrar <details>
+        // ============================================================
+        function onChartDetailsToggle(detailsEl) {
+            if (!detailsEl || !detailsEl.open) return;
+            setTimeout(() => {
+                try {
+                    if (typeof pnlChartInstance !== 'undefined' && pnlChartInstance && typeof pnlChartInstance.resize === 'function') pnlChartInstance.resize();
+                    if (typeof clvChartInstance !== 'undefined' && clvChartInstance && typeof clvChartInstance.resize === 'function') clvChartInstance.resize();
+                } catch(e) { console.warn('[Chart resize]', e); }
+            }, 120);
+        }
 
         function scrollToSection(id) {
             const el = document.getElementById(id);
@@ -5051,7 +5079,19 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const link = document.createElement("a"); link.href = url; link.download = `bets_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        function toggleTrackerModal(show) { const m = document.getElementById('trackerModal'); if (show) m.classList.remove('hidden'); else m.classList.add('hidden'); }
+        function toggleTrackerModal(show) {
+            const m = document.getElementById('trackerModal');
+            if (show) {
+                m.classList.remove('hidden');
+                // ✅ resize charts después de mostrar el modal
+                setTimeout(() => {
+                    try {
+                        if (pnlChartInstance) pnlChartInstance.resize();
+                        if (clvChartInstance) clvChartInstance.resize();
+                    } catch(e) {}
+                }, 180);
+            } else m.classList.add('hidden');
+        }
         function toggleLogBetModal(show) { const m = document.getElementById('logBetModal'); if (show) m.classList.remove('hidden'); else m.classList.add('hidden'); }
 
         function toggleLeagueModal(show) {
