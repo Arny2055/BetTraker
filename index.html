@@ -3622,12 +3622,48 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const stake010 = Math.max(1, Math.round(bank * effectiveBase * 0.10));
             const stake025 = Math.max(1, Math.round(bank * effectiveBase * 0.25));
             const stake050 = Math.max(1, Math.round(bank * effectiveBase * 0.50));
+
+            // === Stake óptimo simulado para Max DD 9%-10% (seleccionable) ===
+            let ddTargetOptimal = null;
+            try {
+                ddTargetOptimal = estimateOptimalFractionForTargetDD(effectiveBase, bank, p, b, results, 0.09, 0.10);
+            } catch(e) { console.warn('DD target estimation error:', e); ddTargetOptimal = null; }
+
             const btnsContainer = document.getElementById('quickMcFractionsButtons');
             if (btnsContainer) {
+                let ddButtonHtml = '';
+                if (ddTargetOptimal && isFinite(ddTargetOptimal.stakeDollars) && ddTargetOptimal.stakeDollars > 0) {
+                    const ddPct = (ddTargetOptimal.medianDD * 100).toFixed(1);
+                    const stakePctStr = ddTargetOptimal.stakePct.toFixed(2);
+                    const withinRange = (ddTargetOptimal.medianDD >= 0.09 && ddTargetOptimal.medianDD <= 0.10);
+                    const rangeLabel = withinRange ? `✅ DD ${ddPct}%` : `⚠️ DD ${ddPct}%`;
+                    const borderColor = withinRange ? 'border-amber-500/70 bg-amber-950/60' : 'border-amber-500/40 bg-amber-950/30';
+                    const labelColor = withinRange ? 'text-amber-300' : 'text-amber-200';
+                    const valColor = withinRange ? 'text-amber-400' : 'text-amber-300';
+                    const retStr = ddTargetOptimal.netReturnPct >= 0 ? `+${ddTargetOptimal.netReturnPct.toFixed(1)}%` : `${ddTargetOptimal.netReturnPct.toFixed(1)}%`;
+                    ddButtonHtml = `
+                        <button type="button" onclick="setBetModalStakeFromMc(${ddTargetOptimal.stakeDollars}, '🎯 Objetivo DD 9-10% (${stakePctStr}%)')" class="col-span-3 ${borderColor} hover:bg-amber-900/70 border rounded-lg p-2 text-center active:scale-95 mt-0.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[8px] ${labelColor} font-black uppercase flex items-center gap-1"><i class="fa-solid fa-bullseye"></i> Objetivo Max DD 9%-10%</span>
+                                <span class="text-[8px] ${labelColor} font-bold">${rangeLabel}</span>
+                            </div>
+                            <div class="flex items-center justify-between mt-0.5">
+                                <span class="text-[9px] text-slate-300 font-mono">${stakePctStr}% · ${ddTargetOptimal.mult.toFixed(2)}x Kelly</span>
+                                <span class="text-[12px] font-black ${valColor}">$${ddTargetOptimal.stakeDollars}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[8px] text-slate-400 mt-0.5 pt-0.5 border-t border-amber-500/20">
+                                <span>Ret. medio: <b class="${ddTargetOptimal.netReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${retStr}</b></span>
+                                <span>P(Profit): <b class="${ddTargetOptimal.profitPct >= 50 ? 'text-emerald-400' : 'text-rose-400'}">${ddTargetOptimal.profitPct.toFixed(0)}%</b></span>
+                                <span>Ruina: <b class="${ddTargetOptimal.probRuin > 2 ? 'text-rose-400' : 'text-emerald-400'}">${ddTargetOptimal.probRuin.toFixed(1)}%</b></span>
+                            </div>
+                        </button>
+                    `;
+                }
                 btnsContainer.innerHTML = `
                     <button type="button" onclick="setBetModalStakeFromMc(${stake010}, '0.10x Conservador')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-slate-400 font-bold">0.10x</span><span class="text-[11px] font-black text-sky-400">$${stake010}</span></button>
                     <button type="button" onclick="setBetModalStakeFromMc(${stake025}, '0.25x Cuarto Kelly')" class="bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/50 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-emerald-300 font-black">⭐ 0.25x</span><span class="text-[11px] font-black text-emerald-400">$${stake025}</span></button>
                     <button type="button" onclick="setBetModalStakeFromMc(${stake050}, '0.50x Medio Kelly')" class="bg-slate-900 hover:bg-slate-800 border border-indigo-500/40 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-indigo-300 font-bold">0.50x</span><span class="text-[11px] font-black text-indigo-400">$${stake050}</span></button>
+                    ${ddButtonHtml}
                 `;
             }
 
@@ -3636,6 +3672,124 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (fullKelly <= 0.0001) evNotice.classList.remove('hidden');
                 else evNotice.classList.add('hidden');
             }
+        }
+
+        // ============================================================
+        // ESTIMADOR DE STAKE ÓPTIMO PARA MAX DD 9%-10%
+        // ============================================================
+        // Estrategia:
+        //   1. Interpolación lineal sobre las fracciones Kelly ya simuladas (1000 sims)
+        //   2. Refinamiento con verificaciones rápidas (350 sims + hasta 3 iteraciones)
+        // Objetivo: encontrar el multiplicador Kelly cuyo Max DD mediano ≈ 9.5%.
+        function estimateOptimalFractionForTargetDD(effectiveBase, bank, pWin, bNet, results, targetLow, targetHigh) {
+            targetLow = targetLow || 0.09;
+            targetHigh = targetHigh || 0.10;
+            const targetDD = (targetLow + targetHigh) / 2;
+
+            const sampledKeys = ['k010', 'k025', 'k050', 'k075', 'k100', 'k125'];
+            const sampled = sampledKeys
+                .map(k => ({ mult: results[k].mult, dd: results[k].medianDD }))
+                .filter(pt => isFinite(pt.mult) && isFinite(pt.dd))
+                .sort((a, c) => a.dd - c.dd);
+            if (sampled.length < 2) return null;
+
+            function interpMultForDD(dd) {
+                if (dd <= sampled[0].dd) {
+                    const slope = (sampled[1].mult - sampled[0].mult) / Math.max(1e-6, sampled[1].dd - sampled[0].dd);
+                    return sampled[0].mult + slope * (dd - sampled[0].dd);
+                }
+                const last = sampled[sampled.length - 1];
+                if (dd >= last.dd) {
+                    const prev = sampled[sampled.length - 2];
+                    const slope = (last.mult - prev.mult) / Math.max(1e-6, last.dd - prev.dd);
+                    return last.mult + slope * (dd - last.dd);
+                }
+                for (let i = 0; i < sampled.length - 1; i++) {
+                    const a = sampled[i], c = sampled[i + 1];
+                    if (dd >= a.dd && dd <= c.dd) {
+                        const t = (dd - a.dd) / Math.max(1e-6, c.dd - a.dd);
+                        return a.mult + t * (c.mult - a.mult);
+                    }
+                }
+                return sampled[Math.floor(sampled.length / 2)].mult;
+            }
+
+            function quickDD(mult, N, M) {
+                N = N || 350; M = M || 250;
+                const f = Math.min(0.50, Math.max(0.001, effectiveBase * mult));
+                const dds = [];
+                const finals = [];
+                let profitCount = 0, ruinCount = 0;
+                for (let s = 0; s < N; s++) {
+                    let bk = bank, peak = bank, mdd = 0, ruined = false;
+                    for (let t = 0; t < M; t++) {
+                        if (ruined) break;
+                        const stake = Math.min(Math.max(1, bk * f), bk);
+                        const win = Math.random() < pWin;
+                        bk += win ? (stake * bNet) : -stake;
+                        if (bk < 1) { bk = 0; ruined = true; }
+                        if (bk > peak) peak = bk;
+                        const dd = peak > 0 ? (peak - bk) / peak : 1;
+                        if (dd > mdd) mdd = dd;
+                        if (bk <= bank * 0.10) ruined = true;
+                    }
+                    dds.push(mdd);
+                    finals.push(bk);
+                    if (bk > bank) profitCount++;
+                    if (bk <= bank * 0.10) ruinCount++;
+                }
+                dds.sort((a, c) => a - c);
+                finals.sort((a, c) => a - c);
+                return {
+                    medianDD: dds[Math.floor(N / 2)],
+                    medianBank: finals[Math.floor(N / 2)],
+                    profitPct: (profitCount / N) * 100,
+                    probRuin: (ruinCount / N) * 100
+                };
+            }
+
+            let guess = interpMultForDD(targetDD);
+            if (!isFinite(guess) || guess <= 0) guess = 0.25;
+            guess = Math.max(0.02, Math.min(3.0, guess));
+
+            let bestMult = guess;
+            let bestEval = quickDD(guess, 350, 250);
+            let bestDist = Math.abs(bestEval.medianDD - targetDD);
+
+            // Refinamiento: hasta 3 iteraciones de bisección si estamos fuera del rango
+            let lo = Math.max(0.02, bestMult / 2.5);
+            let hi = Math.min(3.0, bestMult * 2.5);
+            for (let iter = 0; iter < 3; iter++) {
+                if (bestEval.medianDD >= targetLow && bestEval.medianDD <= targetHigh) break;
+                let trial;
+                if (bestEval.medianDD > targetHigh) {
+                    hi = bestMult;
+                    trial = (lo + bestMult) / 2;
+                } else {
+                    lo = bestMult;
+                    trial = (bestMult + hi) / 2;
+                }
+                if (!isFinite(trial) || trial <= 0.005) break;
+                const evalTrial = quickDD(trial, 250, 250);
+                const dist = Math.abs(evalTrial.medianDD - targetDD);
+                if (dist < bestDist) {
+                    bestMult = trial;
+                    bestEval = evalTrial;
+                    bestDist = dist;
+                }
+            }
+
+            return {
+                mult: bestMult,
+                stakePct: effectiveBase * bestMult * 100,
+                stakeDollars: Math.max(1, Math.round(bank * effectiveBase * bestMult)),
+                medianDD: bestEval.medianDD,
+                medianBank: bestEval.medianBank,
+                netReturnPct: ((bestEval.medianBank - bank) / bank) * 100,
+                probRuin: bestEval.probRuin,
+                profitPct: bestEval.profitPct,
+                targetLow, targetHigh
+            };
         }
 
         function saveBetToLog() {
