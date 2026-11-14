@@ -1269,9 +1269,9 @@
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Selección</label><input type="text" id="logSelection" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold"></div>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Prob. (%)</label><input type="number" step="0.1" id="logProb" oninput="calculateLogEv()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold text-center"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Prob. (%)</label><input type="number" step="0.1" id="logProb" oninput="calculateLogEv(); scheduleBetModalInlineMc();" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold text-center"></div>
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Justa</label><input type="number" step="0.01" id="logFairOdds" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-gold-400 font-bold text-center"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Casa</label><input type="number" step="0.01" id="logBookieOdds" oninput="calculateLogEv()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-300 font-bold text-center"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Casa</label><input type="number" step="0.01" id="logBookieOdds" oninput="calculateLogEv(); scheduleBetModalInlineMc();" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-300 font-bold text-center"></div>
                 </div>
                 <!-- === CLV INPUT FIELD === -->
                 <div class="grid grid-cols-2 gap-2 bg-indigo-950/30 p-2 rounded-xl border border-indigo-500/30">
@@ -1318,6 +1318,32 @@
                         <div class="bg-slate-900/90 p-1.5 rounded-lg border border-slate-800"><span class="block text-[8px] uppercase text-slate-400 font-bold">P(Profit)</span><span id="quickMcWinProbSeries" class="text-[11px] font-black text-indigo-300">0%</span></div>
                     </div>
                     <div class="space-y-1"><span class="block text-[9px] font-bold text-slate-400 uppercase">Stake óptimo simulado:</span><div class="grid grid-cols-3 gap-1.5" id="quickMcFractionsButtons"></div></div>
+
+                    <!-- === MC AUTO: Tabla comparativa inline (250 series × 1,000 sims) === -->
+                    <div id="betModalMcInlineTableContainer" class="space-y-1 pt-1.5 border-t border-purple-500/20">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase"><i class="fa-solid fa-table-cells text-purple-400 mr-1"></i>MC Auto (250 series × 1,000 sims)</span>
+                            <span id="betModalMcInlineTableBadge" class="text-[8px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded font-black border border-purple-500/40">Auto</span>
+                        </div>
+                        <div class="overflow-x-auto rounded-lg border border-purple-500/30 bg-slate-950/60 max-h-52">
+                            <table class="w-full text-[9px] text-left border-collapse excel-table">
+                                <thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold">
+                                    <tr>
+                                        <th class="p-1">Fracción</th>
+                                        <th class="p-1 text-center">Stake</th>
+                                        <th class="p-1 text-center">Bankroll</th>
+                                        <th class="p-1 text-center">Retorno</th>
+                                        <th class="p-1 text-center">Max DD</th>
+                                        <th class="p-1 text-center">Ruina</th>
+                                        <th class="p-1 text-center">Veredicto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="betModalMcInlineTableBody">
+                                    <tr><td colspan="7" class="p-2 text-center text-slate-500 italic">Cambia la cuota de la casa para ejecutar el MC automático.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Casa</label><select id="logBookmaker" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-200 font-bold"><option value="Bet365">Bet365</option><option value="Caliente">Caliente</option><option value="1xBet">1xBet</option><option value="Codere">Codere</option><option value="Otra">Otra</option></select></div>
@@ -2079,13 +2105,14 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         let parlaySelections = [];
         let kmcOpenedFromBetModal = false;
+        let betModalInlineMcTimeout = null;
 
         let backtestChartInstance = null;
         let backtestDdChartInstance = null;
         let backtestResults = null;
 
         // ============================================================
-        // ✅ NUEVO HANDLER: resize de charts al abrir/cerrar <details>
+        // RESIZE DE CHARTS AL ABRIR <details> (gráficas desplegables)
         // ============================================================
         function onChartDetailsToggle(detailsEl) {
             if (!detailsEl || !detailsEl.open) return;
@@ -2498,6 +2525,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('logParallelOption').value = "original_only";
 
             calculateLogEv();
+            scheduleBetModalInlineMc();
             toggleLogBetModal(true);
         }
 
@@ -3378,8 +3406,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('logParallelOption').value = "original_only";
             const quickPanel = document.getElementById('betModalMcQuickPanel');
             if (quickPanel) quickPanel.classList.add('hidden');
+            const inlineTbody = document.getElementById('betModalMcInlineTableBody');
+            if (inlineTbody) inlineTbody.innerHTML = '<tr><td colspan="7" class="p-2 text-center text-slate-500 italic">Cambia la cuota de la casa para ejecutar el MC automático.</td></tr>';
             checkSelectionHistoricalProfit();
             calculateLogEv();
+            // Auto-disparar MC al abrir
+            scheduleBetModalInlineMc();
             toggleLogBetModal(true);
         }
 
@@ -3407,6 +3439,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (quickPanel) quickPanel.classList.add('hidden');
             checkSelectionHistoricalProfit();
             calculateLogEv();
+            // Auto-disparar MC al editar
+            scheduleBetModalInlineMc();
             toggleLogBetModal(true);
         }
 
@@ -3422,15 +3456,186 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const trapWarning = document.getElementById('valueTrapWarning');
             if (ev < -0.05) trapWarning.classList.remove('hidden');
             else trapWarning.classList.add('hidden');
-            const quickPanel = document.getElementById('betModalMcQuickPanel');
-            if (quickPanel && !quickPanel.classList.contains('hidden')) runBetModalQuickMcSimulation(false);
             // Recalcular CLV (la cuota de casa ha cambiado)
             calculateClvDisplay();
         }
 
         function onLogStakeInputChange() {
-            const qp = document.getElementById('betModalMcQuickPanel');
-            if (qp && !qp.classList.contains('hidden')) runBetModalQuickMcSimulation(false);
+            // El stake NO altera la tabla MC (que se calcula por fracciones Kelly).
+            // Solo se refleja si el usuario pulsa los botones de stake rápido.
+        }
+
+        // ============================================================
+        // MC AUTOMÁTICO EN EL MODAL DE REGISTRAR APUESTA
+        // Se dispara al cambiar la cuota de la Bookie (o la probabilidad).
+        // Corre 250 series × 1,000 simulaciones para 7 fracciones Kelly.
+        // ============================================================
+        function scheduleBetModalInlineMc() {
+            const panel = document.getElementById('betModalMcQuickPanel');
+            if (!panel) return;
+            panel.classList.remove('hidden');
+
+            const tbody = document.getElementById('betModalMcInlineTableBody');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-2 text-center text-slate-400 italic"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Calculando MC (250 series × 1,000 sims)...</td></tr>`;
+            }
+            const medEl = document.getElementById('quickMcMedianBank');
+            if (medEl) medEl.innerText = '...';
+            const ddEl = document.getElementById('quickMcMedianDD');
+            if (ddEl) ddEl.innerText = '...';
+            const varEl = document.getElementById('quickMcVariance');
+            if (varEl) varEl.innerText = '...';
+            const wpEl = document.getElementById('quickMcWinProbSeries');
+            if (wpEl) wpEl.innerText = '...';
+
+            if (betModalInlineMcTimeout) clearTimeout(betModalInlineMcTimeout);
+            betModalInlineMcTimeout = setTimeout(runBetModalInlineMcSimulation, 450);
+        }
+
+        function runBetModalInlineMcSimulation() {
+            const tbody = document.getElementById('betModalMcInlineTableBody');
+            if (!tbody) return;
+
+            const bank = Math.max(10, getActiveAvailableBankroll());
+            const probPct = Math.min(99, Math.max(1, parseFloat(document.getElementById('logProb').value) || 50));
+            const p = probPct / 100;
+            const odds = Math.max(1.01, parseFloat(document.getElementById('logBookieOdds').value) || 2.0);
+            const b = odds - 1;
+            const fullKelly = b > 0 ? Math.max(0, (p * b - (1 - p)) / b) : 0;
+            const fallbackBase = Math.max(0.04, ((parseFloat(document.getElementById('globalStakePct').value) || 2.0) / 100) * 4);
+            const effectiveBase = fullKelly > 0 ? fullKelly : fallbackBase;
+
+            const NUM_SIMS = 1000;
+            const NUM_BETS = 250;
+
+            const fractions = [
+                { id: 'k010', label: '0.10x', mult: 0.10, role: 'Conservador' },
+                { id: 'k025', label: '0.25x', mult: 0.25, role: '⭐ Óptimo', recommended: true },
+                { id: 'k050', label: '0.50x', mult: 0.50, role: 'Agresivo' },
+                { id: 'k075', label: '0.75x', mult: 0.75, role: 'Alto Riesgo' },
+                { id: 'k100', label: '1.00x', mult: 1.00, role: 'Varianza Crítica' },
+                { id: 'k125', label: '1.25x', mult: 1.25, role: '☠️ Ruina', dangerous: true },
+                { id: 'flat2', label: 'Flat 2%', mult: 0.02, isFlat: true, role: 'Referencia' }
+            ];
+
+            const results = {};
+            fractions.forEach(frac => {
+                const finalBanks = [], maxDDs = [], returnVariances = [];
+                let profitCount = 0, ruinCount = 0;
+                for (let s = 0; s < NUM_SIMS; s++) {
+                    let bank_i = bank, peak = bank, mdd = 0, ruined = false;
+                    const returns = [];
+                    for (let t = 0; t < NUM_BETS; t++) {
+                        if (ruined) break;
+                        let stake;
+                        if (frac.isFlat) {
+                            stake = Math.min(bank * frac.mult, bank_i);
+                        } else {
+                            const f = Math.min(0.50, Math.max(0.001, effectiveBase * frac.mult));
+                            stake = Math.max(1, bank_i * f);
+                            stake = Math.min(stake, bank_i);
+                        }
+                        const prevBank = bank_i;
+                        const win = Math.random() < p;
+                        const pnl = win ? (stake * b) : -stake;
+                        bank_i += pnl;
+                        if (bank_i < 1) { bank_i = 0; ruined = true; }
+                        returns.push(prevBank > 0 ? (bank_i - prevBank) / prevBank : 0);
+                        if (bank_i > peak) peak = bank_i;
+                        const dd = peak > 0 ? (peak - bank_i) / peak : 1;
+                        if (dd > mdd) mdd = dd;
+                        if (bank_i <= bank * 0.10) ruined = true;
+                    }
+                    finalBanks.push(bank_i);
+                    maxDDs.push(mdd);
+                    if (bank_i > bank) profitCount++;
+                    if (bank_i <= bank * 0.10) ruinCount++;
+                    const meanR = returns.length > 0 ? returns.reduce((a, c) => a + c, 0) / returns.length : 0;
+                    const v = returns.length > 0 ? returns.reduce((a, c) => a + Math.pow(c - meanR, 2), 0) / returns.length : 0;
+                    returnVariances.push(v);
+                }
+                finalBanks.sort((a, c) => a - c);
+                maxDDs.sort((a, c) => a - c);
+                const medianBank = finalBanks[Math.floor(NUM_SIMS * 0.5)];
+                const medianDD = maxDDs[Math.floor(NUM_SIMS * 0.5)];
+                const netReturnPct = ((medianBank - bank) / bank) * 100;
+                const avgVar = returnVariances.reduce((a, c) => a + c, 0) / returnVariances.length;
+                results[frac.id] = {
+                    ...frac,
+                    typicalStakePct: frac.isFlat ? (frac.mult * 100) : (effectiveBase * frac.mult * 100),
+                    medianBank, medianDD, netReturnPct, avgVar,
+                    profitPct: (profitCount / NUM_SIMS) * 100,
+                    probRuin: (ruinCount / NUM_SIMS) * 100
+                };
+            });
+
+            // === Render tabla comparativa inline ===
+            const keys = ['k010', 'k025', 'k050', 'k075', 'k100', 'k125', 'flat2'];
+            let html = '';
+            keys.forEach(k => {
+                const item = results[k];
+                const isRec = item.recommended;
+                const isDang = item.dangerous;
+                let rowBg = '';
+                if (isRec) rowBg = 'bg-emerald-950/20 font-bold';
+                else if (isDang) rowBg = 'bg-rose-950/20';
+                let badge = `<span class="text-slate-400 font-bold text-[8px]">${item.role}</span>`;
+                if (isRec) badge = `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-1.5 py-0.5 rounded-full font-black text-[8px]"><i class="fa-solid fa-crown mr-0.5 text-gold-400"></i>${item.role}</span>`;
+                else if (isDang) badge = `<span class="bg-rose-950 text-rose-300 border border-rose-500/40 px-1.5 py-0.5 rounded-full font-black text-[8px]">${item.role}</span>`;
+                const ddClass = item.medianDD > 0.4 ? 'text-rose-400' : (item.medianDD > 0.2 ? 'text-amber-400' : 'text-emerald-400');
+                html += `<tr class="${rowBg}">
+                    <td class="p-1 font-bold ${isRec ? 'text-emerald-300' : (isDang ? 'text-rose-400' : 'text-white')}">${item.label}</td>
+                    <td class="p-1 text-center font-bold text-slate-300">${item.typicalStakePct.toFixed(1)}%</td>
+                    <td class="p-1 text-center font-black ${item.netReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">$${Math.round(item.medianBank).toLocaleString()}</td>
+                    <td class="p-1 text-center font-black ${item.netReturnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${item.netReturnPct >= 0 ? '+' : ''}${item.netReturnPct.toFixed(1)}%</td>
+                    <td class="p-1 text-center font-bold ${ddClass}">${(item.medianDD * 100).toFixed(1)}%</td>
+                    <td class="p-1 text-center font-bold ${item.probRuin > 5 ? 'text-rose-400' : 'text-emerald-400'}">${item.probRuin.toFixed(1)}%</td>
+                    <td class="p-1 text-center">${badge}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            // === Actualizar KPI cards (fila 0.25x recomendada) ===
+            const k025 = results['k025'];
+            if (k025) {
+                const medEl = document.getElementById('quickMcMedianBank');
+                if (medEl) {
+                    medEl.innerText = `$${Math.round(k025.medianBank).toLocaleString()}`;
+                    medEl.className = k025.medianBank >= bank ? "text-[11px] font-black text-emerald-400" : "text-[11px] font-black text-rose-400";
+                }
+                const ddEl = document.getElementById('quickMcMedianDD');
+                if (ddEl) {
+                    const ddPct = k025.medianDD * 100;
+                    ddEl.innerText = `-${ddPct.toFixed(1)}%`;
+                    ddEl.className = ddPct > 35 ? "text-[11px] font-black text-rose-400" : (ddPct > 18 ? "text-[11px] font-black text-amber-400" : "text-[11px] font-black text-emerald-400");
+                }
+                const varEl = document.getElementById('quickMcVariance');
+                if (varEl) varEl.innerText = (k025.avgVar * 1000).toFixed(2);
+                const wpEl = document.getElementById('quickMcWinProbSeries');
+                if (wpEl) {
+                    wpEl.innerText = `${k025.profitPct.toFixed(0)}%`;
+                    wpEl.className = k025.profitPct >= 50 ? "text-[11px] font-black text-emerald-400" : "text-[11px] font-black text-rose-400";
+                }
+            }
+
+            // === Actualizar botones de stake rápido ===
+            const stake010 = Math.max(1, Math.round(bank * effectiveBase * 0.10));
+            const stake025 = Math.max(1, Math.round(bank * effectiveBase * 0.25));
+            const stake050 = Math.max(1, Math.round(bank * effectiveBase * 0.50));
+            const btnsContainer = document.getElementById('quickMcFractionsButtons');
+            if (btnsContainer) {
+                btnsContainer.innerHTML = `
+                    <button type="button" onclick="setBetModalStakeFromMc(${stake010}, '0.10x Conservador')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-slate-400 font-bold">0.10x</span><span class="text-[11px] font-black text-sky-400">$${stake010}</span></button>
+                    <button type="button" onclick="setBetModalStakeFromMc(${stake025}, '0.25x Cuarto Kelly')" class="bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/50 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-emerald-300 font-black">⭐ 0.25x</span><span class="text-[11px] font-black text-emerald-400">$${stake025}</span></button>
+                    <button type="button" onclick="setBetModalStakeFromMc(${stake050}, '0.50x Medio Kelly')" class="bg-slate-900 hover:bg-slate-800 border border-indigo-500/40 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-indigo-300 font-bold">0.50x</span><span class="text-[11px] font-black text-indigo-400">$${stake050}</span></button>
+                `;
+            }
+
+            const evNotice = document.getElementById('betModalMcQuickEvNotice');
+            if (evNotice) {
+                if (fullKelly <= 0.0001) evNotice.classList.remove('hidden');
+                else evNotice.classList.add('hidden');
+            }
         }
 
         function saveBetToLog() {
@@ -4276,74 +4481,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             toggleKellyMonteCarloModal(true, false);
         }
 
-        function runBetModalQuickMcSimulation(showToastMsg = false) {
-            const panel = document.getElementById('betModalMcQuickPanel');
-            if (!panel) return;
-            panel.classList.remove('hidden');
-            const availBank = getActiveAvailableBankroll();
-            const probPct = Math.min(99, Math.max(1, parseFloat(document.getElementById('logProb').value) || 50));
-            const prob = probPct / 100;
-            const odds = Math.max(1.01, parseFloat(document.getElementById('logBookieOdds').value) || 2.0);
-            const currentStake = Math.max(1, parseFloat(document.getElementById('logStake').value) || 20);
-            const b = odds - 1;
-            const ev = (prob * odds) - 1;
-            const pureFullKelly = b > 0 ? Math.max(0, (prob * b - (1 - prob)) / b) : 0;
-            const evNotice = document.getElementById('betModalMcQuickEvNotice');
-            if (evNotice) { if (pureFullKelly <= 0.0001) evNotice.classList.remove('hidden'); else evNotice.classList.add('hidden'); }
-            const sims = 400, serieBets = 100;
-            const stakeFractionCurrent = Math.min(0.50, Math.max(0.002, currentStake / availBank));
-            const finalBanks = [], maxDDs = [], variances = [];
-            let profitCount = 0;
-            for (let s = 0; s < sims; s++) {
-                let bank = availBank, peak = availBank, mdd = 0;
-                const rets = [];
-                for (let t = 0; t < serieBets; t++) {
-                    const st = Math.max(1, bank * stakeFractionCurrent);
-                    const win = Math.random() < prob;
-                    const pnl = win ? st * b : -st;
-                    const prev = bank;
-                    bank = Math.max(0.01, bank + pnl);
-                    rets.push((bank - prev) / prev);
-                    if (bank > peak) peak = bank;
-                    const dd = (peak - bank) / peak;
-                    if (dd > mdd) mdd = dd;
-                }
-                finalBanks.push(bank); maxDDs.push(mdd);
-                if (bank > availBank) profitCount++;
-                const mRet = rets.reduce((a, c) => a + c, 0) / rets.length;
-                variances.push(rets.reduce((a, c) => a + Math.pow(c - mRet, 2), 0) / rets.length);
-            }
-            finalBanks.sort((a, c) => a - c); maxDDs.sort((a, c) => a - c);
-            const medianBank = finalBanks[Math.floor(sims * 0.5)];
-            const medianDD = maxDDs[Math.floor(sims * 0.5)] * 100;
-            const avgVar = (variances.reduce((a, c) => a + c, 0) / sims) * 1000;
-            const winSeriesPct = (profitCount / sims) * 100;
-            const medEl = document.getElementById('quickMcMedianBank');
-            if (medEl) { medEl.innerText = `$${Math.round(medianBank).toLocaleString()}`; medEl.className = medianBank >= availBank ? "text-[11px] font-black text-emerald-400" : "text-[11px] font-black text-rose-400"; }
-            const ddEl = document.getElementById('quickMcMedianDD');
-            if (ddEl) { ddEl.innerText = `-${medianDD.toFixed(1)}%`; ddEl.className = medianDD > 35 ? "text-[11px] font-black text-rose-400" : (medianDD > 18 ? "text-[11px] font-black text-amber-400" : "text-[11px] font-black text-emerald-400"); }
-            const varEl = document.getElementById('quickMcVariance');
-            if (varEl) varEl.innerText = avgVar.toFixed(2);
-            const wpEl = document.getElementById('quickMcWinProbSeries');
-            if (wpEl) { wpEl.innerText = `${winSeriesPct.toFixed(0)}%`; wpEl.className = winSeriesPct >= 50 ? "text-[11px] font-black text-emerald-400" : "text-[11px] font-black text-rose-400"; }
-            const baseKellyForButtons = pureFullKelly > 0 ? pureFullKelly : Math.max(0.04, (parseFloat(document.getElementById('globalStakePct').value) || 2.0) / 100 * 4);
-            const stake010 = Math.max(1, Math.round(availBank * baseKellyForButtons * 0.10));
-            const stake025 = Math.max(1, Math.round(availBank * baseKellyForButtons * 0.25));
-            const stake050 = Math.max(1, Math.round(availBank * baseKellyForButtons * 0.50));
-            const btnsContainer = document.getElementById('quickMcFractionsButtons');
-            if (btnsContainer) {
-                btnsContainer.innerHTML = `
-                    <button type="button" onclick="setBetModalStakeFromMc(${stake010}, '0.10x Conservador')" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-slate-400 font-bold">0.10x</span><span class="text-[11px] font-black text-sky-400">$${stake010}</span></button>
-                    <button type="button" onclick="setBetModalStakeFromMc(${stake025}, '0.25x Cuarto Kelly')" class="bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-500/50 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-emerald-300 font-black">⭐ 0.25x</span><span class="text-[11px] font-black text-emerald-400">$${stake025}</span></button>
-                    <button type="button" onclick="setBetModalStakeFromMc(${stake050}, '0.50x Medio Kelly')" class="bg-slate-900 hover:bg-slate-800 border border-indigo-500/40 rounded-lg p-1.5 text-center active:scale-95"><span class="block text-[8px] text-indigo-300 font-bold">0.50x</span><span class="text-[11px] font-black text-indigo-400">$${stake050}</span></button>
-                `;
-            }
-            if (showToastMsg) showToast(`MC: Caja Mediana $${Math.round(medianBank)} | DD -${medianDD.toFixed(1)}%`);
-        }
-
         function setBetModalStakeFromMc(amount, label) {
             const stakeInput = document.getElementById('logStake');
-            if (stakeInput) { stakeInput.value = Math.max(1, Math.round(amount)); runBetModalQuickMcSimulation(false); showToast(`Stake $${Math.round(amount)} (${label})`); }
+            if (stakeInput) { stakeInput.value = Math.max(1, Math.round(amount)); showToast(`Stake $${Math.round(amount)} (${label})`); }
         }
 
         function bumpBetModalBookieOddsForValue() {
@@ -4352,7 +4492,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const valueOdds = Math.max(1.05, +(fairOdds * 1.06).toFixed(2));
             document.getElementById('logBookieOdds').value = valueOdds.toFixed(2);
             calculateLogEv();
-            runBetModalQuickMcSimulation(true);
+            scheduleBetModalInlineMc();
         }
 
         function openFullMcModalFromQuickPanel() { openKellyMonteCarloFromBetModal(true); }
@@ -4361,7 +4501,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const prob = Math.min(99, Math.max(1, parseFloat(document.getElementById('logProb').value) || 50));
             const odds = Math.max(1.01, parseFloat(document.getElementById('logBookieOdds').value) || 2.0);
             const availBank = Math.round(getActiveAvailableBankroll());
-            runBetModalQuickMcSimulation(false);
             const bankInput = document.getElementById('kmcInitialBankroll');
             if (bankInput) bankInput.value = availBank;
             document.getElementById('kmcWinProb').value = prob.toFixed(1);
@@ -4401,7 +4540,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (logStakeEl) logStakeEl.value = stakeDollars;
             document.getElementById('globalStakePct').value = Math.max(0.5, Math.min(10, parseFloat(stakePct))).toFixed(1);
             updateTrackerMetrics();
-            runBetModalQuickMcSimulation(false);
             toggleKellyMonteCarloModal(false);
             showToast(`Stake ${mult}x Kelly ($${stakeDollars}) aplicado.`);
         }
@@ -4783,7 +4921,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 const recommendedDollars = Math.max(1, Math.round(availBank * (suggestedPct / 100)));
                 const stakeInput = document.getElementById('logStake');
                 if (stakeInput) stakeInput.value = recommendedDollars;
-                runBetModalQuickMcSimulation(false);
                 showToast(`¡Stake ($${recommendedDollars} / ${suggestedPct.toFixed(1)}%) aplicado!`);
             } else showToast(`¡Stake (${suggestedPct.toFixed(1)}%) aplicado!`);
             toggleKellyMonteCarloModal(false);
@@ -5083,7 +5220,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const m = document.getElementById('trackerModal');
             if (show) {
                 m.classList.remove('hidden');
-                // ✅ resize charts después de mostrar el modal
+                // Resize charts después de mostrar el modal
                 setTimeout(() => {
                     try {
                         if (pnlChartInstance) pnlChartInstance.resize();
