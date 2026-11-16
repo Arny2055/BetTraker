@@ -6418,100 +6418,112 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 (function() {
     'use strict';
 
-    const STORAGE_KEY         = 'betags_autocalib_v2';
-    const MIN_SAMPLES         = 15;
-    const MIN_MARKET_SAMPLES  = 25;
-    const EPS                 = 1e-9;
-    const RIDGE_LAMBDA        = 0.02;
+    const STORAGE_KEY        = 'betags_autocalib_v3';
+    const MIN_SAMPLES        = 30;
+    const MIN_MARKET_SAMPLES = 25;
+    const EPS                = 1e-9;
+    const RIDGE_LAMBDA       = 0.02;
 
     let state = {
         enabled: false,
         global: { a: 0, b: 1, samples: 0 },
         byMarket: {},
         metrics: null,
-        lastTrained: null
+        lastTrained: null,
+        dataQuality: null
     };
     let applying = false;
 
     // ─── PERSISTENCIA ───
     function loadState() {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) state = Object.assign(state, JSON.parse(raw));
-        } catch (e) {}
+        try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch(e){}
     }
     function saveState() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
     }
 
-    // ─── ACCESO AL GLOBAL currentCalculatedProbs (fix bug #1) ───
+    // ─── GLOBALES ───
     function getGlobalProbs() {
         if (window.currentCalculatedProbs) return window.currentCalculatedProbs;
-        try {
-            return (0, eval)('typeof currentCalculatedProbs !== "undefined" ? currentCalculatedProbs : null');
-        } catch (e) { return null; }
+        try { return (0, eval)('typeof currentCalculatedProbs !== "undefined" ? currentCalculatedProbs : null'); } catch(e) { return null; }
     }
-
-    // ─── ACCESO AL GLOBAL calculatePoisson (fix bug #2) ───
     function getCalculatePoisson() {
         if (typeof window.calculatePoisson === 'function') return window.calculatePoisson;
-        try {
-            return (0, eval)('typeof calculatePoisson === "function" ? calculatePoisson : null');
-        } catch (e) { return null; }
+        try { return (0, eval)('typeof calculatePoisson === "function" ? calculatePoisson : null'); } catch(e) { return null; }
     }
 
     // ─── MATEMÁTICA ───
-    function logit(p) { p = Math.max(EPS, Math.min(1 - EPS, p)); return Math.log(p / (1 - p)); }
-    function sigmoid(z) { return 1 / (1 + Math.exp(-Math.max(-50, Math.min(50, z)))); }
+    function logit(p)   { p = Math.max(EPS, Math.min(1-EPS, p)); return Math.log(p/(1-p)); }
+    function sigmoid(z) { return 1/(1+Math.exp(-Math.max(-50, Math.min(50, z)))); }
     function calibProb(p, a, b) { return sigmoid(a + b * logit(p)); }
 
     function brier(samples, a, b) {
-        let s = 0;
-        for (const x of samples) s += (calibProb(x.p, a, b) - x.y) ** 2;
+        let s = 0; for (const x of samples) s += (calibProb(x.p, a, b) - x.y) ** 2;
         return s / samples.length;
     }
     function logLoss(samples, a, b) {
         let s = 0;
         for (const x of samples) {
-            const pc = Math.max(EPS, Math.min(1 - EPS, calibProb(x.p, a, b)));
-            s += -(x.y * Math.log(pc) + (1 - x.y) * Math.log(1 - pc));
+            const pc = Math.max(EPS, Math.min(1-EPS, calibProb(x.p, a, b)));
+            s += -(x.y * Math.log(pc) + (1-x.y) * Math.log(1-pc));
         }
         return s / samples.length;
     }
 
     function fitCalibration(samples) {
-        if (!samples || samples.length < 5) return { a: 0, b: 1, samples: samples ? samples.length : 0 };
-        let a = 0, b = 1;
+        if (!samples || samples.length < 5) return { a: 0, b: 1, samples: samples ? samples.length : 0, hitBound: false };
+        let a = 0, b = 1, hitBound = false;
         for (let iter = 0; iter < 30; iter++) {
-            let g0 = 0, g1 = 0, h00 = 0, h01 = 0, h11 = 0;
+            let g0=0, g1=0, h00=0, h01=0, h11=0;
             for (const x of samples) {
                 const lp = logit(x.p);
-                const pc = sigmoid(a + b * lp);
+                const pc = sigmoid(a + b*lp);
                 const err = pc - x.y;
-                const w = Math.max(1e-4, pc * (1 - pc));
-                g0 += err; g1 += err * lp;
-                h00 += w;  h01 += w * lp; h11 += w * lp * lp;
+                const w = Math.max(1e-4, pc*(1-pc));
+                g0+=err; g1+=err*lp;
+                h00+=w;  h01+=w*lp; h11+=w*lp*lp;
             }
             const n = samples.length;
-            g0 /= n; g1 /= n;
-            h00 = h00 / n + RIDGE_LAMBDA;
+            g0/=n; g1/=n;
+            h00 = h00/n + RIDGE_LAMBDA;
             h01 /= n;
-            h11 = h11 / n + RIDGE_LAMBDA;
-            const det = h00 * h11 - h01 * h01;
+            h11 = h11/n + RIDGE_LAMBDA;
+            const det = h00*h11 - h01*h01;
             if (Math.abs(det) < 1e-10) break;
-            const da = (h11 * g0 - h01 * g1) / det;
-            const db = (-h01 * g0 + h00 * g1) / det;
-            const sA = Math.max(-0.5, Math.min(0.5, da));
-            const sB = Math.max(-0.5, Math.min(0.5, db));
+            const da = ( h11*g0 - h01*g1)/det;
+            const db = (-h01*g0 + h00*g1)/det;
+            const sA = Math.max(-0.3, Math.min(0.3, da));
+            const sB = Math.max(-0.3, Math.min(0.3, db));
             a -= sA; b -= sB;
             if (Math.abs(sA) < 1e-7 && Math.abs(sB) < 1e-7) break;
         }
+        const aRaw = a, bRaw = b;
         a = Math.max(-1.5, Math.min(1.5, a));
-        b = Math.max(0.4, Math.min(2.5, b));
-        return { a, b, samples: samples.length };
+        b = Math.max(0.55, Math.min(1.9, b));
+        hitBound = (a !== aRaw) || (b !== bRaw);
+        return { a, b, samples: samples.length, hitBound };
     }
 
-    // ─── ESCANEO localStorage (recursivo) ───
+    // ─── CLAVE DE DEDUPLICACIÓN ESTRICTA ───
+    // Construye un hash estable desde los campos más identificativos
+    function betFingerprint(bet) {
+        const parts = [
+            String(bet.id ?? bet.betId ?? bet.uuid ?? bet.key ?? ''),
+            String(bet.date ?? bet.fecha ?? bet.createdAt ?? bet.created_at ?? ''),
+            String(bet.match ?? bet.partido ?? bet.event ?? bet.game ?? ''),
+            String(bet.selection ?? bet.seleccion ?? bet.pick ?? bet.side ?? bet.opcion ?? ''),
+            String(bet.market ?? bet.mercado ?? bet.marketType ?? bet.tipo ?? ''),
+            String(bet.stake ?? bet.monto ?? bet.amount ?? bet.wager ?? ''),
+            String(bet.odds ?? bet.cuota ?? bet.odd ?? '')
+        ];
+        // Si al menos 3 campos tienen valor, usar fingerprint
+        const populated = parts.filter(p => p && p !== 'undefined' && p !== 'null' && p.length > 0);
+        if (populated.length >= 3) return populated.join('|').toLowerCase();
+        // Fallback: JSON completo (no slicing)
+        try { return JSON.stringify(bet).toLowerCase(); } catch(e) { return ''; }
+    }
+
+    // ─── EXTRACCIÓN ───
     function looksLikeBet(o) {
         if (!o || typeof o !== 'object' || Array.isArray(o)) return false;
         const keys = Object.keys(o).map(k => k.toLowerCase());
@@ -6519,25 +6531,33 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         const hasStatus = keys.some(k => ['status','result','outcome','estado','resul','resultado'].includes(k));
         return hasProb && hasStatus;
     }
-    function scanBets(node, out, seen, depth) {
+
+    function scanBets(node, out, seen, depth, source) {
         if (depth > 6 || !node) return;
         if (Array.isArray(node)) {
             for (const item of node) {
                 if (item && typeof item === 'object') {
                     if (looksLikeBet(item)) {
-                        const k = JSON.stringify(item).slice(0, 250);
-                        if (!seen.has(k)) { seen.add(k); out.push(item); }
-                    } else scanBets(item, out, seen, depth + 1);
+                        const fp = betFingerprint(item);
+                        if (fp && !seen.has(fp)) {
+                            seen.add(fp);
+                            item.__source = source;
+                            out.push(item);
+                        }
+                    } else {
+                        scanBets(item, out, seen, depth+1, source);
+                    }
                 }
             }
         } else if (typeof node === 'object') {
             for (const k in node) {
-                if (Object.prototype.hasOwnProperty.call(node, k)) scanBets(node[k], out, seen, depth + 1);
+                if (Object.prototype.hasOwnProperty.call(node, k)) scanBets(node[k], out, seen, depth+1, source);
             }
         }
     }
-    function findBetsArray() {
-        const all = [], seen = new Set();
+
+    function findBets() {
+        const all = [], seen = new Set(), sources = {};
         let keysScanned = 0;
         for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
@@ -6546,10 +6566,13 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             try {
                 const v = localStorage.getItem(k);
                 if (!v) continue;
-                scanBets(JSON.parse(v), all, seen, 0);
-            } catch (e) {}
+                const before = all.length;
+                scanBets(JSON.parse(v), all, seen, 0, k);
+                const added = all.length - before;
+                if (added > 0) sources[k] = added;
+            } catch(e) {}
         }
-        return { bets: all, keysScanned };
+        return { bets: all, keysScanned, sources };
     }
 
     function extractProb(bet) {
@@ -6557,7 +6580,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         for (const c of cands) {
             if (bet[c] !== undefined && bet[c] !== null && bet[c] !== '') {
                 const v = parseFloat(bet[c]);
-                if (!isNaN(v) && v > 0 && v < 100) return v > 1 ? v / 100 : v;
+                if (!isNaN(v) && v > 0 && v < 100) return v > 1 ? v/100 : v;
             }
         }
         return null;
@@ -6570,7 +6593,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         return null;
     }
     function extractMarketKey(bet) {
-        const m = String(bet.market ?? bet.marketType ?? bet.tipoMercado ?? bet.tipo ?? '').toLowerCase();
+        const m = String(bet.market ?? bet.marketType ?? bet.tipoMercado ?? bet.tipo ?? bet.mercado ?? '').toLowerCase();
         const sel = String(bet.selection ?? bet.side ?? bet.pick ?? bet.seleccion ?? bet.opcion ?? '').toLowerCase();
         if (/over|under|goles|o\/u|total/.test(m) || /over 2\.5|under 2\.5/.test(sel)) {
             if (/over|más|mas|\+/.test(sel)) return 'over25';
@@ -6588,33 +6611,91 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
     }
 
     function buildSamples() {
-        const { bets, keysScanned } = findBetsArray();
+        const { bets, keysScanned, sources } = findBets();
         const samples = [], byMarket = {};
+        let skippedNoProb = 0, skippedNoOutcome = 0, skippedBoth = 0;
         for (const bet of bets) {
             const p = extractProb(bet);
             const y = extractOutcome(bet);
-            if (p === null || y === null) continue;
+            if (p === null && y === null) { skippedBoth++; continue; }
+            if (p === null) { skippedNoProb++; continue; }
+            if (y === null) { skippedNoOutcome++; continue; }
             const market = extractMarketKey(bet);
             samples.push({ p, y, market });
             byMarket[market] = (byMarket[market] || 0) + 1;
         }
-        return { samples, bets, keysScanned, byMarket };
+        return { samples, bets, keysScanned, sources, byMarket, skippedNoProb, skippedNoOutcome, skippedBoth };
+    }
+
+    // ─── SANITY CHECKS ───
+    function runSanityChecks(samples) {
+        const issues = [];
+        if (samples.length === 0) return issues;
+        const n = samples.length;
+        const wins = samples.filter(s => s.y === 1).length;
+        const avgP = samples.reduce((a, s) => a + s.p, 0) / n;
+        const actualWR = wins / n;
+        const divergence = Math.abs(avgP - actualWR);
+
+        // Check 1: divergencia global
+        if (divergence > 0.10) {
+            issues.push({
+                level: 'warn',
+                msg: `Prob. media (${(avgP*100).toFixed(1)}%) vs WR real (${(actualWR*100).toFixed(1)}%) divergen ${(divergence*100).toFixed(1)} pp. Revisa etiquetado won/lost.`
+            });
+        }
+
+        // Check 2: extremos invertidos
+        const lowP = samples.filter(s => s.p < 0.35);
+        const lowPWins = lowP.filter(s => s.y === 1).length;
+        if (lowP.length >= 10 && lowPWins / lowP.length > 0.45) {
+            issues.push({
+                level: 'warn',
+                msg: `${lowPWins}/${lowP.length} apuestas con prob <35% ganaron (${((lowPWins/lowP.length)*100).toFixed(0)}%). Señal de outcomes invertidos o sesgo de registro.`
+            });
+        }
+
+        const highP = samples.filter(s => s.p > 0.65);
+        const highPLosses = highP.filter(s => s.y === 0).length;
+        if (highP.length >= 10 && highPLosses / highP.length > 0.55) {
+            issues.push({
+                level: 'warn',
+                msg: `${highPLosses}/${highP.length} apuestas con prob >65% perdieron (${((highPLosses/highP.length)*100).toFixed(0)}%). Verifica que el campo "prob" sea del MODELO, no de la cuota implícita.`
+            });
+        }
+
+        // Check 3: si el campo prob parece ser cuota implícita (1/odds)
+        const oddsImpliedMatches = samples.filter(s => {
+            const bet = s.__bet;
+            return false; // reservado
+        }).length;
+
+        return issues;
     }
 
     // ─── ENTRENAMIENTO ───
     function trainCalibration() {
-        const { samples, bets, keysScanned, byMarket } = buildSamples();
-        const diagnostic = { keysScanned, betsFound: bets.length, samplesValid: samples.length, byMarket };
+        const built = buildSamples();
+        const { samples } = built;
+        const diagnostic = {
+            keysScanned: built.keysScanned, sources: built.sources,
+            betsFound: built.bets.length, samplesValid: samples.length,
+            skippedNoProb: built.skippedNoProb, skippedNoOutcome: built.skippedNoOutcome, skippedBoth: built.skippedBoth,
+            byMarket: built.byMarket
+        };
         if (samples.length < MIN_SAMPLES) {
-            return { ok: false, msg: `${samples.length} válidas de ${bets.length} detectadas (mín ${MIN_SAMPLES}).`, diagnostic };
+            return { ok: false, msg: `${samples.length} válidas de ${built.bets.length} detectadas (mín ${MIN_SAMPLES}).`, diagnostic };
         }
+
+        const sanity = runSanityChecks(samples);
+
         state.global = fitCalibration(samples);
         state.byMarket = {};
         const groups = {};
         for (const s of samples) (groups[s.market] ||= []).push(s);
         for (const mk in groups) if (groups[mk].length >= MIN_MARKET_SAMPLES) state.byMarket[mk] = fitCalibration(groups[mk]);
 
-        const bBefore = brier(samples, 0, 1),  bAfter = brier(samples, state.global.a, state.global.b);
+        const bBefore = brier(samples, 0, 1),   bAfter = brier(samples, state.global.a, state.global.b);
         const lBefore = logLoss(samples, 0, 1), lAfter = logLoss(samples, state.global.a, state.global.b);
 
         state.metrics = {
@@ -6624,11 +6705,20 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             logLossImprov: ((lBefore - lAfter) / lBefore) * 100,
             totalSamples: samples.length,
             marketsCalibrated: Object.keys(state.byMarket).length,
-            byMarket, keysScanned, betsFound: bets.length
+            uniqueBets: built.bets.length,
+            sources: built.sources,
+            sanityIssues: sanity,
+            globalHitBound: state.global.hitBound
+        };
+        state.dataQuality = {
+            samples: samples.length,
+            uniqueBets: built.bets.length,
+            sources: built.sources,
+            sanity
         };
         state.lastTrained = new Date().toISOString();
         saveState();
-        return { ok: true, samples, diagnostic };
+        return { ok: true, samples, diagnostic, sanity };
     }
 
     // ─── APLICAR ───
@@ -6672,8 +6762,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
     function renderProbDisplays(cp, o) {
         const setEl = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt; };
         const setW  = (id, p)   => { const e = document.getElementById(id); if (e) e.style.width = p + '%'; };
-        const f = (v) => ((v || 0) * 100).toFixed(1) + '%';
-        const d = (v) => '@' + (1 / Math.max(v || EPS, EPS)).toFixed(2);
+        const f = v => ((v||0)*100).toFixed(1) + '%';
+        const d = v => '@' + (1/Math.max(v||EPS, EPS)).toFixed(2);
 
         setEl('pctOver25', f(cp.probOver25));   setEl('oddsOver25', d(cp.probOver25));   setW('barOver25', (cp.probOver25*100).toFixed(1));
         setEl('pctUnder25', f(cp.probUnder25)); setEl('oddsUnder25', d(cp.probUnder25)); setW('barUnder25', (cp.probUnder25*100).toFixed(1));
@@ -6684,12 +6774,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         setEl('pct1x2Away', f(cp.probAwayWin)); setEl('odds1x2Away', d(cp.probAwayWin));
 
         if (o) {
-            markCalib('pctOver25', cp.probOver25, o.probOver25);
+            markCalib('pctOver25',  cp.probOver25,  o.probOver25);
             markCalib('pctUnder25', cp.probUnder25, o.probUnder25);
             markCalib('pctBttsYes', cp.probBttsYes, o.probBttsYes);
-            markCalib('pctBttsNo', cp.probBttsNo, o.probBttsNo);
+            markCalib('pctBttsNo',  cp.probBttsNo,  o.probBttsNo);
             markCalib('pct1x2Home', cp.probHomeWin, o.probHomeWin);
-            markCalib('pct1x2Draw', cp.probDraw, o.probDraw);
+            markCalib('pct1x2Draw', cp.probDraw,    o.probDraw);
             markCalib('pct1x2Away', cp.probAwayWin, o.probAwayWin);
         }
     }
@@ -6697,8 +6787,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
     function markCalib(id, pNew, pOld) {
         const el = document.getElementById(id);
         if (!el) return;
-        const prev = el.querySelector('.calib-badge');
-        if (prev) prev.remove();
+        const prev = el.querySelector('.calib-badge'); if (prev) prev.remove();
         if (!state.enabled || !pOld) return;
         const diff = (pNew - pOld) * 100;
         if (Math.abs(diff) < 0.2) return;
@@ -6709,37 +6798,29 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         el.title = `Base: ${(pOld*100).toFixed(1)}% → Calibrada: ${(pNew*100).toFixed(1)}%`;
     }
 
-    // ─── HOOK DEL BOTÓN "CALCULAR" (fix bug #2, más robusto que hookear la función) ───
+    // ─── HOOK BOTÓN CALCULAR ───
     let btnWrapped = false;
     function wrapCalculateButton() {
         if (btnWrapped) return true;
         const btn = document.querySelector('[onclick*="calculatePoisson"]');
         if (!btn) return false;
-        const originalOnclick = btn.onclick;
+        const orig = btn.onclick;
         btn.onclick = function(e) {
             const cp = getGlobalProbs();
             if (cp) delete cp.__originals;
             try {
-                if (typeof originalOnclick === 'function') originalOnclick.call(this, e);
-                else {
-                    const fn = getCalculatePoisson();
-                    if (fn) fn.call(this);
-                }
-            } catch (err) { console.error('[AutoCalib] calc error', err); }
-            if (state.enabled) {
-                try { applyToUI(); } catch (err) { console.warn('[AutoCalib] apply error', err); }
-            }
+                if (typeof orig === 'function') orig.call(this, e);
+                else { const fn = getCalculatePoisson(); if (fn) fn.call(this); }
+            } catch(err) { console.error('[AutoCalib] calc', err); }
+            if (state.enabled) { try { applyToUI(); } catch(err) { console.warn('[AutoCalib] apply', err); } }
         };
         btnWrapped = true;
-        console.log('[AutoCalib] ✅ Botón "Calcular" hookeado');
         return true;
     }
-
-    function initHooks(retries) {
-        retries = retries || 0;
+    function initHooks(r) {
+        r = r || 0;
         if (wrapCalculateButton()) return;
-        if (retries < 20) setTimeout(() => initHooks(retries + 1), 500);
-        else console.warn('[AutoCalib] ⚠️ No se encontró botón Calcular');
+        if (r < 20) setTimeout(() => initHooks(r+1), 500);
     }
 
     // ─── UI ───
@@ -6757,29 +6838,19 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         panel.innerHTML = `
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md">
-                        <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
-                    </div>
-                    <div>
-                        <h4 class="text-xs font-black text-white">Auto-Calibración Adaptativa</h4>
-                        <p class="text-[9px] text-slate-400">Aprende de tu historial real de apuestas</p>
-                    </div>
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md"><i class="fa-solid fa-wand-magic-sparkles text-sm"></i></div>
+                    <div><h4 class="text-xs font-black text-white">Auto-Calibración Adaptativa</h4><p class="text-[9px] text-slate-400">Entrena con deduplicación estricta</p></div>
                 </div>
                 <button id="autoCalibToggle" onclick="window.__autoCalib.toggle()" class="px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95">OFF</button>
             </div>
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="window.__autoCalib.train()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-black text-[11px] py-2 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-                    <i class="fa-solid fa-brain"></i> Entrenar
-                </button>
-                <button onclick="window.__autoCalib.diagnose()" class="bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 font-bold text-[11px] py-2 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-                    <i class="fa-solid fa-magnifying-glass"></i> Diagnóstico
-                </button>
+                <button onclick="window.__autoCalib.train()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-black text-[11px] py-2 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-1.5 active:scale-95"><i class="fa-solid fa-brain"></i> Entrenar</button>
+                <button onclick="window.__autoCalib.diagnose()" class="bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 font-bold text-[11px] py-2 rounded-xl flex items-center justify-center gap-1.5 active:scale-95"><i class="fa-solid fa-magnifying-glass"></i> Diagnóstico</button>
             </div>
-            <div id="autoCalibStatus" class="text-[10px] text-slate-300 bg-slate-950/70 p-2 rounded-xl border border-slate-800 leading-relaxed">
-                <div class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-circle-info"></i><span>Entrena con tu historial cerrado para calibrar.</span></div>
-            </div>
+            <div id="autoCalibStatus" class="text-[10px] text-slate-300 bg-slate-950/70 p-2 rounded-xl border border-slate-800 leading-relaxed"><div class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-circle-info"></i><span>Entrena para calibrar con tu historial.</span></div></div>
+            <div id="autoCalibQuality" class="hidden bg-slate-950/80 p-2 rounded-xl border border-amber-500/40 space-y-1"></div>
             <div id="autoCalibPreview" class="hidden bg-slate-950/80 p-2 rounded-xl border border-indigo-500/30 space-y-1">
-                <div class="text-[9px] uppercase font-black text-indigo-300">Vista previa: Prob. base → calibrada</div>
+                <div class="text-[9px] uppercase font-black text-indigo-300">Vista previa (prob. base → calibrada)</div>
                 <div id="autoCalibPreviewTable" class="grid grid-cols-2 gap-1 text-[10px]"></div>
             </div>
             <div id="autoCalibMetrics" class="hidden space-y-2">
@@ -6790,40 +6861,33 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     <div class="bg-slate-950/80 p-2 rounded-lg border border-yellow-500/30 text-center"><span class="block text-[8px] uppercase font-bold text-yellow-300">Mercados</span><span class="text-xs font-black text-yellow-400" id="acMarkets">0</span></div>
                 </div>
                 <div class="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 text-[10px] space-y-1">
+                    <div class="flex justify-between"><span class="text-slate-400">Brier antes → después:</span><span id="acBrierPair" class="font-mono text-white">- → -</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">Parámetro <b class="text-white">a</b>:</span><span id="acParamA" class="font-mono text-white">0.0000</span></div>
                     <div class="flex justify-between"><span class="text-slate-400">Parámetro <b class="text-white">b</b>:</span><span id="acParamB" class="font-mono text-white">1.0000</span></div>
                     <div id="acInterpretation" class="text-[9px] text-indigo-300 italic pt-1.5 border-t border-slate-800"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="window.__autoCalib.recalc()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] py-1.5 rounded-lg flex items-center justify-center gap-1 active:scale-95">
-                        <i class="fa-solid fa-rotate"></i> Recalcular
-                    </button>
-                    <button onclick="window.__autoCalib.reset()" class="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[10px] py-1.5 rounded-lg flex items-center justify-center gap-1 active:scale-95">
-                        <i class="fa-solid fa-rotate-left"></i> Resetear
-                    </button>
+                    <button onclick="window.__autoCalib.recalc()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] py-1.5 rounded-lg flex items-center justify-center gap-1 active:scale-95"><i class="fa-solid fa-rotate"></i> Recalcular</button>
+                    <button onclick="window.__autoCalib.reset()" class="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[10px] py-1.5 rounded-lg flex items-center justify-center gap-1 active:scale-95"><i class="fa-solid fa-rotate-left"></i> Resetear</button>
                 </div>
             </div>
         `;
         scroll.insertBefore(panel, scroll.firstChild);
         updateToggleUI();
-        if (state.metrics) { updateMetricsUI(); updateStatusUI(`Modelo cargado (${state.metrics.totalSamples} apuestas).`, 'info'); }
+        if (state.metrics) { updateMetricsUI(); updateQualityUI(); updateStatusUI(`Modelo cargado (${state.metrics.totalSamples} muestras).`, 'info'); }
     }
 
     function updateToggleUI() {
-        const btn = document.getElementById('autoCalibToggle');
-        if (!btn) return;
+        const btn = document.getElementById('autoCalibToggle'); if (!btn) return;
         btn.textContent = state.enabled ? 'ON ✓' : 'OFF';
-        btn.className = 'px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95 ' +
-            (state.enabled ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700');
+        btn.className = 'px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95 ' + (state.enabled ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700');
     }
 
     function updatePreviewUI() {
         const box = document.getElementById('autoCalibPreview');
         const tbl = document.getElementById('autoCalibPreviewTable');
         if (!box || !tbl) return;
-        if (!state.metrics || (Math.abs(state.global.a) < 1e-6 && Math.abs(state.global.b - 1) < 1e-6)) {
-            box.classList.add('hidden'); return;
-        }
+        if (!state.metrics || (Math.abs(state.global.a) < 1e-6 && Math.abs(state.global.b - 1) < 1e-6)) { box.classList.add('hidden'); return; }
         box.classList.remove('hidden');
         const tests = [0.30, 0.50, 0.65, 0.80];
         tbl.innerHTML = tests.map(p => {
@@ -6835,13 +6899,13 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
     }
 
     function updateMetricsUI() {
-        const box = document.getElementById('autoCalibMetrics');
-        if (!box || !state.metrics) return;
+        const box = document.getElementById('autoCalibMetrics'); if (!box || !state.metrics) return;
         box.classList.remove('hidden');
         document.getElementById('acSamples').textContent = state.metrics.totalSamples;
         document.getElementById('acBrierImprov').textContent = (state.metrics.brierImprov >= 0 ? '+' : '') + state.metrics.brierImprov.toFixed(1) + '%';
         document.getElementById('acLogLossImprov').textContent = (state.metrics.logLossImprov >= 0 ? '+' : '') + state.metrics.logLossImprov.toFixed(1) + '%';
         document.getElementById('acMarkets').textContent = state.metrics.marketsCalibrated;
+        document.getElementById('acBrierPair').textContent = `${state.metrics.brierBefore.toFixed(4)} → ${state.metrics.brierAfter.toFixed(4)}`;
         document.getElementById('acParamA').textContent = state.global.a.toFixed(4);
         document.getElementById('acParamB').textContent = state.global.b.toFixed(4);
         const b = state.global.b, a = state.global.a;
@@ -6850,13 +6914,31 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         else if (b > 1.1) txt = '📈 Infraconfiado → amplifica probs';
         else txt = '✅ Confianza bien calibrada';
         if (Math.abs(a) > 0.15) txt += ' | ' + (a < 0 ? 'Sobreestima' : 'Subestima');
+        if (state.global.hitBound) txt += ' | 🚨 PARÁMETRO EN BOUND — datos sospechosos';
         document.getElementById('acInterpretation').textContent = txt;
         updatePreviewUI();
     }
 
+    function updateQualityUI() {
+        const box = document.getElementById('autoCalibQuality'); if (!box || !state.dataQuality) return;
+        const issues = state.dataQuality.sanity || [];
+        const n = state.dataQuality.samples;
+        const uniq = state.dataQuality.uniqueBets;
+        const isDup = n !== uniq;
+        if (!isDup && issues.length === 0) { box.classList.add('hidden'); return; }
+        box.classList.remove('hidden');
+        let html = '';
+        if (isDup) {
+            html += `<div class="flex items-start gap-1.5 text-rose-300 text-[10px]"><i class="fa-solid fa-copy text-rose-400 mt-0.5"></i><span><b>Duplicados detectados:</b> ${uniq} apuestas únicas → ${n} muestras. Revisa si el mismo bet vive en varias keys de localStorage.</span></div>`;
+        }
+        for (const iss of issues) {
+            html += `<div class="flex items-start gap-1.5 text-amber-300 text-[10px]"><i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5"></i><span>${iss.msg}</span></div>`;
+        }
+        box.innerHTML = html;
+    }
+
     function updateStatusUI(msg, type) {
-        const el = document.getElementById('autoCalibStatus');
-        if (!el) return;
+        const el = document.getElementById('autoCalibStatus'); if (!el) return;
         const cls = type === 'error' ? 'text-rose-400' : type === 'success' ? 'text-emerald-400' : 'text-slate-400';
         const icon = type === 'error' ? 'triangle-exclamation' : type === 'success' ? 'circle-check' : 'circle-info';
         el.innerHTML = `<div class="flex items-center gap-1.5 ${cls}"><i class="fa-solid fa-${icon}"></i><span>${msg}</span></div>`;
@@ -6865,79 +6947,76 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
     // ─── API PÚBLICA ───
     window.__autoCalib = {
         train() {
-            updateStatusUI('Entrenando con historial...', 'info');
+            updateStatusUI('Entrenando...', 'info');
             try {
                 const res = trainCalibration();
-                if (!res.ok) {
-                    updateStatusUI(res.msg, 'error');
-                    console.warn('[AutoCalib] Train failed:', res.diagnostic);
-                    return;
+                if (!res.ok) { updateStatusUI(res.msg, 'error'); console.warn('[AutoCalib] Train failed:', res.diagnostic); return; }
+                updateMetricsUI(); updateQualityUI();
+
+                const hasDup = state.metrics.totalSamples !== state.metrics.uniqueBets;
+                const hitBound = state.metrics.globalHitBound;
+                const hasSanity = (state.metrics.sanityIssues || []).length > 0;
+
+                if (hasDup || hitBound || hasSanity) {
+                    // NO activar automáticamente si hay problemas
+                    updateStatusUI(`⚠️ Modelo entrenado PERO con ${hasDup ? 'duplicados' : ''}${hitBound ? ' bound-hit' : ''}${hasSanity ? ' issues de datos' : ''}. Revisa los avisos arriba. NO se activó automáticamente.`, 'error');
+                    if (state.enabled) { state.enabled = false; saveState(); updateToggleUI(); }
+                } else {
+                    updateStatusUI(`✅ Entrenado con ${state.metrics.totalSamples} apuestas únicas. Brier ${state.metrics.brierImprov >= 0 ? 'mejoró' : 'empeoró'} ${Math.abs(state.metrics.brierImprov).toFixed(1)}%. ACTIVADO.`, 'success');
+                    if (!state.enabled) { state.enabled = true; saveState(); updateToggleUI(); }
                 }
-                updateMetricsUI();
-                const near = Math.abs(state.global.a) < 0.05 && Math.abs(state.global.b - 1) < 0.05;
-                updateStatusUI(
-                    near
-                        ? `✅ Entrenado (${state.metrics.totalSamples} apuestas). Modelo ya bien calibrado: cambios mínimos.`
-                        : `✅ Entrenado con ${state.metrics.totalSamples} apuestas. Brier ${state.metrics.brierImprov >= 0 ? 'mejoró' : 'empeoró'} ${Math.abs(state.metrics.brierImprov).toFixed(1)}%. ACTIVADO.`,
-                    'success'
-                );
-                if (!state.enabled) { state.enabled = true; saveState(); updateToggleUI(); }
                 setTimeout(() => this.recalc(), 150);
-                console.log('[AutoCalib] Trained:', state.metrics, 'Params:', state.global);
-            } catch (e) {
-                console.error(e);
-                updateStatusUI('Error: ' + e.message, 'error');
-            }
+            } catch(e) { console.error(e); updateStatusUI('Error: ' + e.message, 'error'); }
         },
         toggle() {
-            if (!state.metrics && !state.enabled) { updateStatusUI('Primero entrena con historial.', 'error'); return; }
-            state.enabled = !state.enabled;
-            saveState();
-            updateToggleUI();
+            if (!state.metrics && !state.enabled) { updateStatusUI('Primero entrena.', 'error'); return; }
+            state.enabled = !state.enabled; saveState(); updateToggleUI();
             const cp = getGlobalProbs();
             if (state.enabled) {
                 updateStatusUI('Calibración ACTIVA.', 'success');
                 if (cp && cp.__originals) applyToUI();
             } else {
                 updateStatusUI('Calibración DESACTIVADA.', 'info');
-                if (cp && cp.__originals) {
-                    Object.assign(cp, cp.__originals);
-                    delete cp.__originals;
-                    renderProbDisplays(cp);
-                }
+                if (cp && cp.__originals) { Object.assign(cp, cp.__originals); delete cp.__originals; renderProbDisplays(cp); }
             }
         },
         recalc() {
             const fn = getCalculatePoisson();
             if (!fn) { updateStatusUI('calculatePoisson no disponible.', 'error'); return; }
             try {
-                const cp = getGlobalProbs();
-                if (cp) delete cp.__originals;
+                const cp = getGlobalProbs(); if (cp) delete cp.__originals;
                 fn();
                 if (state.enabled) applyToUI();
-                updateStatusUI('Probabilidades recalculadas con calibración.', 'success');
-            } catch (e) { updateStatusUI('Error: ' + e.message, 'error'); }
+                updateStatusUI('Probabilidades recalculadas.', 'success');
+            } catch(e) { updateStatusUI('Error: ' + e.message, 'error'); }
         },
         diagnose() {
-            const { samples, bets, keysScanned, byMarket } = buildSamples();
-            console.group('[AutoCalib] Diagnóstico');
-            console.log('Keys escaneadas:', keysScanned);
-            console.log('Bets detectadas:', bets.length);
-            console.log('Samples válidos (prob+status):', samples.length);
-            console.log('Por mercado:', byMarket);
-            if (bets.length > 0) console.log('Primera bet ejemplo:', bets[0]);
+            const built = buildSamples();
+            console.group('[AutoCalib v3] Diagnóstico');
+            console.log('Keys escaneadas:', built.keysScanned);
+            console.log('Fuentes con bets:', built.sources);
+            console.log('Bets únicas:', built.bets.length);
+            console.log('Muestras válidas (prob+status):', built.samples.length);
+            console.log('Saltadas sin prob:', built.skippedNoProb);
+            console.log('Saltadas sin outcome:', built.skippedNoOutcome);
+            console.log('Por mercado:', built.byMarket);
+            if (built.bets.length > 0) console.log('Ejemplo bet:', built.bets[0]);
             console.groupEnd();
-            const mk = Object.entries(byMarket).map(([k,v]) => `${k}:${v}`).join(', ') || 'ninguno';
-            const okMsg = samples.length >= MIN_SAMPLES;
-            updateStatusUI(`🔍 ${bets.length} bets, ${samples.length} válidas. Mercados: ${mk}.`, okMsg ? 'success' : 'error');
+
+            const dup = built.samples.length !== built.bets.length;
+            const sourceList = Object.entries(built.sources).map(([k,v]) => `${k.replace(/^.*[:_]/,'')}:${v}`).join(', ');
+            updateStatusUI(
+                `🔍 Keys:${built.keysScanned} | Bets únicas:${built.bets.length} | Válidas:${built.samples.length}${dup ? ` ⚠️ DUP` : ''} | Fuentes: ${sourceList || 'ninguna'}`,
+                built.samples.length >= MIN_SAMPLES && !dup ? 'success' : 'error'
+            );
         },
         reset() {
             if (!confirm('¿Resetear calibración?')) return;
-            state = { enabled: false, global: { a: 0, b: 1, samples: 0 }, byMarket: {}, metrics: null, lastTrained: null };
-            saveState();
-            updateToggleUI();
+            state = { enabled: false, global: { a: 0, b: 1, samples: 0 }, byMarket: {}, metrics: null, lastTrained: null, dataQuality: null };
+            saveState(); updateToggleUI();
             document.getElementById('autoCalibMetrics')?.classList.add('hidden');
             document.getElementById('autoCalibPreview')?.classList.add('hidden');
+            document.getElementById('autoCalibQuality')?.classList.add('hidden');
             const cp = getGlobalProbs();
             if (cp && cp.__originals) { Object.assign(cp, cp.__originals); delete cp.__originals; renderProbDisplays(cp); }
             updateStatusUI('Modelo reseteado.', 'info');
@@ -6946,10 +7025,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
     };
 
     loadState();
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => { initHooks(); buildUI(); });
-    } else { initHooks(); buildUI(); }
-    console.log('[AutoCalib v2] ✅ cargado. Estado:', state.enabled ? 'ON' : 'OFF');
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { initHooks(); buildUI(); });
+    else { initHooks(); buildUI(); }
+    console.log('[AutoCalib v3] ✅ cargado. Estado:', state.enabled ? 'ON' : 'OFF');
 })();
 </script>
 </body>
