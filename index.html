@@ -6414,22 +6414,16 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast("Backtest CSV exportado.");
         }
     </script>
-    <!-- ═══════════════════════════════════════════════════════════════════
-     AUTO-CALIBRACIÓN ADAPTATIVA — Módulo Drop-In
-     Se integra con el modelo Poisson existente SIN modificarlo.
-     Pega este bloque justo antes de </body>
-═══════════════════════════════════════════════════════════════════ -->
-<script>
+   <script>
 (function() {
     'use strict';
 
-    // ─── CONFIG ───
-    const STORAGE_KEY        = 'betags_autocalib_v1';
-    const MIN_GLOBAL_SAMPLES = 20;   // mínimo de apuestas cerradas para entrenar
-    const MIN_MARKET_SAMPLES = 30;   // mínimo por mercado para curva específica
-    const EPS                = 1e-9;
+    const STORAGE_KEY         = 'betags_autocalib_v2';
+    const MIN_SAMPLES         = 15;
+    const MIN_MARKET_SAMPLES  = 25;
+    const EPS                 = 1e-9;
+    const RIDGE_LAMBDA        = 0.02;
 
-    // ─── ESTADO ───
     let state = {
         enabled: false,
         global: { a: 0, b: 1, samples: 0 },
@@ -6437,27 +6431,43 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         metrics: null,
         lastTrained: null
     };
+    let applying = false;
 
     // ─── PERSISTENCIA ───
     function loadState() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) state = Object.assign(state, JSON.parse(raw));
-        } catch (e) { console.warn('[AutoCalib] load error', e); }
+        } catch (e) {}
     }
     function saveState() {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-        catch (e) { console.warn('[AutoCalib] save error', e); }
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    }
+
+    // ─── ACCESO AL GLOBAL currentCalculatedProbs (fix bug #1) ───
+    function getGlobalProbs() {
+        if (window.currentCalculatedProbs) return window.currentCalculatedProbs;
+        try {
+            return (0, eval)('typeof currentCalculatedProbs !== "undefined" ? currentCalculatedProbs : null');
+        } catch (e) { return null; }
+    }
+
+    // ─── ACCESO AL GLOBAL calculatePoisson (fix bug #2) ───
+    function getCalculatePoisson() {
+        if (typeof window.calculatePoisson === 'function') return window.calculatePoisson;
+        try {
+            return (0, eval)('typeof calculatePoisson === "function" ? calculatePoisson : null');
+        } catch (e) { return null; }
     }
 
     // ─── MATEMÁTICA ───
-    function logit(p)   { p = Math.max(EPS, Math.min(1 - EPS, p)); return Math.log(p / (1 - p)); }
-    function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+    function logit(p) { p = Math.max(EPS, Math.min(1 - EPS, p)); return Math.log(p / (1 - p)); }
+    function sigmoid(z) { return 1 / (1 + Math.exp(-Math.max(-50, Math.min(50, z)))); }
     function calibProb(p, a, b) { return sigmoid(a + b * logit(p)); }
 
     function brier(samples, a, b) {
         let s = 0;
-        for (const x of samples) { const pc = calibProb(x.p, a, b); s += (pc - x.y) ** 2; }
+        for (const x of samples) s += (calibProb(x.p, a, b) - x.y) ** 2;
         return s / samples.length;
     }
     function logLoss(samples, a, b) {
@@ -6469,277 +6479,281 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         return s / samples.length;
     }
 
-    // ─── ENTRENAMIENTO Newton-Raphson (2 params: a, b) ───
     function fitCalibration(samples) {
         if (!samples || samples.length < 5) return { a: 0, b: 1, samples: samples ? samples.length : 0 };
         let a = 0, b = 1;
-        for (let iter = 0; iter < 25; iter++) {
+        for (let iter = 0; iter < 30; iter++) {
             let g0 = 0, g1 = 0, h00 = 0, h01 = 0, h11 = 0;
             for (const x of samples) {
-                const lp   = logit(x.p);
-                const pcal = sigmoid(a + b * lp);
-                const err  = pcal - x.y;
-                const w    = pcal * (1 - pcal);
-                g0  += err;
-                g1  += err * lp;
-                h00 += w;
-                h01 += w * lp;
-                h11 += w * lp * lp;
+                const lp = logit(x.p);
+                const pc = sigmoid(a + b * lp);
+                const err = pc - x.y;
+                const w = Math.max(1e-4, pc * (1 - pc));
+                g0 += err; g1 += err * lp;
+                h00 += w;  h01 += w * lp; h11 += w * lp * lp;
             }
             const n = samples.length;
-            g0 /= n; g1 /= n; h00 /= n; h01 /= n; h11 /= n;
+            g0 /= n; g1 /= n;
+            h00 = h00 / n + RIDGE_LAMBDA;
+            h01 /= n;
+            h11 = h11 / n + RIDGE_LAMBDA;
             const det = h00 * h11 - h01 * h01;
             if (Math.abs(det) < 1e-10) break;
-            const da = ( h11 * g0 - h01 * g1) / det;
+            const da = (h11 * g0 - h01 * g1) / det;
             const db = (-h01 * g0 + h00 * g1) / det;
-            a -= da; b -= db;
-            if (Math.abs(da) < 1e-7 && Math.abs(db) < 1e-7) break;
+            const sA = Math.max(-0.5, Math.min(0.5, da));
+            const sB = Math.max(-0.5, Math.min(0.5, db));
+            a -= sA; b -= sB;
+            if (Math.abs(sA) < 1e-7 && Math.abs(sB) < 1e-7) break;
         }
-        a = Math.max(-2, Math.min(2, a));
-        b = Math.max(0.3, Math.min(3, b));
+        a = Math.max(-1.5, Math.min(1.5, a));
+        b = Math.max(0.4, Math.min(2.5, b));
         return { a, b, samples: samples.length };
     }
 
-    // ─── LECTURA DE HISTORIAL ───
+    // ─── ESCANEO localStorage (recursivo) ───
+    function looksLikeBet(o) {
+        if (!o || typeof o !== 'object' || Array.isArray(o)) return false;
+        const keys = Object.keys(o).map(k => k.toLowerCase());
+        const hasProb = keys.some(k => ['prob','probability','p_model','modelprob','model_probability','probabilidad','prob_modelo'].includes(k));
+        const hasStatus = keys.some(k => ['status','result','outcome','estado','resul','resultado'].includes(k));
+        return hasProb && hasStatus;
+    }
+    function scanBets(node, out, seen, depth) {
+        if (depth > 6 || !node) return;
+        if (Array.isArray(node)) {
+            for (const item of node) {
+                if (item && typeof item === 'object') {
+                    if (looksLikeBet(item)) {
+                        const k = JSON.stringify(item).slice(0, 250);
+                        if (!seen.has(k)) { seen.add(k); out.push(item); }
+                    } else scanBets(item, out, seen, depth + 1);
+                }
+            }
+        } else if (typeof node === 'object') {
+            for (const k in node) {
+                if (Object.prototype.hasOwnProperty.call(node, k)) scanBets(node[k], out, seen, depth + 1);
+            }
+        }
+    }
     function findBetsArray() {
-        // Recorre TODO localStorage buscando arrays que parezcan apuestas
-        const all = [];
+        const all = [], seen = new Set();
+        let keysScanned = 0;
         for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
             if (!k || k === STORAGE_KEY) continue;
+            keysScanned++;
             try {
                 const v = localStorage.getItem(k);
                 if (!v) continue;
-                const arr = JSON.parse(v);
-                if (Array.isArray(arr) && arr.length > 0) {
-                    const s = arr[0];
-                    if (s && typeof s === 'object' &&
-                        (s.prob !== undefined || s.probability !== undefined || s.odds !== undefined)) {
-                        all.push(...arr);
-                    }
-                }
-            } catch (e) { /* no es JSON */ }
+                scanBets(JSON.parse(v), all, seen, 0);
+            } catch (e) {}
         }
-        return all;
+        return { bets: all, keysScanned };
     }
 
     function extractProb(bet) {
-        const cands = [bet.prob, bet.probability, bet.modelProb, bet.modelProbability, bet.p_model];
+        const cands = ['prob','probability','modelProb','modelProbability','p_model','probabilidad','prob_modelo','p'];
         for (const c of cands) {
-            if (c === undefined || c === null || c === '') continue;
-            let v = parseFloat(c);
-            if (!isNaN(v) && v > 0 && v < 100) return v > 1 ? v / 100 : v;
+            if (bet[c] !== undefined && bet[c] !== null && bet[c] !== '') {
+                const v = parseFloat(bet[c]);
+                if (!isNaN(v) && v > 0 && v < 100) return v > 1 ? v / 100 : v;
+            }
         }
         return null;
     }
-
     function extractOutcome(bet) {
-        const s = String(bet.status ?? bet.result ?? bet.outcome ?? '').toLowerCase().trim();
-        if (['won', 'win', 'ganada', 'ganado', 'w', 'acierto'].includes(s)) return 1;
-        if (['lost', 'loss', 'perdida', 'perdido', 'l', 'fallo'].includes(s)) return 0;
-        return null; // pending / void / push
+        const raw = bet.status ?? bet.result ?? bet.outcome ?? bet.estado ?? bet.resultado ?? '';
+        const s = String(raw).toLowerCase().trim();
+        if (['won','win','w','ganada','ganado','acierto','green','1','true'].includes(s)) return 1;
+        if (['lost','loss','l','perdida','perdido','fallo','red','0','false'].includes(s)) return 0;
+        return null;
     }
-
     function extractMarketKey(bet) {
-        const m   = String(bet.market ?? bet.marketType ?? bet.tipo ?? '').toLowerCase();
-        const sel = String(bet.selection ?? bet.side ?? bet.pick ?? bet.seleccion ?? '').toLowerCase();
-        if (/over|under|goles|2\.5|o\/u/.test(m)) {
-            if (/over|\+/.test(sel)) return 'over25';
-            if (/under|-/.test(sel)) return 'under25';
+        const m = String(bet.market ?? bet.marketType ?? bet.tipoMercado ?? bet.tipo ?? '').toLowerCase();
+        const sel = String(bet.selection ?? bet.side ?? bet.pick ?? bet.seleccion ?? bet.opcion ?? '').toLowerCase();
+        if (/over|under|goles|o\/u|total/.test(m) || /over 2\.5|under 2\.5/.test(sel)) {
+            if (/over|más|mas|\+/.test(sel)) return 'over25';
+            if (/under|menos|\-/.test(sel)) return 'under25';
             return 'ou25';
         }
         if (/btts|ambos|anotan/.test(m)) {
-            if (/\bsi\b|sí|yes|\+/.test(sel)) return 'btts_yes';
-            if (/\bno\b|-/.test(sel))         return 'btts_no';
+            if (/s[ií]|yes|\+/.test(sel) && !/no/.test(sel)) return 'btts_yes';
+            if (/\bno\b|^no|\-/.test(sel) || /no anotan/.test(sel)) return 'btts_no';
             return 'btts';
         }
-        if (/1x2|resultado|final/.test(m))     return '1x2';
-        if (/parlay|combinada/.test(m))         return 'parlay';
+        if (/1x2|resultado|final|ganador/.test(m)) return '1x2';
+        if (/parlay|combinada|multi/.test(m)) return 'parlay';
         return 'other';
     }
 
     function buildSamples() {
-        const bets = findBetsArray();
-        const out  = [];
+        const { bets, keysScanned } = findBetsArray();
+        const samples = [], byMarket = {};
         for (const bet of bets) {
-            if (!bet) continue;
             const p = extractProb(bet);
             const y = extractOutcome(bet);
             if (p === null || y === null) continue;
-            out.push({ p, y, market: extractMarketKey(bet) });
+            const market = extractMarketKey(bet);
+            samples.push({ p, y, market });
+            byMarket[market] = (byMarket[market] || 0) + 1;
         }
-        return out;
+        return { samples, bets, keysScanned, byMarket };
     }
 
-    // ─── ENTRENAR ───
+    // ─── ENTRENAMIENTO ───
     function trainCalibration() {
-        const samples = buildSamples();
-        if (samples.length < MIN_GLOBAL_SAMPLES) {
-            return { ok: false, msg: `Necesitas ≥${MIN_GLOBAL_SAMPLES} apuestas cerradas. Tienes ${samples.length}.` };
+        const { samples, bets, keysScanned, byMarket } = buildSamples();
+        const diagnostic = { keysScanned, betsFound: bets.length, samplesValid: samples.length, byMarket };
+        if (samples.length < MIN_SAMPLES) {
+            return { ok: false, msg: `${samples.length} válidas de ${bets.length} detectadas (mín ${MIN_SAMPLES}).`, diagnostic };
         }
         state.global = fitCalibration(samples);
-
-        // Curvas por mercado
+        state.byMarket = {};
         const groups = {};
         for (const s of samples) (groups[s.market] ||= []).push(s);
-        state.byMarket = {};
-        for (const mk in groups) {
-            if (groups[mk].length >= MIN_MARKET_SAMPLES) {
-                state.byMarket[mk] = fitCalibration(groups[mk]);
-            }
-        }
+        for (const mk in groups) if (groups[mk].length >= MIN_MARKET_SAMPLES) state.byMarket[mk] = fitCalibration(groups[mk]);
 
-        // Métricas antes vs. después
-        const bBefore = brier(samples, 0, 1);
-        const bAfter  = brier(samples, state.global.a, state.global.b);
-        const lBefore = logLoss(samples, 0, 1);
-        const lAfter  = logLoss(samples, state.global.a, state.global.b);
+        const bBefore = brier(samples, 0, 1),  bAfter = brier(samples, state.global.a, state.global.b);
+        const lBefore = logLoss(samples, 0, 1), lAfter = logLoss(samples, state.global.a, state.global.b);
 
         state.metrics = {
             brierBefore: bBefore, brierAfter: bAfter,
             logLossBefore: lBefore, logLossAfter: lAfter,
-            brierImprov:    ((bBefore - bAfter) / bBefore) * 100,
-            logLossImprov:  ((lBefore - lAfter) / lBefore) * 100,
+            brierImprov:   ((bBefore - bAfter) / bBefore) * 100,
+            logLossImprov: ((lBefore - lAfter) / lBefore) * 100,
             totalSamples: samples.length,
-            marketsCalibrated: Object.keys(state.byMarket).length
+            marketsCalibrated: Object.keys(state.byMarket).length,
+            byMarket, keysScanned, betsFound: bets.length
         };
         state.lastTrained = new Date().toISOString();
         saveState();
-        return { ok: true, samples };
+        return { ok: true, samples, diagnostic };
     }
 
-    // ─── APLICAR CALIBRACIÓN ───
+    // ─── APLICAR ───
     function calibrate(p, market) {
         if (!state.enabled || !p || p <= 0 || p >= 1) return p;
         const mk = state.byMarket[market];
         const a = mk ? mk.a : state.global.a;
         const b = mk ? mk.b : state.global.b;
-        if (a === 0 && b === 1) return p;
+        if (Math.abs(a) < 1e-6 && Math.abs(b - 1) < 1e-6) return p;
         return calibProb(p, a, b);
     }
 
-    // ─── APLICAR A currentCalculatedProbs + REFRESCAR UI ───
     function applyToUI() {
-        const cp = window.currentCalculatedProbs;
-        if (!cp) return;
-
-        // Guardar copia de los valores originales del modelo base
-        if (!cp.__originals) {
-            cp.__originals = {
-                probOver25:  cp.probOver25,
-                probUnder25: cp.probUnder25,
-                probBttsYes: cp.probBttsYes,
-                probBttsNo:  cp.probBttsNo,
-                probHomeWin: cp.probHomeWin,
-                probDraw:    cp.probDraw,
-                probAwayWin: cp.probAwayWin
-            };
+        if (applying) return false;
+        applying = true;
+        try {
+            const cp = getGlobalProbs();
+            if (!cp || typeof cp.probOver25 !== 'number') return false;
+            if (!cp.__originals) {
+                cp.__originals = {
+                    probOver25: cp.probOver25, probUnder25: cp.probUnder25,
+                    probBttsYes: cp.probBttsYes, probBttsNo: cp.probBttsNo,
+                    probHomeWin: cp.probHomeWin, probDraw: cp.probDraw, probAwayWin: cp.probAwayWin
+                };
+            }
+            const o = cp.__originals;
+            cp.probOver25  = calibrate(o.probOver25,  'over25');
+            cp.probUnder25 = calibrate(o.probUnder25, 'under25');
+            cp.probBttsYes = calibrate(o.probBttsYes, 'btts_yes');
+            cp.probBttsNo  = calibrate(o.probBttsNo,  'btts_no');
+            cp.probHomeWin = calibrate(o.probHomeWin, '1x2');
+            cp.probDraw    = calibrate(o.probDraw,    '1x2');
+            cp.probAwayWin = calibrate(o.probAwayWin, '1x2');
+            renderProbDisplays(cp, o);
+            return true;
+        } finally {
+            setTimeout(() => { applying = false; }, 60);
         }
-        const o = cp.__originals;
+    }
 
-        // Sobrescribir con calibración
-        cp.probOver25  = calibrate(o.probOver25,  'over25');
-        cp.probUnder25 = calibrate(o.probUnder25, 'under25');
-        cp.probBttsYes = calibrate(o.probBttsYes, 'btts_yes');
-        cp.probBttsNo  = calibrate(o.probBttsNo,  'btts_no');
-        cp.probHomeWin = calibrate(o.probHomeWin, '1x2');
-        cp.probDraw    = calibrate(o.probDraw,    '1x2');
-        cp.probAwayWin = calibrate(o.probAwayWin, '1x2');
-
-        // ─── Refrescar DOM ───
+    function renderProbDisplays(cp, o) {
         const setEl = (id, txt) => { const e = document.getElementById(id); if (e) e.textContent = txt; };
-        const setW  = (id, pct) => { const e = document.getElementById(id); if (e) e.style.width = pct + '%'; };
+        const setW  = (id, p)   => { const e = document.getElementById(id); if (e) e.style.width = p + '%'; };
+        const f = (v) => ((v || 0) * 100).toFixed(1) + '%';
+        const d = (v) => '@' + (1 / Math.max(v || EPS, EPS)).toFixed(2);
 
-        // Over / Under 2.5
-        setEl('pctOver25',  (cp.probOver25 * 100).toFixed(1) + '%');
-        setEl('oddsOver25', '@' + (1 / Math.max(cp.probOver25, EPS)).toFixed(2));
-        setW ('barOver25',  (cp.probOver25 * 100).toFixed(1));
-        setEl('pctUnder25', (cp.probUnder25 * 100).toFixed(1) + '%');
-        setEl('oddsUnder25','@' + (1 / Math.max(cp.probUnder25, EPS)).toFixed(2));
-        setW ('barUnder25', (cp.probUnder25 * 100).toFixed(1));
+        setEl('pctOver25', f(cp.probOver25));   setEl('oddsOver25', d(cp.probOver25));   setW('barOver25', (cp.probOver25*100).toFixed(1));
+        setEl('pctUnder25', f(cp.probUnder25)); setEl('oddsUnder25', d(cp.probUnder25)); setW('barUnder25', (cp.probUnder25*100).toFixed(1));
+        setEl('pctBttsYes', f(cp.probBttsYes)); setEl('oddsBttsYes', d(cp.probBttsYes)); setW('barBttsYes', (cp.probBttsYes*100).toFixed(1));
+        setEl('pctBttsNo', f(cp.probBttsNo));   setEl('oddsBttsNo', d(cp.probBttsNo));   setW('barBttsNo', (cp.probBttsNo*100).toFixed(1));
+        setEl('pct1x2Home', f(cp.probHomeWin)); setEl('odds1x2Home', d(cp.probHomeWin));
+        setEl('pct1x2Draw', f(cp.probDraw));    setEl('odds1x2Draw', d(cp.probDraw));
+        setEl('pct1x2Away', f(cp.probAwayWin)); setEl('odds1x2Away', d(cp.probAwayWin));
 
-        // BTTS
-        setEl('pctBttsYes', (cp.probBttsYes * 100).toFixed(1) + '%');
-        setEl('oddsBttsYes','@' + (1 / Math.max(cp.probBttsYes, EPS)).toFixed(2));
-        setW ('barBttsYes', (cp.probBttsYes * 100).toFixed(1));
-        setEl('pctBttsNo',  (cp.probBttsNo  * 100).toFixed(1) + '%');
-        setEl('oddsBttsNo', '@' + (1 / Math.max(cp.probBttsNo,  EPS)).toFixed(2));
-        setW ('barBttsNo',  (cp.probBttsNo  * 100).toFixed(1));
-
-        // 1X2
-        setEl('pct1x2Home',  (cp.probHomeWin * 100).toFixed(1) + '%');
-        setEl('odds1x2Home', '@' + (1 / Math.max(cp.probHomeWin, EPS)).toFixed(2));
-        setEl('pct1x2Draw',  (cp.probDraw    * 100).toFixed(1) + '%');
-        setEl('odds1x2Draw', '@' + (1 / Math.max(cp.probDraw,    EPS)).toFixed(2));
-        setEl('pct1x2Away',  (cp.probAwayWin * 100).toFixed(1) + '%');
-        setEl('odds1x2Away', '@' + (1 / Math.max(cp.probAwayWin, EPS)).toFixed(2));
-
-        // Marcar visualmente los % calibrados
-        markCalib('pctOver25',  cp.probOver25,  o.probOver25);
-        markCalib('pctUnder25', cp.probUnder25, o.probUnder25);
-        markCalib('pctBttsYes', cp.probBttsYes, o.probBttsYes);
-        markCalib('pctBttsNo',  cp.probBttsNo,  o.probBttsNo);
-        markCalib('pct1x2Home', cp.probHomeWin, o.probHomeWin);
-        markCalib('pct1x2Draw', cp.probDraw,    o.probDraw);
-        markCalib('pct1x2Away', cp.probAwayWin, o.probAwayWin);
+        if (o) {
+            markCalib('pctOver25', cp.probOver25, o.probOver25);
+            markCalib('pctUnder25', cp.probUnder25, o.probUnder25);
+            markCalib('pctBttsYes', cp.probBttsYes, o.probBttsYes);
+            markCalib('pctBttsNo', cp.probBttsNo, o.probBttsNo);
+            markCalib('pct1x2Home', cp.probHomeWin, o.probHomeWin);
+            markCalib('pct1x2Draw', cp.probDraw, o.probDraw);
+            markCalib('pct1x2Away', cp.probAwayWin, o.probAwayWin);
+        }
     }
 
     function markCalib(id, pNew, pOld) {
         const el = document.getElementById(id);
         if (!el) return;
-        // Limpia marca previa
         const prev = el.querySelector('.calib-badge');
         if (prev) prev.remove();
         if (!state.enabled || !pOld) return;
         const diff = (pNew - pOld) * 100;
-        if (Math.abs(diff) < 0.3) return;
+        if (Math.abs(diff) < 0.2) return;
         const sup = document.createElement('sup');
         sup.className = 'calib-badge text-[7px] ml-0.5 ' + (diff > 0 ? 'text-emerald-400' : 'text-rose-400');
         sup.textContent = (diff > 0 ? '+' : '') + diff.toFixed(1) + 'pp';
         el.appendChild(sup);
-        el.title = `Modelo base: ${(pOld*100).toFixed(1)}% → Calibrado: ${(pNew*100).toFixed(1)}%`;
+        el.title = `Base: ${(pOld*100).toFixed(1)}% → Calibrada: ${(pNew*100).toFixed(1)}%`;
     }
 
-    // ─── HOOK calculatePoisson (SIN romper nada) ───
-    function hookCalculatePoisson() {
-        const orig = window.calculatePoisson;
-        if (typeof orig !== 'function') {
-            setTimeout(hookCalculatePoisson, 500);
-            return;
-        }
-        if (orig.__isCalibWrapped) return;
-        const wrapped = function() {
-            // Limpiar originals previos (por si recalculan)
-            if (window.currentCalculatedProbs) delete window.currentCalculatedProbs.__originals;
-            // Ejecutar cálculo original intacto
-            const r = orig.apply(this, arguments);
-            // Post-procesar con calibración
-            if (state.enabled && window.currentCalculatedProbs) {
-                try { applyToUI(); } catch (e) { console.warn('[AutoCalib] apply error', e); }
+    // ─── HOOK DEL BOTÓN "CALCULAR" (fix bug #2, más robusto que hookear la función) ───
+    let btnWrapped = false;
+    function wrapCalculateButton() {
+        if (btnWrapped) return true;
+        const btn = document.querySelector('[onclick*="calculatePoisson"]');
+        if (!btn) return false;
+        const originalOnclick = btn.onclick;
+        btn.onclick = function(e) {
+            const cp = getGlobalProbs();
+            if (cp) delete cp.__originals;
+            try {
+                if (typeof originalOnclick === 'function') originalOnclick.call(this, e);
+                else {
+                    const fn = getCalculatePoisson();
+                    if (fn) fn.call(this);
+                }
+            } catch (err) { console.error('[AutoCalib] calc error', err); }
+            if (state.enabled) {
+                try { applyToUI(); } catch (err) { console.warn('[AutoCalib] apply error', err); }
             }
-            return r;
         };
-        wrapped.__isCalibWrapped = true;
-        window.calculatePoisson = wrapped;
-        console.log('[AutoCalib] ✅ calculatePoisson hookeado');
+        btnWrapped = true;
+        console.log('[AutoCalib] ✅ Botón "Calcular" hookeado');
+        return true;
     }
 
-    // ─── UI (se inyecta dentro del modal de Calibración) ───
+    function initHooks(retries) {
+        retries = retries || 0;
+        if (wrapCalculateButton()) return;
+        if (retries < 20) setTimeout(() => initHooks(retries + 1), 500);
+        else console.warn('[AutoCalib] ⚠️ No se encontró botón Calcular');
+    }
+
+    // ─── UI ───
     let uiRetries = 0;
     function buildUI() {
         const modal = document.getElementById('calibrationModal');
-        if (!modal) {
-            if (++uiRetries < 30) setTimeout(buildUI, 300);
-            return;
-        }
+        if (!modal) { if (++uiRetries < 40) setTimeout(buildUI, 250); return; }
         if (document.getElementById('autoCalibPanel')) return;
-
-        const scrollArea = modal.querySelector('[class*="overflow-y-auto"]') || modal.querySelector('.flex-1');
-        if (!scrollArea) { setTimeout(buildUI, 300); return; }
+        const scroll = modal.querySelector('[class*="overflow-y-auto"]') || modal.querySelector('.flex-1');
+        if (!scroll) { if (++uiRetries < 40) setTimeout(buildUI, 250); return; }
 
         const panel = document.createElement('div');
         panel.id = 'autoCalibPanel';
-        panel.className = 'bg-gradient-to-br from-indigo-950/80 via-purple-950/50 to-slate-900/80 p-3 rounded-2xl border border-indigo-500/50 space-y-3 shadow-lg';
+        panel.className = 'bg-gradient-to-br from-indigo-950/90 via-purple-950/60 to-slate-900/90 p-3 rounded-2xl border-2 border-indigo-500/60 space-y-2.5 shadow-xl';
         panel.innerHTML = `
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-2">
@@ -6748,60 +6762,49 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     </div>
                     <div>
                         <h4 class="text-xs font-black text-white">Auto-Calibración Adaptativa</h4>
-                        <p class="text-[9px] text-slate-400">Aprende de tu historial y corrige el sesgo del modelo</p>
+                        <p class="text-[9px] text-slate-400">Aprende de tu historial real de apuestas</p>
                     </div>
                 </div>
-                <button id="autoCalibToggle" onclick="window.__autoCalib.toggle()"
-                        class="px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95">
-                    OFF
-                </button>
+                <button id="autoCalibToggle" onclick="window.__autoCalib.toggle()" class="px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95">OFF</button>
             </div>
-
             <div class="grid grid-cols-2 gap-2">
-                <button onclick="window.__autoCalib.train()"
-                        class="bg-indigo-500 hover:bg-indigo-600 text-white font-black text-[11px] py-2 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-                    <i class="fa-solid fa-brain"></i> Entrenar con Historial
+                <button onclick="window.__autoCalib.train()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-black text-[11px] py-2 rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+                    <i class="fa-solid fa-brain"></i> Entrenar
                 </button>
-                <button onclick="window.__autoCalib.reset()"
-                        class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-2 rounded-xl border border-slate-700 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
-                    <i class="fa-solid fa-rotate-left"></i> Resetear
+                <button onclick="window.__autoCalib.diagnose()" class="bg-sky-500/20 hover:bg-sky-500/30 border border-sky-500/40 text-sky-300 font-bold text-[11px] py-2 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+                    <i class="fa-solid fa-magnifying-glass"></i> Diagnóstico
                 </button>
             </div>
-
             <div id="autoCalibStatus" class="text-[10px] text-slate-300 bg-slate-950/70 p-2 rounded-xl border border-slate-800 leading-relaxed">
-                <div class="flex items-center gap-1.5 text-slate-400">
-                    <i class="fa-solid fa-circle-info"></i>
-                    <span>Presiona "Entrenar" para ajustar automáticamente el modelo.</span>
-                </div>
+                <div class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-circle-info"></i><span>Entrena con tu historial cerrado para calibrar.</span></div>
             </div>
-
+            <div id="autoCalibPreview" class="hidden bg-slate-950/80 p-2 rounded-xl border border-indigo-500/30 space-y-1">
+                <div class="text-[9px] uppercase font-black text-indigo-300">Vista previa: Prob. base → calibrada</div>
+                <div id="autoCalibPreviewTable" class="grid grid-cols-2 gap-1 text-[10px]"></div>
+            </div>
             <div id="autoCalibMetrics" class="hidden space-y-2">
                 <div class="grid grid-cols-4 gap-1.5">
-                    <div class="bg-slate-950/80 p-2 rounded-lg border border-indigo-500/30 text-center">
-                        <span class="block text-[8px] uppercase font-bold text-indigo-300">Muestras</span>
-                        <span class="text-xs font-black text-white" id="acSamples">0</span>
-                    </div>
-                    <div class="bg-slate-950/80 p-2 rounded-lg border border-emerald-500/30 text-center">
-                        <span class="block text-[8px] uppercase font-bold text-emerald-300">Brier ↓</span>
-                        <span class="text-xs font-black text-emerald-400" id="acBrierImprov">-</span>
-                    </div>
-                    <div class="bg-slate-950/80 p-2 rounded-lg border border-purple-500/30 text-center">
-                        <span class="block text-[8px] uppercase font-bold text-purple-300">LogLoss ↓</span>
-                        <span class="text-xs font-black text-purple-400" id="acLogLossImprov">-</span>
-                    </div>
-                    <div class="bg-slate-950/80 p-2 rounded-lg border border-yellow-500/30 text-center">
-                        <span class="block text-[8px] uppercase font-bold text-yellow-300">Mercados</span>
-                        <span class="text-xs font-black text-yellow-400" id="acMarkets">0</span>
-                    </div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-indigo-500/30 text-center"><span class="block text-[8px] uppercase font-bold text-indigo-300">Muestras</span><span class="text-xs font-black text-white" id="acSamples">0</span></div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-emerald-500/30 text-center"><span class="block text-[8px] uppercase font-bold text-emerald-300">Brier ↓</span><span class="text-xs font-black text-emerald-400" id="acBrierImprov">-</span></div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-purple-500/30 text-center"><span class="block text-[8px] uppercase font-bold text-purple-300">LogLoss ↓</span><span class="text-xs font-black text-purple-400" id="acLogLossImprov">-</span></div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-yellow-500/30 text-center"><span class="block text-[8px] uppercase font-bold text-yellow-300">Mercados</span><span class="text-xs font-black text-yellow-400" id="acMarkets">0</span></div>
                 </div>
                 <div class="bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 text-[10px] space-y-1">
-                    <div class="flex justify-between"><span class="text-slate-400">Parámetro <b class="text-white">a</b> (sesgo):</span><span id="acParamA" class="font-mono text-white">0.0000</span></div>
-                    <div class="flex justify-between"><span class="text-slate-400">Parámetro <b class="text-white">b</b> (pendiente):</span><span id="acParamB" class="font-mono text-white">1.0000</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Parámetro <b class="text-white">a</b>:</span><span id="acParamA" class="font-mono text-white">0.0000</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Parámetro <b class="text-white">b</b>:</span><span id="acParamB" class="font-mono text-white">1.0000</span></div>
                     <div id="acInterpretation" class="text-[9px] text-indigo-300 italic pt-1.5 border-t border-slate-800"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="window.__autoCalib.recalc()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] py-1.5 rounded-lg flex items-center justify-center gap-1 active:scale-95">
+                        <i class="fa-solid fa-rotate"></i> Recalcular
+                    </button>
+                    <button onclick="window.__autoCalib.reset()" class="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[10px] py-1.5 rounded-lg flex items-center justify-center gap-1 active:scale-95">
+                        <i class="fa-solid fa-rotate-left"></i> Resetear
+                    </button>
                 </div>
             </div>
         `;
-        scrollArea.insertBefore(panel, scrollArea.firstChild);
+        scroll.insertBefore(panel, scroll.firstChild);
         updateToggleUI();
         if (state.metrics) { updateMetricsUI(); updateStatusUI(`Modelo cargado (${state.metrics.totalSamples} apuestas).`, 'info'); }
     }
@@ -6809,40 +6812,52 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
     function updateToggleUI() {
         const btn = document.getElementById('autoCalibToggle');
         if (!btn) return;
-        if (state.enabled) {
-            btn.textContent = 'ON ✓';
-            btn.className = 'px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95 bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/40';
-        } else {
-            btn.textContent = 'OFF';
-            btn.className = 'px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95 bg-slate-800 text-slate-400 border-slate-700';
+        btn.textContent = state.enabled ? 'ON ✓' : 'OFF';
+        btn.className = 'px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all active:scale-95 ' +
+            (state.enabled ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/40' : 'bg-slate-800 text-slate-400 border-slate-700');
+    }
+
+    function updatePreviewUI() {
+        const box = document.getElementById('autoCalibPreview');
+        const tbl = document.getElementById('autoCalibPreviewTable');
+        if (!box || !tbl) return;
+        if (!state.metrics || (Math.abs(state.global.a) < 1e-6 && Math.abs(state.global.b - 1) < 1e-6)) {
+            box.classList.add('hidden'); return;
         }
+        box.classList.remove('hidden');
+        const tests = [0.30, 0.50, 0.65, 0.80];
+        tbl.innerHTML = tests.map(p => {
+            const pc = calibProb(p, state.global.a, state.global.b);
+            const diff = (pc - p) * 100;
+            const cls = Math.abs(diff) < 0.2 ? 'text-slate-500' : (diff > 0 ? 'text-emerald-400' : 'text-rose-400');
+            return `<div class="flex justify-between px-1.5 py-0.5 bg-slate-900/80 rounded"><span class="text-slate-400">${(p*100).toFixed(0)}%</span><span class="text-white font-bold">→ ${(pc*100).toFixed(1)}%</span><span class="${cls} text-[9px] font-bold">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}</span></div>`;
+        }).join('');
     }
 
     function updateMetricsUI() {
         const box = document.getElementById('autoCalibMetrics');
         if (!box || !state.metrics) return;
         box.classList.remove('hidden');
-        document.getElementById('acSamples').textContent      = state.metrics.totalSamples;
-        document.getElementById('acBrierImprov').textContent  = (state.metrics.brierImprov  >= 0 ? '+' : '') + state.metrics.brierImprov.toFixed(1)  + '%';
+        document.getElementById('acSamples').textContent = state.metrics.totalSamples;
+        document.getElementById('acBrierImprov').textContent = (state.metrics.brierImprov >= 0 ? '+' : '') + state.metrics.brierImprov.toFixed(1) + '%';
         document.getElementById('acLogLossImprov').textContent = (state.metrics.logLossImprov >= 0 ? '+' : '') + state.metrics.logLossImprov.toFixed(1) + '%';
-        document.getElementById('acMarkets').textContent       = state.metrics.marketsCalibrated;
+        document.getElementById('acMarkets').textContent = state.metrics.marketsCalibrated;
         document.getElementById('acParamA').textContent = state.global.a.toFixed(4);
         document.getElementById('acParamB').textContent = state.global.b.toFixed(4);
-
         const b = state.global.b, a = state.global.a;
         let txt = '';
-        if (b < 0.85)       txt = '⚠️ Modelo SOBRECONFIADO → se reducen probs extremas.';
-        else if (b > 1.15)  txt = '📈 Modelo INFRACONFIADO → se amplifican probs.';
-        else                txt = '✅ Confianza bien calibrada.';
-        if (a < -0.1)       txt += ' Sesgo: sobreestima.';
-        else if (a > 0.1)   txt += ' Sesgo: subestima.';
+        if (b < 0.9) txt = '⚠️ Sobreconfiado → reduce probs extremas';
+        else if (b > 1.1) txt = '📈 Infraconfiado → amplifica probs';
+        else txt = '✅ Confianza bien calibrada';
+        if (Math.abs(a) > 0.15) txt += ' | ' + (a < 0 ? 'Sobreestima' : 'Subestima');
         document.getElementById('acInterpretation').textContent = txt;
+        updatePreviewUI();
     }
 
     function updateStatusUI(msg, type) {
         const el = document.getElementById('autoCalibStatus');
         if (!el) return;
-        const cls  = type === 'error' ? 'text-rose-400' : type === 'success' ? 'text-emerald-400' : 'text-slate-400';
+        const cls = type === 'error' ? 'text-rose-400' : type === 'success' ? 'text-emerald-400' : 'text-slate-400';
         const icon = type === 'error' ? 'triangle-exclamation' : type === 'success' ? 'circle-check' : 'circle-info';
         el.innerHTML = `<div class="flex items-center gap-1.5 ${cls}"><i class="fa-solid fa-${icon}"></i><span>${msg}</span></div>`;
     }
@@ -6853,73 +6868,88 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             updateStatusUI('Entrenando con historial...', 'info');
             try {
                 const res = trainCalibration();
-                if (!res.ok) { updateStatusUI(res.msg, 'error'); return; }
+                if (!res.ok) {
+                    updateStatusUI(res.msg, 'error');
+                    console.warn('[AutoCalib] Train failed:', res.diagnostic);
+                    return;
+                }
                 updateMetricsUI();
+                const near = Math.abs(state.global.a) < 0.05 && Math.abs(state.global.b - 1) < 0.05;
                 updateStatusUI(
-                    `✅ Entrenado con ${state.metrics.totalSamples} apuestas. ` +
-                    `Brier ${state.metrics.brierImprov >= 0 ? 'mejoró' : 'empeoró'} ${Math.abs(state.metrics.brierImprov).toFixed(1)}%. ` +
-                    `Modelo ACTIVADO automáticamente.`,
+                    near
+                        ? `✅ Entrenado (${state.metrics.totalSamples} apuestas). Modelo ya bien calibrado: cambios mínimos.`
+                        : `✅ Entrenado con ${state.metrics.totalSamples} apuestas. Brier ${state.metrics.brierImprov >= 0 ? 'mejoró' : 'empeoró'} ${Math.abs(state.metrics.brierImprov).toFixed(1)}%. ACTIVADO.`,
                     'success'
                 );
                 if (!state.enabled) { state.enabled = true; saveState(); updateToggleUI(); }
-                if (window.currentCalculatedProbs) {
-                    delete window.currentCalculatedProbs.__originals;
-                    applyToUI();
-                }
+                setTimeout(() => this.recalc(), 150);
+                console.log('[AutoCalib] Trained:', state.metrics, 'Params:', state.global);
             } catch (e) {
                 console.error(e);
                 updateStatusUI('Error: ' + e.message, 'error');
             }
         },
         toggle() {
-            if (!state.metrics && !state.enabled) {
-                updateStatusUI('Primero entrena con historial.', 'error');
-                return;
-            }
+            if (!state.metrics && !state.enabled) { updateStatusUI('Primero entrena con historial.', 'error'); return; }
             state.enabled = !state.enabled;
             saveState();
             updateToggleUI();
+            const cp = getGlobalProbs();
             if (state.enabled) {
-                updateStatusUI('Auto-calibración ACTIVA. Recalcula o presiona Calcular para ver el efecto.', 'success');
-                if (window.currentCalculatedProbs && window.currentCalculatedProbs.__originals) applyToUI();
+                updateStatusUI('Calibración ACTIVA.', 'success');
+                if (cp && cp.__originals) applyToUI();
             } else {
-                updateStatusUI('Auto-calibración DESACTIVADA. Se usarán valores del Poisson base.', 'info');
-                // Restaurar valores originales para evitar confusión
-                const cp = window.currentCalculatedProbs;
+                updateStatusUI('Calibración DESACTIVADA.', 'info');
                 if (cp && cp.__originals) {
                     Object.assign(cp, cp.__originals);
                     delete cp.__originals;
-                    // Forzar refresco visual llamando al original de nuevo si es posible
-                    if (typeof window.calculatePoisson === 'function') {
-                        try { window.calculatePoisson(); } catch(e) {}
-                    }
+                    renderProbDisplays(cp);
                 }
             }
         },
+        recalc() {
+            const fn = getCalculatePoisson();
+            if (!fn) { updateStatusUI('calculatePoisson no disponible.', 'error'); return; }
+            try {
+                const cp = getGlobalProbs();
+                if (cp) delete cp.__originals;
+                fn();
+                if (state.enabled) applyToUI();
+                updateStatusUI('Probabilidades recalculadas con calibración.', 'success');
+            } catch (e) { updateStatusUI('Error: ' + e.message, 'error'); }
+        },
+        diagnose() {
+            const { samples, bets, keysScanned, byMarket } = buildSamples();
+            console.group('[AutoCalib] Diagnóstico');
+            console.log('Keys escaneadas:', keysScanned);
+            console.log('Bets detectadas:', bets.length);
+            console.log('Samples válidos (prob+status):', samples.length);
+            console.log('Por mercado:', byMarket);
+            if (bets.length > 0) console.log('Primera bet ejemplo:', bets[0]);
+            console.groupEnd();
+            const mk = Object.entries(byMarket).map(([k,v]) => `${k}:${v}`).join(', ') || 'ninguno';
+            const okMsg = samples.length >= MIN_SAMPLES;
+            updateStatusUI(`🔍 ${bets.length} bets, ${samples.length} válidas. Mercados: ${mk}.`, okMsg ? 'success' : 'error');
+        },
         reset() {
-            if (!confirm('¿Resetear calibración? Se perderán los parámetros aprendidos.')) return;
+            if (!confirm('¿Resetear calibración?')) return;
             state = { enabled: false, global: { a: 0, b: 1, samples: 0 }, byMarket: {}, metrics: null, lastTrained: null };
             saveState();
             updateToggleUI();
-            const m = document.getElementById('autoCalibMetrics');
-            if (m) m.classList.add('hidden');
-            updateStatusUI('Modelo reseteado. Cálculo vuelve al Poisson puro.', 'info');
+            document.getElementById('autoCalibMetrics')?.classList.add('hidden');
+            document.getElementById('autoCalibPreview')?.classList.add('hidden');
+            const cp = getGlobalProbs();
+            if (cp && cp.__originals) { Object.assign(cp, cp.__originals); delete cp.__originals; renderProbDisplays(cp); }
+            updateStatusUI('Modelo reseteado.', 'info');
         },
         getState() { return state; }
     };
 
-    // ─── INIT ───
     loadState();
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            hookCalculatePoisson();
-            buildUI();
-        });
-    } else {
-        hookCalculatePoisson();
-        buildUI();
-    }
-    console.log('[AutoCalib] ✅ Módulo cargado. Estado:', state.enabled ? 'ON' : 'OFF');
+        document.addEventListener('DOMContentLoaded', () => { initHooks(); buildUI(); });
+    } else { initHooks(); buildUI(); }
+    console.log('[AutoCalib v2] ✅ cargado. Estado:', state.enabled ? 'ON' : 'OFF');
 })();
 </script>
 </body>
