@@ -358,6 +358,18 @@
                         <span id="poissonCalibrationStatus" class="text-[8px] text-slate-400">Calibración histórica: pendiente de sesión</span>
                     </div>
                     <p class="text-[8px] text-slate-500">Ajusta las probabilidades con apuestas simples liquidadas guardadas en Supabase. No utiliza localStorage.</p>
+                    <div id="poissonReliabilityPanel" class="mt-2 p-2.5 rounded-xl border border-cyan-500/30 bg-cyan-950/15 space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-[10px] font-black uppercase tracking-wide text-cyan-300 flex items-center gap-1.5"><i class="fa-solid fa-shield-halved"></i> Detector de fiabilidad</p>
+                                <p class="text-[8px] text-slate-400">Evalúa probabilidades registradas frente a resultados liquidados.</p>
+                            </div>
+                            <button type="button" id="poissonReliabilityRunButton" onclick="runPoissonReliabilityCheck()" class="shrink-0 text-[9px] font-black bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-200 px-2.5 py-2 rounded-lg flex items-center gap-1.5"><i class="fa-solid fa-magnifying-glass-chart"></i> ANALIZAR</button>
+                        </div>
+                        <p id="poissonReliabilitySummary" class="text-[9px] text-slate-300">Pulsa ANALIZAR para evaluar tu historial de apuestas simples en Supabase.</p>
+                        <div id="poissonReliabilityResults" class="space-y-1.5"></div>
+                        <p class="text-[7px] leading-relaxed text-slate-500">Brier y Log Loss miden el error probabilístico; ECE mide la diferencia entre confianza estimada y frecuencia observada. Se requieren al menos 30 registros por mercado. Es una señal basada en tus apuestas registradas, no una garantía ni una evaluación de todos los pronósticos generados.</p>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-3 gap-2 pt-1">
@@ -5939,6 +5951,158 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             return Math.max(0.000001, Math.min(0.999999,
                 poissonCalibrationSigmoid(model.a + model.b * poissonCalibrationLogit(p))
             ));
+        }
+
+        // ============================================================
+        // DETECTOR DE FIABILIDAD DE PRONÓSTICOS
+        // Usa únicamente apuestas simples WON/LOST registradas en Supabase.
+        // No altera probabilidades ni interviene en calculatePoisson().
+        // ============================================================
+        let poissonReliabilityLoading = false;
+
+        function calculatePoissonReliabilityStats(rows) {
+            const samples = (rows || []).map(row => {
+                const rawProb = Number(row.prob);
+                const p = rawProb / 100;
+                if (!Number.isFinite(p) || p <= 0 || p >= 1) return null;
+                if (row.status !== 'WON' && row.status !== 'LOST') return null;
+                return { p, y: row.status === 'WON' ? 1 : 0 };
+            }).filter(Boolean);
+
+            const n = samples.length;
+            if (!n) return { count: 0, wins: 0, losses: 0, brier: null, logLoss: null, ece: null, level: 'SIN DATOS', tone: 'slate' };
+
+            let brierSum = 0;
+            let logLossSum = 0;
+            const bins = Array.from({ length: 5 }, () => ({ count: 0, probSum: 0, outcomeSum: 0 }));
+            let wins = 0;
+            for (const sample of samples) {
+                const error = sample.p - sample.y;
+                brierSum += error * error;
+                const safeP = Math.max(1e-6, Math.min(1 - 1e-6, sample.p));
+                logLossSum += -(sample.y * Math.log(safeP) + (1 - sample.y) * Math.log(1 - safeP));
+                if (sample.y) wins++;
+                const binIndex = Math.min(4, Math.floor(sample.p * 5));
+                bins[binIndex].count++;
+                bins[binIndex].probSum += sample.p;
+                bins[binIndex].outcomeSum += sample.y;
+            }
+            const brier = brierSum / n;
+            const logLoss = logLossSum / n;
+            const ece = bins.reduce((sum, bin) => {
+                if (!bin.count) return sum;
+                const meanPredicted = bin.probSum / bin.count;
+                const observedRate = bin.outcomeSum / bin.count;
+                return sum + (bin.count / n) * Math.abs(meanPredicted - observedRate);
+            }, 0);
+
+            // Semáforo orientativo, con umbral de muestra explícito; no es una garantía predictiva.
+            let level = 'FIABILIDAD BAJA';
+            let tone = 'rose';
+            if (n < 30) { level = 'MUESTRA INSUFICIENTE'; tone = 'amber'; }
+            else if (brier <= 0.18 && ece <= 0.05) { level = 'FIABILIDAD ALTA'; tone = 'emerald'; }
+            else if (brier <= 0.21 && ece <= 0.08) { level = 'FIABILIDAD BUENA'; tone = 'cyan'; }
+            else if (brier <= 0.25 && ece <= 0.12) { level = 'FIABILIDAD MEDIA'; tone = 'amber'; }
+
+            return { count: n, wins, losses: n - wins, brier, logLoss, ece, level, tone };
+        }
+
+        function renderPoissonReliabilityResults(groupedStats, totalStats) {
+            const container = document.getElementById('poissonReliabilityResults');
+            const summary = document.getElementById('poissonReliabilitySummary');
+            if (!container || !summary) return;
+            container.replaceChildren();
+
+            const colorClasses = {
+                emerald: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10',
+                cyan: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10',
+                amber: 'text-amber-300 border-amber-500/30 bg-amber-500/10',
+                rose: 'text-rose-300 border-rose-500/30 bg-rose-500/10',
+                slate: 'text-slate-300 border-slate-600/30 bg-slate-700/20'
+            };
+            const makeRow = (name, stats) => {
+                const card = document.createElement('div');
+                card.className = 'rounded-lg border border-slate-700/70 bg-slate-950/40 p-2 space-y-1';
+                const top = document.createElement('div');
+                top.className = 'flex items-center justify-between gap-2';
+                const title = document.createElement('span');
+                title.className = 'text-[9px] font-black text-slate-100 truncate';
+                title.textContent = name;
+                const badge = document.createElement('span');
+                badge.className = `shrink-0 text-[7px] font-black px-1.5 py-1 rounded border ${colorClasses[stats.tone] || colorClasses.slate}`;
+                badge.textContent = stats.level;
+                top.append(title, badge);
+                const metrics = document.createElement('p');
+                metrics.className = 'text-[8px] text-slate-400 font-mono leading-relaxed';
+                metrics.textContent = `n=${stats.count} · Aciertos ${stats.wins}/${stats.count} · Brier ${stats.brier == null ? '—' : stats.brier.toFixed(3)} · Log Loss ${stats.logLoss == null ? '—' : stats.logLoss.toFixed(3)} · ECE ${stats.ece == null ? '—' : (stats.ece * 100).toFixed(1) + '%'}`;
+                card.append(top, metrics);
+                return card;
+            };
+
+            summary.textContent = `Análisis completado: ${totalStats.count} apuestas simples liquidadas · ${totalStats.wins} ganadas · ${totalStats.losses} perdidas.`;
+            container.appendChild(makeRow('TOTAL DEL HISTORIAL', totalStats));
+            Object.entries(groupedStats).sort((a, b) => b[1].count - a[1].count).forEach(([market, stats]) => {
+                container.appendChild(makeRow(market, stats));
+            });
+        }
+
+        async function runPoissonReliabilityCheck() {
+            const button = document.getElementById('poissonReliabilityRunButton');
+            const summary = document.getElementById('poissonReliabilitySummary');
+            const results = document.getElementById('poissonReliabilityResults');
+            if (poissonReliabilityLoading) return;
+            if (!currentUser || !supabaseClient) {
+                if (summary) summary.textContent = 'Inicia sesión para analizar las apuestas guardadas en Supabase.';
+                if (results) results.replaceChildren();
+                showToast('El detector de fiabilidad requiere una sesión de Supabase.');
+                return;
+            }
+
+            poissonReliabilityLoading = true;
+            if (button) { button.disabled = true; button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ANALIZANDO'; }
+            if (summary) summary.textContent = 'Consultando y evaluando resultados históricos…';
+            if (results) results.replaceChildren();
+            try {
+                const { data, error } = await supabaseClient
+                    .from('bets')
+                    .select('prob,status,is_parlay,market')
+                    .eq('user_id', currentUser.id)
+                    .eq('is_parlay', false)
+                    .in('status', ['WON', 'LOST'])
+                    .limit(5000);
+                if (error) throw error;
+
+                const validRows = (data || []).filter(row => row.is_parlay !== true && row.is_parlay !== 'true' &&
+                    (row.status === 'WON' || row.status === 'LOST') && Number.isFinite(Number(row.prob)) &&
+                    Number(row.prob) > 0 && Number(row.prob) < 100);
+                if (!validRows.length) {
+                    if (summary) summary.textContent = 'No hay apuestas simples liquidadas con probabilidades válidas. Registra probabilidades antes de liquidar tus apuestas.';
+                    showToast('No hay datos suficientes para ejecutar el detector.');
+                    return;
+                }
+
+                const grouped = {};
+                validRows.forEach(row => {
+                    const market = normalizePoissonMarket(row.market) || 'Mercado sin identificar';
+                    if (!grouped[market]) grouped[market] = [];
+                    grouped[market].push(row);
+                });
+                const groupedStats = {};
+                Object.entries(grouped).forEach(([market, rows]) => {
+                    groupedStats[market] = calculatePoissonReliabilityStats(rows);
+                });
+                const totalStats = calculatePoissonReliabilityStats(validRows);
+                renderPoissonReliabilityResults(groupedStats, totalStats);
+                showToast('Detector de fiabilidad actualizado con el historial disponible.');
+            } catch (error) {
+                console.error('[Poisson reliability] Error:', error);
+                if (summary) summary.textContent = 'No se pudo consultar el historial. Comprueba la conexión con Supabase e inténtalo de nuevo.';
+                if (results) results.replaceChildren();
+                showToast('Error al ejecutar el detector de fiabilidad.');
+            } finally {
+                poissonReliabilityLoading = false;
+                if (button) { button.disabled = false; button.innerHTML = '<i class="fa-solid fa-magnifying-glass-chart"></i> ANALIZAR'; }
+            }
         }
 
         // Consulta directamente Supabase; nunca lee localStorage ni betLogData.
