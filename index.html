@@ -1297,13 +1297,22 @@
                 </div>
                 <div><label class="block text-[10px] font-bold text-slate-400 mb-1" id="logMatchLabel">Partido</label><input type="text" id="logMatch" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold"></div>
                 <div class="grid grid-cols-2 gap-2" id="logSingleFieldsContainer">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Mercado</label><input type="text" id="logMarket" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Selección</label><input type="text" id="logSelection" oninput="checkSelectionHistoricalProfit()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Mercado</label><input type="text" id="logMarket" oninput="checkSelectionHistoricalProfit(); updateBetModalConfidence()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold"></div>
+                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Selección</label><input type="text" id="logSelection" oninput="checkSelectionHistoricalProfit(); updateBetModalConfidence()" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold"></div>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Prob. (%)</label><input type="number" step="0.1" id="logProb" oninput="calculateLogEv(); scheduleBetModalInlineMc();" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-400 font-bold text-center"></div>
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Justa</label><input type="number" step="0.01" id="logFairOdds" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1.5 text-xs text-gold-400 font-bold text-center"></div>
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Cuota Casa</label><input type="number" step="0.01" id="logBookieOdds" oninput="calculateLogEv(); scheduleBetModalInlineMc();" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-emerald-300 font-bold text-center"></div>
+                </div>
+                <div id="betModalConfidencePanel" class="bg-indigo-950/30 border border-indigo-500/35 rounded-xl p-2.5 space-y-1.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[10px] font-black uppercase tracking-wide text-indigo-200"><i class="fa-solid fa-shield-halved mr-1 text-indigo-400"></i>Confianza de esta selección</span>
+                        <span id="betModalConfidenceBadge" class="text-[9px] font-black px-2 py-1 rounded-lg border border-slate-600 bg-slate-800 text-slate-300">PENDIENTE</span>
+                    </div>
+                    <p id="betModalConfidenceDetail" class="text-[9px] leading-relaxed text-slate-300">Calcula las probabilidades y selecciona un mercado compatible para consultar su IC90.</p>
+                    <p id="betModalConfidenceRange" class="text-[8px] font-mono text-indigo-200">IC90: -</p>
+                    <p class="text-[7px] leading-relaxed text-slate-500">Este nivel refleja la amplitud del intervalo estimado del modelo, no la probabilidad de ganar ni una garantía. Si no existe IC específico para la selección, se mostrará como no disponible.</p>
                 </div>
                 <!-- === CLV INPUT FIELD === -->
                 <div class="grid grid-cols-2 gap-2 bg-indigo-950/30 p-2 rounded-xl border border-indigo-500/30">
@@ -2134,6 +2143,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         let betLogData = [];
         let parallelBetLogData = [];
         let currentCalculatedProbs = {};
+        let betModalIsEditing = false;
         let matchMatrices = {};
         let activeBetTab = 'pending';
         let currentCalendarDate = new Date();
@@ -3417,7 +3427,92 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast(`Stake Kelly 1/4: $${recommendedStake}`);
         }
 
+        // Confianza por selección: utiliza el IC90 específico ya calculado por Poisson.
+        // No convierte la probabilidad de acierto en un supuesto nivel de confianza.
+        function getBetModalConfidenceKey(market, selection) {
+            const m = String(market || '').toLowerCase();
+            const s = String(selection || '').toLowerCase();
+            if (m.includes('over / under') || m.includes('over/under')) {
+                if (s.includes('over 2.5')) return 'over25';
+                if (s.includes('under 2.5')) return 'under25';
+            }
+            if (m.includes('ambos anotan') || m.includes('btts')) {
+                if (s.includes('si') || s.includes('sí') || s.includes('yes')) return 'bttsYes';
+                if (s.includes('no')) return 'bttsNo';
+            }
+            if (m.includes('resultado final') || m.includes('1x2')) {
+                if (s.includes('empate') || s === 'x') return 'draw';
+                const home = (document.getElementById('homeName')?.value || 'Local').trim().toLowerCase();
+                const away = (document.getElementById('awayName')?.value || 'Visitante').trim().toLowerCase();
+                if (s.includes('gana') && home && s.includes(home)) return 'homeWin';
+                if (s.includes('gana') && away && s.includes(away)) return 'awayWin';
+                if (s === 'local' || s === 'home') return 'homeWin';
+                if (s === 'visitante' || s === 'away') return 'awayWin';
+            }
+            return null;
+        }
+
+        function renderBetModalConfidence(label, detail, range, tone) {
+            const badge = document.getElementById('betModalConfidenceBadge');
+            const detailEl = document.getElementById('betModalConfidenceDetail');
+            const rangeEl = document.getElementById('betModalConfidenceRange');
+            if (!badge || !detailEl || !rangeEl) return;
+            badge.textContent = label;
+            detailEl.textContent = detail;
+            rangeEl.textContent = range;
+            const tones = {
+                high: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40',
+                medium: 'bg-amber-500/15 text-amber-300 border-amber-500/40',
+                low: 'bg-rose-500/15 text-rose-300 border-rose-500/40',
+                neutral: 'bg-slate-800 text-slate-300 border-slate-600'
+            };
+            badge.className = 'text-[9px] font-black px-2 py-1 rounded-lg border ' + (tones[tone] || tones.neutral);
+        }
+
+        function updateBetModalConfidence() {
+            const marketEl = document.getElementById('logMarket');
+            const selectionEl = document.getElementById('logSelection');
+            if (!marketEl || !selectionEl) return;
+            if (betModalIsEditing) {
+                renderBetModalConfidence('NO DISPONIBLE', 'Esta es una apuesta histórica. No se reutiliza el intervalo del partido que esté cargado actualmente.', 'IC90: no asociado a este registro', 'neutral');
+                return;
+            }
+            const key = getBetModalConfidenceKey(marketEl.value, selectionEl.value);
+            const ci = key && currentCalculatedProbs && currentCalculatedProbs.ci ? currentCalculatedProbs.ci[key] : null;
+            if (!ci || !Number.isFinite(Number(ci.p10)) || !Number.isFinite(Number(ci.p90))) {
+                renderBetModalConfidence('NO DISPONIBLE', 'No hay un IC90 específico para esta selección. Calcula el partido o elige una selección compatible (1X2, Over/Under 2.5 o BTTS).', 'IC90: -', 'neutral');
+                return;
+            }
+            const low = Math.max(0, Math.min(1, Number(ci.p10)));
+            const high = Math.max(low, Math.min(1, Number(ci.p90)));
+            const widthPoints = (high - low) * 100;
+            let label = 'BAJA', tone = 'low';
+            if (widthPoints <= 12) { label = 'ALTA'; tone = 'high'; }
+            else if (widthPoints <= 22) { label = 'MODERADA'; tone = 'medium'; }
+            let sampleText = 'Muestra base asumida: 10 partidos por equipo';
+            try {
+                const mp = getCurrentMatchMp();
+                const hasHome = Number(mp.mpHome) > 0;
+                const hasAway = Number(mp.mpAway) > 0;
+                if (hasHome && hasAway) {
+                    sampleText = `Muestra usada: ${mp.mpHome} partidos local · ${mp.mpAway} partidos visitante`;
+                } else if (hasHome || hasAway) {
+                    sampleText = `Muestra parcial: ${hasHome ? mp.mpHome : 10} local · ${hasAway ? mp.mpAway : 10} visitante (10 asumidos donde faltan datos)`;
+                    if (tone === 'high') { label = 'MODERADA'; tone = 'medium'; }
+                }
+            } catch (e) {
+                console.warn('No se pudo leer el tamaño de muestra para el indicador de confianza:', e);
+            }
+            renderBetModalConfidence(
+                label,
+                `Amplitud del IC90: ${widthPoints.toFixed(1)} puntos porcentuales. ${sampleText}.`,
+                `IC90: ${(low * 100).toFixed(1)}% – ${(high * 100).toFixed(1)}%`,
+                tone
+            );
+        }
+
         function openLogBetModal(market = '', selection = '', prob = 0) {
+            betModalIsEditing = false;
             const homeName = document.getElementById('homeName').value.trim() || 'Local';
             const awayName = document.getElementById('awayName').value.trim() || 'Visitante';
             const activeLeague = document.getElementById('activeLeagueSelect').value || DEFAULT_LEAGUE_NAME;
@@ -3430,6 +3525,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('logMarket').value = market || 'Ganador Partido';
             document.getElementById('logSelection').value = selection || homeName;
             document.getElementById('logProb').value = prob ? (prob * 100).toFixed(1) : '50.0';
+            updateBetModalConfidence();
             const fairOdds = prob ? (1 / prob).toFixed(2) : '2.00';
             document.getElementById('logFairOdds').value = fairOdds;
             document.getElementById('logBookieOdds').value = fairOdds;
@@ -3453,6 +3549,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         function editBetInLog(index) {
+            betModalIsEditing = true;
             const item = betLogData[index];
             if (!item) return;
             document.getElementById('editBetIndex').value = index;
@@ -3464,6 +3561,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('logMarket').value = item.market;
             document.getElementById('logSelection').value = item.selection;
             document.getElementById('logProb').value = item.prob;
+            updateBetModalConfidence();
             document.getElementById('logFairOdds').value = item.fairOdds;
             document.getElementById('logBookieOdds').value = item.bookieOdds;
             document.getElementById('logClosingOdds').value = item.closingOdds || '';
