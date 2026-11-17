@@ -345,6 +345,12 @@
                         <input type="range" id="dixonRhoRange" min="-0.15" max="0.00" step="0.01" value="-0.05" oninput="updateRhoDisplay()" class="w-full accent-indigo-500 cursor-pointer">
                     </div>
                     <p class="text-[8px] text-slate-400">Corrige la interdependencia en marcador bajo. Mueve el slider para override manual; se aplicará a todos los cálculos.</p>
+                    <div class="pt-1 space-y-1.5">
+                        <button type="button" id="poissonCalibrationModeButton" onclick="togglePoissonCalibrationMode()" class="w-full text-[10px] font-black bg-slate-700/40 hover:bg-slate-700/60 border border-slate-600 text-slate-200 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+                            <i class="fa-solid fa-toggle-off text-sm"></i> <span id="poissonCalibrationModeLabel">POISSON NORMAL</span>
+                        </button>
+                        <p id="poissonCalibrationModeDetail" class="text-[8px] text-slate-400 text-center">Autocalibración desactivada: se usan las probabilidades Poisson originales.</p>
+                    </div>
                     <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
                         <button type="button" onclick="autoCalibratePoissonFromSupabase(true)" class="text-[9px] font-black bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/40 text-indigo-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> AUTOCALIBRAR CON HISTORIAL SUPABASE
@@ -1934,7 +1940,7 @@ GP W D L GF GA GD Pts PPG
 
                 setSyncStatus('synced');
                 showToast('☁️ Sincronización inicial completada.');
-                await autoCalibratePoissonFromSupabase(false);
+                if (poissonCalibrationEnabled) await autoCalibratePoissonFromSupabase(false);
                 startAutoSync();
             } catch(e) {
                 console.warn('Initial sync error:', e);
@@ -5750,6 +5756,57 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             ready: false, loading: false, markets: {}, totalCount: 0, trainedAt: null
         };
 
+        // Modo de calibración controlado por el usuario.
+        // Por defecto permanece en Poisson normal hasta que el usuario lo active.
+        let poissonCalibrationEnabled = false;
+
+        function updatePoissonCalibrationModeUI() {
+            const button = document.getElementById('poissonCalibrationModeButton');
+            const label = document.getElementById('poissonCalibrationModeLabel');
+            const detail = document.getElementById('poissonCalibrationModeDetail');
+            if (!button || !label) return;
+
+            if (poissonCalibrationEnabled) {
+                label.innerText = 'AUTOCALIBRACIÓN ACTIVADA';
+                button.className = 'w-full text-[10px] font-black bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/50 text-emerald-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]';
+                button.innerHTML = '<i class="fa-solid fa-toggle-on text-sm"></i> <span id="poissonCalibrationModeLabel">AUTOCALIBRACIÓN ACTIVADA</span>';
+                if (detail) detail.innerText = 'Se aplicarán los ajustes históricos disponibles por mercado.';
+            } else {
+                label.innerText = 'POISSON NORMAL';
+                button.className = 'w-full text-[10px] font-black bg-slate-700/40 hover:bg-slate-700/60 border border-slate-600 text-slate-200 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]';
+                button.innerHTML = '<i class="fa-solid fa-toggle-off text-sm"></i> <span id="poissonCalibrationModeLabel">POISSON NORMAL</span>';
+                if (detail) detail.innerText = 'Autocalibración desactivada: se usan las probabilidades Poisson originales.';
+            }
+        }
+
+        async function togglePoissonCalibrationMode() {
+            if (poissonCalibrationEnabled) {
+                poissonCalibrationEnabled = false;
+                updatePoissonCalibrationModeUI();
+                if (Number(document.getElementById('homeGf')?.value || 0) +
+                    Number(document.getElementById('awayGf')?.value || 0) > 0) {
+                    calculatePoisson();
+                }
+                updatePoissonCalibrationStatus('Modo Poisson normal: ajustes históricos desactivados.');
+                showToast('Poisson normal activado. No se aplicará autocalibración.');
+                return;
+            }
+
+            poissonCalibrationEnabled = true;
+            updatePoissonCalibrationModeUI();
+            updatePoissonCalibrationStatus('Autocalibración activada. Consultando historial de Supabase…');
+            const trained = await autoCalibratePoissonFromSupabase(false);
+            if (Number(document.getElementById('homeGf')?.value || 0) +
+                Number(document.getElementById('awayGf')?.value || 0) > 0) {
+                calculatePoisson();
+            }
+            if (trained) {
+                showToast('Autocalibración activada y aplicada a los mercados con historial suficiente.');
+            } else {
+                showToast('Modo activado, pero no hay historial suficiente. Se mantiene Poisson normal donde no haya modelo.');
+            }
+        }
+
         function poissonCalibrationLogit(p) {
             const safe = Math.max(0.0001, Math.min(0.9999, Number(p) || 0));
             return Math.log(safe / (1 - safe));
@@ -6003,9 +6060,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             // Calibración histórica INDEPENDIENTE por mercado.
             // 1X2 se normaliza para que Local + Empate + Visitante = 100%.
-            const has1x2Calibration = poissonHistoricalCalibration.markets['Resultado Final (1X2)']?.ready;
-            const hasOuCalibration = poissonHistoricalCalibration.markets['Over / Under Goles']?.ready;
-            const hasBttsCalibration = poissonHistoricalCalibration.markets['Ambos Anotan']?.ready;
+            const has1x2Calibration = poissonCalibrationEnabled && !!poissonHistoricalCalibration.markets['Resultado Final (1X2)']?.ready;
+            const hasOuCalibration = poissonCalibrationEnabled && !!poissonHistoricalCalibration.markets['Over / Under Goles']?.ready;
+            const hasBttsCalibration = poissonCalibrationEnabled && !!poissonHistoricalCalibration.markets['Ambos Anotan']?.ready;
             if (has1x2Calibration) {
                 const c1x2 = [
                     applyPoissonHistoricalCalibration(probHomeWin, 'Resultado Final (1X2)'),
@@ -6684,6 +6741,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const link = document.createElement("a"); link.href = url; link.download = `backtest_${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
             showToast("Backtest CSV exportado.");
         }
-    </script>
+            // Estado inicial visible: Poisson normal, sin autocalibración aplicada.
+        document.addEventListener('DOMContentLoaded', updatePoissonCalibrationModeUI);
+
+</script>
 </body>
 </html>
