@@ -73,6 +73,9 @@
                 <button onclick="toggleCalibrationModal(true)" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-bullseye"></i> Calibración
                 </button>
+                <button onclick="openPredictionMemoryModal()" class="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
+                    <i class="fa-solid fa-brain"></i> Memoria
+                </button>
                 <button onclick="toggleKellyMonteCarloModal(true)" class="bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-dice"></i> Kelly MC
                 </button>
@@ -312,6 +315,11 @@
                         <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Visitante</label>
                         <input type="text" id="awayName" value="" placeholder="Nombre equipo" class="w-full bg-inputBg border border-slate-700/60 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500 transition-colors">
                     </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-1.5">
+                    <label for="predictionMatchDate" class="text-[9px] uppercase font-bold text-slate-400">Fecha del partido (opcional, mejora la identificación histórica)</label>
+                    <input type="date" id="predictionMatchDate" class="w-full bg-inputBg border border-slate-700/60 rounded-xl px-2.5 py-2 text-xs font-bold text-white focus:outline-none focus:border-cyan-500">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2.5">
@@ -1490,8 +1498,42 @@ GP W D L GF GA GD Pts PPG
                     <p id="authSyncStatusText">— Todo sincronizado.</p>
                 </div>
                 <p class="text-[9px] text-slate-500 italic text-center">"Subir" hace merge (seguro). "Descargar" reemplaza local con la nube (usa esto en un navegador nuevo).</p>
+                <p class="text-[9px] text-cyan-300/80 text-center">La Memoria Estadística sincroniza los pronósticos de partidos por separado de tus apuestas.</p>
             </div>
             <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-end"><button onclick="toggleAuthModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button></div>
+        </div>
+    </div>
+
+    <div id="predictionMemoryModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[95] hidden items-center justify-center p-2 sm:p-4">
+        <div class="glass-card w-full max-w-2xl max-h-[94vh] rounded-2xl border border-cyan-500/40 flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-3.5 bg-slate-900/95 border-b border-cyan-500/30 flex items-center justify-between">
+                <div class="flex items-center gap-2"><i class="fa-solid fa-brain text-cyan-300"></i><div><h3 class="font-black text-sm text-white">Memoria Estadística de Pronósticos</h3><p class="text-[9px] text-slate-400">Todos los partidos analizados · Independiente de las apuestas</p></div></div>
+                <button onclick="closePredictionMemoryModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-3 space-y-3 overflow-y-auto">
+                <div id="predictionMemoryStatus" class="text-[10px] rounded-xl border border-slate-700 bg-slate-900/80 p-2.5 text-slate-300">Comprobando memoria estadística…</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="bg-slate-900 p-2.5 rounded-xl border border-slate-800"><span class="block text-[8px] uppercase text-slate-400 font-bold">Total</span><b id="predictionMemoryTotal" class="text-lg text-white">0</b></div>
+                    <div class="bg-slate-900 p-2.5 rounded-xl border border-amber-500/20"><span class="block text-[8px] uppercase text-slate-400 font-bold">Pendientes</span><b id="predictionMemoryPending" class="text-lg text-amber-300">0</b></div>
+                    <div class="bg-slate-900 p-2.5 rounded-xl border border-emerald-500/20"><span class="block text-[8px] uppercase text-slate-400 font-bold">Liquidados</span><b id="predictionMemorySettled" class="text-lg text-emerald-300">0</b></div>
+                    <div class="bg-slate-900 p-2.5 rounded-xl border border-cyan-500/20"><span class="block text-[8px] uppercase text-slate-400 font-bold">En cola local</span><b id="predictionMemoryQueued" class="text-lg text-cyan-300">0</b></div>
+                </div>
+                <div class="flex items-center justify-between gap-2">
+                    <h4 class="text-xs font-black text-white">Últimos pronósticos guardados</h4>
+                    <button onclick="refreshPredictionMemory()" class="text-[10px] font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-2.5 py-1.5"><i class="fa-solid fa-rotate mr-1"></i>Actualizar</button>
+                </div>
+                <div id="predictionMemoryList" class="space-y-2"><div class="text-[10px] text-slate-500 text-center py-4">Todavía no hay pronósticos guardados.</div></div>
+                <details class="bg-slate-900/80 border border-amber-500/30 rounded-xl overflow-hidden">
+                    <summary class="cursor-pointer p-3 text-[10px] font-black text-amber-300"><i class="fa-solid fa-database mr-1.5"></i> Instalación / diagnóstico de Supabase</summary>
+                    <div class="p-3 pt-0 space-y-2">
+                        <p class="text-[9px] text-slate-400">Ejecuta este SQL una sola vez en Supabase → SQL Editor. Crea únicamente la tabla independiente <b>match_predictions</b> y sus políticas RLS; no modifica tus tablas actuales.</p>
+                        <textarea id="predictionMemorySql" readonly class="w-full h-56 bg-slate-950 border border-slate-700 rounded-lg p-2 text-[9px] font-mono text-cyan-100 resize-y"></textarea>
+                        <button onclick="copyPredictionMemorySql()" class="w-full py-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-200 rounded-lg text-[10px] font-black"><i class="fa-regular fa-copy mr-1"></i> Copiar SQL de instalación</button>
+                    </div>
+                </details>
+                <p class="text-[9px] text-slate-500">Las probabilidades originales y calibradas se conservan por separado. La memoria no crea apuestas ni modifica el bankroll. Para evaluar un partido, registra su marcador final cuando termine.</p>
+            </div>
+            <div class="p-3 bg-slate-900/95 border-t border-slate-800 flex justify-end"><button onclick="closePredictionMemoryModal()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-2 rounded-xl">Cerrar</button></div>
         </div>
     </div>
 
@@ -1962,6 +2004,7 @@ GP W D L GF GA GD Pts PPG
                 setSyncStatus('synced');
                 showToast('☁️ Sincronización inicial completada.');
                 if (poissonCalibrationEnabled) await autoCalibratePoissonFromSupabase(false);
+                await initializePredictionMemory(false);
                 startAutoSync();
             } catch(e) {
                 console.warn('Initial sync error:', e);
@@ -2030,6 +2073,7 @@ GP W D L GF GA GD Pts PPG
                 if (boxTransactionsLog.length) await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
 
                 await pullFromSupabase(true);
+                if (predictionMemoryQueue.length) await syncPredictionMemoryQueue();
             } catch(e) {
                 console.warn('[AutoSync] error:', e);
             } finally {
@@ -2065,6 +2109,10 @@ GP W D L GF GA GD Pts PPG
                     poissonHistoricalCalibration.ready = false;
                     poissonHistoricalCalibration.markets = {};
                     poissonHistoricalCalibration.totalCount = 0;
+                    predictionMemoryTableReady = false;
+                    predictionMemorySchemaChecked = false;
+                    predictionMemoryRows = [];
+                    updatePredictionMemoryCounters();
                     updatePoissonCalibrationStatus('Inicia sesión para consultar el historial de Supabase.');
                     stopAutoSync();
                     updateAuthUI();
@@ -2076,6 +2124,371 @@ GP W D L GF GA GD Pts PPG
 
         // ============================================================
         // END SUPABASE CONFIGURATION
+        // ============================================================
+
+        // ============================================================
+        // BETAGS PREDICTION MEMORY — historial de TODOS los partidos analizados
+        // Tabla independiente: public.match_predictions. No modifica bets/bankrolls.
+        // ============================================================
+        const PREDICTION_MEMORY_TABLE = 'match_predictions';
+        const PREDICTION_MEMORY_MODEL_VERSION = 'BETAGS_POISSON_1.0';
+        const PREDICTION_MEMORY_SQL = `create table if not exists public.match_predictions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  fingerprint text not null,
+  match_key text not null,
+  league text,
+  home_team text not null,
+  away_team text not null,
+  match_date date,
+  analyzed_at timestamptz not null default now(),
+  model_version text not null default 'BETAGS_POISSON_1.0',
+  calibration_enabled boolean not null default false,
+  calibration_meta jsonb not null default '{}'::jsonb,
+  inputs jsonb not null default '{}'::jsonb,
+  probabilities jsonb not null default '{}'::jsonb,
+  lambdas jsonb not null default '{}'::jsonb,
+  rho numeric,
+  status text not null default 'PENDING' check (status in ('PENDING','SETTLED')),
+  actual_home_goals integer check (actual_home_goals is null or actual_home_goals >= 0),
+  actual_away_goals integer check (actual_away_goals is null or actual_away_goals >= 0),
+  settled_at timestamptz
+);
+
+create unique index if not exists match_predictions_user_fingerprint_uidx
+  on public.match_predictions (user_id, fingerprint);
+
+create index if not exists match_predictions_user_analyzed_idx
+  on public.match_predictions (user_id, analyzed_at desc);
+
+alter table public.match_predictions enable row level security;
+
+drop policy if exists "Users can read own match predictions" on public.match_predictions;
+create policy "Users can read own match predictions"
+  on public.match_predictions for select to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert own match predictions" on public.match_predictions;
+create policy "Users can insert own match predictions"
+  on public.match_predictions for insert to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update own match predictions" on public.match_predictions;
+create policy "Users can update own match predictions"
+  on public.match_predictions for update to authenticated
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+grant select, insert, update on public.match_predictions to authenticated;`;
+
+        let predictionMemoryQueue = [];
+        let predictionMemoryRows = [];
+        let predictionMemoryTableReady = false;
+        let predictionMemorySchemaChecked = false;
+        let predictionMemoryCheckPromise = null;
+        let predictionMemoryCaptureTimer = null;
+        let predictionMemoryLastFingerprint = '';
+        let predictionMemoryLoading = false;
+
+        function loadPredictionMemoryQueue() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('betags_prediction_memory_queue') || '[]');
+                predictionMemoryQueue = Array.isArray(saved) ? saved : [];
+            } catch (e) { predictionMemoryQueue = []; }
+        }
+
+        function savePredictionMemoryQueue() {
+            try { localStorage.setItem('betags_prediction_memory_queue', JSON.stringify(predictionMemoryQueue)); }
+            catch (e) { console.warn('[Prediction memory] No se pudo guardar cola local:', e); }
+            updatePredictionMemoryCounters();
+        }
+
+        function predictionMemoryHash(value) {
+            const str = JSON.stringify(value);
+            let hashA = 2166136261, hashB = 2246822519;
+            for (let i = 0; i < str.length; i++) {
+                const code = str.charCodeAt(i);
+                hashA = Math.imul(hashA ^ code, 16777619);
+                hashB = Math.imul(hashB ^ (code + i), 3266489917);
+            }
+            return (`00000000${(hashA >>> 0).toString(16)}`).slice(-8) + (`00000000${(hashB >>> 0).toString(16)}`).slice(-8);
+        }
+
+        function predictionMemoryUuid() {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+        }
+
+        function predictionMemoryEscape(value) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        function collectPredictionMemorySnapshot() {
+            const homeTeam = (document.getElementById('homeName')?.value || '').trim();
+            const awayTeam = (document.getElementById('awayName')?.value || '').trim();
+            const homeGf = Number(document.getElementById('homeGf')?.value);
+            const homeGc = Number(document.getElementById('homeGc')?.value);
+            const awayGf = Number(document.getElementById('awayGf')?.value);
+            const awayGc = Number(document.getElementById('awayGc')?.value);
+            const probs = currentCalculatedProbs || {};
+            if (!homeTeam || !awayTeam || homeTeam.toLowerCase() === awayTeam.toLowerCase()) return null;
+            if (![homeGf, homeGc, awayGf, awayGc].every(Number.isFinite) || (homeGf + homeGc + awayGf + awayGc) <= 0) return null;
+            const leagueSelect = document.getElementById('activeLeagueSelect');
+            const league = leagueSelect ? (leagueSelect.value || leagueSelect.options[leagueSelect.selectedIndex]?.text || '') : '';
+            const matchDate = document.getElementById('predictionMatchDate')?.value || null;
+            const lambdaHome = Number(document.getElementById('valHomeLambda')?.innerText);
+            const lambdaAway = Number(document.getElementById('valAwayLambda')?.innerText);
+            if (!Number.isFinite(lambdaHome) || !Number.isFinite(lambdaAway) || (lambdaHome + lambdaAway) <= 0) return null;
+            const original = probs.original || {};
+            const probabilities = {
+                original: {
+                    home_win: Number(original.probHomeWin), draw: Number(original.probDraw), away_win: Number(original.probAwayWin),
+                    over_2_5: Number(original.probOver25), under_2_5: Number(original.probUnder25),
+                    btts_yes: Number(original.probBttsYes), btts_no: Number(original.probBttsNo)
+                },
+                calibrated: {
+                    home_win: Number(probs.probHomeWin), draw: Number(probs.probDraw), away_win: Number(probs.probAwayWin),
+                    over_2_5: Number(probs.probOver25), under_2_5: Number(probs.probUnder25),
+                    btts_yes: Number(probs.probBttsYes), btts_no: Number(probs.probBttsNo)
+                },
+                confidence_intervals_90: probs.ci || null
+            };
+            if (!Object.values(probabilities.original).slice(0, 7).every(Number.isFinite) || !Object.values(probabilities.calibrated).every(Number.isFinite)) return null;
+            const inputs = {
+                home_gf_avg: homeGf, home_ga_avg: homeGc, away_gf_avg: awayGf, away_ga_avg: awayGc,
+                home_matches: Number(getCurrentMatchMp()?.mpHome) || null,
+                away_matches: Number(getCurrentMatchMp()?.mpAway) || null
+            };
+            const lambdas = { home: lambdaHome, away: lambdaAway };
+            const rho = Number(document.getElementById('dixonRhoRange')?.value) || 0;
+            const calibrationMeta = {
+                enabled: !!poissonCalibrationEnabled,
+                trained_at: poissonHistoricalCalibration?.trainedAt || null,
+                markets: Object.fromEntries(Object.entries(poissonHistoricalCalibration?.markets || {}).map(([key, model]) => [key, { ready: !!model.ready, count: Number(model.count) || 0, wins: Number(model.wins) || 0, losses: Number(model.losses) || 0, a: Number(model.a) || 0, b: Number(model.b) || 1 }]))
+            };
+            const matchKey = [league, homeTeam, awayTeam, matchDate || 'sin-fecha'].map(v => String(v || '').trim().toLowerCase()).join('|');
+            const fingerprintSource = { matchKey, model: PREDICTION_MEMORY_MODEL_VERSION, inputs, lambdas, rho, probabilities, calibrationMeta };
+            const fingerprint = predictionMemoryHash(fingerprintSource);
+            return {
+                id: predictionMemoryUuid(), fingerprint, match_key: matchKey, league: league || null,
+                home_team: homeTeam, away_team: awayTeam, match_date: matchDate || null,
+                analyzed_at: new Date().toISOString(), model_version: PREDICTION_MEMORY_MODEL_VERSION,
+                calibration_enabled: !!poissonCalibrationEnabled, calibration_meta: calibrationMeta, inputs, probabilities, lambdas, rho,
+                status: 'PENDING', actual_home_goals: null, actual_away_goals: null, settled_at: null
+            };
+        }
+
+        function schedulePredictionMemoryCapture() {
+            const snapshot = collectPredictionMemorySnapshot();
+            if (!snapshot || snapshot.fingerprint === predictionMemoryLastFingerprint) return;
+            if (predictionMemoryCaptureTimer) clearTimeout(predictionMemoryCaptureTimer);
+            predictionMemoryCaptureTimer = setTimeout(() => {
+                predictionMemoryCaptureTimer = null;
+                if (snapshot.fingerprint === predictionMemoryLastFingerprint) return;
+                predictionMemoryLastFingerprint = snapshot.fingerprint;
+                savePredictionMemorySnapshot(snapshot);
+            }, 1300);
+        }
+
+        async function savePredictionMemorySnapshot(snapshot) {
+            if (!snapshot) return;
+            const alreadyQueued = predictionMemoryQueue.some(row => row.fingerprint === snapshot.fingerprint);
+            const alreadyLoaded = predictionMemoryRows.some(row => row.fingerprint === snapshot.fingerprint);
+            if (alreadyQueued || alreadyLoaded) return;
+            predictionMemoryQueue.push(snapshot);
+            savePredictionMemoryQueue();
+            if (currentUser && supabaseClient) await syncPredictionMemoryQueue();
+            else setPredictionMemoryStatus('Pronóstico guardado temporalmente en este dispositivo. Inicia sesión para sincronizarlo con Supabase.', 'local');
+        }
+
+        async function checkPredictionMemoryTable(force = false) {
+            if (!currentUser || !supabaseClient) {
+                predictionMemoryTableReady = false;
+                setPredictionMemoryStatus('Inicia sesión para sincronizar la memoria estadística con Supabase. Los nuevos pronósticos se conservan localmente mientras tanto.', 'local');
+                return false;
+            }
+            if (predictionMemorySchemaChecked && !force) return predictionMemoryTableReady;
+            if (predictionMemoryCheckPromise) return predictionMemoryCheckPromise;
+            predictionMemoryCheckPromise = (async () => {
+                const { error } = await supabaseClient.from(PREDICTION_MEMORY_TABLE)
+                    .select('id,user_id,fingerprint,match_key,league,home_team,away_team,match_date,analyzed_at,model_version,calibration_enabled,calibration_meta,inputs,probabilities,lambdas,rho,status,actual_home_goals,actual_away_goals,settled_at')
+                    .limit(1);
+                predictionMemorySchemaChecked = true;
+                predictionMemoryTableReady = !error;
+                if (error) {
+                    console.warn('[Prediction memory] Tabla no disponible:', error);
+                    const missing = /does not exist|schema cache|could not find the table|relation .* not found|42P01|PGRST205/i.test(error.message || '') || error.code === '42P01' || error.code === 'PGRST205';
+                    setPredictionMemoryStatus(missing
+                        ? 'Falta instalar match_predictions. Abre “Instalación / diagnóstico”, copia el SQL y ejecútalo en Supabase → SQL Editor. No se modificó ninguna tabla existente.'
+                        : 'Supabase encontró la tabla, pero la consulta falló por permisos o estructura. Revisa las políticas RLS y las columnas indicadas en el SQL.', 'error');
+                } else {
+                    setPredictionMemoryStatus('Tabla match_predictions disponible. Memoria estadística conectada y protegida por usuario (RLS).', 'ready');
+                }
+                return predictionMemoryTableReady;
+            })();
+            try { return await predictionMemoryCheckPromise; }
+            finally { predictionMemoryCheckPromise = null; }
+        }
+
+        function setPredictionMemoryStatus(message, state) {
+            const el = document.getElementById('predictionMemoryStatus');
+            if (!el) return;
+            const styles = state === 'ready' ? 'border-emerald-500/30 bg-emerald-950/30 text-emerald-200' : state === 'error' ? 'border-amber-500/40 bg-amber-950/30 text-amber-200' : 'border-slate-700 bg-slate-900/80 text-slate-300';
+            el.className = `text-[10px] rounded-xl border p-2.5 ${styles}`;
+            el.textContent = message;
+        }
+
+        async function syncPredictionMemoryQueue() {
+            if (!currentUser || !supabaseClient || !predictionMemoryQueue.length) return false;
+            if (!(await checkPredictionMemoryTable())) return false;
+            const pending = [...predictionMemoryQueue];
+            for (const row of pending) {
+                const payload = { ...row, user_id: currentUser.id };
+                const { error } = await supabaseClient.from(PREDICTION_MEMORY_TABLE)
+                    .upsert(payload, { onConflict: 'user_id,fingerprint', ignoreDuplicates: true });
+                if (error) {
+                    console.warn('[Prediction memory] Error al sincronizar:', error);
+                    setPredictionMemoryStatus('No se pudo sincronizar la cola de pronósticos. Se conservará localmente y se reintentará.', 'error');
+                    return false;
+                }
+                predictionMemoryQueue = predictionMemoryQueue.filter(item => item.fingerprint !== row.fingerprint);
+            }
+            savePredictionMemoryQueue();
+            if (pending.length) setPredictionMemoryStatus(`${pending.length} pronóstico(s) sincronizado(s) con Supabase.`, 'ready');
+            return true;
+        }
+
+        async function initializePredictionMemory(showFeedback = false) {
+            loadPredictionMemoryQueue();
+            if (!currentUser || !supabaseClient) {
+                updatePredictionMemoryCounters();
+                return false;
+            }
+            const ready = await checkPredictionMemoryTable();
+            if (!ready) return false;
+            await syncPredictionMemoryQueue();
+            if (document.getElementById('predictionMemoryModal') && !document.getElementById('predictionMemoryModal').classList.contains('hidden')) await refreshPredictionMemory();
+            if (showFeedback) showToast('Memoria estadística conectada.');
+            return true;
+        }
+
+        function updatePredictionMemoryCounters() {
+            const rows = [...predictionMemoryRows];
+            const queuedOnly = predictionMemoryQueue.filter(q => !rows.some(r => r.fingerprint === q.fingerprint));
+            const all = rows.concat(queuedOnly);
+            const pending = all.filter(r => r.status !== 'SETTLED').length;
+            const settled = all.filter(r => r.status === 'SETTLED').length;
+            const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = String(value); };
+            set('predictionMemoryTotal', all.length);
+            set('predictionMemoryPending', pending);
+            set('predictionMemorySettled', settled);
+            set('predictionMemoryQueued', queuedOnly.length);
+        }
+
+        async function refreshPredictionMemory() {
+            if (predictionMemoryLoading) return;
+            predictionMemoryLoading = true;
+            try {
+                loadPredictionMemoryQueue();
+                if (currentUser && supabaseClient && await checkPredictionMemoryTable(true)) {
+                    const { data, error } = await supabaseClient.from(PREDICTION_MEMORY_TABLE).select('*')
+                        .eq('user_id', currentUser.id).order('analyzed_at', { ascending: false }).limit(100);
+                    if (error) throw error;
+                    predictionMemoryRows = data || [];
+                    await syncPredictionMemoryQueue();
+                } else {
+                    if (!currentUser || !supabaseClient) await checkPredictionMemoryTable();
+                    predictionMemoryRows = [];
+                }
+                renderPredictionMemoryRows();
+                updatePredictionMemoryCounters();
+            } catch (e) {
+                console.warn('[Prediction memory] Error leyendo historial:', e);
+                setPredictionMemoryStatus('No se pudo cargar el historial. Se conservan los pronósticos pendientes en el almacenamiento local.', 'error');
+            } finally { predictionMemoryLoading = false; }
+        }
+
+        function renderPredictionMemoryRows() {
+            const container = document.getElementById('predictionMemoryList');
+            if (!container) return;
+            const queued = predictionMemoryQueue.filter(q => !predictionMemoryRows.some(r => r.fingerprint === q.fingerprint));
+            const rows = [...predictionMemoryRows, ...queued].sort((a,b) => new Date(b.analyzed_at || 0) - new Date(a.analyzed_at || 0)).slice(0, 30);
+            if (!rows.length) {
+                container.innerHTML = '<div class="text-[10px] text-slate-500 text-center py-4">Todavía no hay pronósticos guardados. Carga los equipos, sus estadísticas y calcula el partido.</div>';
+                return;
+            }
+            container.innerHTML = rows.map(row => {
+                const p = row.probabilities?.calibrated || {};
+                const dt = row.analyzed_at ? new Date(row.analyzed_at).toLocaleString() : 'Fecha desconocida';
+                const isSettled = row.status === 'SETTLED';
+                const result = isSettled ? `Resultado: ${row.actual_home_goals} - ${row.actual_away_goals}` : 'Pendiente de resultado';
+                const id = predictionMemoryEscape(row.id);
+                return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 space-y-2">
+                    <div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[11px] font-black text-white break-words">${predictionMemoryEscape(row.home_team)} vs ${predictionMemoryEscape(row.away_team)}</div><div class="text-[8px] text-slate-500">${predictionMemoryEscape(row.league || 'Liga no especificada')} · ${predictionMemoryEscape(dt)}${row.match_date ? ' · Partido: '+predictionMemoryEscape(row.match_date) : ''}</div></div><span class="shrink-0 text-[8px] font-black px-2 py-1 rounded-lg ${isSettled ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${isSettled ? 'LIQUIDADO' : 'PENDIENTE'}</span></div>
+                    <div class="grid grid-cols-3 gap-1 text-center"><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Local</span><b class="text-[9px] text-emerald-300">${(Number(p.home_win)*100).toFixed(1)}%</b></div><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Empate</span><b class="text-[9px] text-slate-200">${(Number(p.draw)*100).toFixed(1)}%</b></div><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Visitante</span><b class="text-[9px] text-rose-300">${(Number(p.away_win)*100).toFixed(1)}%</b></div></div>
+                    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[8px] text-slate-400"><span>O2.5 ${(Number(p.over_2_5)*100).toFixed(1)}%</span><span>BTTS Sí ${(Number(p.btts_yes)*100).toFixed(1)}%</span><span>λ ${(Number(row.lambdas?.home)||0).toFixed(2)} / ${(Number(row.lambdas?.away)||0).toFixed(2)}</span><span>${predictionMemoryEscape(row.model_version || '')}</span></div>
+                    <div class="text-[9px] ${isSettled ? 'text-emerald-300' : 'text-amber-200'}">${result}</div>
+                    ${!isSettled ? `<div class="grid grid-cols-[1fr_1fr_auto] gap-1.5 items-end"><label class="text-[8px] text-slate-400">Goles local<input id="predHomeScore_${id}" type="number" min="0" step="1" inputmode="numeric" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" placeholder="0"></label><label class="text-[8px] text-slate-400">Goles visitante<input id="predAwayScore_${id}" type="number" min="0" step="1" inputmode="numeric" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" placeholder="0"></label><button onclick="settlePredictionMemory('${id}')" class="bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 rounded-lg px-2 py-2 text-[9px] font-black">Guardar<br>marcador</button></div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        async function settlePredictionMemory(id) {
+            const homeEl = document.getElementById(`predHomeScore_${id}`);
+            const awayEl = document.getElementById(`predAwayScore_${id}`);
+            const home = Number(homeEl?.value), away = Number(awayEl?.value);
+            if (!Number.isInteger(home) || !Number.isInteger(away) || home < 0 || away < 0) { showToast('Introduce un marcador válido para ambos equipos.'); return; }
+            const settledAt = new Date().toISOString();
+            const queued = predictionMemoryQueue.find(r => String(r.id) === String(id));
+            if (queued) {
+                queued.status = 'SETTLED'; queued.actual_home_goals = home; queued.actual_away_goals = away; queued.settled_at = settledAt;
+                savePredictionMemoryQueue();
+                if (currentUser && predictionMemoryTableReady) await syncPredictionMemoryQueue();
+                renderPredictionMemoryRows(); updatePredictionMemoryCounters();
+                showToast('Resultado guardado en la cola de memoria.');
+                return;
+            }
+            if (!currentUser || !supabaseClient || !(await checkPredictionMemoryTable())) { showToast('Inicia sesión y verifica la tabla de memoria.'); return; }
+            const { data, error } = await supabaseClient.from(PREDICTION_MEMORY_TABLE).update({ status: 'SETTLED', actual_home_goals: home, actual_away_goals: away, settled_at: settledAt })
+                .eq('id', id).eq('user_id', currentUser.id).select().single();
+            if (error) { console.warn('[Prediction memory] Error al liquidar:', error); showToast('No se pudo guardar el resultado en Supabase.'); return; }
+            const idx = predictionMemoryRows.findIndex(r => String(r.id) === String(id));
+            if (idx >= 0) predictionMemoryRows[idx] = data;
+            renderPredictionMemoryRows(); updatePredictionMemoryCounters();
+            showToast('Marcador final guardado.');
+        }
+
+        async function openPredictionMemoryModal() {
+            const modal = document.getElementById('predictionMemoryModal');
+            if (!modal) return;
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            const sql = document.getElementById('predictionMemorySql');
+            if (sql) sql.value = PREDICTION_MEMORY_SQL;
+            await refreshPredictionMemory();
+        }
+
+        function closePredictionMemoryModal() {
+            const modal = document.getElementById('predictionMemoryModal');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        }
+
+        async function copyPredictionMemorySql() {
+            const sql = PREDICTION_MEMORY_SQL;
+            try {
+                if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(sql);
+                else {
+                    const field = document.getElementById('predictionMemorySql'); field.focus(); field.select();
+                    if (!document.execCommand('copy')) throw new Error('copy failed');
+                }
+                showToast('SQL de instalación copiado.');
+            } catch (e) { showToast('No se pudo copiar automáticamente. Selecciona el SQL y cópialo.'); }
+        }
+
+        loadPredictionMemoryQueue();
+        // ============================================================
+        // FIN BETAGS PREDICTION MEMORY
         // ============================================================
 
         const DEFAULT_LEAGUE_NAME = "J1 League (Japón)";
@@ -2204,6 +2617,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             loadBoxTransactionsFromStorage();
             loadBetLogFromStorage();
             loadParallelBetLogFromStorage();
+            loadPredictionMemoryQueue();
+            updatePredictionMemoryCounters();
             populateLeagueDropdowns();
             populateBankrollDropdowns();
             updateTeamSelectors();
@@ -6422,6 +6837,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (parlaySelections.some(s => s.match === `${homeName} vs ${awayName}`)) {
                 renderParlayBuilder();
             }
+
+            // Guarda automáticamente cada estado distinto de un partido analizado, sin exigir apuesta.
+            // Debounce + fingerprint evita duplicados por recalculados repetidos del mismo estado.
+            if (typeof schedulePredictionMemoryCapture === 'function') schedulePredictionMemoryCapture();
         }
 
         function renderDynamicOverUnder(matrix) {
