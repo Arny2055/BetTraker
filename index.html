@@ -2463,29 +2463,97 @@ grant select, insert, update on public.match_predictions to authenticated;`;
             } finally { predictionMemoryLoading = false; }
         }
 
+        function predictionMemoryOutcome(row) {
+            if (row?.status !== 'SETTLED' || !Number.isInteger(Number(row.actual_home_goals)) || !Number.isInteger(Number(row.actual_away_goals))) return null;
+            const h = Number(row.actual_home_goals), a = Number(row.actual_away_goals), total = h + a;
+            return {
+                result: h > a ? 'home_win' : h === a ? 'draw' : 'away_win',
+                over_2_5: total >= 3, under_2_5: total <= 2,
+                btts_yes: h > 0 && a > 0, btts_no: h === 0 || a === 0
+            };
+        }
+
+        function predictionMemoryMetric(rows, market) {
+            const settled = rows.filter(row => predictionMemoryOutcome(row));
+            const isThreeWay = market === '1x2';
+            const keys = isThreeWay ? ['home_win', 'draw', 'away_win'] : market === 'over_under' ? ['over_2_5', 'under_2_5'] : ['btts_yes', 'btts_no'];
+            const labels = isThreeWay ? ['Local', 'Empate', 'Visitante'] : market === 'over_under' ? ['Over 2.5', 'Under 2.5'] : ['BTTS Sí', 'BTTS No'];
+            const calculate = (kind) => {
+                let brier = 0, logLoss = 0, correct = 0, count = 0;
+                settled.forEach(row => {
+                    const outcome = predictionMemoryOutcome(row);
+                    const probabilities = row.probabilities?.[kind];
+                    if (!outcome || !probabilities || !keys.every(key => Number.isFinite(Number(probabilities[key])))) return;
+                    const actual = keys.map(key => isThreeWay ? (outcome.result === key ? 1 : 0) : (outcome[key] ? 1 : 0));
+                    const predicted = keys.map(key => Math.max(0.000001, Math.min(0.999999, Number(probabilities[key]))));
+                    if (isThreeWay) {
+                        const sum = predicted.reduce((a,b) => a+b, 0);
+                        if (!Number.isFinite(sum) || sum <= 0) return;
+                        for (let i=0;i<predicted.length;i++) predicted[i] /= sum;
+                        const pi = predicted.indexOf(Math.max(...predicted));
+                        const ai = actual.indexOf(1);
+                        if (pi === ai) correct++;
+                        for (let i=0;i<keys.length;i++) { brier += Math.pow(predicted[i]-actual[i],2); if (actual[i]) logLoss -= Math.log(predicted[i]); }
+                    } else {
+                        const positive = predicted[0];
+                        const actualPositive = actual[0];
+                        if ((positive >= 0.5 ? 1 : 0) === actualPositive) correct++;
+                        brier += Math.pow(positive-actualPositive,2) + Math.pow((1-positive)-(1-actualPositive),2);
+                        logLoss -= actualPositive ? Math.log(positive) : Math.log(1-positive);
+                    }
+                    count++;
+                });
+                return count ? { count, accuracy: correct/count*100, brier: brier/count, logLoss: logLoss/count } : { count: 0, accuracy: null, brier: null, logLoss: null };
+            };
+            return { labels, original: calculate('original'), calibrated: calculate('calibrated') };
+        }
+
         function renderPredictionMemoryRows() {
             const container = document.getElementById('predictionMemoryList');
             if (!container) return;
             const queued = predictionMemoryQueue.filter(q => !predictionMemoryRows.some(r => r.fingerprint === q.fingerprint));
-            const rows = [...predictionMemoryRows, ...queued].sort((a,b) => new Date(b.analyzed_at || 0) - new Date(a.analyzed_at || 0)).slice(0, 30);
+            const rows = [...predictionMemoryRows, ...queued].sort((a,b) => new Date(b.analyzed_at || 0) - new Date(a.analyzed_at || 0)).slice(0, 100);
             if (!rows.length) {
                 container.innerHTML = '<div class="text-[10px] text-slate-500 text-center py-4">Todavía no hay pronósticos guardados. Carga los equipos, sus estadísticas y calcula el partido.</div>';
                 return;
             }
-            container.innerHTML = rows.map(row => {
-                const p = row.probabilities?.calibrated || {};
+            const settledRows = rows.filter(row => predictionMemoryOutcome(row));
+            const metricCards = [
+                { key: '1x2', title: '1X2' },
+                { key: 'over_under', title: 'Over / Under 2.5' },
+                { key: 'btts', title: 'Ambos equipos anotan (BTTS)' }
+            ].map(market => {
+                const metric = predictionMemoryMetric(settledRows, market.key);
+                const fmt = value => value == null ? '—' : Number(value).toFixed(3);
+                const acc = value => value == null ? '—' : `${value.toFixed(1)}%`;
+                return `<div class="bg-slate-950/90 border border-slate-700 rounded-xl p-2"><div class="text-[9px] font-black text-white mb-1">${market.title} <span class="text-slate-500 font-normal">· n=${metric.calibrated.count}</span></div><div class="grid grid-cols-2 gap-2 text-[8px]"><div><div class="text-cyan-300 font-bold">Original</div><div class="text-slate-300">Acierto ${acc(metric.original.accuracy)}</div><div class="text-slate-400">Brier ${fmt(metric.original.brier)}</div><div class="text-slate-400">Log Loss ${fmt(metric.original.logLoss)}</div></div><div><div class="text-emerald-300 font-bold">Calibrada</div><div class="text-slate-300">Acierto ${acc(metric.calibrated.accuracy)}</div><div class="text-slate-400">Brier ${fmt(metric.calibrated.brier)}</div><div class="text-slate-400">Log Loss ${fmt(metric.calibrated.logLoss)}</div></div></div></div>`;
+            }).join('');
+            const summary = `<div class="bg-slate-900/70 border border-cyan-500/20 rounded-xl p-2.5 space-y-2"><div class="flex items-center justify-between"><b class="text-[10px] text-white">Rendimiento por mercado</b><span class="text-[8px] text-slate-400">${settledRows.length} partidos liquidados</span></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-2">${metricCards}</div><p class="text-[8px] text-slate-500">Brier y Log Loss: menor es mejor. Acierto: porcentaje de resultados acertados. Se calculan solo con registros liquidados que contienen las probabilidades necesarias.</p></div>`;
+            const cards = rows.slice(0,30).map(row => {
+                const original = row.probabilities?.original || {};
+                const calibrated = row.probabilities?.calibrated || {};
+                const outcome = predictionMemoryOutcome(row);
                 const dt = row.analyzed_at ? new Date(row.analyzed_at).toLocaleString() : 'Fecha desconocida';
-                const isSettled = row.status === 'SETTLED';
-                const result = isSettled ? `Resultado: ${row.actual_home_goals} - ${row.actual_away_goals}` : 'Pendiente de resultado';
+                const isSettled = !!outcome;
+                const result = isSettled ? `Resultado final: ${row.actual_home_goals} - ${row.actual_away_goals}` : 'Pendiente de resultado';
                 const id = predictionMemoryEscape(row.id);
+                const pct = (v) => Number.isFinite(Number(v)) ? `${(Number(v)*100).toFixed(1)}%` : '—';
+                const hit = (key, label) => isSettled ? `<span class="${outcome[key] ? 'text-emerald-300' : 'text-rose-300'}">${label}: ${outcome[key] ? 'ACIERTO' : 'FALLO'}</span>` : `<span class="text-slate-500">${label}: pendiente</span>`;
+                const resultLabel = isSettled ? (outcome.result === 'home_win' ? 'Ganó local' : outcome.result === 'draw' ? 'Empate' : 'Ganó visitante') : '';
+                const ci = row.probabilities?.confidence_intervals_90;
+                const ciText = ci && typeof ci === 'object' ? Object.entries(ci).slice(0,6).map(([k,v]) => `${predictionMemoryEscape(k)} ${predictionMemoryEscape(typeof v === 'object' ? `${v.lower ?? v.low ?? '—'}–${v.upper ?? v.high ?? '—'}` : v)}`).join(' · ') : 'No disponibles';
                 return `<div class="bg-slate-900/80 border border-slate-800 rounded-xl p-2.5 space-y-2">
                     <div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[11px] font-black text-white break-words">${predictionMemoryEscape(row.home_team)} vs ${predictionMemoryEscape(row.away_team)}</div><div class="text-[8px] text-slate-500">${predictionMemoryEscape(row.league || 'Liga no especificada')} · ${predictionMemoryEscape(dt)}${row.match_date ? ' · Partido: '+predictionMemoryEscape(row.match_date) : ''}</div></div><span class="shrink-0 text-[8px] font-black px-2 py-1 rounded-lg ${isSettled ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">${isSettled ? 'LIQUIDADO' : 'PENDIENTE'}</span></div>
-                    <div class="grid grid-cols-3 gap-1 text-center"><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Local</span><b class="text-[9px] text-emerald-300">${(Number(p.home_win)*100).toFixed(1)}%</b></div><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Empate</span><b class="text-[9px] text-slate-200">${(Number(p.draw)*100).toFixed(1)}%</b></div><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Visitante</span><b class="text-[9px] text-rose-300">${(Number(p.away_win)*100).toFixed(1)}%</b></div></div>
-                    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[8px] text-slate-400"><span>O2.5 ${(Number(p.over_2_5)*100).toFixed(1)}%</span><span>BTTS Sí ${(Number(p.btts_yes)*100).toFixed(1)}%</span><span>λ ${(Number(row.lambdas?.home)||0).toFixed(2)} / ${(Number(row.lambdas?.away)||0).toFixed(2)}</span><span>${predictionMemoryEscape(row.model_version || '')}</span></div>
+                    <div class="grid grid-cols-3 gap-1 text-center"><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Local</span><b class="text-[9px] text-emerald-300">${pct(calibrated.home_win)}</b></div><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Empate</span><b class="text-[9px] text-slate-200">${pct(calibrated.draw)}</b></div><div class="bg-slate-950 rounded p-1"><span class="block text-[7px] text-slate-500">Visitante</span><b class="text-[9px] text-rose-300">${pct(calibrated.away_win)}</b></div></div>
+                    <div class="bg-slate-950 rounded-lg p-2 space-y-1"><div class="text-[8px] font-black text-white">Probabilidades por mercado · original / calibrada</div><div class="grid grid-cols-2 gap-x-2 gap-y-1 text-[8px] text-slate-400"><span>1X2 Local: ${pct(original.home_win)} / ${pct(calibrated.home_win)}</span><span>Empate: ${pct(original.draw)} / ${pct(calibrated.draw)}</span><span>Visitante: ${pct(original.away_win)} / ${pct(calibrated.away_win)}</span><span>Over 2.5: ${pct(original.over_2_5)} / ${pct(calibrated.over_2_5)}</span><span>Under 2.5: ${pct(original.under_2_5)} / ${pct(calibrated.under_2_5)}</span><span>BTTS Sí: ${pct(original.btts_yes)} / ${pct(calibrated.btts_yes)}</span><span>BTTS No: ${pct(original.btts_no)} / ${pct(calibrated.btts_no)}</span></div></div>
+                    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[8px]">${(() => { const vals = [Number(calibrated.home_win), Number(calibrated.draw), Number(calibrated.away_win)]; const keys = ['home_win','draw','away_win']; const predicted = keys[vals.indexOf(Math.max(...vals))]; const correct = isSettled && predicted === outcome.result; return isSettled ? `<span class="${correct ? 'text-emerald-300' : 'text-rose-300'}">1X2 (${resultLabel}): ${correct ? 'ACIERTO' : 'FALLO'}</span>` : '<span class="text-slate-500">1X2: pendiente</span>'; })()}${hit('over_2_5','Over 2.5')}${hit('under_2_5','Under 2.5')}${hit('btts_yes','BTTS Sí')}${hit('btts_no','BTTS No')}</div>
+                    <div class="text-[8px] text-slate-500">IC 90%: ${ciText}</div>
+                    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[8px] text-slate-400"><span>λ ${(Number(row.lambdas?.home)||0).toFixed(2)} / ${(Number(row.lambdas?.away)||0).toFixed(2)}</span><span>${predictionMemoryEscape(row.model_version || '')}</span></div>
                     <div class="text-[9px] ${isSettled ? 'text-emerald-300' : 'text-amber-200'}">${result}</div>
                     ${!isSettled ? `<div class="grid grid-cols-[1fr_1fr_auto] gap-1.5 items-end"><label class="text-[8px] text-slate-400">Goles local<input id="predHomeScore_${id}" type="number" min="0" step="1" inputmode="numeric" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" placeholder="0"></label><label class="text-[8px] text-slate-400">Goles visitante<input id="predAwayScore_${id}" type="number" min="0" step="1" inputmode="numeric" class="mt-1 w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white" placeholder="0"></label><button onclick="settlePredictionMemory('${id}')" class="bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 rounded-lg px-2 py-2 text-[9px] font-black">Guardar<br>marcador</button></div>` : ''}
                 </div>`;
             }).join('');
+            container.innerHTML = summary + cards;
         }
 
         async function settlePredictionMemory(id) {
