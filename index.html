@@ -1504,6 +1504,15 @@ GP W D L GF GA GD Pts PPG
         </div>
     </div>
 
+    <div id="predictionMemoryConfirmPanel" class="fixed bottom-3 left-3 right-3 z-[85] hidden max-w-xl mx-auto glass-card rounded-2xl border border-amber-400/50 shadow-2xl p-3">
+        <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-shield-halved text-amber-300"></i><div><p class="text-xs font-black text-white">Confirmar pronóstico para Memoria</p><p id="predictionMemoryConfirmCount" class="text-[9px] text-slate-400">Pendientes de confirmar: 0</p></div></div>
+            <span class="text-[8px] font-black text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-full px-2 py-1">MODO SEGURO</span>
+        </div>
+        <p class="text-[9px] text-slate-300 mb-2">Los análisis no se guardan ni se envían a Supabase hasta que pulses «Guardar». Puedes descartar los que hiciste por error.</p>
+        <div id="predictionMemoryConfirmList" class="space-y-2 max-h-52 overflow-y-auto"></div>
+    </div>
+
     <div id="predictionMemoryModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[95] hidden items-center justify-center p-2 sm:p-4">
         <div class="glass-card w-full max-w-2xl max-h-[94vh] rounded-2xl border border-cyan-500/40 flex flex-col shadow-2xl overflow-hidden">
             <div class="p-3.5 bg-slate-900/95 border-b border-cyan-500/30 flex items-center justify-between">
@@ -2186,6 +2195,7 @@ grant select, insert, update on public.match_predictions to authenticated;`;
         let predictionMemorySchemaChecked = false;
         let predictionMemoryCheckPromise = null;
         let predictionMemoryCaptureTimer = null;
+        let predictionMemoryPendingConfirmations = [];
         let predictionMemoryLastFingerprint = '';
         let predictionMemoryLoading = false;
 
@@ -2282,14 +2292,57 @@ grant select, insert, update on public.match_predictions to authenticated;`;
 
         function schedulePredictionMemoryCapture() {
             const snapshot = collectPredictionMemorySnapshot();
-            if (!snapshot || snapshot.fingerprint === predictionMemoryLastFingerprint) return;
+            if (!snapshot) return;
+            if (snapshot.fingerprint === predictionMemoryLastFingerprint) return;
+            if (predictionMemoryLastFingerprint && snapshot.fingerprint !== predictionMemoryLastFingerprint) predictionMemoryLastFingerprint = '';
+            if (predictionMemoryPendingConfirmations.some(row => row.fingerprint === snapshot.fingerprint)) return;
+            if (predictionMemoryQueue.some(row => row.fingerprint === snapshot.fingerprint) || predictionMemoryRows.some(row => row.fingerprint === snapshot.fingerprint)) return;
             if (predictionMemoryCaptureTimer) clearTimeout(predictionMemoryCaptureTimer);
             predictionMemoryCaptureTimer = setTimeout(() => {
                 predictionMemoryCaptureTimer = null;
-                if (snapshot.fingerprint === predictionMemoryLastFingerprint) return;
-                predictionMemoryLastFingerprint = snapshot.fingerprint;
-                savePredictionMemorySnapshot(snapshot);
+                if (predictionMemoryPendingConfirmations.some(row => row.fingerprint === snapshot.fingerprint)) return;
+                if (predictionMemoryQueue.some(row => row.fingerprint === snapshot.fingerprint) || predictionMemoryRows.some(row => row.fingerprint === snapshot.fingerprint)) return;
+                predictionMemoryPendingConfirmations.unshift(snapshot);
+                renderPredictionMemoryConfirmations();
             }, 1300);
+        }
+
+        function renderPredictionMemoryConfirmations() {
+            const panel = document.getElementById('predictionMemoryConfirmPanel');
+            const list = document.getElementById('predictionMemoryConfirmList');
+            const count = document.getElementById('predictionMemoryConfirmCount');
+            if (!panel || !list || !count) return;
+            const pending = predictionMemoryPendingConfirmations;
+            count.textContent = `Pendientes de confirmar: ${pending.length}`;
+            panel.classList.toggle('hidden', pending.length === 0);
+            list.innerHTML = pending.map(row => {
+                const fp = predictionMemoryEscape(row.fingerprint);
+                const home = predictionMemoryEscape(row.home_team);
+                const away = predictionMemoryEscape(row.away_team);
+                const league = predictionMemoryEscape(row.league || 'Liga no especificada');
+                const date = row.match_date ? ` · ${predictionMemoryEscape(row.match_date)}` : '';
+                const over = (Number(row.probabilities?.calibrated?.over_2_5) * 100).toFixed(1);
+                return `<div class="bg-slate-950/80 border border-slate-700 rounded-xl p-2.5"><div class="text-[10px] font-black text-white">${home} vs ${away}</div><div class="text-[8px] text-slate-400 mb-2">${league}${date} · Over 2.5: ${over}%</div><div class="grid grid-cols-2 gap-2"><button type="button" onclick="confirmPredictionMemorySave('${fp}')" class="py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg text-[10px] font-black"><i class="fa-solid fa-check mr-1"></i>Guardar análisis</button><button type="button" onclick="discardPredictionMemory('${fp}')" class="py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/40 text-rose-300 rounded-lg text-[10px] font-black"><i class="fa-solid fa-trash-can mr-1"></i>Descartar</button></div></div>`;
+            }).join('');
+        }
+
+        async function confirmPredictionMemorySave(fingerprint) {
+            const index = predictionMemoryPendingConfirmations.findIndex(row => row.fingerprint === fingerprint);
+            if (index < 0) return;
+            const snapshot = predictionMemoryPendingConfirmations[index];
+            predictionMemoryPendingConfirmations.splice(index, 1);
+            renderPredictionMemoryConfirmations();
+            await savePredictionMemorySnapshot(snapshot);
+            showToast('Pronóstico confirmado y añadido a Memoria Estadística.');
+        }
+
+        function discardPredictionMemory(fingerprint) {
+            const index = predictionMemoryPendingConfirmations.findIndex(row => row.fingerprint === fingerprint);
+            if (index < 0) return;
+            const [discarded] = predictionMemoryPendingConfirmations.splice(index, 1);
+            predictionMemoryLastFingerprint = discarded.fingerprint;
+            renderPredictionMemoryConfirmations();
+            showToast('Análisis descartado. No se guardó en Memoria ni se envió a Supabase.');
         }
 
         async function savePredictionMemorySnapshot(snapshot) {
@@ -6838,7 +6891,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 renderParlayBuilder();
             }
 
-            // Guarda automáticamente cada estado distinto de un partido analizado, sin exigir apuesta.
+            // Modo Seguro: prepara el pronóstico para confirmación explícita; no lo guarda automáticamente.
             // Debounce + fingerprint evita duplicados por recalculados repetidos del mismo estado.
             if (typeof schedulePredictionMemoryCapture === 'function') schedulePredictionMemoryCapture();
         }
