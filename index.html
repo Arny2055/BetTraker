@@ -5473,7 +5473,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     const evVal = parseFloat(bet.ev) || 0;
                     const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
                     const clvBadge = getClvBadge(bet.clv);
-                    htmlP += `<tr class="bg-amber-950/10 hover:bg-amber-900/20"><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center font-bold">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none"><option value="PENDING" selected>⌛ Pendiente</option><option value="WON">✅ Ganada</option><option value="LOST">❌ Perdida</option><option value="VOID">↩️ Nula</option><option value="HALF_WON">½ Ganada</option><option value="HALF_LOST">½ Perdida</option></select></td><td class="p-1.5 text-center"><button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    htmlP += `<tr class="bg-amber-950/10 hover:bg-amber-900/20"><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center font-bold">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none"><option value="PENDING" selected>⌛ Pendiente</option><option value="WON">✅ Ganada</option><option value="LOST">❌ Perdida</option><option value="VOID">↩️ Nula</option><option value="HALF_WON">½ Ganada</option><option value="HALF_LOST">½ Perdida</option></select></td><td class="p-1.5 text-center"><button onclick="shareBetCard(${bet.originalIdx})" title="Compartir apuesta" class="text-emerald-400 hover:text-emerald-300 mr-1.5"><i class="fa-solid fa-share-nodes"></i></button><button onclick="editBetInLog(${bet.originalIdx})" title="Editar" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" title="Eliminar" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
                 pendingTbody.innerHTML = htmlP;
             }
@@ -5491,7 +5491,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     const evVal = parseFloat(bet.ev) || 0;
                     const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
                     const clvBadge = getClvBadge(bet.clv);
-                    htmlC += `<tr><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none"><option value="PENDING">⌛ Pendiente</option><option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option><option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option><option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option><option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option><option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option></select></td><td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}</td><td class="p-1.5 text-center"><button onclick="editBetInLog(${bet.originalIdx})" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    htmlC += `<tr><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none"><option value="PENDING">⌛ Pendiente</option><option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option><option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option><option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option><option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option><option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option></select></td><td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}</td><td class="p-1.5 text-center"><button onclick="shareBetCard(${bet.originalIdx})" title="Compartir apuesta" class="text-emerald-400 hover:text-emerald-300 mr-1.5"><i class="fa-solid fa-share-nodes"></i></button><button onclick="editBetInLog(${bet.originalIdx})" title="Editar" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" title="Eliminar" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
                 });
                 closedTbody.innerHTML = htmlC;
             }
@@ -7214,6 +7214,64 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             window.addEventListener('orientationchange', applyLayout, { passive: true });
         })();
     </script>
+
+
+<script>
+// Tarjeta de apuesta personalizada Poisson Betting Pro VIP.
+function shareBetCard(index) {
+    const bet = (typeof betLogData !== 'undefined' ? betLogData[index] : null);
+    if (!bet) { if (typeof showToast === 'function') showToast('No se encontró la apuesta.'); return; }
+    const W = 1080, H = 1350;
+    const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const roundRect = (x,y,w,h,r,fill,stroke) => { ctx.beginPath(); ctx.roundRect(x,y,w,h,r); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();} };
+    const txt = (value) => String(value == null || value === '' ? '—' : value);
+    const fit = (value, max, size=42) => { let t=txt(value); ctx.font=`700 ${size}px Arial`; while(ctx.measureText(t).width>max && t.length>4){t=t.slice(0,-2)+'…';} return t; };
+    const bg=ctx.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#071b3d'); bg.addColorStop(.55,'#102f61'); bg.addColorStop(1,'#07152e'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    // textura decorativa
+    ctx.globalAlpha=.10; ctx.strokeStyle='#8db8f5'; ctx.lineWidth=3;
+    for(let i=0;i<8;i++){ctx.beginPath();ctx.arc(900,180,90+i*35,0,Math.PI*2);ctx.stroke();} ctx.globalAlpha=1;
+    ctx.fillStyle='#fff'; ctx.font='800 34px Arial'; ctx.fillText('POISSON BETTING PRO',72,92);
+    ctx.fillStyle='#8fb7ed'; ctx.font='600 20px Arial'; ctx.fillText('ANÁLISIS · ESTADÍSTICA · APUESTAS',74,130);
+    roundRect(64,180,952,1100,34,'#f8fafc');
+    roundRect(100,218,340,54,27,'#12366f'); ctx.fillStyle='#fff'; ctx.font='800 21px Arial'; ctx.fillText(bet.isParlay?'APUESTA PARLAY':'APUESTA REGISTRADA',124,253);
+    ctx.fillStyle='#64748b'; ctx.font='700 22px Arial'; ctx.fillText(txt(bet.league).toUpperCase(),104,340);
+    ctx.fillStyle='#0f2344'; ctx.font='800 43px Arial'; ctx.fillText(fit(bet.match,850,43),104,405);
+    ctx.fillStyle='#64748b'; ctx.font='600 22px Arial'; ctx.fillText('SELECCIÓN',104,490);
+    ctx.fillStyle='#12366f'; ctx.font='800 48px Arial'; ctx.fillText(fit(bet.selection,820,48),104,552);
+    // cuota protagonista
+    roundRect(104,610,872,190,26,'#12366f');
+    ctx.fillStyle='#a9c6ee'; ctx.font='800 22px Arial'; ctx.fillText('CUOTA',144,660);
+    ctx.fillStyle='#ffc83d'; ctx.font='900 100px Arial'; ctx.fillText('@'+txt(bet.bookieOdds),140,760);
+    // indicadores
+    const cols=[104,398,692], labels=['PROBABILIDAD','STAKE','RETORNO POTENCIAL'];
+    const values=[txt(bet.prob)+'%', '$'+Number(bet.stake||0).toFixed(2), '$'+(Number(bet.stake||0)*Number(bet.bookieOdds||0)).toFixed(2)];
+    for(let i=0;i<3;i++){roundRect(cols[i],835,270,150,18,'#edf2f8','#dbe4ef');ctx.fillStyle='#64748b';ctx.font='700 17px Arial';ctx.fillText(labels[i],cols[i]+18,875);ctx.fillStyle='#102f61';ctx.font='900 34px Arial';ctx.fillText(values[i],cols[i]+18,935);}
+    roundRect(104,1020,872,100,18,'#e8eef7');
+    ctx.fillStyle='#64748b';ctx.font='700 18px Arial';ctx.fillText('CASA DE APUESTAS',128,1058);
+    ctx.fillStyle='#102f61';ctx.font='800 27px Arial';ctx.fillText(fit(bet.bookmaker||'No especificada',330,27),128,1098);
+    ctx.fillStyle='#64748b';ctx.font='700 18px Arial';ctx.fillText('FECHA',620,1058);
+    ctx.fillStyle='#102f61';ctx.font='800 25px Arial';ctx.fillText(txt(bet.date),620,1098);
+    const statusMap={PENDING:'PENDIENTE',WON:'GANADA',LOST:'PERDIDA',VOID:'NULA',HALF_WON:'MEDIA GANADA',HALF_LOST:'MEDIA PERDIDA'};
+    ctx.fillStyle='#64748b';ctx.font='700 20px Arial';ctx.fillText('ESTADO: '+(statusMap[bet.status]||txt(bet.status)),108,1180);
+    ctx.fillStyle='#94a3b8';ctx.font='600 17px Arial';ctx.fillText('Contenido informativo y estadístico · Juega con responsabilidad',108,1230);
+    const fileName='Poisson_Betting_Pro_Apuesta_'+String(bet.id||Date.now()).replace(/[^a-zA-Z0-9_-]/g,'')+'.png';
+    canvas.toBlob(async blob=>{
+        if(!blob){if(typeof showToast==='function')showToast('No se pudo generar la tarjeta.');return;}
+        const file=new File([blob],fileName,{type:'image/png'});
+        const shareText=`Mi apuesta en Poisson Betting Pro\n${bet.match}\n${bet.selection} @${bet.bookieOdds}\nProbabilidad: ${bet.prob}% · Stake: $${bet.stake}`;
+        if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+            try{await navigator.share({title:'Mi apuesta · Poisson Betting Pro',text:shareText,files:[file]});return;}catch(err){if(err && err.name==='AbortError')return;}
+        }
+        const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
+        const choice=window.confirm('La tarjeta se descargó. ¿Quieres abrir WhatsApp para compartirla? Adjunta la imagen descargada en el chat. Pulsa Cancelar para abrir Telegram.');
+        const encoded=encodeURIComponent(shareText);
+        window.open(choice?`https://wa.me/?text=${encoded}`:`https://t.me/share/url?url=&text=${encoded}`,'_blank','noopener');
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        if(typeof showToast==='function')showToast('Tarjeta descargada. Adjunta el PNG en WhatsApp o Telegram.');
+    },'image/png');
+}
+</script>
 
 </body>
 </html>
