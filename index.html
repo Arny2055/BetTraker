@@ -7302,14 +7302,13 @@ function shareBetCard(index) {
     canvas.toBlob(async blob=>{
         if(!blob){if(typeof showToast==='function')showToast('No se pudo generar la tarjeta.');return;}
         const file=new File([blob],fileName,{type:'image/png'});
-        const shareText=`Mi apuesta en BETAGS VIP PRO\n${bet.match}\n${bet.selection} @${bet.bookieOdds}\nProbabilidad: ${bet.prob}% · Stake: ${money(bet.stake)}`;
+        // Compartir únicamente la imagen: todos los datos ya están dentro de la tarjeta.
         if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-            try{await navigator.share({title:'Apuesta · BETAGS VIP PRO',text:shareText,files:[file]});return;}catch(err){if(err&&err.name==='AbortError')return;}
+            try{await navigator.share({files:[file]});return;}catch(err){if(err&&err.name==='AbortError')return;}
         }
         const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
         const choice=window.confirm('La tarjeta se descargó. ¿Quieres abrir WhatsApp para compartirla? Adjunta la imagen descargada en el chat. Pulsa Cancelar para abrir Telegram.');
-        const encoded=encodeURIComponent(shareText);
-        window.open(choice?`https://wa.me/?text=${encoded}`:`https://t.me/share/url?url=&text=${encoded}`,'_blank','noopener');
+        window.open(choice?'https://wa.me/':'https://t.me/','_blank','noopener');
         setTimeout(()=>URL.revokeObjectURL(url),60000);
         if(typeof showToast==='function')showToast('Tarjeta BETAGS VIP PRO descargada. Adjunta el PNG en WhatsApp o Telegram.');
     },'image/png');
