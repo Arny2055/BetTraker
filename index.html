@@ -147,6 +147,50 @@
             header button { white-space: nowrap; }
         }
 
+    
+        /* ============================================================
+           MEJORA VISUAL 2.0: jerarquía, navegación y paneles independientes
+           Solo presentación/organización; no modifica los cálculos del modelo.
+        ============================================================ */
+        #visualDashboardIntro { order: 0; }
+        #sec-setup { order: 1; }
+        #sec-league { order: 2; }
+        #sec-match { order: 3; }
+        #sec-results { order: 4; }
+        #sec-advanced { order: 5; }
+        #sec-parlay { order: 6; }
+        #sec-bankroll { order: 7; }
+        #quickNav button { min-height: 34px; }
+        #sec-results > .flex:first-child span { font-size: 10px; padding: .35rem .65rem; }
+        #sec-results .glass-card { border-color: rgba(16,185,129,.18); }
+        #sec-results .glass-card:has(#pct1x2Home),
+        #sec-results .glass-card:has(#pctOver25),
+        #sec-results .glass-card:has(#pctBttsYes) { box-shadow: 0 8px 24px rgba(0,0,0,.16); }
+        #sec-bankroll > .glass-card { width: 100%; }
+        #sec-bankroll .bankroll-section-heading { display:flex; align-items:center; gap:.55rem; }
+        @media (min-width: 768px) {
+            #visualDashboardIntro { grid-column: 1 / -1; }
+            #sec-setup { grid-column: span 5; }
+            #sec-league { grid-column: span 7; }
+            #sec-match { grid-column: span 5; }
+            #sec-results { grid-column: span 7; }
+            #sec-advanced { grid-column: span 6; }
+            #sec-parlay { grid-column: span 6; }
+            #sec-bankroll { grid-column: 1 / -1; }
+        }
+        @media (min-width: 1024px) {
+            #visualDashboardIntro { padding: 1.1rem 1.25rem; }
+            #sec-results { grid-column: 1 / -1; }
+            #sec-advanced { grid-column: span 7; }
+            #sec-parlay { grid-column: span 5; }
+            #sec-bankroll { grid-column: 1 / -1; }
+        }
+        @media (max-width: 767px) {
+            #visualDashboardIntro { margin-bottom: .1rem; }
+            #quickNav { top: .25rem; }
+            #sec-results { scroll-margin-top: 5.5rem; }
+        }
+
     </style>
 </head>
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
@@ -194,19 +238,22 @@
         <nav id="quickNav" class="sticky top-1 z-30 glass-card rounded-2xl p-1.5 border border-emerald-500/30 shadow-xl">
             <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 <button onclick="scrollToSection('sec-setup')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
-                    <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">1</span> Setup
+                    <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center"><i class="fa-solid fa-house"></i></span> Inicio
                 </button>
                 <button onclick="scrollToSection('sec-match')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-400 text-[9px] font-black flex items-center justify-center">2</span> Partido
                 </button>
                 <button onclick="scrollToSection('sec-results')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
-                    <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">4</span> Mercados
+                    <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">3</span> Resultados
                 </button>
                 <button onclick="scrollToSection('sec-advanced')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
-                    <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">5</span> Avanzado
+                    <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">4</span> Avanzado
                 </button>
                 <button onclick="scrollToSection('sec-parlay')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
-                    <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-300 text-[9px] font-black flex items-center justify-center">6</span> Parlay
+                    <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-300 text-[9px] font-black flex items-center justify-center">5</span> Parlay
+                </button>
+                <button data-visual-bankroll-link="true" onclick="scrollToSection('sec-bankroll')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                    <span class="w-5 h-5 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-300 text-[9px] font-black flex items-center justify-center"><i class="fa-solid fa-wallet"></i></span> Bankroll
                 </button>
             </div>
             <div class="mt-1 px-1 flex items-center justify-between text-[9px] text-slate-400 border-t border-slate-800/70 pt-1">
@@ -214,6 +261,17 @@
                 <span id="navLambdaBadge" class="font-mono text-emerald-400 font-black">-</span>
             </div>
         </nav>
+
+        <section id="visualDashboardIntro" class="glass-card rounded-2xl p-3.5 border border-emerald-500/20 space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+                <div><p class="text-[9px] uppercase tracking-[.18em] font-black text-emerald-400">Centro de análisis</p><h2 class="text-sm sm:text-base font-black text-white">Configura · Analiza · Decide</h2></div>
+                <span class="text-[9px] font-black text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-2 py-1"><i class="fa-solid fa-display mr-1"></i> Diseño adaptable</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="rounded-xl bg-slate-900/80 border border-slate-800 p-2.5"><p class="text-[8px] uppercase font-bold text-slate-500">Partido seleccionado</p><p id="visualDashboardMatch" class="text-[11px] font-bold text-slate-200 mt-0.5">Selecciona liga y equipos para comenzar</p></div>
+                <div class="rounded-xl bg-slate-900/80 border border-slate-800 p-2.5"><p class="text-[8px] uppercase font-bold text-slate-500">Estado de autocalibración</p><p id="visualCalibrationStatus" class="text-[11px] font-bold text-indigo-300 mt-0.5">Consultando estado del modelo…</p></div>
+            </div>
+        </section>
 
         <section id="sec-setup" class="space-y-3.5 scroll-mt-28">
             <div class="flex items-center gap-2 px-1">
@@ -7183,6 +7241,100 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             window.addEventListener('resize', applyLayout, { passive: true });
             window.addEventListener('orientationchange', applyLayout, { passive: true });
+        })();
+    </script>
+
+    <script>
+        /* Mejora visual de navegación y organización: conserva nodos, IDs y funciones existentes. */
+        (function initVisualOrganizationUpgrade() {
+            function setupVisualOrganization() {
+                if (document.documentElement.dataset.visualUpgradeApplied === 'true') return;
+                document.documentElement.dataset.visualUpgradeApplied = 'true';
+
+                // Compactar la protección Anti-Rachas/Stop-Loss en un desplegable sin tocar sus controles.
+                const setupSection = document.getElementById('sec-setup');
+                const lossPanel = document.getElementById('lossMitigationSection');
+                if (setupSection && lossPanel && !document.getElementById('lossMitigationDetails')) {
+                    const lossDetails = document.createElement('details');
+                    lossDetails.id = 'lossMitigationDetails';
+                    lossDetails.className = 'glass-card rounded-2xl border border-emerald-500/30 overflow-hidden group';
+                    const lossSummary = document.createElement('summary');
+                    lossSummary.className = 'list-none cursor-pointer p-3 flex items-center justify-between gap-2 text-xs font-black text-emerald-300';
+                    lossSummary.innerHTML = '<span><i class="fa-solid fa-shield-cat mr-2"></i>Escudo Anti-Rachas & Stop-Loss <span class="text-[9px] text-slate-400 font-semibold ml-1">Ver estado y límites</span></span><i class="fa-solid fa-chevron-down text-[10px] transition-transform group-open:rotate-180"></i>';
+                    lossDetails.appendChild(lossSummary);
+                    lossPanel.classList.remove('glass-card', 'rounded-2xl', 'border', 'border-emerald-500/40', 'bg-gradient-to-r', 'from-slate-900', 'via-emerald-950/30', 'to-slate-900');
+                    lossPanel.classList.add('p-3', 'space-y-2');
+                    lossDetails.appendChild(lossPanel);
+                    const firstSectionHeading = setupSection.querySelector(':scope > .flex');
+                    if (firstSectionHeading) firstSectionHeading.insertAdjacentElement('afterend', lossDetails);
+                    else setupSection.insertAdjacentElement('afterbegin', lossDetails);
+                }
+
+                // Separar el panel de Bankroll en su propia sección sin duplicar ni reconstruir controles.
+                const bankrollCard = setupSection && Array.from(setupSection.querySelectorAll('section')).find(el =>
+                    (el.innerText || '').includes('Gestión de Bankroll Activo')
+                );
+                const parlaySection = document.getElementById('sec-parlay');
+                if (bankrollCard && parlaySection && !document.getElementById('sec-bankroll')) {
+                    const bankrollSection = document.createElement('section');
+                    bankrollSection.id = 'sec-bankroll';
+                    bankrollSection.className = 'space-y-3.5 scroll-mt-28';
+                    bankrollSection.innerHTML = `
+                        <div class="flex items-center gap-2 px-1">
+                            <span class="text-[10px] font-black bg-sky-500/15 text-sky-300 border border-sky-500/30 px-2 py-1 rounded-full uppercase tracking-wider"><i class="fa-solid fa-wallet mr-1"></i> 6 · Bankroll y protección</span>
+                            <div class="flex-1 h-px bg-gradient-to-r from-sky-500/30 to-transparent"></div>
+                        </div>`;
+                    const heading = document.createElement('div');
+                    heading.className = 'glass-card rounded-2xl p-3 border border-sky-500/20';
+                    heading.innerHTML = '<div class="bankroll-section-heading"><i class="fa-solid fa-shield-halved text-sky-300"></i><div><h2 class="text-xs font-black text-white">Gestión de capital y protección</h2><p class="text-[9px] text-slate-400 mt-0.5">Saldo, movimientos, stake y administración de cajas en un solo apartado</p></div></div>';
+                    bankrollSection.appendChild(heading);
+                    bankrollSection.appendChild(bankrollCard);
+                    parlaySection.insertAdjacentElement('afterend', bankrollSection);
+                }
+
+                // Mantener visibles los nombres y el estado del modelo en el panel superior.
+                const matchOutput = document.getElementById('visualDashboardMatch');
+                const calibrationOutput = document.getElementById('visualCalibrationStatus');
+                const navMatch = document.getElementById('navCurrentMatch');
+                const calibrationDetail = document.getElementById('poissonCalibrationModeDetail');
+                const home = document.getElementById('homeName');
+                const away = document.getElementById('awayName');
+                function refreshVisualStatus() {
+                    if (matchOutput) {
+                        const h = home && home.value.trim();
+                        const a = away && away.value.trim();
+                        const navText = navMatch && navMatch.textContent.trim();
+                        matchOutput.textContent = h && a ? `${h} vs ${a}` : (navText && navText !== 'Sin partido cargado' ? navText : 'Selecciona liga y equipos para comenzar');
+                    }
+                    if (calibrationOutput && calibrationDetail) {
+                        const detail = (calibrationDetail.textContent || '').trim();
+                        calibrationOutput.textContent = detail || 'Estado disponible en el panel Partido';
+                        calibrationOutput.className = 'text-[11px] font-bold mt-0.5 ' + (/desactivad|sin ajuste/i.test(detail) ? 'text-slate-300' : 'text-indigo-300');
+                    }
+                }
+                [home, away].filter(Boolean).forEach(input => { input.addEventListener('input', refreshVisualStatus); input.addEventListener('change', refreshVisualStatus); });
+                if (calibrationDetail && typeof MutationObserver !== 'undefined') {
+                    new MutationObserver(refreshVisualStatus).observe(calibrationDetail, { childList: true, subtree: true, characterData: true, attributes: true });
+                }
+                if (navMatch && typeof MutationObserver !== 'undefined') {
+                    new MutationObserver(refreshVisualStatus).observe(navMatch, { childList: true, subtree: true, characterData: true });
+                }
+                refreshVisualStatus();
+
+                // El menú superior refleja el nuevo orden y conserva el acceso a todas las secciones.
+                const nav = document.querySelector('#quickNav > div:first-child');
+                if (nav && !nav.querySelector('[data-visual-bankroll-link]')) {
+                    const bankButton = document.createElement('button');
+                    bankButton.type = 'button';
+                    bankButton.dataset.visualBankrollLink = 'true';
+                    bankButton.className = 'shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95';
+                    bankButton.innerHTML = '<span class="w-5 h-5 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-300 text-[9px] font-black flex items-center justify-center"><i class="fa-solid fa-wallet"></i></span> Bankroll';
+                    bankButton.addEventListener('click', () => { const target = document.getElementById('sec-bankroll'); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+                    nav.appendChild(bankButton);
+                }
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setupVisualOrganization, { once: true });
+            else setupVisualOrganization();
         })();
     </script>
 
