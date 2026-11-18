@@ -51,6 +51,102 @@
             50% { opacity: 0.55; transform: scale(1.12); }
         }
         .steam-against-icon { animation: steamPulse 1.4s ease-in-out infinite; }
+    
+
+        /* ============================================================
+           DISEÑO RESPONSIVO REAL: CELULAR / TABLET / PC
+           Se conserva el diseño móvil original y se reorganiza en pantallas grandes.
+        ============================================================ */
+        @media (min-width: 768px) {
+            html { scroll-padding-top: 6rem; }
+            body { padding-left: 1rem; padding-right: 1rem; }
+            .iphone-frame {
+                width: 100%;
+                max-width: 1100px;
+                min-height: 100vh;
+                margin: 0 auto;
+                padding: 1.25rem;
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-content: start;
+                align-items: start;
+                gap: 1rem;
+            }
+            .iphone-frame > header,
+            .iphone-frame > #quickNav { grid-column: 1 / -1; width: 100%; }
+            .iphone-frame > section { min-width: 0; width: 100%; }
+            .iphone-frame > #sec-setup,
+            .iphone-frame > #sec-league,
+            .iphone-frame > #sec-match,
+            .iphone-frame > #sec-results,
+            .iphone-frame > #sec-advanced,
+            .iphone-frame > #sec-parlay { align-self: start; }
+            #quickNav { top: .5rem; }
+            header { gap: 1rem; }
+            header > div:last-child { gap: .5rem; }
+            header button { white-space: nowrap; }
+            .glass-card { min-width: 0; }
+            canvas { max-width: 100%; }
+            .excel-table { min-width: 100%; }
+        }
+
+        @media (min-width: 1024px) {
+            .iphone-frame {
+                max-width: 1600px;
+                grid-template-columns: repeat(12, minmax(0, 1fr));
+                gap: 1.25rem;
+                padding: 1.5rem 2rem 2rem;
+            }
+            .iphone-frame > header,
+            .iphone-frame > #quickNav { grid-column: 1 / -1; }
+            #sec-setup { grid-column: span 5; }
+            #sec-league { grid-column: span 7; }
+            #sec-match { grid-column: span 5; }
+            #sec-results { grid-column: span 7; }
+            #sec-advanced { grid-column: span 6; }
+            #sec-parlay { grid-column: span 6; }
+            #sec-setup, #sec-league, #sec-match, #sec-results,
+            #sec-advanced, #sec-parlay { scroll-margin-top: 6rem; }
+            header { padding: 1rem !important; }
+            header h1 { font-size: 1rem; }
+            header p { font-size: .65rem; }
+            header button { font-size: .75rem !important; padding: .55rem .8rem !important; }
+            #quickNav > div:first-child { justify-content: center; gap: .65rem; }
+            #quickNav > div:first-child button { font-size: .75rem; padding: .55rem .8rem; }
+            #quickNav > div:last-child { font-size: .7rem; padding: .55rem .5rem 0; }
+            /* Más espacio para paneles y controles internos en escritorio. */
+            #sec-match .grid.grid-cols-2 { gap: .9rem; }
+            #sec-results .grid.grid-cols-2 { gap: .9rem; }
+            #sec-results .grid.grid-cols-3 { gap: .8rem; }
+            #sec-setup .glass-card,
+            #sec-league .glass-card,
+            #sec-match .glass-card,
+            #sec-results .glass-card { padding: 1rem; }
+        }
+
+        @media (min-width: 1440px) {
+            .iphone-frame { max-width: 1800px; gap: 1.5rem; padding-left: 2.5rem; padding-right: 2.5rem; }
+            #sec-setup { grid-column: span 4; }
+            #sec-league { grid-column: span 8; }
+            #sec-match { grid-column: span 5; }
+            #sec-results { grid-column: span 7; }
+        }
+
+        @media (max-width: 767px) {
+            .iphone-frame {
+                width: 100%;
+                max-width: 520px;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+            }
+            .iphone-frame > header,
+            .iphone-frame > #quickNav,
+            .iphone-frame > section { width: 100%; }
+            header > div:last-child { max-width: 72%; }
+            header button { white-space: nowrap; }
+        }
+
     </style>
 </head>
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
@@ -7047,5 +7143,48 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         document.addEventListener('DOMContentLoaded', updatePoissonCalibrationModeUI);
 
 </script>
+
+
+    <script>
+        // Detecta el ancho disponible, no el tipo de aparato: también responde
+        // al girar el móvil, cambiar el tamaño de la ventana o conectar un monitor.
+        (function initResponsiveDeviceLayout() {
+            const desktopQuery = window.matchMedia('(min-width: 1024px)');
+            const tabletQuery = window.matchMedia('(min-width: 768px) and (max-width: 1023px)');
+            function applyLayout() {
+                const mode = desktopQuery.matches ? 'desktop' : (tabletQuery.matches ? 'tablet' : 'mobile');
+                document.documentElement.dataset.deviceLayout = mode;
+                document.body.dataset.deviceLayout = mode;
+                // Chart.js debe recalcular el tamaño de los lienzos al cambiar de formato.
+                requestAnimationFrame(() => {
+                    try {
+                        if (typeof chartInstance !== 'undefined' && chartInstance) chartInstance.resize();
+                        if (typeof pnlChartInstance !== 'undefined' && pnlChartInstance) pnlChartInstance.resize();
+                        if (typeof clvChartInstance !== 'undefined' && clvChartInstance) clvChartInstance.resize();
+                        if (typeof calibrationChartInstance !== 'undefined' && calibrationChartInstance) calibrationChartInstance.resize();
+                        if (typeof flatStakeChartInstance !== 'undefined' && flatStakeChartInstance) flatStakeChartInstance.resize();
+                        if (typeof kmcCurveChartInstance !== 'undefined' && kmcCurveChartInstance) kmcCurveChartInstance.resize();
+                        if (typeof kmcFanChartInstance !== 'undefined' && kmcFanChartInstance) kmcFanChartInstance.resize();
+                        if (typeof kmcScatterChartInstance !== 'undefined' && kmcScatterChartInstance) kmcScatterChartInstance.resize();
+                        if (typeof backtestChartInstance !== 'undefined' && backtestChartInstance) backtestChartInstance.resize();
+                        if (typeof backtestDdChartInstance !== 'undefined' && backtestDdChartInstance) backtestDdChartInstance.resize();
+                    } catch (error) {
+                        console.warn('[Responsive layout chart resize]', error);
+                    }
+                });
+            }
+            applyLayout();
+            if (desktopQuery.addEventListener) {
+                desktopQuery.addEventListener('change', applyLayout);
+                tabletQuery.addEventListener('change', applyLayout);
+            } else {
+                desktopQuery.addListener(applyLayout);
+                tabletQuery.addListener(applyLayout);
+            }
+            window.addEventListener('resize', applyLayout, { passive: true });
+            window.addEventListener('orientationchange', applyLayout, { passive: true });
+        })();
+    </script>
+
 </body>
 </html>
