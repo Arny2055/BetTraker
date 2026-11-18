@@ -7217,58 +7217,101 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
 
 <script>
-// Tarjeta de apuesta personalizada Poisson Betting Pro VIP.
+// Tarjeta de apuesta premium con identidad visual BETAGS VIP PRO.
+// Se genera desde los datos reales de la apuesta registrada, sin alterar la bitácora.
 function shareBetCard(index) {
     const bet = (typeof betLogData !== 'undefined' ? betLogData[index] : null);
     if (!bet) { if (typeof showToast === 'function') showToast('No se encontró la apuesta.'); return; }
+
     const W = 1080, H = 1350;
     const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d');
-    const roundRect = (x,y,w,h,r,fill,stroke) => { ctx.beginPath(); ctx.roundRect(x,y,w,h,r); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();} };
-    const txt = (value) => String(value == null || value === '' ? '—' : value);
-    const fit = (value, max, size=42) => { let t=txt(value); ctx.font=`700 ${size}px Arial`; while(ctx.measureText(t).width>max && t.length>4){t=t.slice(0,-2)+'…';} return t; };
-    const bg=ctx.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#071b3d'); bg.addColorStop(.55,'#102f61'); bg.addColorStop(1,'#07152e'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-    // textura decorativa
-    ctx.globalAlpha=.10; ctx.strokeStyle='#8db8f5'; ctx.lineWidth=3;
-    for(let i=0;i<8;i++){ctx.beginPath();ctx.arc(900,180,90+i*35,0,Math.PI*2);ctx.stroke();} ctx.globalAlpha=1;
-    ctx.fillStyle='#fff'; ctx.font='800 34px Arial'; ctx.fillText('POISSON BETTING PRO',72,92);
-    ctx.fillStyle='#8fb7ed'; ctx.font='600 20px Arial'; ctx.fillText('ANÁLISIS · ESTADÍSTICA · APUESTAS',74,130);
-    roundRect(64,180,952,1100,34,'#f8fafc');
-    roundRect(100,218,340,54,27,'#12366f'); ctx.fillStyle='#fff'; ctx.font='800 21px Arial'; ctx.fillText(bet.isParlay?'APUESTA PARLAY':'APUESTA REGISTRADA',124,253);
-    ctx.fillStyle='#64748b'; ctx.font='700 22px Arial'; ctx.fillText(txt(bet.league).toUpperCase(),104,340);
-    ctx.fillStyle='#0f2344'; ctx.font='800 43px Arial'; ctx.fillText(fit(bet.match,850,43),104,405);
-    ctx.fillStyle='#64748b'; ctx.font='600 22px Arial'; ctx.fillText('SELECCIÓN',104,490);
-    ctx.fillStyle='#12366f'; ctx.font='800 48px Arial'; ctx.fillText(fit(bet.selection,820,48),104,552);
-    // cuota protagonista
-    roundRect(104,610,872,190,26,'#12366f');
-    ctx.fillStyle='#a9c6ee'; ctx.font='800 22px Arial'; ctx.fillText('CUOTA',144,660);
-    ctx.fillStyle='#ffc83d'; ctx.font='900 100px Arial'; ctx.fillText('@'+txt(bet.bookieOdds),140,760);
-    // indicadores
-    const cols=[104,398,692], labels=['PROBABILIDAD','STAKE','RETORNO POTENCIAL'];
-    const values=[txt(bet.prob)+'%', '$'+Number(bet.stake||0).toFixed(2), '$'+(Number(bet.stake||0)*Number(bet.bookieOdds||0)).toFixed(2)];
-    for(let i=0;i<3;i++){roundRect(cols[i],835,270,150,18,'#edf2f8','#dbe4ef');ctx.fillStyle='#64748b';ctx.font='700 17px Arial';ctx.fillText(labels[i],cols[i]+18,875);ctx.fillStyle='#102f61';ctx.font='900 34px Arial';ctx.fillText(values[i],cols[i]+18,935);}
-    roundRect(104,1020,872,100,18,'#e8eef7');
-    ctx.fillStyle='#64748b';ctx.font='700 18px Arial';ctx.fillText('CASA DE APUESTAS',128,1058);
-    ctx.fillStyle='#102f61';ctx.font='800 27px Arial';ctx.fillText(fit(bet.bookmaker||'No especificada',330,27),128,1098);
-    ctx.fillStyle='#64748b';ctx.font='700 18px Arial';ctx.fillText('FECHA',620,1058);
-    ctx.fillStyle='#102f61';ctx.font='800 25px Arial';ctx.fillText(txt(bet.date),620,1098);
+    const C = { bg:'#080d16', panel:'#111a29', panel2:'#172337', line:'#26364b', white:'#f8fafc', muted:'#91a2b8', green:'#10b981', green2:'#34d399', gold:'#fbbf24', red:'#fb7185', blue:'#60a5fa' };
+    const safe = v => String(v == null || v === '' ? '—' : v);
+    const money = v => '$' + (Number(v || 0)).toFixed(2);
+    const round = (x,y,w,h,r,fill,stroke) => { ctx.beginPath(); ctx.roundRect(x,y,w,h,r); if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();} };
+    const text = (value,x,y,size,color,weight='700',align='left') => { ctx.font=`${weight} ${size}px Inter, Arial, sans-serif`; ctx.fillStyle=color; ctx.textAlign=align; ctx.fillText(safe(value),x,y); ctx.textAlign='left'; };
+    const fit = (value,maxWidth,size,weight='700') => { let s=safe(value); ctx.font=`${weight} ${size}px Inter, Arial, sans-serif`; while(s.length>3 && ctx.measureText(s).width>maxWidth) s=s.slice(0,-2)+'…'; return s; };
+    const wrap = (value,x,y,maxWidth,lineHeight,size,color,weight='700',maxLines=2) => {
+        const words=safe(value).split(/\s+/); let line='', lines=[]; ctx.font=`${weight} ${size}px Inter, Arial, sans-serif`;
+        for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>maxWidth && line){lines.push(line);line=word;}else line=test;}
+        if(line) lines.push(line); if(lines.length>maxLines){lines=lines.slice(0,maxLines);lines[maxLines-1]=fit(lines[maxLines-1]+'…',maxWidth,size,weight);}
+        lines.forEach((l,i)=>text(l,x,y+i*lineHeight,size,color,weight)); return lines.length;
+    };
+
+    // Fondo oscuro con brillo esmeralda y patrón técnico discreto.
+    const bg=ctx.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#07111d'); bg.addColorStop(.52,'#0b1725'); bg.addColorStop(1,'#060b13'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    const glow=ctx.createRadialGradient(900,120,10,900,120,620); glow.addColorStop(0,'rgba(16,185,129,.22)'); glow.addColorStop(1,'rgba(16,185,129,0)'); ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
+    ctx.save(); ctx.globalAlpha=.10; ctx.strokeStyle='#34d399'; ctx.lineWidth=2;
+    for(let i=0;i<9;i++){ctx.beginPath();ctx.arc(930,230,110+i*54,0,Math.PI*2);ctx.stroke();}
+    ctx.restore();
+
+    // Cabecera de marca.
+    round(58,54,964,124,28,'#101d2c','#26394d');
+    round(82,78,76,76,22,'#064e3b');
+    text('B',120,133,52,C.green2,'900','center');
+    text('BETAGS VIP PRO',184,111,36,C.white,'900');
+    text('PREDICTOR  ·  ANÁLISIS  ·  BET TRACKER',186,145,17,C.green2,'800');
+    round(814,91,176,48,24,'rgba(16,185,129,.13)','#167c60');
+    text(bet.isParlay?'PARLAY':'APUESTA',902,122,18,C.green2,'900','center');
+
+    // Panel principal.
+    round(58,210,964,1080,34,'#0f1927','#243449');
+    text(safe(bet.league).toUpperCase(),100,278,20,C.muted,'800');
+    round(100,302,880,2,1,'#25364b');
+    // Enfrentamiento / evento.
+    wrap(bet.match,104,374,820,56,42,C.white,'900',2);
+    text('MERCADO',104,485,17,C.muted,'800');
+    text(fit(bet.market,820,27,'800'),104,524,27,C.blue,'800');
+    round(100,558,880,142,24,'#142337','#2b4057');
+    text('SELECCIÓN REGISTRADA',132,600,17,C.muted,'800');
+    wrap(bet.selection,132,651,805,48,40,C.white,'900',2);
+
+    // Cuota principal, con acento dorado característico.
+    round(100,730,880,204,28,'#092d29','#0d8061');
+    text('CUOTA TOMADA',140,780,19,'#9ddbc7','900');
+    text('@'+safe(bet.bookieOdds),140,884,92,C.gold,'900');
+    round(754,770,184,112,22,'rgba(251,191,36,.10)','#9a741e');
+    text('PROB.',846,811,16,C.muted,'800','center');
+    text(safe(bet.prob)+'%',846,858,38,C.green2,'900','center');
+
+    // Métricas de la apuesta.
+    const metrics=[
+        {x:100,label:'STAKE',value:money(bet.stake),color:C.white},
+        {x:398,label:'RETORNO POTENCIAL',value:money(Number(bet.stake||0)*Number(bet.bookieOdds||0)),color:C.green2},
+        {x:696,label:'VALOR ESPERADO',value:(Number(bet.ev)>=0?'+':'')+safe(bet.ev)+'%',color:Number(bet.ev)>=0?C.green2:C.red}
+    ];
+    metrics.forEach(m=>{round(m.x,962,284,132,20,'#142033','#26384d');text(m.label,m.x+20,1002,15,C.muted,'800');text(fit(m.value,244,31,'900'),m.x+20,1056,31,m.color,'900');});
+
+    // Pie informativo con casa, fecha y estado.
+    round(100,1120,880,104,20,'#0a1320','#26384d');
+    text('CASA',128,1157,15,C.muted,'800');
+    text(fit(bet.bookmaker||'No especificada',300,22,'800'),128,1196,22,C.white,'800');
+    text('FECHA',520,1157,15,C.muted,'800');
+    text(fit(bet.date,180,22,'800'),520,1196,22,C.white,'800');
     const statusMap={PENDING:'PENDIENTE',WON:'GANADA',LOST:'PERDIDA',VOID:'NULA',HALF_WON:'MEDIA GANADA',HALF_LOST:'MEDIA PERDIDA'};
-    ctx.fillStyle='#64748b';ctx.font='700 20px Arial';ctx.fillText('ESTADO: '+(statusMap[bet.status]||txt(bet.status)),108,1180);
-    ctx.fillStyle='#94a3b8';ctx.font='600 17px Arial';ctx.fillText('Contenido informativo y estadístico · Juega con responsabilidad',108,1230);
-    const fileName='Poisson_Betting_Pro_Apuesta_'+String(bet.id||Date.now()).replace(/[^a-zA-Z0-9_-]/g,'')+'.png';
+    const status=safe(statusMap[bet.status]||bet.status);
+    const statusColor=bet.status==='WON'?C.green2:(bet.status==='LOST'?C.red:C.gold);
+    round(752,1140,204,58,18,'rgba(255,255,255,.04)','#34465c');
+    text(status,854,1177,17,statusColor,'900','center');
+
+    text('BETAGS VIP PRO',100,1258,17,C.green2,'900');
+    text('Análisis estadístico · Juega con responsabilidad',980,1258,15,C.muted,'600','right');
+
+    const fileName='BETAGS_VIP_PRO_Apuesta_'+String(bet.id||Date.now()).replace(/[^a-zA-Z0-9_-]/g,'')+'.png';
     canvas.toBlob(async blob=>{
         if(!blob){if(typeof showToast==='function')showToast('No se pudo generar la tarjeta.');return;}
         const file=new File([blob],fileName,{type:'image/png'});
-        const shareText=`Mi apuesta en Poisson Betting Pro\n${bet.match}\n${bet.selection} @${bet.bookieOdds}\nProbabilidad: ${bet.prob}% · Stake: $${bet.stake}`;
+        const shareText=`Mi apuesta en BETAGS VIP PRO\n${bet.match}\n${bet.selection} @${bet.bookieOdds}\nProbabilidad: ${bet.prob}% · Stake: ${money(bet.stake)}`;
         if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
-            try{await navigator.share({title:'Mi apuesta · Poisson Betting Pro',text:shareText,files:[file]});return;}catch(err){if(err && err.name==='AbortError')return;}
+            try{await navigator.share({title:'Apuesta · BETAGS VIP PRO',text:shareText,files:[file]});return;}catch(err){if(err&&err.name==='AbortError')return;}
         }
-        const url=URL.createObjectURL(blob); const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
+        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
         const choice=window.confirm('La tarjeta se descargó. ¿Quieres abrir WhatsApp para compartirla? Adjunta la imagen descargada en el chat. Pulsa Cancelar para abrir Telegram.');
         const encoded=encodeURIComponent(shareText);
         window.open(choice?`https://wa.me/?text=${encoded}`:`https://t.me/share/url?url=&text=${encoded}`,'_blank','noopener');
         setTimeout(()=>URL.revokeObjectURL(url),60000);
-        if(typeof showToast==='function')showToast('Tarjeta descargada. Adjunta el PNG en WhatsApp o Telegram.');
+        if(typeof showToast==='function')showToast('Tarjeta BETAGS VIP PRO descargada. Adjunta el PNG en WhatsApp o Telegram.');
     },'image/png');
 }
 </script>
