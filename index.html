@@ -693,13 +693,13 @@
 
             <details class="glass-card rounded-2xl border border-slate-800 overflow-hidden group">
                 <summary class="p-3 cursor-pointer flex items-center justify-between font-black text-xs text-white select-none">
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-table-cells text-emerald-400"></i><span>Matriz Exacta de Goles (0 – 6+)</span></div>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-table-cells text-emerald-400"></i><span>Matriz Exacta de Goles (0 – 10)</span></div>
                     <i class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform group-open:rotate-180"></i>
                 </summary>
                 <div class="p-3 pt-0 overflow-x-auto">
-                    <p class="text-[9px] text-slate-400 mb-2">Filas: Local | Columnas: Visitante</p>
+                    <p class="text-[9px] text-slate-400 mb-2">Filas: Local (0–10) | Columnas: Visitante (0–10)</p>
                     <table class="w-full text-[10px] text-center border-collapse">
-                        <thead><tr class="bg-slate-900 text-slate-400 font-bold border-b border-slate-800"><th class="p-1">L \ V</th><th class="p-1">0</th><th class="p-1">1</th><th class="p-1">2</th><th class="p-1">3</th><th class="p-1">4</th><th class="p-1">5+</th></tr></thead>
+                        <thead id="matrixHeader"><tr class="bg-slate-900 text-slate-400 font-bold border-b border-slate-800"><th class="p-1">L \ V</th><th class="p-1">0</th><th class="p-1">1</th><th class="p-1">2</th><th class="p-1">3</th><th class="p-1">4</th><th class="p-1">5+</th></tr></thead>
                         <tbody id="matrixBody" class="divide-y divide-slate-800/40"></tbody>
                     </table>
                 </div>
@@ -707,7 +707,7 @@
 
             <section class="glass-card rounded-2xl p-3.5 space-y-2.5">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-chart-column text-emerald-400 text-xs"></i><h2 class="font-extrabold text-xs text-white">Distribución de Goles Exactos</h2></div>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-chart-column text-emerald-400 text-xs"></i><h2 class="font-extrabold text-xs text-white">Distribución de Goles Exactos (0–10)</h2></div>
                 </div>
                 <div class="h-44 w-full"><canvas id="goalsChart"></canvas></div>
             </section>
@@ -2532,8 +2532,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (matrixInfo && allHaveTypes) {
                     const matrix = matrixInfo.matrix;
                     let matchProb = 0;
-                    for (let h = 0; h <= 6; h++) {
-                        for (let a = 0; a <= 6; a++) {
+                    for (let h = 0; h <= POISSON_MAX_GOALS; h++) {
+                        for (let a = 0; a <= POISSON_MAX_GOALS; a++) {
                             if (group.every(sel => satisfiedH(h, a, sel))) {
                                 matchProb += matrix[h][a];
                             }
@@ -5697,6 +5697,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             tbody.innerHTML = html;
         }
 
+        // Rango uniforme del modelo: goles exactos de 0 a 10 por equipo.
+        const POISSON_MAX_GOALS = 10;
+
         function factorial(n) { if (n === 0 || n === 1) return 1; let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
         function poissonProb(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k); }
         function modifiedBesselI(k, z) { let s = 0; const kAbs = Math.abs(k); for (let m = 0; m < 40; m++) s += Math.pow(z / 2, kAbs + 2 * m) / (factorial(m) * factorial(kAbs + m)); return s; }
@@ -5722,14 +5725,14 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         function computeProbsFromLambdas(lh, la, rho) {
             const homeProbs = [], awayProbs = [];
-            for (let i = 0; i <= 6; i++) {
+            for (let i = 0; i <= POISSON_MAX_GOALS; i++) {
                 homeProbs[i] = poissonProb(i, lh);
                 awayProbs[i] = poissonProb(i, la);
             }
             let homeWin = 0, draw = 0, awayWin = 0;
             let over25 = 0, under25 = 0, bttsYes = 0, bttsNo = 0;
-            for (let i = 0; i <= 6; i++) {
-                for (let j = 0; j <= 6; j++) {
+            for (let i = 0; i <= POISSON_MAX_GOALS; i++) {
+                for (let j = 0; j <= POISSON_MAX_GOALS; j++) {
                     let p = homeProbs[i] * awayProbs[j];
                     if (rho !== 0) {
                         if (i === 0 && j === 0) p *= (1 - lh * la * rho);
@@ -6393,16 +6396,16 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 document.getElementById('rhoValueDisplay').innerText = rho.toFixed(2);
             }
 
-            const matrix = Array(7).fill(0).map(() => Array(7).fill(0));
+            const matrix = Array.from({ length: POISSON_MAX_GOALS + 1 }, () => Array(POISSON_MAX_GOALS + 1).fill(0));
             let probHomeWin = 0, probDraw = 0, probAwayWin = 0;
             let probOver25 = 0, probUnder25 = 0;
             let probBttsYes = 0, probBttsNo = 0;
             const exactScores = [];
-            const homeProbs = Array(7).fill(0);
-            const awayProbs = Array(7).fill(0);
-            for (let i = 0; i <= 6; i++) { homeProbs[i] = poissonProb(i, lambdaHome); awayProbs[i] = poissonProb(i, lambdaAway); }
-            for (let i = 0; i <= 6; i++) {
-                for (let j = 0; j <= 6; j++) {
+            const homeProbs = Array(POISSON_MAX_GOALS + 1).fill(0);
+            const awayProbs = Array(POISSON_MAX_GOALS + 1).fill(0);
+            for (let i = 0; i <= POISSON_MAX_GOALS; i++) { homeProbs[i] = poissonProb(i, lambdaHome); awayProbs[i] = poissonProb(i, lambdaAway); }
+            for (let i = 0; i <= POISSON_MAX_GOALS; i++) {
+                for (let j = 0; j <= POISSON_MAX_GOALS; j++) {
                     let p = homeProbs[i] * awayProbs[j];
                     if (rho !== 0) {
                         if (i === 0 && j === 0) p *= (1 - lambdaHome * lambdaAway * rho);
@@ -6419,6 +6422,25 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     exactScores.push({ score: `${i} - ${j}`, prob: p, h: i, a: j });
                 }
             }
+            // El rango 0-10 deja fuera únicamente la cola de 11+ goles.
+            // Normalizamos la matriz enumerada para que 1X2, OU, BTTS y Parlay
+            // compartan una misma base probabilística del 100% dentro del rango modelado.
+            const matrixProbabilitySum = matrix.reduce((sum, row) => sum + row.reduce((rowSum, value) => rowSum + value, 0), 0);
+            if (matrixProbabilitySum > 0) {
+                const matrixScale = 1 / matrixProbabilitySum;
+                probHomeWin *= matrixScale;
+                probDraw *= matrixScale;
+                probAwayWin *= matrixScale;
+                probOver25 *= matrixScale;
+                probUnder25 *= matrixScale;
+                probBttsYes *= matrixScale;
+                probBttsNo *= matrixScale;
+                for (let i = 0; i <= POISSON_MAX_GOALS; i++) {
+                    for (let j = 0; j <= POISSON_MAX_GOALS; j++) matrix[i][j] *= matrixScale;
+                }
+                exactScores.forEach(item => { item.prob *= matrixScale; });
+            }
+
             // Guardamos las probabilidades Poisson originales antes de cualquier ajuste.
             // Para 1X2 se normaliza la base para compararla en la misma escala de 100%.
             const original1x2Sum = (probHomeWin + probDraw + probAwayWin) || 1;
@@ -6567,8 +6589,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             container.innerHTML = '';
 
             const totalProbs = {};
-            for (let i = 0; i <= 6; i++) {
-                for (let j = 0; j <= 6; j++) {
+            for (let i = 0; i <= POISSON_MAX_GOALS; i++) {
+                for (let j = 0; j <= POISSON_MAX_GOALS; j++) {
                     const t = i + j;
                     totalProbs[t] = (totalProbs[t] || 0) + matrix[i][j];
                 }
@@ -6687,11 +6709,18 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         function renderMatrix(matrix) {
+            const header = document.getElementById('matrixHeader');
+            if (header) {
+                let headerHtml = '<tr class="bg-slate-900 text-slate-400 font-bold border-b border-slate-800"><th class="p-1">L \ V</th>';
+                for (let goal = 0; goal <= POISSON_MAX_GOALS; goal++) headerHtml += `<th class="p-1">${goal}</th>`;
+                headerHtml += '</tr>';
+                header.innerHTML = headerHtml;
+            }
             const body = document.getElementById('matrixBody');
             body.innerHTML = '';
-            for (let i = 0; i <= 6; i++) {
+            for (let i = 0; i <= POISSON_MAX_GOALS; i++) {
                 let rowHtml = `<tr class="border-b border-slate-800/40"><td class="p-1 font-bold text-slate-400 bg-slate-900/80">${i}</td>`;
-                for (let j = 0; j <= 6; j++) {
+                for (let j = 0; j <= POISSON_MAX_GOALS; j++) {
                     const prob = matrix[i][j];
                     const pct = (prob * 100).toFixed(1);
                     let bgStyle = 'bg-slate-900/40 text-slate-300';
@@ -6707,7 +6736,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function renderGoalsChart(homeProbs, awayProbs) {
             const ctx = document.getElementById('goalsChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-            const labels = ['0 Goles', '1 Gol', '2 Goles', '3 Goles', '4 Goles', '5 Goles', '6+ Goles'];
+            const labels = Array.from({ length: POISSON_MAX_GOALS + 1 }, (_, goals) => goals === 1 ? '1 Gol' : `${goals} Goles`);
             const homeName = document.getElementById('homeName').value || 'Local';
             const awayName = document.getElementById('awayName').value || 'Visitante';
             chartInstance = new Chart(ctx, {
