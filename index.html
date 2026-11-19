@@ -5766,6 +5766,20 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (bet.status === 'PENDING') pendingBets.push(betWithIndex);
                 else closedBets.push(betWithIndex);
             });
+            // Orden descendente independiente para cada tabla: fecha más reciente primero.
+            // Si coinciden en fecha, usa timestamp y, como respaldo para registros antiguos,
+            // la posición de guardado en la bitácora (índice mayor = registro más reciente).
+            const newestFirst = (a, b) => {
+                const dateA = String(a.date || '');
+                const dateB = String(b.date || '');
+                if (dateA !== dateB) return dateB.localeCompare(dateA);
+                const timeA = Number(a.timestamp) || 0;
+                const timeB = Number(b.timestamp) || 0;
+                if (timeA !== timeB) return timeB - timeA;
+                return (Number(b.originalIdx) || 0) - (Number(a.originalIdx) || 0);
+            };
+            pendingBets.sort(newestFirst);
+            closedBets.sort(newestFirst);
             if (pendingBets.length === 0) pendingTbody.innerHTML = `<tr><td colspan="11" class="p-3 text-center text-slate-500 italic">No hay apuestas pendientes.</td></tr>`;
             else {
                 let htmlP = '';
