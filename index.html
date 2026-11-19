@@ -147,6 +147,29 @@
             header button { white-space: nowrap; }
         }
 
+
+
+        /* Acciones de bitácora: objetivos táctiles grandes y separados. */
+        .bet-actions-cell { min-width: 124px; vertical-align: middle; }
+        .bet-row-actions { display: flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
+        .bet-action-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            min-width: 86px; min-height: 42px; padding: 9px 11px; border: 1px solid;
+            border-radius: 11px; font-size: 11px; line-height: 1; font-weight: 900;
+            touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+            user-select: none; transition: transform .12s ease, filter .12s ease;
+        }
+        .bet-action-btn i { font-size: 13px; }
+        .bet-action-btn:active { transform: scale(.97); filter: brightness(1.18); }
+        .bet-action-share { color: #6ee7b7; background: rgba(16,185,129,.13); border-color: rgba(16,185,129,.42); }
+        .bet-action-edit { color: #93c5fd; background: rgba(59,130,246,.13); border-color: rgba(59,130,246,.42); }
+        .bet-action-delete { color: #fda4af; background: rgba(244,63,94,.12); border-color: rgba(244,63,94,.42); }
+        @media (max-width: 768px) {
+            .bet-actions-cell { min-width: 112px !important; padding: 7px !important; }
+            .bet-row-actions { flex-direction: column; align-items: stretch; gap: 7px; }
+            .bet-action-btn { width: 100%; min-width: 96px; min-height: 44px; justify-content: flex-start; padding: 10px 12px; font-size: 12px; }
+        }
+
     </style>
 </head>
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
@@ -1522,6 +1545,9 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Casa</label><select id="logBookmaker" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-200 font-bold"><option value="Bet365">Bet365</option><option value="Caliente">Caliente</option><option value="1xBet">1xBet</option><option value="Codere">Codere</option><option value="Otra">Otra</option></select></div>
                     <div><label class="block text-[10px] font-bold text-slate-400 mb-1">Estado</label><select id="logStatus" class="w-full bg-inputBg border border-slate-700 rounded-xl px-2 py-1.5 text-xs text-slate-200 font-bold"><option value="PENDING">Pendiente</option><option value="WON">Ganada</option><option value="LOST">Perdida</option><option value="VOID">Nula</option><option value="HALF_WON">½ Ganada</option><option value="HALF_LOST">½ Perdida</option></select></div>
+                </div>
+                <div class="bg-amber-950/25 border border-amber-500/30 p-2 rounded-xl text-[9px] text-amber-200">
+                    <i class="fa-solid fa-shield-halved mr-1"></i><b>Protección antiduplicados:</b> BETAGS detectará registros coincidentes y pedirá confirmación antes de permitir guardar otro igual.
                 </div>
                 <div class="bg-teal-950/20 border border-teal-500/30 p-2.5 rounded-xl space-y-1">
                     <label class="block text-[10px] font-black text-teal-300 uppercase">Destino</label>
@@ -4063,7 +4089,33 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             };
         }
 
+        // === PROTECCIÓN ANTIDUPLICADOS BETAGS ===
+        // Evita dobles clics y registros repetidos de la misma apuesta.
+        let betSaveInProgress = false;
+        function normalizeBetDuplicateField(value) {
+            return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().replace(/\s+/g, ' ').trim();
+        }
+        function buildBetDuplicateKey(bet) {
+            return [
+                bet.bankrollId || '', bet.date || '', bet.isParlay ? 'parlay' : 'single',
+                bet.league || '', bet.match || '', bet.market || '', bet.selection || '',
+                bet.bookmaker || '', Number(bet.stake || 0).toFixed(2)
+            ].map(normalizeBetDuplicateField).join('|');
+        }
+        function findDuplicateBet(candidate, editingIndex = -1) {
+            const key = buildBetDuplicateKey(candidate);
+            return betLogData.findIndex((existing, i) => i !== editingIndex && buildBetDuplicateKey(existing) === key);
+        }
         function saveBetToLog() {
+            if (betSaveInProgress) {
+                showToast('Guardado en proceso. Espera un momento para evitar duplicados.');
+                return;
+            }
+            betSaveInProgress = true;
+            const saveButton = document.querySelector('#logBetModal button[onclick="saveBetToLog()"]');
+            if (saveButton) { saveButton.disabled = true; saveButton.dataset.originalText = saveButton.innerHTML; saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando'; }
+            try {
             const index = parseInt(document.getElementById('editBetIndex').value);
             const isParlay = document.getElementById('logIsParlay').value === "true";
             const prob = parseFloat(document.getElementById('logProb').value) || 0;
@@ -4074,7 +4126,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const parallelOption = document.getElementById('logParallelOption').value;
             const sendToParallel = (parallelOption === 'both');
             const betRecord = {
-                id: index >= 0 ? betLogData[index].id : Date.now(),
+                id: index >= 0 ? betLogData[index].id : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                 bankrollId: index >= 0 ? (betLogData[index].bankrollId || bankrollsData[0].id) : activeBankrollId,
                 isParlay,
                 date: document.getElementById('logDate').value || new Date().toISOString().slice(0, 10),
@@ -4093,6 +4145,23 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 closingOdds: closingOdds > 1 ? closingOdds.toFixed(2) : '',
                 clv: clv !== null ? clv.toFixed(2) : ''
             };
+            // Un registro con misma fecha, partido, mercado, selección, casa y stake
+            // se considera duplicado. Para editar se excluye el propio registro.
+            const duplicateIndex = findDuplicateBet(betRecord, index);
+            if (duplicateIndex >= 0) {
+                const duplicate = betLogData[duplicateIndex];
+                const duplicateDate = duplicate.date || 'fecha no disponible';
+                const proceed = confirm(
+                    `POSIBLE APUESTA DUPLICADA\n\n` +
+                    `${duplicate.match || 'Partido'} · ${duplicate.market || 'Mercado'} · ${duplicate.selection || 'Selección'}\n` +
+                    `Fecha: ${duplicateDate} · Casa: ${duplicate.bookmaker || 'Sin casa'} · Stake: $${Number(duplicate.stake || 0).toFixed(2)}\n\n` +
+                    `Ya existe un registro con estos datos. ¿Deseas guardarla de todos modos?`
+                );
+                if (!proceed) {
+                    showToast('Apuesta duplicada bloqueada. No se guardó ningún registro.');
+                    return;
+                }
+            }
             if (index >= 0) {
                 betLogData[index] = betRecord;
                 const pIndex = parallelBetLogData.findIndex(b => b.id === betRecord.id);
@@ -4125,11 +4194,18 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             } else {
                 showToast(sendToParallel ? "¡Guardada en ambas bitácoras!" : "¡Guardada!");
             }
+            } finally {
+                betSaveInProgress = false;
+                if (saveButton) { saveButton.disabled = false; saveButton.innerHTML = saveButton.dataset.originalText || 'Guardar'; }
+            }
         }
 
         async function deleteBetFromLog(index) {
             const betToRemove = betLogData[index];
             if (!betToRemove) return;
+
+            const confirmed = window.confirm(`¿Seguro que deseas borrar esta apuesta?\n\n${betToRemove.match || 'Apuesta'}\n${betToRemove.market || ''} - ${betToRemove.selection || ''}\nCuota: @${betToRemove.bookieOdds || '-'} | Stake: $${betToRemove.stake || '0'}\n\nEsta acción no se puede deshacer.`);
+            if (!confirmed) return;
 
             autoSyncPaused = true;
             try {
@@ -5692,7 +5768,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     const evVal = parseFloat(bet.ev) || 0;
                     const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
                     const clvBadge = getClvBadge(bet.clv);
-                    htmlP += `<tr class="bg-amber-950/10 hover:bg-amber-900/20"><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center font-bold">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none"><option value="PENDING" selected>⌛ Pendiente</option><option value="WON">✅ Ganada</option><option value="LOST">❌ Perdida</option><option value="VOID">↩️ Nula</option><option value="HALF_WON">½ Ganada</option><option value="HALF_LOST">½ Perdida</option></select></td><td class="p-1.5 text-center"><button onclick="shareBetCard(${bet.originalIdx})" title="Compartir apuesta" class="text-emerald-400 hover:text-emerald-300 mr-1.5"><i class="fa-solid fa-share-nodes"></i></button><button onclick="editBetInLog(${bet.originalIdx})" title="Editar" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" title="Eliminar" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    htmlP += `<tr class="bg-amber-950/10 hover:bg-amber-900/20"><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-amber-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center font-bold">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center font-bold text-emerald-300">$${potReturn.toFixed(2)}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-amber-950/80 border border-amber-500/40 rounded text-[9px] font-black p-0.5 text-amber-300 focus:outline-none"><option value="PENDING" selected>⌛ Pendiente</option><option value="WON">✅ Ganada</option><option value="LOST">❌ Perdida</option><option value="VOID">↩️ Nula</option><option value="HALF_WON">½ Ganada</option><option value="HALF_LOST">½ Perdida</option></select></td><td class="p-2 text-center bet-actions-cell"><div class="bet-row-actions"><button type="button" onclick="shareBetCard(${bet.originalIdx})" aria-label="Compartir apuesta" title="Compartir apuesta" class="bet-action-btn bet-action-share"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i><span>Compartir</span></button><button type="button" onclick="editBetInLog(${bet.originalIdx})" aria-label="Editar apuesta" title="Editar apuesta" class="bet-action-btn bet-action-edit"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Editar</span></button><button type="button" onclick="deleteBetFromLog(${bet.originalIdx})" aria-label="Eliminar apuesta" title="Eliminar apuesta" class="bet-action-btn bet-action-delete"><i class="fa-solid fa-trash" aria-hidden="true"></i><span>Borrar</span></button></div></td></tr>`;
                 });
                 pendingTbody.innerHTML = htmlP;
             }
@@ -5710,7 +5786,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     const evVal = parseFloat(bet.ev) || 0;
                     const typeTag = bet.isParlay ? '<span class="bg-gold-500/20 text-gold-300 text-[8px] px-1 py-0.2 rounded font-black mr-1">PARLAY</span>' : '';
                     const clvBadge = getClvBadge(bet.clv);
-                    htmlC += `<tr><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none"><option value="PENDING">⌛ Pendiente</option><option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option><option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option><option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option><option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option><option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option></select></td><td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}</td><td class="p-1.5 text-center"><button onclick="shareBetCard(${bet.originalIdx})" title="Compartir apuesta" class="text-emerald-400 hover:text-emerald-300 mr-1.5"><i class="fa-solid fa-share-nodes"></i></button><button onclick="editBetInLog(${bet.originalIdx})" title="Editar" class="text-blue-400 hover:text-blue-300 mr-1.5"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="deleteBetFromLog(${bet.originalIdx})" title="Eliminar" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+                    htmlC += `<tr><td class="p-1.5 text-center text-slate-400 font-mono">${bet.date}</td><td class="p-1.5 font-bold text-white"><span class="text-[9px] text-slate-400 block">${bet.league}</span>${typeTag}${bet.market}</td><td class="p-1.5 font-bold text-emerald-300"><span class="text-[9px] text-slate-400 block truncate max-w-[150px]">${bet.match}</span>${bet.selection}</td><td class="p-1.5 text-center">${bet.prob}%</td><td class="p-1.5 text-center text-emerald-400 font-bold">@${bet.bookieOdds}</td><td class="p-1.5 text-center font-bold ${evVal >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${evVal >= 0 ? '+' : ''}${bet.ev}%</td><td class="p-1.5 text-center font-bold ${clvBadge.cls}">${clvBadge.text}</td><td class="p-1.5 text-center font-bold text-white">$${bet.stake}</td><td class="p-1.5 text-center"><select onchange="updateBetStatusDirect(${bet.originalIdx}, this.value)" class="bg-inputBg border border-slate-700 rounded text-[9px] font-bold p-0.5 text-white focus:outline-none"><option value="PENDING">⌛ Pendiente</option><option value="WON" ${bet.status === 'WON' ? 'selected' : ''}>✅ Ganada</option><option value="LOST" ${bet.status === 'LOST' ? 'selected' : ''}>❌ Perdida</option><option value="VOID" ${bet.status === 'VOID' ? 'selected' : ''}>↩️ Nula</option><option value="HALF_WON" ${bet.status === 'HALF_WON' ? 'selected' : ''}>½ Ganada</option><option value="HALF_LOST" ${bet.status === 'HALF_LOST' ? 'selected' : ''}>½ Perdida</option></select></td><td class="p-1.5 text-center font-black ${pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400')}">${pnl > 0 ? '+$' + pnl.toFixed(2) : (pnl < 0 ? '-$' + Math.abs(pnl).toFixed(2) : '$0.00')}</td><td class="p-2 text-center bet-actions-cell"><div class="bet-row-actions"><button type="button" onclick="shareBetCard(${bet.originalIdx})" aria-label="Compartir apuesta" title="Compartir apuesta" class="bet-action-btn bet-action-share"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i><span>Compartir</span></button><button type="button" onclick="editBetInLog(${bet.originalIdx})" aria-label="Editar apuesta" title="Editar apuesta" class="bet-action-btn bet-action-edit"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i><span>Editar</span></button><button type="button" onclick="deleteBetFromLog(${bet.originalIdx})" aria-label="Eliminar apuesta" title="Eliminar apuesta" class="bet-action-btn bet-action-delete"><i class="fa-solid fa-trash" aria-hidden="true"></i><span>Borrar</span></button></div></td></tr>`;
                 });
                 closedTbody.innerHTML = htmlC;
             }
