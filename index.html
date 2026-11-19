@@ -1027,6 +1027,15 @@
                     </div>
                 </details>
                 <div class="space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/15 p-2">
+                        <div class="min-w-0">
+                            <div class="text-[11px] font-black text-emerald-300"><i class="fa-solid fa-share-nodes mr-1.5"></i>RESUMEN DIARIO</div>
+                            <div class="text-[9px] text-slate-400">Genera una tarjeta con las apuestas de hoy guardadas en esta bitácora.</div>
+                        </div>
+                        <button onclick="shareDailyBetSummary()" class="shrink-0 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-[10px] px-3.5 py-2 rounded-xl shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-2 active:scale-95">
+                            <i class="fa-solid fa-image"></i> COMPARTIR RESUMEN DE HOY
+                        </button>
+                    </div>
                     <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                         <div class="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
                             <button id="tabBtnPending" onclick="setActiveBetTab('pending')" class="px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow-md"><i class="fa-solid fa-clock"></i> Pendientes <span id="badgePendingCount" class="ml-1 px-1.5 bg-slate-950/40 text-amber-300 rounded-full text-[10px]">0</span></button>
@@ -7353,6 +7362,134 @@ function shareBetCard(index) {
         window.open(choice?'https://wa.me/':'https://t.me/','_blank','noopener');
         setTimeout(()=>URL.revokeObjectURL(url),60000);
         if(typeof showToast==='function')showToast('Tarjeta BETAGS VIP PRO descargada. Adjunta el PNG en WhatsApp o Telegram.');
+    },'image/png');
+}
+</script>
+
+
+<script>
+// Resumen diario compartible: utiliza exclusivamente apuestas guardadas hoy
+// en la bitácora principal y el bankroll actualmente seleccionado.
+function shareDailyBetSummary() {
+    const allBets = Array.isArray(betLogData) ? betLogData : [];
+    const activeBank = (Array.isArray(bankrollsData) ? bankrollsData : []).find(b => String(b.id) === String(activeBankrollId)) || (Array.isArray(bankrollsData) ? bankrollsData[0] : null);
+    const bankId = activeBank ? String(activeBank.id) : String(activeBankrollId || 'default_bankroll');
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const bets = allBets.filter(b => String(b.date || '') === today && String(b.bankrollId || bankId) === bankId);
+    if (!bets.length) {
+        if (typeof showToast === 'function') showToast('No hay apuestas guardadas hoy en la bitácora activa.');
+        return;
+    }
+
+    const statusInfo = {
+        PENDING: { label: 'PENDIENTE', color: '#fbbf24' },
+        WON: { label: 'GANADA', color: '#34d399' },
+        LOST: { label: 'PERDIDA', color: '#fb7185' },
+        VOID: { label: 'NULA', color: '#94a3b8' },
+        HALF_WON: { label: 'MEDIA GANADA', color: '#6ee7b7' },
+        HALF_LOST: { label: 'MEDIA PERDIDA', color: '#fda4af' }
+    };
+    const money = n => '$' + (Number(n || 0)).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const getPnl = bet => {
+        const stake = Number(bet.stake) || 0;
+        const odds = Number(bet.bookieOdds) || 1;
+        if (bet.status === 'WON') return stake * (odds - 1);
+        if (bet.status === 'LOST') return -stake;
+        if (bet.status === 'HALF_WON') return (stake / 2) * (odds - 1);
+        if (bet.status === 'HALF_LOST') return -(stake / 2);
+        return 0;
+    };
+    const totals = {won:0,lost:0,halfWon:0,halfLost:0,pending:0,void:0,stake:0,settledStake:0,pnl:0};
+    bets.forEach(b => {
+        const stake = Number(b.stake) || 0;
+        totals.stake += stake;
+        if (b.status === 'WON') { totals.won++; totals.settledStake += stake; }
+        else if (b.status === 'LOST') { totals.lost++; totals.settledStake += stake; }
+        else if (b.status === 'HALF_WON') { totals.halfWon++; totals.settledStake += stake; }
+        else if (b.status === 'HALF_LOST') { totals.halfLost++; totals.settledStake += stake; }
+        else if (b.status === 'PENDING') totals.pending++;
+        else if (b.status === 'VOID') totals.void++;
+        totals.pnl += getPnl(b);
+    });
+    const settled = totals.won + totals.lost + totals.halfWon + totals.halfLost;
+    const yieldPct = totals.settledStake > 0 ? (totals.pnl / totals.settledStake) * 100 : 0;
+    const W = 1080, rowH = 82, headerH = 390, footerH = 100;
+    const H = Math.max(920, 760 + bets.length * rowH);
+    const canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    const C = {white:'#f8fafc',muted:'#91a2b8',green:'#34d399',gold:'#fbbf24',line:'#26364b',panel:'#111d2d',red:'#fb7185'};
+    const round = (x,y,w,h,r,fill,stroke) => { ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fillStyle=fill; ctx.fill(); if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();} };
+    const txt = (v,x,y,size,color,weight='700',align='left') => { ctx.font=`${weight} ${size}px Inter, Arial, sans-serif`;ctx.fillStyle=color;ctx.textAlign=align;ctx.fillText(String(v ?? '—'),x,y);ctx.textAlign='left'; };
+    const fit = (v,max,size,weight='700') => { let t=String(v ?? '—');ctx.font=`${weight} ${size}px Inter, Arial, sans-serif`;while(t.length>2 && ctx.measureText(t).width>max)t=t.slice(0,-2)+'…';return t; };
+    const wrap = (v,x,y,max,size,color,weight='700') => {
+        const words=String(v || '—').split(/\s+/);let line='',lines=[];ctx.font=`${weight} ${size}px Inter, Arial, sans-serif`;
+        words.forEach(word=>{const test=line?line+' '+word:word;if(ctx.measureText(test).width>max&&line){lines.push(line);line=word;}else line=test;});if(line)lines.push(line);
+        lines.slice(0,2).forEach((l,i)=>txt(fit(l+(lines.length>2&&i===1?'…':''),max,size,weight),x,y+i*(size+5),size,color,weight));
+    };
+
+    const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#07111d');bg.addColorStop(.55,'#0b1725');bg.addColorStop(1,'#060b13');ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    const glow=ctx.createRadialGradient(900,100,10,900,100,650);glow.addColorStop(0,'rgba(16,185,129,.22)');glow.addColorStop(1,'rgba(16,185,129,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+    round(48,42,984,148,28,'#101d2c','#26394d');
+    round(72,76,76,76,22,'#064e3b','#167c60');txt('B',110,132,52,C.green,'900','center');
+    txt('BETAGS VIP PRO',174,105,37,C.white,'900');txt('RESUMEN DIARIO DE BITÁCORA',176,143,19,C.green,'800');
+    round(790,88,210,48,24,'rgba(16,185,129,.13)','#167c60');txt('APUESTAS DEL DÍA',895,119,17,C.green,'900','center');
+    const dateLabel = now.toLocaleDateString('es-MX',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    txt(dateLabel.toUpperCase(),72,230,20,C.muted,'800');
+
+    // Métricas agregadas: el P&L sólo contempla apuestas liquidadas.
+    const cards=[
+        {label:'APUESTAS',value:String(bets.length),color:C.white},
+        {label:'LIQUIDADAS',value:String(settled),color:C.white},
+        {label:'PENDIENTES',value:String(totals.pending),color:C.gold},
+        {label:'GANADAS',value:String(totals.won+totals.halfWon),color:C.green}
+    ];
+    cards.forEach((m,i)=>{const x=48+i*250;round(x,258,232,112,20,'#111d2d','#26384d');txt(m.label,x+18,292,15,C.muted,'800');txt(m.value,x+18,330,34,m.color,'900');});
+    round(48,370,984,126,22,'#0c2928','#0d8061');
+    txt('RESULTADO NETO (APUESTAS LIQUIDADAS)',76,410,16,'#9ddbc7','800');
+    txt((totals.pnl>0?'+':totals.pnl<0?'-':'')+money(Math.abs(totals.pnl)),76,464,43,totals.pnl>=0?C.green:C.red,'900');
+    txt('YIELD',760,410,16,C.muted,'800');txt((yieldPct>0?'+':'')+yieldPct.toFixed(2)+'%',760,460,34,yieldPct>=0?C.green:C.red,'900');
+    txt('Apostado: '+money(totals.stake)+'  ·  Media ganada: '+totals.halfWon+'  ·  Media perdida: '+totals.halfLost+'  ·  Nulas: '+totals.void,76,532,17,C.muted,'700');
+
+    // Detalle de todas las apuestas registradas hoy, sin alterar ni excluir estados.
+    const listTop=570;
+    txt('DETALLE DE APUESTAS',60,listTop,19,C.white,'900');
+    txt('PARTIDO / SELECCIÓN',78,listTop+44,13,C.muted,'800');
+    txt('CUOTA',770,listTop+44,13,C.muted,'800','center');
+    txt('PROB.',870,listTop+44,13,C.muted,'800','center');
+    txt('ESTADO',974,listTop+44,13,C.muted,'800','center');
+    bets.forEach((bet,i)=>{
+        const y=listTop+62+i*rowH;
+        round(48,y,984,70,16,i%2===0?'#111d2d':'#0d1826','#26364b');
+        const league=String(bet.league||'SIN LIGA');
+        txt(fit(league.toUpperCase(),640,12,'800'),72,y+22,12,C.muted,'800');
+        wrap(bet.match||'Partido sin nombre',72,y+48,620,18,C.white,'900');
+        txt(fit(String(bet.market||'')+' · '+String(bet.selection||''),620,13,'700'),72,y+66,13,C.green,'700');
+        txt('@'+(Number(bet.bookieOdds)||0).toFixed(2),770,y+43,20,C.gold,'900','center');
+        txt((Number(bet.prob)||0).toFixed(1)+'%',870,y+43,18,C.white,'800','center');
+        const st=statusInfo[bet.status]||{label:String(bet.status||'—'),color:C.muted};
+        round(900,y+20,110,32,16,'#172337','#34465c');
+        txt(st.label,955,y+42,11,st.color,'900','center');
+    });
+    const footerY=listTop+62+bets.length*rowH+22;
+    round(48,footerY,984,66,18,'#0a1320','#26384d');
+    txt('BETAGS VIP PRO',72,footerY+28,17,C.green,'900');
+    txt('Registro de apuestas · Datos de la bitácora · Juega con responsabilidad',72,footerY+50,13,C.muted,'600');
+    txt((activeBank && activeBank.name) ? activeBank.name : 'Bankroll activo',1008,footerY+39,13,C.muted,'700','right');
+
+    const fileName='BETAGS_VIP_PRO_Resumen_'+today+'.png';
+    canvas.toBlob(async blob=>{
+        if(!blob){if(typeof showToast==='function')showToast('No se pudo generar el resumen diario.');return;}
+        const file=new File([blob],fileName,{type:'image/png'});
+        if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+            try{await navigator.share({files:[file],title:'BETAGS VIP PRO · Resumen diario'});return;}
+            catch(err){if(err&&err.name==='AbortError')return;}
+        }
+        const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=fileName;document.body.appendChild(a);a.click();a.remove();
+        const openWhatsApp=window.confirm('El resumen se descargó. ¿Quieres abrir WhatsApp para adjuntar la imagen? Pulsa Cancelar para abrir Telegram.');
+        window.open(openWhatsApp?'https://wa.me/':'https://t.me/','_blank','noopener');
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        if(typeof showToast==='function')showToast('Resumen diario descargado. Adjunta el PNG en WhatsApp o Telegram.');
     },'image/png');
 }
 </script>
