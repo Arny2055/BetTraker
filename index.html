@@ -962,6 +962,34 @@
                     </div>
                 </div>
 
+                <!-- AUDITORÍA ESTADÍSTICA BETAGS VIP PRO -->
+                <details id="betagsAuditPanel" class="bg-slate-950/70 rounded-xl border border-cyan-500/40 overflow-hidden group" open>
+                    <summary class="p-3 cursor-pointer flex items-center justify-between select-none">
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-microscope text-cyan-300"></i><span class="text-xs font-black text-white uppercase">Auditoría estadística BETAGS</span><span id="auditStatusBadge" class="text-[8px] font-black px-2 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300">PENDIENTE</span></div>
+                        <div class="flex items-center gap-2"><button type="button" onclick="event.preventDefault();event.stopPropagation();runBetagsAudit()" class="text-[9px] font-black bg-cyan-500/15 border border-cyan-500/40 text-cyan-200 px-2.5 py-1.5 rounded-lg"><i class="fa-solid fa-rotate mr-1"></i>ACTUALIZAR</button><i class="fa-solid fa-chevron-down text-cyan-300 text-xs transition-transform group-open:rotate-180"></i></div>
+                    </summary>
+                    <div class="p-3 pt-0 space-y-3">
+                        <p id="auditScopeNotice" class="text-[9px] leading-relaxed text-slate-400">Auditoría del bankroll activo. Se evalúan apuestas simples liquidadas; los parlays y pendientes quedan fuera de las métricas predictivas.</p>
+                        <div id="auditKpiGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+                        <div class="rounded-lg border border-slate-700 bg-slate-900/70 p-2 space-y-1">
+                            <div class="flex justify-between items-center gap-2"><span class="text-[9px] font-black text-white">CALIDAD PROBABILÍSTICA</span><span id="auditReliabilityLabel" class="text-[8px] font-black text-amber-300">SIN EVALUAR</span></div>
+                            <div id="auditReliabilityMetrics" class="grid grid-cols-3 gap-2 text-center"></div>
+                            <p class="text-[8px] text-slate-500">Brier y Log Loss: menor es mejor. ECE: menor indica mejor correspondencia entre probabilidades y frecuencias observadas. Se calculan con la probabilidad guardada al apostar.</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-700 bg-slate-900/70 p-2 space-y-2">
+                            <div class="flex items-center justify-between"><span class="text-[9px] font-black text-white">PROGRESO DE MUESTRA</span><span id="auditSampleCount" class="text-[9px] text-cyan-300 font-black">0 / 500</span></div>
+                            <div class="h-2 rounded-full bg-slate-800 overflow-hidden"><div id="auditSampleProgress" class="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full" style="width:0%"></div></div>
+                            <div id="auditMilestones" class="grid grid-cols-4 gap-1 text-center"></div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div class="rounded-lg border border-slate-700 bg-slate-900/70 p-2"><div class="text-[9px] font-black text-white mb-1">POR LIGA</div><div class="overflow-x-auto"><table class="w-full text-[8px]"><thead class="text-slate-500"><tr><th class="text-left">Liga</th><th>n</th><th>WR</th><th>Yield</th><th>P&amp;L</th></tr></thead><tbody id="auditLeagueRows" class="text-slate-300"></tbody></table></div></div>
+                            <div class="rounded-lg border border-slate-700 bg-slate-900/70 p-2"><div class="text-[9px] font-black text-white mb-1">POR MERCADO</div><div class="overflow-x-auto"><table class="w-full text-[8px]"><thead class="text-slate-500"><tr><th class="text-left">Mercado</th><th>n</th><th>WR</th><th>Yield</th><th>P&amp;L</th></tr></thead><tbody id="auditMarketRows" class="text-slate-300"></tbody></table></div></div>
+                        </div>
+                        <div id="auditWarnings" class="rounded-lg border border-amber-500/30 bg-amber-950/20 p-2 text-[8px] text-amber-200 leading-relaxed"></div>
+                        <div class="flex flex-wrap gap-2"><button type="button" onclick="exportBetagsAuditCSV()" class="text-[9px] font-black bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 px-3 py-2 rounded-lg"><i class="fa-solid fa-file-csv mr-1"></i>EXPORTAR AUDITORÍA CSV</button><button type="button" onclick="runBetagsAudit(true)" class="text-[9px] font-black bg-slate-700/50 border border-slate-600 text-slate-200 px-3 py-2 rounded-lg"><i class="fa-solid fa-arrows-rotate mr-1"></i>RECALCULAR TODO</button></div>
+                    </div>
+                </details>
+
                 <details class="bg-slate-900/90 rounded-xl border border-emerald-500/40 bg-gradient-to-r from-slate-900 via-emerald-950/20 to-slate-900 overflow-hidden group" open>
                     <summary class="p-3 cursor-pointer flex items-center justify-between select-none"><div class="flex items-center gap-1.5"><i class="fa-solid fa-trophy text-gold-400 text-xs"></i><span class="text-xs font-black text-white uppercase">Rendimiento por Liga</span></div><div class="flex items-center gap-2"><span id="leaguePerformanceBadge" class="text-[9px] font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Desglose</span><i class="fa-solid fa-chevron-down text-emerald-400 text-xs transition-transform group-open:rotate-180"></i></div></summary>
                     <div class="p-3 pt-0"><div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60"><table class="w-full text-[10px] text-left border-collapse excel-table"><thead class="bg-slate-900 text-slate-300 sticky top-0 font-extrabold shadow-md"><tr><th class="p-1.5">Liga</th><th class="p-1.5 text-center">Bets</th><th class="p-1.5 text-center">WR</th><th class="p-1.5 text-center">Yield</th><th class="p-1.5 text-center">P&L</th></tr></thead><tbody id="leaguePerformanceTableBody" class="divide-y divide-slate-800/60 font-medium text-slate-200"></tbody></table></div></div>
@@ -4308,6 +4336,186 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             selectionsSet.forEach(s => { const opt = new Option(s, s); if (s === currentSelectionVal) opt.selected = true; selectionSelect.add(opt); });
         }
 
+        // ============================================================
+        // AUDITORÍA ESTADÍSTICA BETAGS VIP PRO
+        // Evalúa el historial real del bankroll activo. No modifica apuestas,
+        // probabilidades, calibración ni parámetros del modelo.
+        // ============================================================
+        let betagsAuditLastRows = [];
+        let betagsAuditLastSummary = null;
+
+        function auditBetProfit(bet) {
+            const stake = Math.max(0, Number(bet.stake) || 0);
+            const odds = Math.max(1, Number(bet.bookieOdds) || 1);
+            if (bet.status === 'WON') return stake * (odds - 1);
+            if (bet.status === 'LOST') return -stake;
+            if (bet.status === 'HALF_WON') return (stake / 2) * (odds - 1);
+            if (bet.status === 'HALF_LOST') return -(stake / 2);
+            return 0;
+        }
+
+        function auditWilsonInterval(wins, n, z = 1.96) {
+            if (!n) return null;
+            const p = wins / n;
+            const den = 1 + (z * z / n);
+            const center = (p + z * z / (2 * n)) / den;
+            const margin = z * Math.sqrt((p * (1 - p) / n) + (z * z / (4 * n * n))) / den;
+            return { low: Math.max(0, center - margin), high: Math.min(1, center + margin) };
+        }
+
+        function auditProbabilityMetrics(rows) {
+            const samples = rows.filter(b => ['WON', 'LOST'].includes(b.status))
+                .map(b => ({ p: Number(b.prob) / 100, y: b.status === 'WON' ? 1 : 0 }))
+                .filter(x => Number.isFinite(x.p) && x.p > 0 && x.p < 1);
+            if (!samples.length) return { n: 0, brier: null, logLoss: null, ece: null };
+            let brier = 0, logLoss = 0;
+            const bins = Array.from({ length: 10 }, () => ({ n: 0, p: 0, y: 0 }));
+            samples.forEach(x => {
+                brier += (x.p - x.y) ** 2;
+                const p = Math.max(1e-6, Math.min(1 - 1e-6, x.p));
+                logLoss += -(x.y * Math.log(p) + (1 - x.y) * Math.log(1 - p));
+                const bin = bins[Math.min(9, Math.floor(x.p * 10))];
+                bin.n++; bin.p += x.p; bin.y += x.y;
+            });
+            const n = samples.length;
+            const ece = bins.reduce((sum, bin) => bin.n ? sum + (bin.n / n) * Math.abs(bin.p / bin.n - bin.y / bin.n) : sum, 0);
+            return { n, brier: brier / n, logLoss: logLoss / n, ece };
+        }
+
+        function auditAggregate(rows) {
+            const settled = rows.filter(b => ['WON', 'LOST', 'HALF_WON', 'HALF_LOST'].includes(b.status));
+            const binary = settled.filter(b => ['WON', 'LOST'].includes(b.status));
+            const wins = binary.filter(b => b.status === 'WON').length;
+            const stake = settled.reduce((s, b) => s + (Number(b.stake) || 0), 0);
+            const pnl = settled.reduce((s, b) => s + auditBetProfit(b), 0);
+            const grossWins = settled.reduce((s, b) => s + Math.max(0, auditBetProfit(b)), 0);
+            const grossLosses = Math.abs(settled.reduce((s, b) => s + Math.min(0, auditBetProfit(b)), 0));
+            const oddsRows = binary.filter(b => Number(b.bookieOdds) > 1);
+            const avgOdds = oddsRows.length ? oddsRows.reduce((s, b) => s + Number(b.bookieOdds), 0) / oddsRows.length : null;
+            const evRows = settled.filter(b => Number.isFinite(Number(b.ev)));
+            const avgEv = evRows.length ? evRows.reduce((s, b) => s + Number(b.ev), 0) / evRows.length : null;
+            const clvRows = settled.filter(b => Number(b.closingOdds) > 1 && Number(b.bookieOdds) > 1);
+            const clvs = clvRows.map(b => Number.isFinite(Number(b.clv)) ? Number(b.clv) : ((Number(b.bookieOdds) / Number(b.closingOdds) - 1) * 100));
+            const ordered = settled.slice().sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || (Number(a.id) || 0) - (Number(b.id) || 0));
+            let cumulative = 0, peak = 0, maxDrawdown = 0, losingStreak = 0, maxLosingStreak = 0;
+            ordered.forEach(b => {
+                const result = auditBetProfit(b);
+                cumulative += result;
+                peak = Math.max(peak, cumulative);
+                maxDrawdown = Math.max(maxDrawdown, peak - cumulative);
+                if (result < 0) { losingStreak++; maxLosingStreak = Math.max(maxLosingStreak, losingStreak); }
+                else if (result > 0) losingStreak = 0;
+            });
+            const interval = auditWilsonInterval(wins, binary.length);
+            const prob = auditProbabilityMetrics(binary);
+            return { n: settled.length, binaryN: binary.length, wins, losses: binary.length - wins,
+                winRate: binary.length ? wins / binary.length * 100 : null, interval,
+                stake, pnl, yield: stake ? pnl / stake * 100 : null,
+                profitFactor: grossLosses ? grossWins / grossLosses : (grossWins ? Infinity : null),
+                avgOdds, breakEven: avgOdds ? 100 / avgOdds : null, avgEv,
+                clvCount: clvs.length, avgClv: clvs.length ? clvs.reduce((a,b)=>a+b,0)/clvs.length : null,
+                beatClv: clvs.length ? clvs.filter(x=>x>0).length/clvs.length*100 : null,
+                maxDrawdown, maxLosingStreak, prob };
+        }
+
+        function auditGroupRows(rows, keyFn) {
+            const groups = {};
+            rows.forEach(b => { const key = keyFn(b) || 'Sin clasificar'; (groups[key] ||= []).push(b); });
+            return Object.entries(groups).map(([name, group]) => ({ name, ...auditAggregate(group) })).sort((a,b)=>b.n-a.n);
+        }
+
+        function auditKpiCard(label, value, note = '', tone = 'text-white') {
+            return `<div class="rounded-lg border border-slate-700 bg-slate-900/80 p-2 text-center"><div class="text-[8px] uppercase font-bold text-slate-500">${label}</div><div class="text-sm font-black ${tone} mt-1">${value}</div>${note ? `<div class="text-[7px] text-slate-500 mt-0.5">${note}</div>` : ''}</div>`;
+        }
+
+        function renderAuditGroupTable(targetId, groups) {
+            const target = document.getElementById(targetId);
+            if (!target) return;
+            target.replaceChildren();
+            if (!groups.length) { target.innerHTML = '<tr><td colspan="5" class="py-2 text-center text-slate-500">Sin datos liquidados</td></tr>'; return; }
+            groups.slice(0, 12).forEach(g => {
+                const tr = document.createElement('tr');
+                const cells = [g.name, String(g.binaryN), g.winRate == null ? '—' : g.winRate.toFixed(1)+'%', g.yield == null ? '—' : g.yield.toFixed(1)+'%', g.pnl.toFixed(2)];
+                cells.forEach((v, i) => { const td = document.createElement('td'); td.className = 'py-1 border-b border-slate-800/70 ' + (i ? 'text-center' : 'text-left max-w-[90px] truncate'); td.textContent = v; tr.appendChild(td); });
+                target.appendChild(tr);
+            });
+        }
+
+        function runBetagsAudit() {
+            const bankId = activeBankrollId || bankrollsData[0]?.id;
+            const allBankBets = betLogData.filter(b => (b.bankrollId || bankrollsData[0]?.id) === bankId);
+            const singles = allBankBets.filter(b => !b.isParlay && b.isParlay !== 'true');
+            const settled = singles.filter(b => ['WON','LOST','HALF_WON','HALF_LOST'].includes(b.status));
+            const binary = settled.filter(b => ['WON','LOST'].includes(b.status));
+            const stats = auditAggregate(singles);
+            betagsAuditLastRows = settled;
+            betagsAuditLastSummary = stats;
+            const kpis = document.getElementById('auditKpiGrid');
+            if (!kpis) return;
+            const fmt = v => v == null || !Number.isFinite(v) ? '—' : v.toFixed(2);
+            const wrRange = stats.interval ? `${(stats.interval.low*100).toFixed(1)}–${(stats.interval.high*100).toFixed(1)}% IC95` : 'Sin muestra';
+            kpis.innerHTML = [
+                auditKpiCard('APUESTAS LIQUIDADAS', stats.n, `${stats.binaryN} binarias evaluables`),
+                auditKpiCard('WIN RATE', stats.winRate == null ? '—' : stats.winRate.toFixed(1)+'%', wrRange, 'text-emerald-300'),
+                auditKpiCard('YIELD REAL', stats.yield == null ? '—' : (stats.yield>0?'+':'')+stats.yield.toFixed(2)+'%', 'P&L / stake liquidado', stats.yield>=0?'text-emerald-300':'text-rose-300'),
+                auditKpiCard('P&L NETO', (stats.pnl>=0?'+':'')+'$'+stats.pnl.toFixed(2), 'Apuestas simples', stats.pnl>=0?'text-emerald-300':'text-rose-300'),
+                auditKpiCard('PROFIT FACTOR', stats.profitFactor == null ? '—' : (Number.isFinite(stats.profitFactor)?stats.profitFactor.toFixed(2):'∞'), 'Ganancia bruta / pérdida bruta'),
+                auditKpiCard('DRAWDOWN MÁX.', '$'+stats.maxDrawdown.toFixed(2), 'Desde máximo acumulado', 'text-amber-300'),
+                auditKpiCard('RACHA PERDEDORA', stats.maxLosingStreak, 'Consecutivas liquidadas', 'text-rose-300'),
+                auditKpiCard('CLV PROMEDIO', stats.avgClv==null?'—':(stats.avgClv>0?'+':'')+stats.avgClv.toFixed(2)+'%', `${stats.clvCount} con cuota de cierre`, stats.avgClv>=0?'text-cyan-300':'text-rose-300'),
+                auditKpiCard('BEAT CLOSE LINE', stats.beatClv==null?'—':stats.beatClv.toFixed(1)+'%', 'Solo registros con CLV'),
+                auditKpiCard('EV PROMEDIO', stats.avgEv==null?'—':(stats.avgEv>0?'+':'')+stats.avgEv.toFixed(2)+'%', 'EV guardado al registrar', 'text-emerald-300'),
+                auditKpiCard('CUOTA PROMEDIO', stats.avgOdds==null?'—':'@'+stats.avgOdds.toFixed(2), 'Mercado binario'),
+                auditKpiCard('PUNTO DE EQUILIBRIO', stats.breakEven==null?'—':stats.breakEven.toFixed(1)+'%', 'Según cuota media')
+            ].join('');
+            const reliability = document.getElementById('auditReliabilityMetrics');
+            if (reliability) reliability.innerHTML = [
+                auditKpiCard('BRIER',fmt(stats.prob.brier),'Menor es mejor'),
+                auditKpiCard('LOG LOSS',fmt(stats.prob.logLoss),'Menor es mejor'),
+                auditKpiCard('ECE',stats.prob.ece==null?'—':(stats.prob.ece*100).toFixed(2)+'%','Menor es mejor')
+            ].join('');
+            const label = document.getElementById('auditReliabilityLabel');
+            if (label) { label.textContent = stats.prob.n < 30 ? `MUESTRA CORTA · n=${stats.prob.n}` : `EVALUACIÓN · n=${stats.prob.n}`; label.className = `text-[8px] font-black ${stats.prob.n < 30 ? 'text-amber-300' : 'text-cyan-300'}`; }
+            const count = document.getElementById('auditSampleCount');
+            if (count) count.textContent = `${stats.n} / 500`;
+            const progress = document.getElementById('auditSampleProgress');
+            if (progress) progress.style.width = `${Math.min(100, stats.n/500*100)}%`;
+            const milestones = document.getElementById('auditMilestones');
+            if (milestones) milestones.innerHTML = [100,500,1000,2000].map(n=>`<div class="rounded bg-slate-800/80 p-1 ${stats.n>=n?'text-emerald-300':'text-slate-500'}"><div class="text-[8px] font-black">${n.toLocaleString('es-MX')}</div><div class="text-[7px]">${stats.n>=n?'ALCANZADO':'PENDIENTE'}</div></div>`).join('');
+            renderAuditGroupTable('auditLeagueRows', auditGroupRows(settled, b=>b.league));
+            renderAuditGroupTable('auditMarketRows', auditGroupRows(settled, b=>b.market));
+            const notice = document.getElementById('auditScopeNotice');
+            if (notice) notice.textContent = `Bankroll activo · ${singles.length} apuestas simples registradas · ${settled.length} liquidadas · ${allBankBets.length-settled.length} pendientes/otros estados · ${allBankBets.filter(b=>b.isParlay).length} parlays excluidos. Las métricas predictivas usan solo WON/LOST con probabilidad válida.`;
+            const warnings = document.getElementById('auditWarnings');
+            if (warnings) {
+                const notes = [];
+                if (stats.n < 100) notes.push(`Muestra inicial: faltan ${100-stats.n} apuestas liquidadas para el primer punto de control de 100.`);
+                else notes.push('Primer punto de control de 100 alcanzado; no equivale a evidencia definitiva de ventaja.');
+                if (stats.prob.n < 30) notes.push('Calibración no concluyente: menos de 30 observaciones binarias con probabilidad válida.');
+                if (stats.clvCount < 30) notes.push(`CLV todavía exploratorio: solo ${stats.clvCount} apuestas tienen cuota de cierre; busca una muestra mayor.`);
+                notes.push('IMPORTANTE: esta auditoría evalúa apuestas seleccionadas, no todos los pronósticos generados. La selección puede sesgar Win Rate, Brier, Log Loss y ECE.');
+                notes.push('No hay registro histórico completo de predicciones no apostadas en esta versión; por eso no se declara validación independiente del modelo.');
+                warnings.textContent = notes.join(' ');
+            }
+            const badge = document.getElementById('auditStatusBadge');
+            if (badge) { badge.textContent = stats.n >= 500 ? 'MUESTRA AMPLIA' : stats.n >= 100 ? 'SEGUIMIENTO' : 'MUESTRA INICIAL'; badge.className = `text-[8px] font-black px-2 py-1 rounded-full border ${stats.n>=500?'border-emerald-500/40 bg-emerald-500/10 text-emerald-300':'border-amber-500/40 bg-amber-500/10 text-amber-300'}`; }
+            return stats;
+        }
+
+        function exportBetagsAuditCSV() {
+            if (!betagsAuditLastRows.length) runBetagsAudit();
+            const rows = betagsAuditLastRows;
+            if (!rows.length) { showToast('No hay apuestas liquidadas para exportar.'); return; }
+            const cols = ['date','league','match','market','selection','prob','bookieOdds','stake','status','ev','closingOdds','clv'];
+            const esc = v => '"' + String(v == null ? '' : v).replace(/"/g,'""') + '"';
+            const csv = [cols.join(','), ...rows.map(r=>cols.map(k=>esc(r[k])).join(','))].join('\r\n');
+            const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob); const a = document.createElement('a');
+            a.href=url; a.download=`BETAGS_Auditoria_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+            showToast('Auditoría exportada a CSV.');
+        }
+
         function updateTrackerMetrics() {
             const activeBankObj = bankrollsData.find(b => b.id === activeBankrollId) || bankrollsData[0];
             const fin = getBankrollFinancialSummary(activeBankrollId);
@@ -4594,6 +4802,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             renderClvChart(filteredBets);
             saveBankrollsToStorage();
             saveBetLogToStorage();
+            if (typeof runBetagsAudit === 'function') runBetagsAudit();
         }
 
         // ============================================================
@@ -5617,6 +5826,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const m = document.getElementById('trackerModal');
             if (show) {
                 m.classList.remove('hidden');
+                if (typeof runBetagsAudit === 'function') runBetagsAudit();
                 // Resize charts después de mostrar el modal
                 setTimeout(() => {
                     try {
