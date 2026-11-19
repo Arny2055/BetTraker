@@ -6054,7 +6054,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const wins = samples.reduce((n, sample) => n + sample.y, 0);
             const losses = samples.length - wins;
 
-            if (samples.length < 30 || wins < 5 || losses < 5) {
+            if (samples.length < 10 || wins < 5 || losses < 5) {
                 return { ready: false, count: samples.length, wins, losses, a: 0, b: 1 };
             }
 
@@ -6248,7 +6248,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             // Semáforo orientativo, con umbral de muestra explícito; no es una garantía predictiva.
             let level = 'FIABILIDAD BAJA';
             let tone = 'rose';
-            if (n < 30) { level = 'MUESTRA INSUFICIENTE'; tone = 'amber'; }
+            if (n < 10) { level = 'MUESTRA INSUFICIENTE'; tone = 'amber'; }
             else if (brier <= 0.18 && ece <= 0.05) { level = 'FIABILIDAD ALTA'; tone = 'emerald'; }
             else if (brier <= 0.21 && ece <= 0.08) { level = 'FIABILIDAD BUENA'; tone = 'cyan'; }
             else if (brier <= 0.25 && ece <= 0.12) { level = 'FIABILIDAD MEDIA'; tone = 'amber'; }
