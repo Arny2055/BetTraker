@@ -212,6 +212,9 @@
                 <button onclick="scrollToSection('sec-setup')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">1</span> Setup
                 </button>
+                <button onclick="scrollToSection('sec-prediction-memory')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-indigo-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                    <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">3</span> Pronósticos
+                </button>
                 <button onclick="scrollToSection('sec-match')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-400 text-[9px] font-black flex items-center justify-center">2</span> Partido
                 </button>
@@ -230,6 +233,33 @@
                 <span id="navLambdaBadge" class="font-mono text-emerald-400 font-black">-</span>
             </div>
         </nav>
+
+        <section id="sec-prediction-memory" class="space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
+            <div class="flex items-center gap-2 px-1">
+                <span class="text-[9px] font-black bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">3 · Memoria de predicciones</span>
+                <div class="flex-1 h-px bg-gradient-to-r from-indigo-500/30 to-transparent"></div>
+            </div>
+            <div class="glass-card rounded-2xl p-3.5 space-y-3 border border-indigo-500/35">
+                <div class="flex items-start justify-between gap-2">
+                    <div><h2 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i> Seguimiento automático del modelo</h2>
+                    <p class="text-[10px] text-slate-400 mt-1">Pega la tabla tabulada con Competition, estadísticas Home/Away, equipos y hora. Se guarda una fotografía inmutable de cada pronóstico; no crea apuestas ni mueve el bankroll.</p></div>
+                    <span id="modelPredictionCount" class="shrink-0 text-[9px] font-black bg-indigo-500/15 text-indigo-200 border border-indigo-500/30 px-2 py-1 rounded-lg">0 registros</span>
+                </div>
+                <textarea id="modelPredictionPaste" rows="6" spellcheck="false" placeholder="Pega aquí la tabla completa, incluidos los encabezados..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-[10px] leading-relaxed text-slate-200 font-mono focus:outline-none focus:border-indigo-400"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="previewModelPredictionBatch()" class="py-2.5 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-200 font-black text-[11px]"><i class="fa-solid fa-magnifying-glass mr-1"></i> Revisar tabla</button>
+                    <button onclick="saveModelPredictionBatch()" id="saveModelPredictionBatchBtn" disabled class="py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 font-black text-[11px] disabled:opacity-40"><i class="fa-solid fa-floppy-disk mr-1"></i> Guardar pronósticos</button>
+                </div>
+                <div id="modelPredictionParseStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">La revisión previa detecta filas incompletas y duplicados antes de guardar.</div>
+                <div id="modelPredictionPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
+            </div>
+            <div class="glass-card rounded-2xl p-3.5 space-y-2.5 border border-slate-700/80">
+                <div class="flex items-center justify-between gap-2"><h3 class="text-xs font-black text-white"><i class="fa-solid fa-list-check text-emerald-400 mr-1"></i> Bitácora de predicciones del modelo</h3>
+                    <div class="flex items-center gap-1"><select id="modelPredictionFilter" onchange="renderModelPredictionLog()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[9px] text-slate-200"><option value="ALL">Todas</option><option value="PENDING">Pendientes</option><option value="SETTLED">Resueltas</option></select><button onclick="syncModelPredictionsFromCloud()" class="text-[9px] bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-300"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Sincronizar</button></div>
+                </div>
+                <div id="modelPredictionLog" class="space-y-2"><p class="text-center text-[10px] text-slate-500 py-4">Todavía no hay predicciones guardadas.</p></div>
+            </div>
+        </section>
 
         <section id="sec-setup" class="space-y-3.5 scroll-mt-28">
             <div class="flex items-center gap-2 px-1">
@@ -2110,6 +2140,8 @@ GP W D L GF GA GD Pts PPG
                     await pullFromSupabase(false);
                     await pushAllToSupabase();
                 }
+                if (modelPredictionRecords.length) await syncModelPredictionsToCloud(modelPredictionRecords);
+                await syncModelPredictionsFromCloud();
 
                 setSyncStatus('synced');
                 showToast('☁️ Sincronización inicial completada.');
@@ -2358,6 +2390,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             loadBoxTransactionsFromStorage();
             loadBetLogFromStorage();
             loadParallelBetLogFromStorage();
+            loadModelPredictionRecords();
             populateLeagueDropdowns();
             populateBankrollDropdowns();
             updateTeamSelectors();
@@ -6726,6 +6759,257 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             } finally {
                 poissonHistoricalCalibration.loading = false;
             }
+        }
+
+        // ============================================================
+        // MEMORIA DE PREDICCIONES: pronósticos del modelo, separados de apuestas.
+        // Conserva snapshots; no modifica calculatePoisson(), lambdas ni bankroll.
+        // ============================================================
+        const MODEL_PREDICTIONS_STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
+        let modelPredictionRecords = [];
+        let modelPredictionPreviewRows = [];
+
+        function loadModelPredictionRecords() {
+            try {
+                const raw = localStorage.getItem(MODEL_PREDICTIONS_STORAGE_KEY);
+                modelPredictionRecords = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(modelPredictionRecords)) modelPredictionRecords = [];
+            } catch (e) { console.warn('[ModelPredictions] No se pudo leer memoria local:', e); modelPredictionRecords = []; }
+            renderModelPredictionLog();
+        }
+
+        function persistModelPredictionRecords() {
+            localStorage.setItem(MODEL_PREDICTIONS_STORAGE_KEY, JSON.stringify(modelPredictionRecords));
+            renderModelPredictionLog();
+        }
+
+        function modelPredictionNormalize(value) {
+            return String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+        }
+
+        function modelPredictionFingerprint(row) {
+            const day = row.matchDate || new Date().toISOString().slice(0,10);
+            return [modelPredictionNormalize(row.league), modelPredictionNormalize(row.home), modelPredictionNormalize(row.away), day, String(row.kickoff || '').trim()].join('|');
+        }
+
+        function modelPredictionHeaderIndex(headers, names, start, end) {
+            const wanted = names.map(modelPredictionNormalize);
+            for (let i = Math.max(0, start || 0); i < Math.min(headers.length, end == null ? headers.length : end); i++) {
+                if (wanted.includes(modelPredictionNormalize(headers[i]))) return i;
+            }
+            return -1;
+        }
+
+        function modelPredictionNumber(value) {
+            if (value == null) return NaN;
+            const cleaned = String(value).trim().replace(/%/g, '').replace(/,/g, '.').replace(/[^0-9.+-]/g, '');
+            return cleaned === '' ? NaN : Number(cleaned);
+        }
+
+        function parseModelPredictionTable(rawText) {
+            const lines = String(rawText || '').replace(/\r/g, '').split('\n').filter(line => line.trim());
+            if (lines.length < 2) throw new Error('Pega una tabla con encabezados y al menos un partido.');
+            const headers = lines[0].split('\t').map(v => v.trim());
+            const homeIdx = modelPredictionHeaderIndex(headers, ['Home','Local']);
+            const awayIdx = modelPredictionHeaderIndex(headers, ['Away','Visitante']);
+            const compIdx = modelPredictionHeaderIndex(headers, ['Competition','League','Competicion','Liga']);
+            const timeIdx = modelPredictionHeaderIndex(headers, ['Time','Hora','Kickoff']);
+            const dateIdx = modelPredictionHeaderIndex(headers, ['Date','Match Date','Fecha']);
+            if ([homeIdx, awayIdx, compIdx].some(i => i < 0) || awayIdx <= homeIdx) throw new Error('No encuentro los encabezados Competition, Home y Away. Respeta los encabezados de la tabla original.');
+            const hGfIdx = modelPredictionHeaderIndex(headers, ['GF','Goals For'], 0, homeIdx);
+            const hGaIdx = modelPredictionHeaderIndex(headers, ['GA','Goals Against'], 0, homeIdx);
+            const aGfIdx = modelPredictionHeaderIndex(headers, ['GF','Goals For'], awayIdx + 1);
+            const aGaIdx = modelPredictionHeaderIndex(headers, ['GA','Goals Against'], awayIdx + 1);
+            if ([hGfIdx,hGaIdx,aGfIdx,aGaIdx].some(i => i < 0)) throw new Error('Faltan columnas GF/GA a ambos lados de los equipos. No se calculará con estadísticas adivinadas.');
+            const rows = [], errors = [];
+            for (let lineNo = 1; lineNo < lines.length; lineNo++) {
+                const cells = lines[lineNo].split('\t');
+                if (cells.length < headers.length) { errors.push(`Fila ${lineNo+1}: tiene ${cells.length} columnas; se esperaban ${headers.length}.`); continue; }
+                const row = {
+                    league: String(cells[compIdx] || '').trim(), home: String(cells[homeIdx] || '').trim(), away: String(cells[awayIdx] || '').trim(),
+                    kickoff: timeIdx >= 0 ? String(cells[timeIdx] || '').trim() : '',
+                    matchDate: dateIdx >= 0 ? String(cells[dateIdx] || '').trim() : new Date().toISOString().slice(0,10),
+                    homeGF: modelPredictionNumber(cells[hGfIdx]), homeGA: modelPredictionNumber(cells[hGaIdx]),
+                    awayGF: modelPredictionNumber(cells[aGfIdx]), awayGA: modelPredictionNumber(cells[aGaIdx]),
+                    sourceRow: lineNo + 1
+                };
+                if (!row.league || !row.home || !row.away || ![row.homeGF,row.homeGA,row.awayGF,row.awayGA].every(Number.isFinite)) {
+                    errors.push(`Fila ${lineNo+1}: competición, equipos o GF/GA incompletos.`); continue;
+                }
+                if ([row.homeGF,row.homeGA,row.awayGF,row.awayGA].some(v => v < 0)) { errors.push(`Fila ${lineNo+1}: GF/GA no puede ser negativo.`); continue; }
+                row.fingerprint = modelPredictionFingerprint(row);
+                row.lambdaHome = Math.sqrt(Math.max(0, row.homeGF * row.awayGA)) || 0;
+                row.lambdaAway = Math.sqrt(Math.max(0, row.awayGF * row.homeGA)) || 0;
+                row.probabilities = calculateModelPredictionProbabilities(row);
+                row.modelVersion = 'BETAGS_POISSON_GEOMETRIC_1.0';
+                rows.push(row);
+            }
+            return { rows, errors };
+        }
+
+        function calculateModelPredictionProbabilities(row) {
+            const lh = row.lambdaHome, la = row.lambdaAway;
+            const total = lh + la, diff = Math.abs(lh - la);
+            let rho = 0;
+            if (total < 2.20 && diff < 0.4) rho = -0.12;
+            else if (total <= 2.60 && diff <= 0.8) rho = -0.06;
+            else if (total > 3.20 || diff > 1.2) rho = 0.00;
+            else rho = -0.03;
+            const hp = [], ap = [];
+            for (let i=0;i<=POISSON_MAX_GOALS;i++) { hp[i]=poissonProb(i,lh); ap[i]=poissonProb(i,la); }
+            let h=0,d=0,a=0,o=0,u=0,by=0,bn=0,sum=0;
+            for (let i=0;i<=POISSON_MAX_GOALS;i++) for (let j=0;j<=POISSON_MAX_GOALS;j++) {
+                let p=hp[i]*ap[j];
+                if (rho!==0) {
+                    if(i===0&&j===0)p*=(1-lh*la*rho);
+                    else if(i===1&&j===0)p*=(1+la*rho);
+                    else if(i===0&&j===1)p*=(1+lh*rho);
+                    else if(i===1&&j===1)p*=(1-rho);
+                }
+                sum+=p;
+                if(i>j)h+=p; else if(i===j)d+=p; else a+=p;
+                if(i+j>2.5)o+=p; else u+=p;
+                if(i>0&&j>0)by+=p; else bn+=p;
+            }
+            if(sum>0){h/=sum;d/=sum;a/=sum;o/=sum;u/=sum;by/=sum;bn/=sum;}
+            const league = row.league;
+            const apply = (p, market, selection) => applyPoissonHistoricalCalibration(p, league, market, selection);
+            const c1=[apply(h,'Resultado Final (1X2)',`Gana ${row.home}`),apply(d,'Resultado Final (1X2)','Empate (X)'),apply(a,'Resultado Final (1X2)',`Gana ${row.away}`)];
+            const c1s=c1.reduce((x,y)=>x+y,0)||1;
+            const c2=[apply(o,'Over / Under Goles','Over 2.5'),apply(u,'Over / Under Goles','Under 2.5')]; const c2s=c2[0]+c2[1]||1;
+            const c3=[apply(by,'Ambos Anotan','Ambos Anotan Si'),apply(bn,'Ambos Anotan','Ambos Anotan No')]; const c3s=c3[0]+c3[1]||1;
+            return { homeWin:c1[0]/c1s, draw:c1[1]/c1s, awayWin:c1[2]/c1s, over25:c2[0]/c2s, under25:c2[1]/c2s, bttsYes:c3[0]/c3s, bttsNo:c3[1]/c3s,
+                original:{homeWin:h,draw:d,awayWin:a,over25:o,under25:u,bttsYes:by,bttsNo:bn}, rho,
+                calibrationActive:{oneXTwo:c1.some((v,i)=>Math.abs(v-[h,d,a][i])>1e-10),overUnder:Math.abs(c2[0]-o)>1e-10,btts:Math.abs(c3[0]-by)>1e-10} };
+        }
+
+        function previewModelPredictionBatch() {
+            const status = document.getElementById('modelPredictionParseStatus');
+            const preview = document.getElementById('modelPredictionPreview');
+            const saveBtn = document.getElementById('saveModelPredictionBatchBtn');
+            try {
+                const parsed = parseModelPredictionTable(document.getElementById('modelPredictionPaste').value);
+                const existing = new Set(modelPredictionRecords.map(r=>r.fingerprint));
+                const batch = new Set();
+                parsed.rows.forEach(r=>{r.duplicate=existing.has(r.fingerprint)||batch.has(r.fingerprint);batch.add(r.fingerprint);});
+                modelPredictionPreviewRows = parsed.rows.filter(r=>!r.duplicate);
+                const errHtml = parsed.errors.length ? `<div class="p-2 text-rose-300 bg-rose-950/30">${parsed.errors.map(escapeModelPredictionHtml).join('<br>')}</div>` : '';
+                preview.innerHTML = `${errHtml}<table class="w-full text-[9px]"><thead class="bg-slate-900 text-slate-400"><tr><th class="p-2 text-left">Competición / Partido</th><th class="p-2">λ L/V</th><th class="p-2">1X2</th><th class="p-2">O2.5</th><th class="p-2">BTTS Sí</th><th class="p-2">Estado</th></tr></thead><tbody>${parsed.rows.map(r=>`<tr class="border-t border-slate-800"><td class="p-2"><b>${escapeModelPredictionHtml(r.league)}</b><br>${escapeModelPredictionHtml(r.home)} vs ${escapeModelPredictionHtml(r.away)}<span class="block text-slate-500">${escapeModelPredictionHtml(r.kickoff)}</span></td><td class="p-2 text-center">${r.lambdaHome.toFixed(2)} / ${r.lambdaAway.toFixed(2)}</td><td class="p-2 text-center">${(r.probabilities.homeWin*100).toFixed(1)} / ${(r.probabilities.draw*100).toFixed(1)} / ${(r.probabilities.awayWin*100).toFixed(1)}</td><td class="p-2 text-center">${(r.probabilities.over25*100).toFixed(1)}%</td><td class="p-2 text-center">${(r.probabilities.bttsYes*100).toFixed(1)}%</td><td class="p-2 text-center ${r.duplicate?'text-amber-300':'text-emerald-300'}">${r.duplicate?'Duplicado':'Nuevo'}</td></tr>`).join('')}</tbody></table>`;
+                preview.classList.remove('hidden');
+                saveBtn.disabled = modelPredictionPreviewRows.length === 0;
+                status.innerHTML = `<b class="text-emerald-300">${modelPredictionPreviewRows.length} nuevos</b> · ${parsed.rows.filter(r=>r.duplicate).length} duplicados omitidos · ${parsed.errors.length} filas con error. Las cuotas se pueden añadir después.`;
+            } catch(e) { modelPredictionPreviewRows=[]; saveBtn.disabled=true; preview.classList.add('hidden'); status.innerText=e.message; }
+        }
+
+        function escapeModelPredictionHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+
+        async function saveModelPredictionBatch() {
+            if (!modelPredictionPreviewRows.length) return;
+            const now = new Date().toISOString();
+            const newRows = modelPredictionPreviewRows.map(r=>({
+                id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==='x'?r:(r&0x3|0x8)).toString(16); }),
+                fingerprint:r.fingerprint, matchKey:`${r.home} vs ${r.away}`, league:r.league, home:r.home, away:r.away,
+                matchDate:r.matchDate, kickoff:r.kickoff, analyzedAt:now, modelVersion:r.modelVersion,
+                inputs:{homeGF:r.homeGF,homeGA:r.homeGA,awayGF:r.awayGF,awayGA:r.awayGA},
+                lambdas:{home:r.lambdaHome,away:r.lambdaAway}, probabilities:r.probabilities,
+                odds:{homeWin:'',draw:'',awayWin:'',over25:'',under25:'',bttsYes:'',bttsNo:''},
+                status:'PENDING', actualHomeGoals:null, actualAwayGoals:null, results:null, settledAt:null
+            }));
+            modelPredictionRecords = [...newRows,...modelPredictionRecords];
+            persistModelPredictionRecords();
+            modelPredictionPreviewRows=[];
+            document.getElementById('saveModelPredictionBatchBtn').disabled=true;
+            document.getElementById('modelPredictionPreview').classList.add('hidden');
+            document.getElementById('modelPredictionParseStatus').innerText=`Se guardaron ${newRows.length} predicciones localmente. Si hay sesión iniciada, se intentará sincronizar con Supabase.`;
+            if (currentUser && supabaseClient) await syncModelPredictionsToCloud(newRows);
+            showToast(`${newRows.length} pronósticos guardados en memoria independiente.`);
+        }
+
+        function modelPredictionToDb(r) {
+            return {id:r.id,user_id:currentUser.id,fingerprint:r.fingerprint,match_key:r.matchKey,league:r.league,home_team:r.home,away_team:r.away,
+                match_date:/^\d{4}-\d{2}-\d{2}$/.test(r.matchDate||'')?r.matchDate:null,analyzed_at:r.analyzedAt,model_version:r.modelVersion,
+                inputs:{...r.inputs,kickoff:r.kickoff},probabilities:r.probabilities,lambdas:r.lambdas,status:r.status,
+                actual_home_goals:r.actualHomeGoals,actual_away_goals:r.actualAwayGoals,settled_at:r.settledAt,
+                odds:r.odds||{},market_results:r.results||{}};
+        }
+
+        async function syncModelPredictionsToCloud(rows) {
+            if (!currentUser || !supabaseClient || !rows?.length) return false;
+            try {
+                const payload=rows.map(modelPredictionToDb);
+                const {error}=await supabaseClient.from('match_predictions').upsert(payload,{onConflict:'user_id,fingerprint'});
+                if(error) throw error;
+                return true;
+            } catch(e) { console.warn('[ModelPredictions] Supabase sync failed:',e); showToast('Guardado local; sincronización pendiente. Verifica que aplicaste el SQL de la tabla match_predictions.'); return false; }
+        }
+
+        async function syncModelPredictionsFromCloud() {
+            if (!currentUser || !supabaseClient) { showToast('Inicia sesión para sincronizar entre dispositivos.'); return; }
+            try {
+                const {data,error}=await supabaseClient.from('match_predictions').select('*').eq('user_id',currentUser.id).order('analyzed_at',{ascending:false}).limit(1000);
+                if(error) throw error;
+                const map=new Map(modelPredictionRecords.map(r=>[r.fingerprint || r.id,r]));
+                (data||[]).forEach(db=>{
+                    const cloud={id:db.id,fingerprint:db.fingerprint,matchKey:db.match_key,league:db.league,home:db.home_team,away:db.away_team,
+                        matchDate:db.match_date||'',kickoff:db.inputs?.kickoff||'',analyzedAt:db.analyzed_at,modelVersion:db.model_version,
+                        inputs:db.inputs||{},lambdas:db.lambdas||{},probabilities:db.probabilities||{},odds:db.odds||{},status:db.status||'PENDING',
+                        actualHomeGoals:db.actual_home_goals,actualAwayGoals:db.actual_away_goals,results:db.market_results||null,settledAt:db.settled_at||null};
+                    const old=map.get(cloud.fingerprint || cloud.id);
+                    if (!old) map.set(cloud.fingerprint || cloud.id, cloud);
+                    else {
+                        const localSettledAt = old.settledAt || '';
+                        const cloudSettledAt = cloud.settledAt || '';
+                        const preferCloud = cloud.status === 'SETTLED' && (old.status !== 'SETTLED' || cloudSettledAt > localSettledAt);
+                        const preferred = preferCloud ? { ...old, ...cloud } : { ...cloud, ...old, id:cloud.id };
+                        preferred.odds = { ...(cloud.odds || {}), ...(old.odds || {}) };
+                        if (preferCloud) preferred.results = cloud.results;
+                        map.set(cloud.fingerprint || cloud.id, preferred);
+                    }
+                });
+                modelPredictionRecords=Array.from(map.values()).sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
+                persistModelPredictionRecords(); showToast('Memoria de predicciones sincronizada.');
+            } catch(e) { console.error('[ModelPredictions] Cloud read failed:',e); showToast('No se pudo sincronizar. Comprueba la migración SQL de match_predictions.'); }
+        }
+
+        function updateModelPredictionOdds(id, market, value) {
+            const r=modelPredictionRecords.find(x=>x.id===id); if(!r||r.status==='SETTLED')return;
+            r.odds=r.odds||{}; r.odds[market]=value===''?'':Math.max(1,Number(value)||1).toString();
+            persistModelPredictionRecords(); if(currentUser&&supabaseClient)syncModelPredictionsToCloud([r]);
+        }
+
+        function settleModelPrediction(id) {
+            const r=modelPredictionRecords.find(x=>x.id===id); if(!r)return;
+            const hg=Number(document.getElementById(`mp_home_score_${id}`)?.value), ag=Number(document.getElementById(`mp_away_score_${id}`)?.value);
+            if(!Number.isInteger(hg)||!Number.isInteger(ag)||hg<0||ag<0){showToast('Introduce un marcador válido para ambos equipos.');return;}
+            const oneX=hg>ag?'homeWin':hg===ag?'draw':'awayWin'; const over=hg+ag>=3;
+            const btts=hg>0&&ag>0;
+            r.actualHomeGoals=hg;r.actualAwayGoals=ag;r.status='SETTLED';r.settledAt=new Date().toISOString();
+            r.results={oneXTwo:oneX,overUnder:over?'over25':'under25',btts:btts?'bttsYes':'bttsNo',
+                homeWin:hg>ag?'WON':'LOST',draw:hg===ag?'WON':'LOST',awayWin:hg<ag?'WON':'LOST',over25:over?'WON':'LOST',under25:over?'LOST':'WON',bttsYes:btts?'WON':'LOST',bttsNo:btts?'LOST':'WON'};
+            persistModelPredictionRecords(); if(currentUser&&supabaseClient)syncModelPredictionsToCloud([r]);
+            showToast('Marcador guardado: se resolvieron 1X2, Over/Under 2.5 y BTTS.');
+        }
+
+        function renderModelPredictionLog() {
+            const root=document.getElementById('modelPredictionLog'); if(!root)return;
+            const count=document.getElementById('modelPredictionCount'); if(count)count.innerText=`${modelPredictionRecords.length} registros`;
+            const filter=document.getElementById('modelPredictionFilter')?.value||'ALL';
+            const rows=modelPredictionRecords.filter(r=>filter==='ALL'||r.status===filter).sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
+            if(!rows.length){root.innerHTML='<p class="text-center text-[10px] text-slate-500 py-4">No hay registros en esta vista.</p>';return;}
+            root.innerHTML=rows.map(r=>{
+                const p=r.probabilities||{},od=r.odds||{}, settled=r.status==='SETTLED';
+                const pct=k=>`${(Number(p[k]||0)*100).toFixed(1)}%`;
+                const oddsInput=(key,label)=>`<label class="text-[8px] text-slate-500">${label}<input ${settled?'disabled':''} type="number" min="1" step="0.01" value="${escapeModelPredictionHtml(od[key]||'')}" onchange="updateModelPredictionOdds('${r.id}','${key}',this.value)" placeholder="Cuota" class="block w-full mt-0.5 bg-slate-950 border border-slate-700 rounded-md p-1 text-[9px] text-white disabled:opacity-40"></label>`;
+                const outcome=settled?`<div class="text-[9px] text-emerald-300 mt-1">Marcador: ${r.actualHomeGoals}-${r.actualAwayGoals} · 1X2: ${r.results?.oneXTwo||'-'} · ${r.results?.overUnder||'-'} · ${r.results?.btts||'-'}</div>`:'';
+                return `<article class="rounded-xl border ${settled?'border-slate-700 bg-slate-950/40':'border-indigo-500/25 bg-slate-950/60'} p-2.5 space-y-2">
+                    <div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[8px] text-indigo-300 font-bold">${escapeModelPredictionHtml(r.league||'Sin competición')} · ${escapeModelPredictionHtml(r.matchDate||'')} ${escapeModelPredictionHtml(r.kickoff||'')}</div><div class="text-[11px] font-black text-white">${escapeModelPredictionHtml(r.home)} <span class="text-slate-500">vs</span> ${escapeModelPredictionHtml(r.away)}</div><div class="text-[8px] text-slate-500">λ ${Number(r.lambdas?.home||0).toFixed(3)} / ${Number(r.lambdas?.away||0).toFixed(3)} · ${escapeModelPredictionHtml(r.modelVersion||'')}</div></div><span class="shrink-0 text-[8px] font-black px-2 py-1 rounded-lg ${settled?'bg-emerald-500/15 text-emerald-300':'bg-amber-500/15 text-amber-300'}">${settled?'RESUELTA':'PENDIENTE'}</span></div>
+                    <div class="grid grid-cols-3 gap-1 text-center text-[8px]"><div class="bg-slate-900 rounded-lg p-1"><span class="block text-slate-500">1X2 L / X / V</span><b class="text-white">${pct('homeWin')} / ${pct('draw')} / ${pct('awayWin')}</b></div><div class="bg-slate-900 rounded-lg p-1"><span class="block text-slate-500">Over / Under 2.5</span><b class="text-white">${pct('over25')} / ${pct('under25')}</b></div><div class="bg-slate-900 rounded-lg p-1"><span class="block text-slate-500">BTTS Sí / No</span><b class="text-white">${pct('bttsYes')} / ${pct('bttsNo')}</b></div></div>
+                    <div class="grid grid-cols-4 sm:grid-cols-7 gap-1">${oddsInput('homeWin','1')}${oddsInput('draw','X')}${oddsInput('awayWin','2')}${oddsInput('over25','O2.5')}${oddsInput('under25','U2.5')}${oddsInput('bttsYes','BTTS Sí')}${oddsInput('bttsNo','BTTS No')}</div>
+                    ${settled?outcome:`<div class="grid grid-cols-[1fr_1fr_auto] gap-1 items-end"><label class="text-[8px] text-slate-500">Goles ${escapeModelPredictionHtml(r.home)}<input id="mp_home_score_${r.id}" type="number" min="0" step="1" class="block w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[10px] text-white" placeholder="0"></label><label class="text-[8px] text-slate-500">Goles ${escapeModelPredictionHtml(r.away)}<input id="mp_away_score_${r.id}" type="number" min="0" step="1" class="block w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[10px] text-white" placeholder="0"></label><button onclick="settleModelPrediction('${r.id}')" class="bg-emerald-500 text-slate-950 font-black text-[9px] px-2 py-2 rounded-lg">Resolver</button></div>`}
+                </article>`;
+            }).join('');
         }
 
         function calculatePoisson() {
