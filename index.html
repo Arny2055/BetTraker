@@ -6761,6 +6761,30 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             renderModelPredictionLog();
         }
 
+        // Elimina únicamente el pronóstico seleccionado de la memoria del modelo.
+        // Si existe sesión de Supabase, elimina primero la copia en la nube para
+        // evitar que vuelva a descargarse en una sincronización posterior.
+        async function deleteModelPrediction(id) {
+            const record = modelPredictionRecords.find(r => r.id === id);
+            if (!record) return;
+            const label = `${record.home || 'Local'} vs ${record.away || 'Visitante'}`;
+            if (!confirm(`¿Eliminar de la bitácora de predicciones del modelo el registro:\n${label}?\n\nEsta acción no se puede deshacer.`)) return;
+            if (currentUser && supabaseClient) {
+                try {
+                    const { error } = await supabaseClient.from('match_predictions')
+                        .delete().eq('user_id', currentUser.id).eq('id', id);
+                    if (error) throw error;
+                } catch (e) {
+                    console.error('[ModelPredictions] No se pudo eliminar el registro en la nube:', e);
+                    showToast('No se eliminó: no se pudo confirmar la eliminación en la nube. Intenta sincronizar y vuelve a intentarlo.');
+                    return;
+                }
+            }
+            modelPredictionRecords = modelPredictionRecords.filter(r => r.id !== id);
+            persistModelPredictionRecords();
+            showToast('Pronóstico eliminado de la bitácora del modelo.');
+        }
+
         function modelPredictionNormalize(value) {
             return String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
         }
@@ -7096,7 +7120,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 const oddsInput=(key,label)=>`<label class="text-[8px] text-slate-500">${label}<input ${settled?'disabled':''} type="number" min="1" step="0.01" value="${escapeModelPredictionHtml(od[key]||'')}" onchange="updateModelPredictionOdds('${r.id}','${key}',this.value)" placeholder="Cuota" class="block w-full mt-0.5 bg-slate-950 border border-slate-700 rounded-md p-1 text-[9px] text-white disabled:opacity-40"></label>`;
                 const outcome=settled?`<div class="text-[9px] text-emerald-300 mt-1">Marcador: ${r.actualHomeGoals}-${r.actualAwayGoals} · 1X2: ${r.results?.oneXTwo||'-'} · ${r.results?.overUnder||'-'} · ${r.results?.btts||'-'}</div>`:'';
                 return `<article class="rounded-xl border ${settled?'border-slate-700 bg-slate-950/40':'border-indigo-500/25 bg-slate-950/60'} p-2.5 space-y-2">
-                    <div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[8px] text-indigo-300 font-bold">${escapeModelPredictionHtml(r.league||'Sin competición')} · ${escapeModelPredictionHtml(r.matchDate||'')} ${escapeModelPredictionHtml(r.kickoff||'')}</div><div class="text-[11px] font-black text-white">${escapeModelPredictionHtml(r.home)} <span class="text-slate-500">vs</span> ${escapeModelPredictionHtml(r.away)}</div><div class="text-[8px] text-slate-500">λ ${Number(r.lambdas?.home||0).toFixed(3)} / ${Number(r.lambdas?.away||0).toFixed(3)} · ${escapeModelPredictionHtml(r.modelVersion||'')}</div></div><span class="shrink-0 text-[8px] font-black px-2 py-1 rounded-lg ${settled?'bg-emerald-500/15 text-emerald-300':'bg-amber-500/15 text-amber-300'}">${settled?'RESUELTA':'PENDIENTE'}</span></div>
+                    <div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[8px] text-indigo-300 font-bold">${escapeModelPredictionHtml(r.league||'Sin competición')} · ${escapeModelPredictionHtml(r.matchDate||'')} ${escapeModelPredictionHtml(r.kickoff||'')}</div><div class="text-[11px] font-black text-white">${escapeModelPredictionHtml(r.home)} <span class="text-slate-500">vs</span> ${escapeModelPredictionHtml(r.away)}</div><div class="text-[8px] text-slate-500">λ ${Number(r.lambdas?.home||0).toFixed(3)} / ${Number(r.lambdas?.away||0).toFixed(3)} · ${escapeModelPredictionHtml(r.modelVersion||'')}</div></div><div class="shrink-0 flex flex-col items-end gap-1"><span class="text-[8px] font-black px-2 py-1 rounded-lg ${settled?'bg-emerald-500/15 text-emerald-300':'bg-amber-500/15 text-amber-300'}">${settled?'RESUELTA':'PENDIENTE'}</span><button type="button" onclick="deleteModelPrediction('${r.id}')" title="Eliminar este pronóstico" aria-label="Eliminar pronóstico ${escapeModelPredictionHtml(r.home)} vs ${escapeModelPredictionHtml(r.away)}" class="text-[8px] font-bold text-rose-300 hover:text-white bg-rose-500/10 hover:bg-rose-600 border border-rose-500/25 rounded-md px-2 py-1 transition-colors"><i class="fa-solid fa-trash-can mr-1"></i>Eliminar</button></div></div>
                     <div class="grid grid-cols-3 gap-1 text-center text-[8px]"><div class="bg-slate-900 rounded-lg p-1"><span class="block text-slate-500">1X2 L / X / V</span><b class="text-white">${pct('homeWin')} / ${pct('draw')} / ${pct('awayWin')}</b></div><div class="bg-slate-900 rounded-lg p-1"><span class="block text-slate-500">Over / Under 2.5</span><b class="text-white">${pct('over25')} / ${pct('under25')}</b></div><div class="bg-slate-900 rounded-lg p-1"><span class="block text-slate-500">BTTS Sí / No</span><b class="text-white">${pct('bttsYes')} / ${pct('bttsNo')}</b></div></div>
                     <div class="grid grid-cols-4 sm:grid-cols-7 gap-1">${oddsInput('homeWin','1')}${oddsInput('draw','X')}${oddsInput('awayWin','2')}${oddsInput('over25','O2.5')}${oddsInput('under25','U2.5')}${oddsInput('bttsYes','BTTS Sí')}${oddsInput('bttsNo','BTTS No')}</div>
                     ${settled?outcome:`<div class="grid grid-cols-[1fr_1fr_auto] gap-1 items-end"><label class="text-[8px] text-slate-500">Goles ${escapeModelPredictionHtml(r.home)}<input id="mp_home_score_${r.id}" type="number" min="0" step="1" class="block w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[10px] text-white" placeholder="0"></label><label class="text-[8px] text-slate-500">Goles ${escapeModelPredictionHtml(r.away)}<input id="mp_away_score_${r.id}" type="number" min="0" step="1" class="block w-full bg-slate-950 border border-slate-700 rounded-lg p-1.5 text-[10px] text-white" placeholder="0"></label><button onclick="settleModelPrediction('${r.id}')" class="bg-emerald-500 text-slate-950 font-black text-[9px] px-2 py-2 rounded-lg">Resolver</button></div>`}
