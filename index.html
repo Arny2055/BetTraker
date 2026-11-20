@@ -253,12 +253,16 @@
                 <div id="modelPredictionParseStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">La revisión previa detecta filas incompletas y duplicados antes de guardar.</div>
                 <div id="modelPredictionPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
             </div>
-            <div class="glass-card rounded-2xl p-3.5 space-y-2.5 border border-slate-700/80">
-                <div class="flex items-center justify-between gap-2"><h3 class="text-xs font-black text-white"><i class="fa-solid fa-list-check text-emerald-400 mr-1"></i> Bitácora de predicciones del modelo</h3>
-                    <div class="flex items-center gap-1"><select id="modelPredictionFilter" onchange="renderModelPredictionLog()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[9px] text-slate-200"><option value="ALL">Todas</option><option value="PENDING">Pendientes</option><option value="SETTLED">Resueltas</option></select><button onclick="syncModelPredictionsFromCloud()" class="text-[9px] bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-300"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Sincronizar</button></div>
+            <details id="modelPredictionLogDetails" class="glass-card rounded-2xl border border-slate-700/80 group">
+                <summary class="list-none cursor-pointer select-none p-3.5 flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                    <span class="text-xs font-black text-white"><i class="fa-solid fa-list-check text-emerald-400 mr-1"></i> Bitácora de predicciones del modelo <span class="ml-1 text-[9px] font-normal text-slate-500">(abrir para consultar)</span></span>
+                    <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] transition-transform group-open:rotate-180"></i>
+                </summary>
+                <div class="px-3.5 pb-3.5 pt-0 space-y-2.5">
+                    <div class="flex items-center justify-end gap-1"><select id="modelPredictionFilter" onchange="renderModelPredictionLog()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[9px] text-slate-200"><option value="ALL">Todas</option><option value="PENDING">Pendientes</option><option value="SETTLED">Resueltas</option></select><button onclick="syncModelPredictionsFromCloud()" class="text-[9px] bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-300"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Sincronizar</button></div>
+                    <div id="modelPredictionLog" class="space-y-2"><p class="text-center text-[10px] text-slate-500 py-4">Todavía no hay predicciones guardadas.</p></div>
                 </div>
-                <div id="modelPredictionLog" class="space-y-2"><p class="text-center text-[10px] text-slate-500 py-4">Todavía no hay predicciones guardadas.</p></div>
-            </div>
+            </details>
         </section>
 
         <section id="sec-setup" class="space-y-3.5 scroll-mt-28">
