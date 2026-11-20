@@ -477,7 +477,15 @@
                         </button>
                         <span id="poissonCalibrationStatus" class="text-[8px] text-slate-400">Calibración histórica: pendiente de sesión</span>
                     </div>
-                    <p class="text-[8px] text-slate-500">Ajusta por liga, mercado y selección exacta usando apuestas simples liquidadas de Supabase. Cada liga mantiene su propio modelo; no mezcla competiciones ni utiliza localStorage.</p>
+                    <p class="text-[8px] text-slate-500">Fuente de apuestas reales: ajusta por liga, mercado y selección exacta usando apuestas simples liquidadas de Supabase. Esta calibración permanece independiente de la memoria de pronósticos.</p>
+                    <div class="rounded-xl border border-cyan-500/30 bg-cyan-950/10 p-2.5 space-y-1.5">
+                        <div class="text-[10px] font-black text-cyan-300 flex items-center gap-1.5"><i class="fa-solid fa-brain"></i> CALIBRACIÓN CON RENDIMIENTO HISTÓRICO DE POISSON</div>
+                        <button type="button" id="modelPredictionCalibrationButton" onclick="toggleModelPredictionCalibration()" class="w-full text-[10px] font-black bg-slate-700/40 hover:bg-slate-700/60 border border-slate-600 text-slate-200 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+                            <i class="fa-solid fa-toggle-off text-sm"></i> <span id="modelPredictionCalibrationLabel">CALIBRAR CON PRONÓSTICOS</span>
+                        </button>
+                        <p id="modelPredictionCalibrationDetail" class="text-[8px] text-slate-400 text-center">Usa todos los pronósticos guardados y liquidados, apostados o no. Requiere 15 observaciones por selección, con al menos 5 aciertos y 5 fallos.</p>
+                        <p id="modelPredictionCalibrationStatus" class="text-[8px] text-cyan-200/80 text-center">Aún no se ha analizado la memoria de pronósticos.</p>
+                    </div>
                     <div id="poissonReliabilityPanel" class="mt-2 p-2.5 rounded-xl border border-cyan-500/30 bg-cyan-950/15 space-y-2">
                         <div class="flex items-center justify-between gap-2">
                             <div class="min-w-0">
@@ -2369,6 +2377,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             loadBetLogFromStorage();
             loadParallelBetLogFromStorage();
             loadModelPredictionRecords();
+            updateModelPredictionCalibrationModeUI();
+            updateModelPredictionCalibrationStatus();
             populateLeagueDropdowns();
             populateBankrollDropdowns();
             updateTeamSelectors();
@@ -3520,6 +3530,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             updateTeamSelectors();
             calculateLeagueAverages();
             updatePoissonCalibrationLeagueStatus();
+            updateModelPredictionCalibrationStatus();
             calculatePoisson();
         }
 
@@ -6293,6 +6304,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         const poissonHistoricalCalibration = {
             ready: false, loading: false, markets: {}, selections: {}, totalCount: 0, trainedAt: null
         };
+        // Fuente independiente: memoria de TODOS los pronósticos liquidados,
+        // sin mezclar apuestas reales ni alterar los snapshots históricos.
+        const poissonModelPredictionCalibration = {
+            ready: false, selections: {}, totalCount: 0, trainedAt: null
+        };
+        let modelPredictionCalibrationEnabled = false;
 
         // Modo de calibración controlado por el usuario.
         // Por defecto permanece en Poisson normal hasta que el usuario lo active.
@@ -6308,7 +6325,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 label.innerText = 'AUTOCALIBRACIÓN ACTIVADA';
                 button.className = 'w-full text-[10px] font-black bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/50 text-emerald-300 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]';
                 button.innerHTML = '<i class="fa-solid fa-toggle-on text-sm"></i> <span id="poissonCalibrationModeLabel">AUTOCALIBRACIÓN ACTIVADA</span>';
-                if (detail) detail.innerText = 'Se aplicarán ajustes independientes por liga, mercado y selección. Solo se usa el historial de la liga activa.';
+                if (detail) detail.innerText = 'Se aplican ajustes por liga, mercado y selección exacta usando exclusivamente apuestas simples liquidadas en Supabase.';
             } else {
                 label.innerText = 'POISSON NORMAL';
                 button.className = 'w-full text-[10px] font-black bg-slate-700/40 hover:bg-slate-700/60 border border-slate-600 text-slate-200 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]';
@@ -6330,6 +6347,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 return;
             }
 
+            modelPredictionCalibrationEnabled = false;
+            updateModelPredictionCalibrationModeUI();
             poissonCalibrationEnabled = true;
             updatePoissonCalibrationModeUI();
             updatePoissonCalibrationStatus('Autocalibración activada. Consultando historial de Supabase…');
@@ -6501,6 +6520,106 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             updatePoissonCalibrationLeagueStatus();
             return poissonHistoricalCalibration.ready;
+        }
+
+        // Entrena exclusivamente con la memoria independiente de predicciones.
+        // Cada partido aporta una observación binaria por resultado/selección;
+        // siempre usa probabilities.original, nunca probabilidades ya calibradas.
+        function fitPoissonCalibrationFromModelPredictions() {
+            const groups = {};
+            const settled = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
+                .filter(r => r && r.status === 'SETTLED' &&
+                    Number.isInteger(Number(r.actualHomeGoals)) && Number.isInteger(Number(r.actualAwayGoals)));
+            const add = (league, market, selection, probability, won) => {
+                const p = Number(probability);
+                if (!String(league || '').trim() || !Number.isFinite(p) || p < 0 || p > 1) return;
+                const key = poissonSelectionModelKey(league, market, selection);
+                if (!key) return;
+                if (!groups[key]) groups[key] = { league: String(league).trim(), market, selection, rows: [] };
+                groups[key].rows.push({ prob: p * 100, status: won ? 'WON' : 'LOST' });
+            };
+            settled.forEach(r => {
+                const p = (r.probabilities && r.probabilities.original && typeof r.probabilities.original === 'object')
+                    ? r.probabilities.original : r.probabilities || {};
+                const hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals);
+                add(r.league, 'Resultado Final (1X2)', 'Local', p.homeWin, hg > ag);
+                add(r.league, 'Resultado Final (1X2)', 'Empate (X)', p.draw, hg === ag);
+                add(r.league, 'Resultado Final (1X2)', 'Visitante', p.awayWin, hg < ag);
+                add(r.league, 'Over / Under Goles', 'Over 2.5', p.over25, hg + ag >= 3);
+                add(r.league, 'Over / Under Goles', 'Under 2.5', p.under25, hg + ag < 3);
+                add(r.league, 'Ambos Anotan', 'Ambos Anotan Si', p.bttsYes, hg > 0 && ag > 0);
+                add(r.league, 'Ambos Anotan', 'Ambos Anotan No', p.bttsNo, !(hg > 0 && ag > 0));
+            });
+            const models = {};
+            Object.entries(groups).forEach(([key, group]) => {
+                models[key] = { ...fitPoissonMarketModel(group.rows), league: group.league,
+                    market: group.market, selection: group.selection, source: 'model_predictions' };
+            });
+            poissonModelPredictionCalibration.selections = models;
+            poissonModelPredictionCalibration.totalCount = settled.length;
+            poissonModelPredictionCalibration.ready = Object.values(models).some(m => m.ready);
+            poissonModelPredictionCalibration.trainedAt = new Date().toISOString();
+            updateModelPredictionCalibrationStatus();
+            return poissonModelPredictionCalibration.ready;
+        }
+
+        function updateModelPredictionCalibrationStatus() {
+            const el = document.getElementById('modelPredictionCalibrationStatus');
+            if (!el) return;
+            const league = getActivePoissonLeague();
+            const normalized = normalizePoissonLeague(league);
+            const models = Object.values(poissonModelPredictionCalibration.selections || {})
+                .filter(m => normalizePoissonLeague(m.league) === normalized);
+            const active = models.filter(m => m.ready);
+            const count = models.reduce((n, m) => n + (m.count || 0), 0);
+            el.textContent = league
+                ? `${league}: ${active.length} selecciones listas · ${count} observaciones de la liga · ${poissonModelPredictionCalibration.totalCount} partidos resueltos globales.`
+                : 'Selecciona una liga para consultar la calibración de pronósticos.';
+        }
+
+        function updateModelPredictionCalibrationModeUI() {
+            const button = document.getElementById('modelPredictionCalibrationButton');
+            const label = document.getElementById('modelPredictionCalibrationLabel');
+            const detail = document.getElementById('modelPredictionCalibrationDetail');
+            if (!button || !label) return;
+            label.textContent = modelPredictionCalibrationEnabled ? 'CALIBRACIÓN DE PRONÓSTICOS ACTIVA' : 'CALIBRAR CON PRONÓSTICOS';
+            button.className = modelPredictionCalibrationEnabled
+                ? 'w-full text-[10px] font-black bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/50 text-cyan-200 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]'
+                : 'w-full text-[10px] font-black bg-slate-700/40 hover:bg-slate-700/60 border border-slate-600 text-slate-200 px-3 py-2 rounded-lg flex items-center justify-center gap-2 transition-all active:scale-[0.98]';
+            button.innerHTML = `<i class="fa-solid ${modelPredictionCalibrationEnabled ? 'fa-toggle-on' : 'fa-toggle-off'} text-sm"></i> <span id="modelPredictionCalibrationLabel">${modelPredictionCalibrationEnabled ? 'CALIBRACIÓN DE PRONÓSTICOS ACTIVA' : 'CALIBRAR CON PRONÓSTICOS'}</span>`;
+            if (detail) detail.textContent = modelPredictionCalibrationEnabled
+                ? 'Usa solo pronósticos liquidados de la memoria independiente y sus probabilidades originales. No mezcla apuestas reales.'
+                : 'Fuente independiente: todos los pronósticos guardados y liquidados. Requiere 15 observaciones por selección, con al menos 5 aciertos y 5 fallos.';
+        }
+
+        function toggleModelPredictionCalibration() {
+            if (modelPredictionCalibrationEnabled) {
+                modelPredictionCalibrationEnabled = false;
+                updateModelPredictionCalibrationModeUI();
+                if (Number(document.getElementById('homeGf')?.value || 0) + Number(document.getElementById('awayGf')?.value || 0) > 0) calculatePoisson();
+                showToast('Calibración de pronósticos desactivada.');
+                return;
+            }
+            poissonCalibrationEnabled = false;
+            updatePoissonCalibrationModeUI();
+            fitPoissonCalibrationFromModelPredictions();
+            modelPredictionCalibrationEnabled = true;
+            updateModelPredictionCalibrationModeUI();
+            if (Number(document.getElementById('homeGf')?.value || 0) + Number(document.getElementById('awayGf')?.value || 0) > 0) calculatePoisson();
+            const league = getActivePoissonLeague();
+            const ready = Object.values(poissonModelPredictionCalibration.selections || {}).some(m => m.ready && normalizePoissonLeague(m.league) === normalizePoissonLeague(league));
+            showToast(ready ? `Calibración activada con pronósticos históricos de ${league}.` : 'Modo activado; la liga aún no alcanza la muestra mínima. Poisson permanece sin ajuste en esas selecciones.');
+        }
+
+        // Aplica el calibrador independiente usando categorías estables (Local/Empate/Visitante),
+        // no nombres de equipos que cambian de un partido a otro.
+        function applyModelPredictionHistoricalCalibration(probability, league, market, selection) {
+            const p = Math.max(0.000001, Math.min(0.999999, Number(probability) || 0));
+            const model = poissonModelPredictionCalibration.selections?.[poissonSelectionModelKey(league, market, selection)];
+            if (!model || !model.ready) return p;
+            return Math.max(0.000001, Math.min(0.999999,
+                poissonCalibrationSigmoid(model.a + model.b * poissonCalibrationLogit(p))
+            ));
         }
 
         // Indicador visual: compara Poisson original contra el resultado calibrado.
@@ -6741,7 +6860,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
         // ============================================================
         // MEMORIA DE PREDICCIONES: pronósticos del modelo, separados de apuestas.
-        // Conserva snapshots; no modifica calculatePoisson(), lambdas ni bankroll.
+        // Conserva snapshots originales; sus resultados alimentan solo el calibrador independiente
+        // de pronósticos cuando el usuario lo activa. No modifica lambdas ni bankroll.
         // ============================================================
         const MODEL_PREDICTIONS_STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
         let modelPredictionRecords = [];
@@ -6754,11 +6874,13 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (!Array.isArray(modelPredictionRecords)) modelPredictionRecords = [];
             } catch (e) { console.warn('[ModelPredictions] No se pudo leer memoria local:', e); modelPredictionRecords = []; }
             renderModelPredictionLog();
+            fitPoissonCalibrationFromModelPredictions();
         }
 
         function persistModelPredictionRecords() {
             localStorage.setItem(MODEL_PREDICTIONS_STORAGE_KEY, JSON.stringify(modelPredictionRecords));
             renderModelPredictionLog();
+            fitPoissonCalibrationFromModelPredictions();
         }
 
         // Elimina únicamente el pronóstico seleccionado de la memoria del modelo.
@@ -6909,11 +7031,15 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             if(sum>0){h/=sum;d/=sum;a/=sum;o/=sum;u/=sum;by/=sum;bn/=sum;}
             const league = row.league;
-            const apply = (p, market, selection) => applyPoissonHistoricalCalibration(p, league, market, selection);
-            const c1=[apply(h,'Resultado Final (1X2)',`Gana ${row.home}`),apply(d,'Resultado Final (1X2)','Empate (X)'),apply(a,'Resultado Final (1X2)',`Gana ${row.away}`)];
+            const apply = (p, market, betSelection, predictionSelection) => {
+                if (modelPredictionCalibrationEnabled) return applyModelPredictionHistoricalCalibration(p, league, market, predictionSelection);
+                if (poissonCalibrationEnabled) return applyPoissonHistoricalCalibration(p, league, market, betSelection);
+                return p;
+            };
+            const c1=[apply(h,'Resultado Final (1X2)',`Gana ${row.home}`,'Local'),apply(d,'Resultado Final (1X2)','Empate (X)','Empate (X)'),apply(a,'Resultado Final (1X2)',`Gana ${row.away}`,'Visitante')];
             const c1s=c1.reduce((x,y)=>x+y,0)||1;
-            const c2=[apply(o,'Over / Under Goles','Over 2.5'),apply(u,'Over / Under Goles','Under 2.5')]; const c2s=c2[0]+c2[1]||1;
-            const c3=[apply(by,'Ambos Anotan','Ambos Anotan Si'),apply(bn,'Ambos Anotan','Ambos Anotan No')]; const c3s=c3[0]+c3[1]||1;
+            const c2=[apply(o,'Over / Under Goles','Over 2.5','Over 2.5'),apply(u,'Over / Under Goles','Under 2.5','Under 2.5')]; const c2s=c2[0]+c2[1]||1;
+            const c3=[apply(by,'Ambos Anotan','Ambos Anotan Si','Ambos Anotan Si'),apply(bn,'Ambos Anotan','Ambos Anotan No','Ambos Anotan No')]; const c3s=c3[0]+c3[1]||1;
             return { homeWin:c1[0]/c1s, draw:c1[1]/c1s, awayWin:c1[2]/c1s, over25:c2[0]/c2s, under25:c2[1]/c2s, bttsYes:c3[0]/c3s, bttsNo:c3[1]/c3s,
                 original:{homeWin:h,draw:d,awayWin:a,over25:o,under25:u,bttsYes:by,bttsNo:bn}, rho,
                 calibrationActive:{oneXTwo:c1.some((v,i)=>Math.abs(v-[h,d,a][i])>1e-10),overUnder:Math.abs(c2[0]-o)>1e-10,btts:Math.abs(c3[0]-by)>1e-10} };
@@ -7005,7 +7131,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     }
                 });
                 modelPredictionRecords=Array.from(map.values()).sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
-                persistModelPredictionRecords(); showToast('Memoria de predicciones sincronizada.');
+                persistModelPredictionRecords();
+                fitPoissonCalibrationFromModelPredictions();
+                if (modelPredictionCalibrationEnabled && Number(document.getElementById('homeGf')?.value || 0) + Number(document.getElementById('awayGf')?.value || 0) > 0) calculatePoisson();
+                showToast('Memoria de predicciones sincronizada y calibración histórica actualizada.');
             } catch(e) { console.error('[ModelPredictions] Cloud read failed:',e); showToast('No se pudo sincronizar. Comprueba la migración SQL de match_predictions.'); }
         }
 
@@ -7102,7 +7231,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const note=document.getElementById('modelPredictionStatsNote');
             if(note){
                 if(!settled.length)note.textContent='Aún no hay pronósticos resueltos en esta selección. Guarda pronósticos y registra sus marcadores finales para comenzar a medir el comportamiento de Poisson.';
-                else note.textContent=`Muestra: ${settled.length} partidos resueltos${selected==='ALL'?' en todas las competiciones':` de ${selected}`}. Los indicadores usan primero el bloque original sin calibrar (si existe); son descriptivos: no ajustan lambdas, no modifican probabilidades y no alimentan la autocalibración de apuestas reales.`;
+                else note.textContent=`Muestra: ${settled.length} partidos resueltos${selected==='ALL'?' en todas las competiciones':` de ${selected}`}. Las métricas se calculan con probabilidades originales congeladas. Estos resultados alimentan exclusivamente la calibración independiente de pronósticos cuando se activa; nunca se mezclan con la calibración de apuestas reales ni modifican los registros históricos.`;
             }
             const pendingHint=document.getElementById('modelStatsPendingHint');if(pendingHint)pendingHint.textContent=`${pending} pendientes excluidos`;
         }
@@ -7224,22 +7353,34 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const bttsNoSelection = 'Ambos Anotan No';
             const activeCalibrationLeague = getActivePoissonLeague();
             const selectionModels = poissonHistoricalCalibration.selections || {};
+            const predictionSelectionModels = poissonModelPredictionCalibration.selections || {};
+            const activeCalibrationEnabled = poissonCalibrationEnabled || modelPredictionCalibrationEnabled;
+            const applyActiveCalibration = (probability, market, betSelection, predictionSelection) => {
+                if (modelPredictionCalibrationEnabled) return applyModelPredictionHistoricalCalibration(probability, activeCalibrationLeague, market, predictionSelection);
+                return applyPoissonHistoricalCalibration(probability, activeCalibrationLeague, market, betSelection);
+            };
 
-            const has1x2Calibration = poissonCalibrationEnabled && [
+            const has1x2Calibration = activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? [
+                'Local', 'Empate (X)', 'Visitante'
+            ].some(selection => !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', selection)]?.ready) : [
                 homeSelection, drawSelection, awaySelection
-            ].some(selection => !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', selection)]?.ready);
-            const hasOuCalibration = poissonCalibrationEnabled && [
+            ].some(selection => !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', selection)]?.ready));
+            const hasOuCalibration = activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? [
+                'Over 2.5', 'Under 2.5'
+            ].some(selection => !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', selection)]?.ready) : [
                 overSelection, underSelection
-            ].some(selection => !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', selection)]?.ready);
-            const hasBttsCalibration = poissonCalibrationEnabled && [
+            ].some(selection => !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', selection)]?.ready));
+            const hasBttsCalibration = activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? [
+                'Ambos Anotan Si', 'Ambos Anotan No'
+            ].some(selection => !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', selection)]?.ready) : [
                 bttsYesSelection, bttsNoSelection
-            ].some(selection => !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', selection)]?.ready);
+            ].some(selection => !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', selection)]?.ready));
 
             if (has1x2Calibration) {
                 const c1x2 = [
-                    applyPoissonHistoricalCalibration(probHomeWin, activeCalibrationLeague, 'Resultado Final (1X2)', homeSelection),
-                    applyPoissonHistoricalCalibration(probDraw, activeCalibrationLeague, 'Resultado Final (1X2)', drawSelection),
-                    applyPoissonHistoricalCalibration(probAwayWin, activeCalibrationLeague, 'Resultado Final (1X2)', awaySelection)
+                    applyActiveCalibration(probHomeWin, 'Resultado Final (1X2)', homeSelection, 'Local'),
+                    applyActiveCalibration(probDraw, 'Resultado Final (1X2)', drawSelection, 'Empate (X)'),
+                    applyActiveCalibration(probAwayWin, 'Resultado Final (1X2)', awaySelection, 'Visitante')
                 ];
                 const sum1x2 = c1x2.reduce((sum, value) => sum + value, 0) || 1;
                 probHomeWin = c1x2[0] / sum1x2;
@@ -7248,8 +7389,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             if (hasOuCalibration) {
                 const calibratedOu = [
-                    applyPoissonHistoricalCalibration(probOver25, activeCalibrationLeague, 'Over / Under Goles', overSelection),
-                    applyPoissonHistoricalCalibration(probUnder25, activeCalibrationLeague, 'Over / Under Goles', underSelection)
+                    applyActiveCalibration(probOver25, 'Over / Under Goles', overSelection, 'Over 2.5'),
+                    applyActiveCalibration(probUnder25, 'Over / Under Goles', underSelection, 'Under 2.5')
                 ];
                 const sumOu = calibratedOu[0] + calibratedOu[1] || 1;
                 probOver25 = calibratedOu[0] / sumOu;
@@ -7257,8 +7398,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             if (hasBttsCalibration) {
                 const calibratedBtts = [
-                    applyPoissonHistoricalCalibration(probBttsYes, activeCalibrationLeague, 'Ambos Anotan', bttsYesSelection),
-                    applyPoissonHistoricalCalibration(probBttsNo, activeCalibrationLeague, 'Ambos Anotan', bttsNoSelection)
+                    applyActiveCalibration(probBttsYes, 'Ambos Anotan', bttsYesSelection, 'Ambos Anotan Si'),
+                    applyActiveCalibration(probBttsNo, 'Ambos Anotan', bttsNoSelection, 'Ambos Anotan No')
                 ];
                 const sumBtts = calibratedBtts[0] + calibratedBtts[1] || 1;
                 probBttsYes = calibratedBtts[0] / sumBtts;
@@ -7282,23 +7423,23 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
 
             document.getElementById('pctOver25').innerText = (probOver25 * 100).toFixed(1) + '%';
-            updatePoissonCalibrationDelta('calDeltaOver25', originalProbabilities.probOver25, probOver25, poissonCalibrationEnabled && !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', overSelection)]?.ready);
+            updatePoissonCalibrationDelta('calDeltaOver25', originalProbabilities.probOver25, probOver25, activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', 'Over 2.5')]?.ready : !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', overSelection)]?.ready));
             document.getElementById('oddsOver25').innerText = '@' + (1 / Math.max(0.001, probOver25)).toFixed(2);
             document.getElementById('barOver25').style.width = (probOver25 * 100).toFixed(1) + '%';
             document.getElementById('ciOver25').innerText = formatCI(ciData ? ciData.over25 : null, noMatchData);
             document.getElementById('pctUnder25').innerText = (probUnder25 * 100).toFixed(1) + '%';
-            updatePoissonCalibrationDelta('calDeltaUnder25', originalProbabilities.probUnder25, probUnder25, poissonCalibrationEnabled && !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', underSelection)]?.ready);
+            updatePoissonCalibrationDelta('calDeltaUnder25', originalProbabilities.probUnder25, probUnder25, activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', 'Under 2.5')]?.ready : !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Over / Under Goles', underSelection)]?.ready));
             document.getElementById('oddsUnder25').innerText = '@' + (1 / Math.max(0.001, probUnder25)).toFixed(2);
             document.getElementById('barUnder25').style.width = (probUnder25 * 100).toFixed(1) + '%';
             document.getElementById('ciUnder25').innerText = formatCI(ciData ? ciData.under25 : null, noMatchData);
             renderDynamicOverUnder(matrix);
             document.getElementById('pctBttsYes').innerText = (probBttsYes * 100).toFixed(1) + '%';
-            updatePoissonCalibrationDelta('calDeltaBttsYes', originalProbabilities.probBttsYes, probBttsYes, poissonCalibrationEnabled && !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', bttsYesSelection)]?.ready);
+            updatePoissonCalibrationDelta('calDeltaBttsYes', originalProbabilities.probBttsYes, probBttsYes, activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', 'Ambos Anotan Si')]?.ready : !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', bttsYesSelection)]?.ready));
             document.getElementById('oddsBttsYes').innerText = '@' + (1 / Math.max(0.001, probBttsYes)).toFixed(2);
             document.getElementById('barBttsYes').style.width = (probBttsYes * 100).toFixed(1) + '%';
             document.getElementById('ciBttsYes').innerText = formatCI(ciData ? ciData.bttsYes : null, noMatchData);
             document.getElementById('pctBttsNo').innerText = (probBttsNo * 100).toFixed(1) + '%';
-            updatePoissonCalibrationDelta('calDeltaBttsNo', originalProbabilities.probBttsNo, probBttsNo, poissonCalibrationEnabled && !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', bttsNoSelection)]?.ready);
+            updatePoissonCalibrationDelta('calDeltaBttsNo', originalProbabilities.probBttsNo, probBttsNo, activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', 'Ambos Anotan No')]?.ready : !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Ambos Anotan', bttsNoSelection)]?.ready));
             document.getElementById('oddsBttsNo').innerText = '@' + (1 / Math.max(0.001, probBttsNo)).toFixed(2);
             document.getElementById('barBttsNo').style.width = (probBttsNo * 100).toFixed(1) + '%';
             document.getElementById('ciBttsNo').innerText = formatCI(ciData ? ciData.bttsNo : null, noMatchData);
@@ -7308,15 +7449,15 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             document.getElementById('name1x2Home').innerText = homeName;
             document.getElementById('name1x2Away').innerText = awayName;
             document.getElementById('pct1x2Home').innerText = (probHomeWin * 100).toFixed(1) + '%';
-            updatePoissonCalibrationDelta('calDelta1x2Home', originalProbabilities.probHomeWin, probHomeWin, poissonCalibrationEnabled && !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', homeSelection)]?.ready);
+            updatePoissonCalibrationDelta('calDelta1x2Home', originalProbabilities.probHomeWin, probHomeWin, activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', 'Local')]?.ready : !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', homeSelection)]?.ready));
             document.getElementById('odds1x2Home').innerText = '@' + (1 / Math.max(0.001, probHomeWin)).toFixed(2);
             document.getElementById('ciHomeWin').innerText = formatCI(ciData ? ciData.homeWin : null, noMatchData);
             document.getElementById('pct1x2Draw').innerText = (probDraw * 100).toFixed(1) + '%';
-            updatePoissonCalibrationDelta('calDelta1x2Draw', originalProbabilities.probDraw, probDraw, poissonCalibrationEnabled && !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', drawSelection)]?.ready);
+            updatePoissonCalibrationDelta('calDelta1x2Draw', originalProbabilities.probDraw, probDraw, activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', 'Empate (X)')]?.ready : !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', drawSelection)]?.ready));
             document.getElementById('odds1x2Draw').innerText = '@' + (1 / Math.max(0.001, probDraw)).toFixed(2);
             document.getElementById('ciDraw').innerText = formatCI(ciData ? ciData.draw : null, noMatchData);
             document.getElementById('pct1x2Away').innerText = (probAwayWin * 100).toFixed(1) + '%';
-            updatePoissonCalibrationDelta('calDelta1x2Away', originalProbabilities.probAwayWin, probAwayWin, poissonCalibrationEnabled && !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', awaySelection)]?.ready);
+            updatePoissonCalibrationDelta('calDelta1x2Away', originalProbabilities.probAwayWin, probAwayWin, activeCalibrationEnabled && (modelPredictionCalibrationEnabled ? !!predictionSelectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', 'Visitante')]?.ready : !!selectionModels[poissonSelectionModelKey(activeCalibrationLeague, 'Resultado Final (1X2)', awaySelection)]?.ready));
             document.getElementById('odds1x2Away').innerText = '@' + (1 / Math.max(0.001, probAwayWin)).toFixed(2);
             document.getElementById('ciAwayWin').innerText = formatCI(ciData ? ciData.awayWin : null, noMatchData);
 
