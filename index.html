@@ -194,6 +194,9 @@
                 <button onclick="toggleTrackerModal(true)" class="bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 text-gold-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-receipt"></i> Bitácora
                 </button>
+                <button type="button" onclick="openModelTrackingWindow()" class="bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95" aria-controls="modelTrackingModal" aria-haspopup="dialog">
+                    <i class="fa-solid fa-brain"></i> Poisson
+                </button>
                 <button onclick="toggleParallelTrackerModal(true)" class="bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 text-teal-400 text-xs px-2 py-1.5 rounded-xl font-bold flex items-center gap-1 transition-all active:scale-95">
                     <i class="fa-solid fa-book-bookmark"></i> Bitácora Paralela
                 </button>
@@ -212,10 +215,10 @@
                 <button onclick="scrollToSection('sec-setup')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">1</span> Setup
                 </button>
-                <button onclick="scrollToSection('sec-prediction-memory')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-indigo-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="openModelTrackingWindow('sec-prediction-memory')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-indigo-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">3</span> Pronósticos
                 </button>
-                <button onclick="scrollToSection('modelPredictionStatsPanel')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-cyan-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-chart-line"></i> Rendimiento Poisson</button>
+                <button onclick="openModelTrackingWindow('modelPredictionStatsPanel')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-cyan-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-chart-line"></i> Rendimiento Poisson</button>
                 <button onclick="scrollToSection('sec-match')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-400 text-[9px] font-black flex items-center justify-center">2</span> Partido
                 </button>
@@ -234,61 +237,6 @@
                 <span id="navLambdaBadge" class="font-mono text-emerald-400 font-black">-</span>
             </div>
         </nav>
-
-        <section id="sec-prediction-memory" class="space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
-            <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 px-3 py-2 flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i><div><div class="text-[10px] font-black text-indigo-200 uppercase tracking-wider">Área 1 · Seguimiento independiente de Poisson</div><div class="text-[9px] text-slate-400">Pronósticos sin apuesta, métricas históricas y bitácora propia. No modifica el bankroll ni la calibración de apuestas.</div></div></div>
-            <div class="flex items-center gap-2 px-1">
-                <span class="text-[9px] font-black bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">3 · Memoria de predicciones</span>
-                <div class="flex-1 h-px bg-gradient-to-r from-indigo-500/30 to-transparent"></div>
-            </div>
-            <div class="glass-card rounded-2xl p-3.5 space-y-3 border border-indigo-500/35">
-                <div class="flex items-start justify-between gap-2">
-                    <div><h2 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i> Seguimiento automático del modelo</h2>
-                    <p class="text-[10px] text-slate-400 mt-1">Pega la tabla tabulada con Competition, estadísticas Home/Away, equipos y hora. Se guarda una fotografía inmutable de cada pronóstico; no crea apuestas ni mueve el bankroll.</p></div>
-                    <span id="modelPredictionCount" class="shrink-0 text-[9px] font-black bg-indigo-500/15 text-indigo-200 border border-indigo-500/30 px-2 py-1 rounded-lg">0 registros</span>
-                </div>
-                <textarea id="modelPredictionPaste" rows="6" spellcheck="false" placeholder="Pega aquí la tabla completa, incluidos los encabezados..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-[10px] leading-relaxed text-slate-200 font-mono focus:outline-none focus:border-indigo-400"></textarea>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="previewModelPredictionBatch()" class="py-2.5 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-200 font-black text-[11px]"><i class="fa-solid fa-magnifying-glass mr-1"></i> Revisar tabla</button>
-                    <button onclick="saveModelPredictionBatch()" id="saveModelPredictionBatchBtn" disabled class="py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 font-black text-[11px] disabled:opacity-40"><i class="fa-solid fa-floppy-disk mr-1"></i> Guardar pronósticos</button>
-                </div>
-                <div id="modelPredictionParseStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">La revisión previa detecta filas incompletas y duplicados antes de guardar.</div>
-                <div id="modelPredictionPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
-            </div>
-            <div id="modelPredictionStatsPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-cyan-500/30">
-                <div class="flex items-start justify-between gap-2">
-                    <div><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-cyan-300"></i> Rendimiento histórico de Poisson</h3>
-                    <p class="text-[9px] text-slate-400 mt-1">Evalúa las probabilidades Poisson originales (sin el ajuste histórico de apuestas reales) en pronósticos del seguimiento automático ya resueltos. No mezcla apuestas reales ni modifica la autocalibración.</p></div>
-                    <span id="modelStatsSampleBadge" class="shrink-0 text-[9px] font-black rounded-lg px-2 py-1 bg-cyan-500/10 text-cyan-200 border border-cyan-500/25">0 evaluados</span>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <label for="modelStatsLeagueFilter" class="text-[9px] text-slate-400 font-bold">Competición</label>
-                    <select id="modelStatsLeagueFilter" onchange="renderModelPredictionStats()" class="max-w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[9px] text-slate-200"><option value="ALL">Todas las competiciones</option></select>
-                    <span id="modelStatsPendingHint" class="text-[9px] text-slate-500 ml-auto">Los pendientes no entran en las métricas.</span>
-                </div>
-                <div id="modelPredictionStatsSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
-                <div class="rounded-xl border border-slate-800 overflow-hidden">
-                    <div class="px-2.5 py-2 bg-slate-900/80 text-[9px] font-black text-slate-200">CALIDAD DE PROBABILIDADES POR MERCADO</div>
-                    <div class="overflow-x-auto"><table class="w-full text-[9px] text-left"><thead class="bg-slate-950 text-slate-500"><tr><th class="p-2">Mercado</th><th class="p-2">Muestra</th><th class="p-2">Acierto</th><th class="p-2">Brier ↓</th><th class="p-2">Log Loss ↓</th></tr></thead><tbody id="modelPredictionStatsMarkets" class="divide-y divide-slate-800"></tbody></table></div>
-                </div>
-                <div class="rounded-xl border border-slate-800 p-2.5 space-y-2">
-                    <div class="flex items-center justify-between gap-2"><span class="text-[9px] font-black text-slate-200">CALIBRACIÓN 1X2 · CONFIANZA VS FRECUENCIA REAL</span><span class="text-[8px] text-slate-500">Por probabilidad máxima</span></div>
-                    <div id="modelPredictionReliability" class="space-y-1.5"></div>
-                    <p class="text-[8px] text-slate-500">Cada tramo compara la confianza media del resultado 1X2 más probable con la frecuencia con que ese resultado ocurrió. Brier y Log Loss: cuanto más bajos, mejor.</p>
-                </div>
-                <div id="modelPredictionStatsNote" class="text-[9px] text-slate-500 bg-slate-950/60 rounded-lg p-2">Aún no hay suficientes pronósticos resueltos para calcular métricas.</div>
-            </div>
-            <details id="modelPredictionLogDetails" class="glass-card rounded-2xl border border-slate-700/80 group">
-                <summary class="list-none cursor-pointer select-none p-3.5 flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
-                    <span class="text-xs font-black text-white"><i class="fa-solid fa-list-check text-emerald-400 mr-1"></i> Bitácora de predicciones del modelo <span class="ml-1 text-[9px] font-normal text-slate-500">(abrir para consultar)</span></span>
-                    <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] transition-transform group-open:rotate-180"></i>
-                </summary>
-                <div class="px-3.5 pb-3.5 pt-0 space-y-2.5">
-                    <div class="flex items-center justify-end gap-1"><select id="modelPredictionFilter" onchange="renderModelPredictionLog()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[9px] text-slate-200"><option value="ALL">Todas</option><option value="PENDING">Pendientes</option><option value="SETTLED">Resueltas</option></select><button onclick="syncModelPredictionsFromCloud()" class="text-[9px] bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-300"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Sincronizar</button></div>
-                    <div id="modelPredictionLog" class="space-y-2"><p class="text-center text-[10px] text-slate-500 py-4">Todavía no hay predicciones guardadas.</p></div>
-                </div>
-            </details>
-        </section>
 
         <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-3 py-2 flex items-center gap-2" style="grid-column:1 / -1;"><i class="fa-solid fa-bullseye text-emerald-300"></i><div><div class="text-[10px] font-black text-emerald-200 uppercase tracking-wider">Área 2 · Análisis para apuestas reales</div><div class="text-[9px] text-slate-400">Configuración, partido, mercados y herramientas de selección. La autocalibración usa exclusivamente apuestas reales liquidadas.</div></div></div>
         <section id="sec-setup" class="space-y-3.5 scroll-mt-28">
@@ -8285,6 +8233,42 @@ function shareDailyBetSummary() {
         if(typeof showToast==='function')showToast('Resumen diario descargado. Adjunta el PNG en WhatsApp o Telegram.');
     },'image/png');
 }
+
+
+// Ventana independiente para seguimiento estadístico de Poisson.
+// Conserva los mismos nodos/IDs para que las funciones existentes de guardado,
+// sincronización, filtros y liquidación sigan operando sin cambios.
+function openModelTrackingWindow(targetId) {
+    const modal = document.getElementById('modelTrackingModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.dataset.modelTrackingPreviousOverflow = document.body.style.overflow || '';
+    document.body.style.overflow = 'hidden';
+    if (targetId) {
+        requestAnimationFrame(() => {
+            const target = document.getElementById(targetId);
+            const scroller = document.getElementById('modelTrackingModalContent');
+            if (target && scroller) {
+                const top = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 8;
+                scroller.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+            }
+        });
+    } else {
+        const scroller = document.getElementById('modelTrackingModalContent');
+        if (scroller) scroller.scrollTop = 0;
+    }
+}
+function closeModelTrackingWindow() {
+    const modal = document.getElementById('modelTrackingModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = document.body.dataset.modelTrackingPreviousOverflow || '';
+}
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') closeModelTrackingWindow();
+});
 </script>
 
     <!-- AYUDA VISUAL DE LIQUIDACIÓN ASIÁTICA: módulo independiente, no modifica el motor de probabilidades -->
@@ -8317,5 +8301,74 @@ function shareDailyBetSummary() {
         </div>
     </div>
 
+
+    <!-- VENTANA INDEPENDIENTE: SEGUIMIENTO Y EVALUACIÓN DEL MODELO POISSON -->
+    <div id="modelTrackingModal" class="fixed inset-0 z-[95] hidden items-center justify-center bg-slate-950/95 backdrop-blur-md p-2 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="modelTrackingWindowTitle" onclick="if(event.target===this)closeModelTrackingWindow()">
+        <div class="glass-card w-full max-w-5xl max-h-[96vh] rounded-2xl border border-indigo-500/40 shadow-2xl overflow-hidden flex flex-col">
+            <div class="shrink-0 p-3 sm:p-4 bg-slate-900/95 border-b border-indigo-500/30 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <h2 id="modelTrackingWindowTitle" class="text-sm sm:text-base font-black text-white flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i> Seguimiento independiente de Poisson</h2>
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 mt-1">Pronósticos, rendimiento histórico y bitácora del modelo. Separado de las apuestas reales.</p>
+                </div>
+                <button type="button" onclick="closeModelTrackingWindow()" class="shrink-0 w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300" aria-label="Cerrar ventana de seguimiento Poisson"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="modelTrackingModalContent" class="overflow-y-auto overscroll-contain p-2 sm:p-4">
+        <section id="sec-prediction-memory" class="space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
+            <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 px-3 py-2 flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i><div><div class="text-[10px] font-black text-indigo-200 uppercase tracking-wider">Área 1 · Seguimiento independiente de Poisson</div><div class="text-[9px] text-slate-400">Pronósticos sin apuesta, métricas históricas y bitácora propia. No modifica el bankroll ni la calibración de apuestas.</div></div></div>
+            <div class="flex items-center gap-2 px-1">
+                <span class="text-[9px] font-black bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">3 · Memoria de predicciones</span>
+                <div class="flex-1 h-px bg-gradient-to-r from-indigo-500/30 to-transparent"></div>
+            </div>
+            <div class="glass-card rounded-2xl p-3.5 space-y-3 border border-indigo-500/35">
+                <div class="flex items-start justify-between gap-2">
+                    <div><h2 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i> Seguimiento automático del modelo</h2>
+                    <p class="text-[10px] text-slate-400 mt-1">Pega la tabla tabulada con Competition, estadísticas Home/Away, equipos y hora. Se guarda una fotografía inmutable de cada pronóstico; no crea apuestas ni mueve el bankroll.</p></div>
+                    <span id="modelPredictionCount" class="shrink-0 text-[9px] font-black bg-indigo-500/15 text-indigo-200 border border-indigo-500/30 px-2 py-1 rounded-lg">0 registros</span>
+                </div>
+                <textarea id="modelPredictionPaste" rows="6" spellcheck="false" placeholder="Pega aquí la tabla completa, incluidos los encabezados..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-[10px] leading-relaxed text-slate-200 font-mono focus:outline-none focus:border-indigo-400"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="previewModelPredictionBatch()" class="py-2.5 rounded-xl bg-indigo-500/20 border border-indigo-400/40 text-indigo-200 font-black text-[11px]"><i class="fa-solid fa-magnifying-glass mr-1"></i> Revisar tabla</button>
+                    <button onclick="saveModelPredictionBatch()" id="saveModelPredictionBatchBtn" disabled class="py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 font-black text-[11px] disabled:opacity-40"><i class="fa-solid fa-floppy-disk mr-1"></i> Guardar pronósticos</button>
+                </div>
+                <div id="modelPredictionParseStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">La revisión previa detecta filas incompletas y duplicados antes de guardar.</div>
+                <div id="modelPredictionPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
+            </div>
+            <div id="modelPredictionStatsPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-cyan-500/30">
+                <div class="flex items-start justify-between gap-2">
+                    <div><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-cyan-300"></i> Rendimiento histórico de Poisson</h3>
+                    <p class="text-[9px] text-slate-400 mt-1">Evalúa las probabilidades Poisson originales (sin el ajuste histórico de apuestas reales) en pronósticos del seguimiento automático ya resueltos. No mezcla apuestas reales ni modifica la autocalibración.</p></div>
+                    <span id="modelStatsSampleBadge" class="shrink-0 text-[9px] font-black rounded-lg px-2 py-1 bg-cyan-500/10 text-cyan-200 border border-cyan-500/25">0 evaluados</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <label for="modelStatsLeagueFilter" class="text-[9px] text-slate-400 font-bold">Competición</label>
+                    <select id="modelStatsLeagueFilter" onchange="renderModelPredictionStats()" class="max-w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[9px] text-slate-200"><option value="ALL">Todas las competiciones</option></select>
+                    <span id="modelStatsPendingHint" class="text-[9px] text-slate-500 ml-auto">Los pendientes no entran en las métricas.</span>
+                </div>
+                <div id="modelPredictionStatsSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+                <div class="rounded-xl border border-slate-800 overflow-hidden">
+                    <div class="px-2.5 py-2 bg-slate-900/80 text-[9px] font-black text-slate-200">CALIDAD DE PROBABILIDADES POR MERCADO</div>
+                    <div class="overflow-x-auto"><table class="w-full text-[9px] text-left"><thead class="bg-slate-950 text-slate-500"><tr><th class="p-2">Mercado</th><th class="p-2">Muestra</th><th class="p-2">Acierto</th><th class="p-2">Brier ↓</th><th class="p-2">Log Loss ↓</th></tr></thead><tbody id="modelPredictionStatsMarkets" class="divide-y divide-slate-800"></tbody></table></div>
+                </div>
+                <div class="rounded-xl border border-slate-800 p-2.5 space-y-2">
+                    <div class="flex items-center justify-between gap-2"><span class="text-[9px] font-black text-slate-200">CALIBRACIÓN 1X2 · CONFIANZA VS FRECUENCIA REAL</span><span class="text-[8px] text-slate-500">Por probabilidad máxima</span></div>
+                    <div id="modelPredictionReliability" class="space-y-1.5"></div>
+                    <p class="text-[8px] text-slate-500">Cada tramo compara la confianza media del resultado 1X2 más probable con la frecuencia con que ese resultado ocurrió. Brier y Log Loss: cuanto más bajos, mejor.</p>
+                </div>
+                <div id="modelPredictionStatsNote" class="text-[9px] text-slate-500 bg-slate-950/60 rounded-lg p-2">Aún no hay suficientes pronósticos resueltos para calcular métricas.</div>
+            </div>
+            <details id="modelPredictionLogDetails" class="glass-card rounded-2xl border border-slate-700/80 group">
+                <summary class="list-none cursor-pointer select-none p-3.5 flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
+                    <span class="text-xs font-black text-white"><i class="fa-solid fa-list-check text-emerald-400 mr-1"></i> Bitácora de predicciones del modelo <span class="ml-1 text-[9px] font-normal text-slate-500">(abrir para consultar)</span></span>
+                    <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] transition-transform group-open:rotate-180"></i>
+                </summary>
+                <div class="px-3.5 pb-3.5 pt-0 space-y-2.5">
+                    <div class="flex items-center justify-end gap-1"><select id="modelPredictionFilter" onchange="renderModelPredictionLog()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-[9px] text-slate-200"><option value="ALL">Todas</option><option value="PENDING">Pendientes</option><option value="SETTLED">Resueltas</option></select><button onclick="syncModelPredictionsFromCloud()" class="text-[9px] bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-300"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Sincronizar</button></div>
+                    <div id="modelPredictionLog" class="space-y-2"><p class="text-center text-[10px] text-slate-500 py-4">Todavía no hay predicciones guardadas.</p></div>
+                </div>
+            </details>
+        </section>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
