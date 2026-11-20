@@ -6822,9 +6822,43 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const aGaIdx = modelPredictionHeaderIndex(headers, ['GA','Goals Against'], awayIdx + 1);
             if ([hGfIdx,hGaIdx,aGfIdx,aGaIdx].some(i => i < 0)) throw new Error('Faltan columnas GF/GA a ambos lados de los equipos. No se calculará con estadísticas adivinadas.');
             const rows = [], errors = [];
-            for (let lineNo = 1; lineNo < lines.length; lineNo++) {
-                const cells = lines[lineNo].split('\t');
-                if (cells.length < headers.length) { errors.push(`Fila ${lineNo+1}: tiene ${cells.length} columnas; se esperaban ${headers.length}.`); continue; }
+
+            // Algunas páginas copian cada partido en cinco líneas físicas:
+            // Competition/columna vacía, PPG local, bloque de estadísticas,
+            // PPG visitante y etiqueta Match (por ejemplo, "stats").
+            // Reconstruimos esos bloques sin alterar el orden ni inventar valores.
+            const physicalRows = lines.slice(1).map((line, index) => ({
+                lineNo: index + 2,
+                cells: line.split('\t').map(value => String(value == null ? '' : value).trim())
+            }));
+            let logicalRows = [];
+            const standardRows = physicalRows.every(item => item.cells.length >= headers.length);
+            if (standardRows) {
+                logicalRows = physicalRows.map(item => ({ lineNo: item.lineNo, cells: item.cells }));
+            } else {
+                if (physicalRows.length % 5 !== 0) {
+                    throw new Error('La tabla llegó dividida en varias líneas por partido y no conserva el bloque completo. Copia nuevamente desde la fila de encabezados hasta el último partido.');
+                }
+                for (let offset = 0; offset < physicalRows.length; offset += 5) {
+                    const group = physicalRows.slice(offset, offset + 5);
+                    const parts = group.map(item => item.cells.slice());
+                    // Elimina únicamente celdas vacías al final de cada línea;
+                    // conserva todas las celdas vacías internas y sus posiciones.
+                    for (const part of parts) {
+                        while (part.length && part[part.length - 1] === '') part.pop();
+                    }
+                    const cells = parts.flat();
+                    if (cells.length !== headers.length) {
+                        throw new Error(`No pude reconstruir el partido que comienza en la fila ${group[0].lineNo}: se recuperaron ${cells.length} de ${headers.length} columnas. No se importó ningún pronóstico.`);
+                    }
+                    logicalRows.push({ lineNo: group[0].lineNo, cells });
+                }
+            }
+
+            for (const logical of logicalRows) {
+                const lineNo = logical.lineNo;
+                const cells = logical.cells;
+                if (cells.length < headers.length) { errors.push(`Fila ${lineNo}: tiene ${cells.length} columnas; se esperaban ${headers.length}.`); continue; }
                 const row = {
                     league: String(cells[compIdx] || '').trim(), home: String(cells[homeIdx] || '').trim(), away: String(cells[awayIdx] || '').trim(),
                     kickoff: timeIdx >= 0 ? String(cells[timeIdx] || '').trim() : '',
