@@ -164,6 +164,212 @@
         @media (max-width:768px) { .bet-actions-cell { width:44px !important; min-width:44px !important; padding:3px !important; } .bet-actions-trigger { width:34px; height:38px; } .bet-actions-popup { right:0; width:150px; } }
 
     </style>
+
+<style id="poisson-premium-visuals">
+/* BETAGS VIP PRO — acabado visual del seguimiento independiente de Poisson.
+   Estilos limitados a esta sección: no modifican lógica, datos ni comportamiento. */
+#sec-prediction-memory.poisson-premium {
+  position: relative;
+  isolation: isolate;
+  padding: 10px;
+  border: 1px solid rgba(129,140,248,.22);
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 8% 0%, rgba(99,102,241,.16), transparent 38%),
+    radial-gradient(ellipse at 95% 18%, rgba(6,182,212,.12), transparent 34%),
+    linear-gradient(145deg, rgba(15,23,42,.98), rgba(7,12,27,.98) 58%, rgba(13,18,39,.98));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 18px 45px rgba(2,6,23,.28);
+}
+#sec-prediction-memory.poisson-premium > .rounded-xl:first-child {
+  position: relative;
+  overflow: hidden;
+  padding: 13px 15px;
+  border-color: rgba(129,140,248,.38);
+  background: linear-gradient(105deg, rgba(79,70,229,.25), rgba(8,145,178,.15) 58%, rgba(16,185,129,.10));
+  box-shadow: 0 8px 24px rgba(49,46,129,.12);
+}
+#sec-prediction-memory.poisson-premium > .rounded-xl:first-child:after {
+  content: "";
+  position: absolute;
+  width: 110px; height: 110px; right: -34px; top: -58px;
+  border-radius: 50%;
+  border: 1px solid rgba(165,180,252,.18);
+  box-shadow: 0 0 0 12px rgba(129,140,248,.035), 0 0 0 26px rgba(129,140,248,.025);
+  pointer-events: none;
+}
+#sec-prediction-memory.poisson-premium > .flex.items-center.gap-2.px-1 {
+  padding: 3px 2px;
+}
+#sec-prediction-memory.poisson-premium > .flex.items-center.gap-2.px-1 span {
+  padding: 5px 10px;
+  border-color: rgba(129,140,248,.35);
+  background: linear-gradient(90deg, rgba(99,102,241,.20), rgba(6,182,212,.12));
+  color: #c7d2fe;
+  box-shadow: 0 3px 12px rgba(79,70,229,.10);
+}
+#sec-prediction-memory.poisson-premium .glass-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(20,29,53,.96), rgba(9,15,31,.97) 72%);
+  box-shadow: 0 12px 28px rgba(2,6,23,.22), inset 0 1px 0 rgba(255,255,255,.035);
+}
+#sec-prediction-memory.poisson-premium > .glass-card:first-of-type {
+  border-color: rgba(129,140,248,.38);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionStatsPanel {
+  border-color: rgba(34,211,238,.34);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(6,182,212,.10), transparent 38%),
+    linear-gradient(145deg, rgba(15,35,54,.97), rgba(9,16,32,.98) 72%);
+}
+#sec-prediction-memory.poisson-premium h2,
+#sec-prediction-memory.poisson-premium h3 {
+  letter-spacing: .015em;
+}
+#sec-prediction-memory.poisson-premium textarea,
+#sec-prediction-memory.poisson-premium input[type="search"],
+#sec-prediction-memory.poisson-premium input[type="number"],
+#sec-prediction-memory.poisson-premium select {
+  color-scheme: dark;
+  background-color: rgba(2,8,23,.88);
+  border-color: rgba(100,116,139,.48);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+#sec-prediction-memory.poisson-premium textarea:focus,
+#sec-prediction-memory.poisson-premium input:focus,
+#sec-prediction-memory.poisson-premium select:focus {
+  border-color: rgba(129,140,248,.9);
+  box-shadow: 0 0 0 3px rgba(99,102,241,.14);
+  outline: none;
+}
+#sec-prediction-memory.poisson-premium textarea {
+  min-height: 132px;
+  line-height: 1.55;
+  background-image: linear-gradient(rgba(99,102,241,.035) 1px, transparent 1px);
+  background-size: 100% 22px;
+}
+#sec-prediction-memory.poisson-premium button[onclick="previewModelPredictionBatch()"] {
+  background: linear-gradient(110deg, rgba(79,70,229,.32), rgba(8,145,178,.20));
+  border-color: rgba(129,140,248,.48);
+  box-shadow: 0 5px 14px rgba(79,70,229,.12);
+  transition: transform .18s ease, filter .18s ease;
+}
+#sec-prediction-memory.poisson-premium button[onclick="saveModelPredictionBatch()"] {
+  background: linear-gradient(110deg, rgba(5,150,105,.27), rgba(16,185,129,.13));
+  border-color: rgba(52,211,153,.38);
+  box-shadow: 0 5px 14px rgba(16,185,129,.08);
+  transition: transform .18s ease, filter .18s ease;
+}
+#sec-prediction-memory.poisson-premium button[onclick="previewModelPredictionBatch()"]:hover,
+#sec-prediction-memory.poisson-premium button[onclick="saveModelPredictionBatch()"]:not(:disabled):hover {
+  filter: brightness(1.18);
+  transform: translateY(-1px);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionParseStatus,
+#sec-prediction-memory.poisson-premium #modelPredictionStatsNote {
+  border-color: rgba(100,116,139,.28);
+  background: linear-gradient(100deg, rgba(15,23,42,.9), rgba(30,41,59,.48));
+}
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div {
+  position: relative;
+  overflow: hidden;
+  min-height: 82px;
+  padding: 11px;
+  border-color: rgba(100,116,139,.34);
+  background: linear-gradient(145deg, rgba(30,41,59,.88), rgba(10,17,34,.96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 5px 14px rgba(2,6,23,.16);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(1) { border-top: 2px solid rgba(34,211,238,.75); }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(2) { border-top: 2px solid rgba(251,191,36,.75); }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(3) { border-top: 2px solid rgba(52,211,153,.75); }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(4) { border-top: 2px solid rgba(167,139,250,.8); }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(1) > div:nth-child(2) { color: #67e8f9; }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(2) > div:nth-child(2) { color: #fcd34d; }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(3) > div:nth-child(2) { color: #6ee7b7; }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div:nth-child(4) > div:nth-child(2) { color: #c4b5fd; }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsPanel > .rounded-xl {
+  border-color: rgba(100,116,139,.34);
+  background: rgba(2,8,23,.38);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionStatsPanel > .rounded-xl > div:first-child {
+  background: linear-gradient(90deg, rgba(8,145,178,.17), rgba(30,41,59,.45));
+}
+#sec-prediction-memory.poisson-premium table thead {
+  background: linear-gradient(90deg, rgba(8,47,73,.78), rgba(15,23,42,.9));
+}
+#sec-prediction-memory.poisson-premium table tbody tr:nth-child(odd) {
+  background: rgba(30,41,59,.22);
+}
+#sec-prediction-memory.poisson-premium table tbody tr:hover {
+  background: rgba(6,182,212,.08);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionReliability > div {
+  padding: 4px 6px;
+  border-radius: 8px;
+  background: rgba(30,41,59,.34);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionReliability .bg-cyan-400 {
+  background: linear-gradient(90deg, #22d3ee, #34d399);
+  box-shadow: 0 0 10px rgba(34,211,238,.28);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLogDetails {
+  border-color: rgba(52,211,153,.28);
+  background: linear-gradient(145deg, rgba(17,37,43,.92), rgba(9,16,31,.98));
+  box-shadow: 0 12px 28px rgba(2,6,23,.2);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLogDetails > summary {
+  background: linear-gradient(100deg, rgba(5,150,105,.12), rgba(8,145,178,.08), transparent);
+  border-radius: 16px;
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLogDetails[open] > summary {
+  border-bottom: 1px solid rgba(52,211,153,.18);
+  border-radius: 16px 16px 0 0;
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLog article {
+  border-color: rgba(100,116,139,.38);
+  box-shadow: 0 8px 20px rgba(2,6,23,.22), inset 0 1px 0 rgba(255,255,255,.035);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLog article:hover {
+  transform: translateY(-2px);
+  border-color: rgba(129,140,248,.52);
+  box-shadow: 0 12px 25px rgba(2,6,23,.3), 0 0 18px rgba(99,102,241,.07);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLog article > div:nth-child(2) > div {
+  border-color: rgba(100,116,139,.32);
+  background: linear-gradient(145deg, rgba(30,41,59,.78), rgba(2,8,23,.8));
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLog article > div:nth-child(2) > div:nth-child(1) { border-top: 2px solid rgba(129,140,248,.65); }
+#sec-prediction-memory.poisson-premium #modelPredictionLog article > div:nth-child(2) > div:nth-child(2) { border-top: 2px solid rgba(34,211,238,.65); }
+#sec-prediction-memory.poisson-premium #modelPredictionLog article > div:nth-child(2) > div:nth-child(3) { border-top: 2px solid rgba(52,211,153,.65); }
+#sec-prediction-memory.poisson-premium #modelPredictionLog article input[type="number"] {
+  border-color: rgba(100,116,139,.5);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionLog article button[onclick^="settleModelPrediction"] {
+  background: linear-gradient(110deg, #059669, #34d399);
+  box-shadow: 0 4px 12px rgba(16,185,129,.17);
+}
+#sec-prediction-memory.poisson-premium #modelPredictionSearch,
+#sec-prediction-memory.poisson-premium #modelPredictionFilter {
+  border-color: rgba(100,116,139,.48);
+}
+#modelTrackingModalContent {
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(79,70,229,.07), transparent 38%),
+    radial-gradient(ellipse at 92% 30%, rgba(6,182,212,.06), transparent 35%),
+    #080e1d;
+}
+#modelTrackingModalContent + * { border-color: rgba(129,140,248,.25); }
+@media (max-width: 520px) {
+  #sec-prediction-memory.poisson-premium { padding: 7px; border-radius: 17px; }
+  #sec-prediction-memory.poisson-premium #modelPredictionStatsSummary > div { min-height: 76px; padding: 9px; }
+  #sec-prediction-memory.poisson-premium #modelPredictionLog article { border-radius: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #sec-prediction-memory.poisson-premium * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+</style>
+
 </head>
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
 
@@ -8507,7 +8713,7 @@ document.addEventListener('keydown', function(event) {
                 <button type="button" onclick="closeModelTrackingWindow()" class="shrink-0 w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300" aria-label="Cerrar ventana de seguimiento Poisson"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="modelTrackingModalContent" class="overflow-y-auto overscroll-contain p-2 sm:p-4">
-        <section id="sec-prediction-memory" class="space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
+        <section id="sec-prediction-memory" class="poisson-premium space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
             <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 px-3 py-2 flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i><div><div class="text-[10px] font-black text-indigo-200 uppercase tracking-wider">Área 1 · Seguimiento independiente de Poisson</div><div class="text-[9px] text-slate-400">Pronósticos sin apuesta, métricas históricas y bitácora propia. No modifica el bankroll ni la calibración de apuestas.</div></div></div>
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">3 · Memoria de predicciones</span>
