@@ -7367,6 +7367,85 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast('Marcador guardado: se resolvieron 1X2, Over/Under 2.5 y BTTS.');
         }
 
+        // PRESELECTOR ADITIVO: lee exclusivamente los partidos pendientes de Área 1.
+        // Ordena por probabilidad original; nunca interpreta probabilidad alta como valor esperado.
+        function renderModelPreselector() {
+            const panel = document.getElementById('modelPreselectorPanel');
+            if (!panel) return;
+            const pending = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
+                .filter(r => r && r.status !== 'SETTLED');
+            const definitions = [
+                { id: '1x2', target: 'modelPreselector1x2', count: 'modelPreselectorCount1x2', keys: [
+                    { key: 'homeWin', label: r => `Gana ${r.home}`, odd: 'homeWin' },
+                    { key: 'draw', label: () => 'Empate', odd: 'draw' },
+                    { key: 'awayWin', label: r => `Gana ${r.away}`, odd: 'awayWin' }
+                ]},
+                { id: 'goals', target: 'modelPreselectorGoals', count: 'modelPreselectorCountGoals', keys: [
+                    { key: 'over25', label: () => 'Más de 2.5', odd: 'over25' },
+                    { key: 'under25', label: () => 'Menos de 2.5', odd: 'under25' }
+                ]},
+                { id: 'btts', target: 'modelPreselectorBtts', count: 'modelPreselectorCountBtts', keys: [
+                    { key: 'bttsYes', label: () => 'Ambos sí', odd: 'bttsYes' },
+                    { key: 'bttsNo', label: () => 'Ambos no', odd: 'bttsNo' }
+                ]}
+            ];
+            const pct = value => `${(value * 100).toFixed(1)}%`;
+            let totalCandidates = 0;
+            definitions.forEach(def => {
+                const candidates = [];
+                pending.forEach(record => {
+                    const probabilities = (record.probabilities && record.probabilities.original && typeof record.probabilities.original === 'object')
+                        ? record.probabilities.original : (record.probabilities || {});
+                    const outcomes = def.keys.map(option => ({
+                        key: option.key,
+                        label: option.label(record),
+                        oddKey: option.odd,
+                        probability: Number(probabilities[option.key])
+                    })).filter(option => Number.isFinite(option.probability) && option.probability > 0 && option.probability < 1);
+                    if (!outcomes.length) return;
+                    // Una sola selección por partido y mercado: la de mayor probabilidad.
+                    outcomes.sort((a, b) => b.probability - a.probability);
+                    const chosen = outcomes[0];
+                    const odds = Number(record.odds?.[chosen.oddKey]);
+                    const hasOdds = Number.isFinite(odds) && odds > 1;
+                    const ev = hasOdds ? chosen.probability * odds - 1 : null;
+                    candidates.push({ record, chosen, odds: hasOdds ? odds : null, ev });
+                });
+                candidates.sort((a, b) => b.chosen.probability - a.chosen.probability || String(b.record.analyzedAt || '').localeCompare(String(a.record.analyzedAt || '')));
+                const selected = candidates.slice(0, 5);
+                totalCandidates += selected.length;
+                const target = document.getElementById(def.target);
+                const count = document.getElementById(def.count);
+                if (count) count.textContent = `${selected.length} / 5`;
+                if (!target) return;
+                if (!selected.length) {
+                    target.innerHTML = '<p class="text-[9px] text-slate-500 py-2">No hay partidos pendientes con probabilidades válidas para este mercado.</p>';
+                    return;
+                }
+                target.innerHTML = selected.map((item, index) => {
+                    const r = item.record, pick = item.chosen;
+                    const oddsLine = item.odds
+                        ? `<div class="mt-1 text-[8px] text-slate-400">Cuota ${item.odds.toFixed(2)} · EV ${item.ev >= 0 ? '+' : ''}${(item.ev * 100).toFixed(1)}% por unidad (sin comisión)</div>`
+                        : '<div class="mt-1 text-[8px] text-slate-500">Sin cuota · EV no calculable</div>';
+                    return `<article class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
+                        <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${index + 1} · ${escapeModelPredictionHtml(r.league || 'Sin competición')}</span><span class="text-[11px] font-black text-white tabular-nums">${pct(pick.probability)}</span></div>
+                        <div class="mt-1 text-[9px] font-bold text-slate-100 break-words">${escapeModelPredictionHtml(r.home || 'Local')} vs ${escapeModelPredictionHtml(r.away || 'Visitante')}</div>
+                        <div class="text-[9px] font-black text-amber-200 mt-1">${escapeModelPredictionHtml(pick.label)}</div>
+                        ${oddsLine}
+                        <div class="text-[7px] text-slate-600 mt-1">${escapeModelPredictionHtml(r.matchDate || '')}${r.kickoff ? ' · ' + escapeModelPredictionHtml(r.kickoff) : ''}</div>
+                    </article>`;
+                }).join('');
+            });
+            const pendingEl = document.getElementById('modelPreselectorPending');
+            const candidatesEl = document.getElementById('modelPreselectorCandidates');
+            const note = document.getElementById('modelPreselectorNote');
+            if (pendingEl) pendingEl.textContent = String(pending.length);
+            if (candidatesEl) candidatesEl.textContent = String(totalCandidates);
+            if (note) note.textContent = pending.length
+                ? `Se revisaron ${pending.length} partidos pendientes de Área 1. Se muestra como máximo una selección por partido en cada mercado, hasta 5 por mercado; un mismo partido puede aparecer en mercados distintos. El ranking usa probabilidades originales congeladas y no altera el historial.`
+                : 'No hay partidos pendientes en Área 1. Guarda nuevos pronósticos para que el preselector pueda examinarlos. Los partidos resueltos quedan fuera.';
+        }
+
         function renderModelPredictionStats() {
             const summary=document.getElementById('modelPredictionStatsSummary');
             const marketBody=document.getElementById('modelPredictionStatsMarkets');
@@ -7520,6 +7599,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function renderModelPredictionLog() {
             const root=document.getElementById('modelPredictionLog'); if(!root)return;
             renderModelPredictionStats();
+            renderModelPreselector();
             const pending=modelPredictionRecords.filter(r=>r.status!=='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
             const settled=modelPredictionRecords.filter(r=>r.status==='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
             const count=document.getElementById('modelPredictionCount'); if(count)count.innerText=`${modelPredictionRecords.length} registros · ${pending.length} pendientes · ${settled.length} resueltos`;
@@ -8797,6 +8877,25 @@ document.addEventListener('keydown', function(event) {
                 </div>
                 <div id="modelPredictionParseStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">La revisión previa detecta filas incompletas y duplicados antes de guardar.</div>
                 <div id="modelPredictionPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
+            </div>
+            <div id="modelPreselectorPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-amber-500/30">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-filter-circle-dollar text-amber-300"></i> Preselector de partidos</h3>
+                    <p class="text-[9px] text-slate-400 mt-1">Examina los partidos pendientes guardados en Área 1 y ordena por la probabilidad más alta de cada mercado. Máximo 5 partidos distintos por mercado; no crea apuestas ni modifica pronósticos.</p></div>
+                    <button type="button" onclick="renderModelPreselector()" class="shrink-0 text-[9px] font-black bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-lg px-2.5 py-2"><i class="fa-solid fa-rotate mr-1"></i>ACTUALIZAR</button>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">PARTIDOS PENDIENTES</span><b id="modelPreselectorPending" class="block text-lg text-white tabular-nums">0</b></div>
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">CANDIDATOS</span><b id="modelPreselectorCandidates" class="block text-lg text-cyan-300 tabular-nums">0</b></div>
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">MÁXIMO POR MERCADO</span><b class="block text-lg text-amber-300 tabular-nums">5</b></div>
+                </div>
+                <div class="rounded-xl border border-amber-500/20 bg-amber-950/10 p-2.5 text-[8px] leading-relaxed text-amber-100/80">Importante: el orden representa probabilidad estimada, no rentabilidad ni garantía de acierto. Si no hay cuotas disponibles, no se puede calcular valor esperado (EV); una probabilidad alta por sí sola no demuestra que una apuesta tenga valor.</div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-2.5">
+                    <div class="rounded-xl border border-indigo-500/25 bg-slate-950/50 p-2.5 space-y-2"><div class="flex items-center justify-between"><h4 class="text-[10px] font-black text-indigo-200">1X2</h4><span id="modelPreselectorCount1x2" class="text-[8px] text-slate-500">0 / 5</span></div><div id="modelPreselector1x2" class="space-y-2"><p class="text-[9px] text-slate-500">Sin candidatos.</p></div></div>
+                    <div class="rounded-xl border border-cyan-500/25 bg-slate-950/50 p-2.5 space-y-2"><div class="flex items-center justify-between"><h4 class="text-[10px] font-black text-cyan-200">MÁS / MENOS 2.5</h4><span id="modelPreselectorCountGoals" class="text-[8px] text-slate-500">0 / 5</span></div><div id="modelPreselectorGoals" class="space-y-2"><p class="text-[9px] text-slate-500">Sin candidatos.</p></div></div>
+                    <div class="rounded-xl border border-emerald-500/25 bg-slate-950/50 p-2.5 space-y-2"><div class="flex items-center justify-between"><h4 class="text-[10px] font-black text-emerald-200">AMBOS ANOTAN</h4><span id="modelPreselectorCountBtts" class="text-[8px] text-slate-500">0 / 5</span></div><div id="modelPreselectorBtts" class="space-y-2"><p class="text-[9px] text-slate-500">Sin candidatos.</p></div></div>
+                </div>
+                <p id="modelPreselectorNote" class="text-[8px] text-slate-500">Se usan únicamente pronósticos pendientes de Área 1 y las probabilidades originales congeladas. Los partidos resueltos quedan fuera.</p>
             </div>
             <div id="modelPredictionStatsPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-cyan-500/30">
                 <div class="flex items-start justify-between gap-2">
