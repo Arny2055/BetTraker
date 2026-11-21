@@ -7446,31 +7446,47 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         selection: option.selection, probability: Number(probabilities[option.key])
                     })).filter(option => Number.isFinite(option.probability) && option.probability > 0 && option.probability < 1);
                     if (!outcomes.length) return;
-                    // Una sola selección por partido y mercado: la de mayor probabilidad original.
-                    outcomes.sort((a, b) => b.probability - a.probability);
-                    const chosen = outcomes[0];
-                    const history = buildModelPreselectorSelectionHistory(record.league, def.market, chosen.selection);
-                    const rawProbability = chosen.probability;
-                    const calibratedProbability = history.model.ready
-                        ? Math.max(0.000001, Math.min(0.999999,
-                            poissonCalibrationSigmoid(history.model.a + history.model.b * poissonCalibrationLogit(rawProbability))))
-                        : rawProbability;
-                    // Frecuencia observada de casos históricos cercanos (±5 pp), solo si hay al menos 5.
-                    const nearby = history.rows.filter(row => Math.abs(row.prob / 100 - rawProbability) <= 0.05);
-                    const nearbyWins = nearby.filter(row => row.status === 'WON').length;
-                    const nearbyFrequency = nearby.length >= 5 ? nearbyWins / nearby.length : null;
-                    const odds = Number(record.odds?.[chosen.oddKey]);
-                    const hasOdds = Number.isFinite(odds) && odds > 1;
-                    const ev = hasOdds ? calibratedProbability * odds - 1 : null;
-                    candidates.push({ record, chosen, rawProbability, calibratedProbability, history,
-                        nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev });
+
+                    // FILTROS OBLIGATORIOS POR SELECCIÓN: no basta con que el partido tenga
+                    // una probabilidad alta. La selección concreta debe tener muestra validada.
+                    const qualifiedOutcomes = [];
+                    outcomes.forEach(option => {
+                        const history = buildModelPreselectorSelectionHistory(record.league, def.market, option.selection);
+                        const qualityAvailable = Number.isFinite(history.brier) && Number.isFinite(history.gap);
+                        const minimumSample = history.count >= 15 && history.wins >= 5 && history.losses >= 5;
+                        // fitPoissonMarketModel aplica exactamente 15 casos, 5 aciertos y 5 fallos.
+                        if (!minimumSample || !history.model.ready || !qualityAvailable) return;
+
+                        const rawProbability = option.probability;
+                        const calibratedProbability = Math.max(0.000001, Math.min(0.999999,
+                            poissonCalibrationSigmoid(history.model.a + history.model.b * poissonCalibrationLogit(rawProbability))));
+                        // Frecuencia observada de casos históricos cercanos (±5 pp), solo si hay al menos 5.
+                        const nearby = history.rows.filter(row => Math.abs(row.prob / 100 - rawProbability) <= 0.05);
+                        const nearbyWins = nearby.filter(row => row.status === 'WON').length;
+                        const nearbyFrequency = nearby.length >= 5 ? nearbyWins / nearby.length : null;
+                        const odds = Number(record.odds?.[option.oddKey]);
+                        const hasOdds = Number.isFinite(odds) && odds > 1;
+                        const ev = hasOdds ? calibratedProbability * odds - 1 : null;
+                        qualifiedOutcomes.push({ record, chosen: option, rawProbability, calibratedProbability, history,
+                            nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev });
+                    });
+                    if (!qualifiedOutcomes.length) return;
+                    // Una sola selección por partido y mercado. Primero calidad histórica
+                    // (Brier y brecha probabilidad/frecuencia), luego probabilidad calibrada.
+                    qualifiedOutcomes.sort((a, b) =>
+                        a.history.brier - b.history.brier ||
+                        Math.abs(a.history.gap) - Math.abs(b.history.gap) ||
+                        b.calibratedProbability - a.calibratedProbability ||
+                        b.history.count - a.history.count
+                    );
+                    candidates.push(qualifiedOutcomes[0]);
                 });
-                // Primero la probabilidad calibrada cuando existe modelo apto; la calidad histórica
-                // de la selección desempata sin convertir Brier/Log Loss en una falsa garantía.
+                // Ranking estricto: mejor calidad (Brier), menor brecha entre frecuencia
+                // real y media pronosticada, mayor probabilidad calibrada y mayor muestra.
                 candidates.sort((a, b) =>
+                    a.history.brier - b.history.brier ||
+                    Math.abs(a.history.gap) - Math.abs(b.history.gap) ||
                     b.calibratedProbability - a.calibratedProbability ||
-                    (a.history.brier ?? 1) - (b.history.brier ?? 1) ||
-                    Math.abs(a.history.gap ?? 1) - Math.abs(b.history.gap ?? 1) ||
                     b.history.count - a.history.count ||
                     String(b.record.analyzedAt || '').localeCompare(String(a.record.analyzedAt || ''))
                 );
@@ -7481,7 +7497,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (count) count.textContent = `${selected.length} / 5`;
                 if (!target) return;
                 if (!selected.length) {
-                    target.innerHTML = '<p class="text-[9px] text-slate-500 py-2">No hay partidos pendientes con probabilidades válidas para este mercado.</p>';
+                    target.innerHTML = '<p class="text-[9px] text-amber-300 py-2">Ningún partido cumple todos los filtros obligatorios para este mercado. Se requieren al menos 15 pronósticos liquidados de la misma liga y selección, con 5 aciertos y 5 fallos, calibración validada y métricas Brier/frecuencia real disponibles. No se mostrarán candidatos sin cumplirlos.</p>';
                     return;
                 }
                 target.innerHTML = selected.map((item, index) => {
@@ -7510,7 +7526,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (pendingEl) pendingEl.textContent = String(pending.length);
             if (candidatesEl) candidatesEl.textContent = String(totalCandidates);
             if (note) note.textContent = pending.length
-                ? `Se analizaron ${pending.length} partidos pendientes. El ranking prioriza la probabilidad calibrada por liga/selección cuando hay al menos 15 casos liquidados (mínimo 5 aciertos y 5 fallos); también muestra Brier, Log Loss y probabilidad media vs frecuencia real de esa selección. Sin muestra suficiente, conserva la probabilidad original y lo señala. Máximo 5 candidatos por mercado; no se mezclan ligas ni apuestas reales.`
+                ? `Se analizaron ${pending.length} partidos pendientes. FILTROS OBLIGATORIOS: cada selección debe tener al menos 15 pronósticos liquidados de su misma liga, mínimo 5 aciertos y 5 fallos, calibración por selección validada y Brier/frecuencia real calculables. Si falla cualquiera, se excluye; nunca se rellena el cupo con partidos no aptos. Ranking: menor Brier, menor brecha probabilidad media/frecuencia real y después mayor probabilidad calibrada. Máximo 5 por mercado; no se mezclan ligas ni apuestas reales.`
                 : 'No hay partidos pendientes en Área 1. Guarda nuevos pronósticos para que el preselector pueda examinarlos. Los partidos resueltos se utilizan únicamente como historial de calidad y calibración.';
         }
 
