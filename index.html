@@ -7638,6 +7638,14 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             // Abrir el formulario EXISTENTE de apuestas reales; nunca guardar automáticamente.
             const preselectorOrigin = {
                 source: 'preselector_area1',
+                calibrationSource: 'Área 1 · pronósticos liquidados',
+                calibrationMethod: 'Platt Scaling',
+                calibrationVersion: 'area1_platt_v1',
+                calibrationLeague: record.league || '',
+                calibrationMarket: definition.market,
+                calibrationSelection: pick.selection,
+                calibrationA: Number(history.model.a),
+                calibrationB: Number(history.model.b),
                 predictionId: record.id || null,
                 marketId,
                 outcomeKey,
@@ -7669,7 +7677,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             checkSelectionHistoricalProfit();
             calculateLogEv();
             scheduleBetModalInlineMc();
-            showToast('Sugerencia cargada en Registrar Apuesta. Revisa cuota y stake antes de guardar.');
+            showToast(`Sugerencia cargada con Platt de Área 1 (${(calibratedProbability * 100).toFixed(1)}%). Revisa cuota y stake antes de guardar.`);
         }
 
         function renderModelPreselector() {
@@ -7727,6 +7735,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         const hasOdds = Number.isFinite(odds) && odds > 1;
                         const ev = hasOdds ? calibratedProbability * odds - 1 : null;
                         qualifiedOutcomes.push({ record, chosen: option, rawProbability, calibratedProbability, history,
+                            calibrationSource: 'Área 1 · pronósticos liquidados',
+                            calibrationMethod: 'Platt Scaling',
+                            calibrationA: history.model.a,
+                            calibrationB: history.model.b,
                             nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev });
                     });
                     if (!qualifiedOutcomes.length) return;
@@ -7762,8 +7774,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 target.innerHTML = selected.map((item, index) => {
                     const r = item.record, pick = item.chosen, h = item.history;
                     const calibrationLine = h.model.ready
-                        ? `<div class="mt-1 text-[8px] text-cyan-200">Calibrada: ${pct(item.calibratedProbability)} · Original: ${pct(item.rawProbability)} · ${signedPp(item.calibratedProbability-item.rawProbability)} ajuste</div>`
-                        : `<div class="mt-1 text-[8px] text-slate-500">Calibración por selección aún no validada (${h.count}/15; requiere 5 aciertos y 5 fallos). Se conserva probabilidad original.</div>`;
+                        ? `<div class="mt-1 text-[8px] text-cyan-200">Platt Área 1: ${pct(item.calibratedProbability)} · Original: ${pct(item.rawProbability)} · ${signedPp(item.calibratedProbability-item.rawProbability)} ajuste</div><div class="text-[7px] text-cyan-300/70">Fuente: pronósticos liquidados · ${h.count} observaciones · calibrador independiente</div>`
+                        : `<div class="mt-1 text-[8px] text-slate-500">Calibración Platt de Área 1 aún no validada (${h.count}/15; requiere 5 aciertos y 5 fallos). Se conserva probabilidad original.</div>`;
                     const qualityLine = h.count
                         ? `<div class="mt-1 text-[8px] text-slate-300">Historial ${h.count} casos (${h.wins} aciertos / ${h.losses} fallos) · Media pronosticada ${pct(h.meanPredicted)} vs frecuencia real ${pct(h.observed)} · Brecha ${signedPp(h.gap)}</div><div class="text-[8px] text-slate-500">Brier ${h.brier.toFixed(3)} · Log Loss ${h.logLoss.toFixed(3)}${item.nearbyFrequency !== null ? ` · Casos cercanos: ${pct(item.nearbyFrequency)} (${item.nearbyCount})` : ` · Frecuencia cercana: muestra insuficiente (${item.nearbyCount}/5)`}</div>`
                         : '<div class="mt-1 text-[8px] text-amber-300">Sin historial liquidado de esta liga y selección: calidad y frecuencia real aún no evaluables.</div>';
