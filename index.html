@@ -7428,8 +7428,16 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     let valid = true;
                     for (let offset=0; offset<physical.length; offset+=groupSize) {
                         const group = physical.slice(offset,offset+groupSize);
-                        const cells = group.flatMap(row => row.cells);
-                        while (cells.length && cells[cells.length-1] === '') cells.pop();
+                        // Las tablas copiadas desde algunas páginas reparten un partido
+                        // en varias líneas físicas. Cada línea puede terminar con muchas
+                        // tabulaciones/celdas vacías; hay que recortarlas POR LÍNEA antes
+                        // de concatenar, sin tocar los vacíos internos que fijan columnas.
+                        const parts = group.map(row => {
+                            const cells = row.cells.slice();
+                            while (cells.length && cells[cells.length-1] === '') cells.pop();
+                            return cells;
+                        });
+                        const cells = parts.flat();
                         if (cells.length !== headers.length) { valid=false; break; }
                         candidate.push({ lineNo:group[0].lineNo, cells });
                     }
