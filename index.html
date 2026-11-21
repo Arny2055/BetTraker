@@ -7367,29 +7367,74 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             showToast('Marcador guardado: se resolvieron 1X2, Over/Under 2.5 y BTTS.');
         }
 
-        // PRESELECTOR ADITIVO: lee exclusivamente los partidos pendientes de Área 1.
-        // Ordena por probabilidad original; nunca interpreta probabilidad alta como valor esperado.
+        // PRESELECTOR ADITIVO: candidatos pendientes + calidad/calibración histórica
+        // por liga, mercado y selección. Solo usa los pronósticos liquidados de Área 1.
+        // No modifica snapshots, apuestas, calibradores ni fórmulas del modelo.
+        function buildModelPreselectorSelectionHistory(league, market, selection) {
+            const settled = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
+                .filter(r => r && r.status === 'SETTLED' &&
+                    normalizePoissonLeague(r.league) === normalizePoissonLeague(league) &&
+                    Number.isInteger(Number(r.actualHomeGoals)) && Number.isInteger(Number(r.actualAwayGoals)));
+            const rows = [];
+            settled.forEach(r => {
+                const p = (r.probabilities && r.probabilities.original && typeof r.probabilities.original === 'object')
+                    ? r.probabilities.original : (r.probabilities || {});
+                const hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals);
+                let probability, won;
+                if (market === 'Resultado Final (1X2)') {
+                    if (selection === 'Local') { probability = p.homeWin; won = hg > ag; }
+                    else if (selection === 'Empate (X)') { probability = p.draw; won = hg === ag; }
+                    else { probability = p.awayWin; won = hg < ag; }
+                } else if (market === 'Over / Under Goles') {
+                    if (selection === 'Over 2.5') { probability = p.over25; won = hg + ag >= 3; }
+                    else { probability = p.under25; won = hg + ag < 3; }
+                } else {
+                    if (selection === 'Ambos Anotan Si') { probability = p.bttsYes; won = hg > 0 && ag > 0; }
+                    else { probability = p.bttsNo; won = !(hg > 0 && ag > 0); }
+                }
+                probability = Number(probability);
+                if (Number.isFinite(probability) && probability > 0 && probability < 1)
+                    rows.push({ prob: probability * 100, status: won ? 'WON' : 'LOST' });
+            });
+            const count = rows.length;
+            const wins = rows.filter(x => x.status === 'WON').length;
+            const meanPredicted = count ? rows.reduce((sum, x) => sum + x.prob / 100, 0) / count : null;
+            const observed = count ? wins / count : null;
+            const brier = count ? rows.reduce((sum, x) => {
+                const error = x.prob / 100 - (x.status === 'WON' ? 1 : 0);
+                return sum + error * error;
+            }, 0) / count : null;
+            const logLoss = count ? rows.reduce((sum, x) => {
+                const prob = Math.max(0.000001, Math.min(0.999999, x.prob / 100));
+                return sum - (x.status === 'WON' ? Math.log(prob) : Math.log(1 - prob));
+            }, 0) / count : null;
+            const model = fitPoissonMarketModel(rows);
+            return { rows, count, wins, losses: count - wins, meanPredicted, observed,
+                gap: count ? observed - meanPredicted : null, brier, logLoss, model };
+        }
+
         function renderModelPreselector() {
             const panel = document.getElementById('modelPreselectorPanel');
             if (!panel) return;
-            const pending = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
-                .filter(r => r && r.status !== 'SETTLED');
+            const allRecords = Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [];
+            const pending = allRecords.filter(r => r && r.status !== 'SETTLED');
             const definitions = [
-                { id: '1x2', target: 'modelPreselector1x2', count: 'modelPreselectorCount1x2', keys: [
-                    { key: 'homeWin', label: r => `Gana ${r.home}`, odd: 'homeWin' },
-                    { key: 'draw', label: () => 'Empate', odd: 'draw' },
-                    { key: 'awayWin', label: r => `Gana ${r.away}`, odd: 'awayWin' }
+                { id: '1x2', target: 'modelPreselector1x2', count: 'modelPreselectorCount1x2', market: 'Resultado Final (1X2)', keys: [
+                    { key: 'homeWin', label: r => `Gana ${r.home}`, odd: 'homeWin', selection: 'Local' },
+                    { key: 'draw', label: () => 'Empate', odd: 'draw', selection: 'Empate (X)' },
+                    { key: 'awayWin', label: r => `Gana ${r.away}`, odd: 'awayWin', selection: 'Visitante' }
                 ]},
-                { id: 'goals', target: 'modelPreselectorGoals', count: 'modelPreselectorCountGoals', keys: [
-                    { key: 'over25', label: () => 'Más de 2.5', odd: 'over25' },
-                    { key: 'under25', label: () => 'Menos de 2.5', odd: 'under25' }
+                { id: 'goals', target: 'modelPreselectorGoals', count: 'modelPreselectorCountGoals', market: 'Over / Under Goles', keys: [
+                    { key: 'over25', label: () => 'Más de 2.5', odd: 'over25', selection: 'Over 2.5' },
+                    { key: 'under25', label: () => 'Menos de 2.5', odd: 'under25', selection: 'Under 2.5' }
                 ]},
-                { id: 'btts', target: 'modelPreselectorBtts', count: 'modelPreselectorCountBtts', keys: [
-                    { key: 'bttsYes', label: () => 'Ambos sí', odd: 'bttsYes' },
-                    { key: 'bttsNo', label: () => 'Ambos no', odd: 'bttsNo' }
+                { id: 'btts', target: 'modelPreselectorBtts', count: 'modelPreselectorCountBtts', market: 'Ambos Anotan', keys: [
+                    { key: 'bttsYes', label: () => 'Ambos sí', odd: 'bttsYes', selection: 'Ambos Anotan Si' },
+                    { key: 'bttsNo', label: () => 'Ambos no', odd: 'bttsNo', selection: 'Ambos Anotan No' }
                 ]}
             ];
             const pct = value => `${(value * 100).toFixed(1)}%`;
+            const signedPp = value => `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)} pp`;
             let totalCandidates = 0;
             definitions.forEach(def => {
                 const candidates = [];
@@ -7397,21 +7442,38 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     const probabilities = (record.probabilities && record.probabilities.original && typeof record.probabilities.original === 'object')
                         ? record.probabilities.original : (record.probabilities || {});
                     const outcomes = def.keys.map(option => ({
-                        key: option.key,
-                        label: option.label(record),
-                        oddKey: option.odd,
-                        probability: Number(probabilities[option.key])
+                        key: option.key, label: option.label(record), oddKey: option.odd,
+                        selection: option.selection, probability: Number(probabilities[option.key])
                     })).filter(option => Number.isFinite(option.probability) && option.probability > 0 && option.probability < 1);
                     if (!outcomes.length) return;
-                    // Una sola selección por partido y mercado: la de mayor probabilidad.
+                    // Una sola selección por partido y mercado: la de mayor probabilidad original.
                     outcomes.sort((a, b) => b.probability - a.probability);
                     const chosen = outcomes[0];
+                    const history = buildModelPreselectorSelectionHistory(record.league, def.market, chosen.selection);
+                    const rawProbability = chosen.probability;
+                    const calibratedProbability = history.model.ready
+                        ? Math.max(0.000001, Math.min(0.999999,
+                            poissonCalibrationSigmoid(history.model.a + history.model.b * poissonCalibrationLogit(rawProbability))))
+                        : rawProbability;
+                    // Frecuencia observada de casos históricos cercanos (±5 pp), solo si hay al menos 5.
+                    const nearby = history.rows.filter(row => Math.abs(row.prob / 100 - rawProbability) <= 0.05);
+                    const nearbyWins = nearby.filter(row => row.status === 'WON').length;
+                    const nearbyFrequency = nearby.length >= 5 ? nearbyWins / nearby.length : null;
                     const odds = Number(record.odds?.[chosen.oddKey]);
                     const hasOdds = Number.isFinite(odds) && odds > 1;
-                    const ev = hasOdds ? chosen.probability * odds - 1 : null;
-                    candidates.push({ record, chosen, odds: hasOdds ? odds : null, ev });
+                    const ev = hasOdds ? calibratedProbability * odds - 1 : null;
+                    candidates.push({ record, chosen, rawProbability, calibratedProbability, history,
+                        nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev });
                 });
-                candidates.sort((a, b) => b.chosen.probability - a.chosen.probability || String(b.record.analyzedAt || '').localeCompare(String(a.record.analyzedAt || '')));
+                // Primero la probabilidad calibrada cuando existe modelo apto; la calidad histórica
+                // de la selección desempata sin convertir Brier/Log Loss en una falsa garantía.
+                candidates.sort((a, b) =>
+                    b.calibratedProbability - a.calibratedProbability ||
+                    (a.history.brier ?? 1) - (b.history.brier ?? 1) ||
+                    Math.abs(a.history.gap ?? 1) - Math.abs(b.history.gap ?? 1) ||
+                    b.history.count - a.history.count ||
+                    String(b.record.analyzedAt || '').localeCompare(String(a.record.analyzedAt || ''))
+                );
                 const selected = candidates.slice(0, 5);
                 totalCandidates += selected.length;
                 const target = document.getElementById(def.target);
@@ -7423,15 +7485,21 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     return;
                 }
                 target.innerHTML = selected.map((item, index) => {
-                    const r = item.record, pick = item.chosen;
+                    const r = item.record, pick = item.chosen, h = item.history;
+                    const calibrationLine = h.model.ready
+                        ? `<div class="mt-1 text-[8px] text-cyan-200">Calibrada: ${pct(item.calibratedProbability)} · Original: ${pct(item.rawProbability)} · ${signedPp(item.calibratedProbability-item.rawProbability)} ajuste</div>`
+                        : `<div class="mt-1 text-[8px] text-slate-500">Calibración por selección aún no validada (${h.count}/15; requiere 5 aciertos y 5 fallos). Se conserva probabilidad original.</div>`;
+                    const qualityLine = h.count
+                        ? `<div class="mt-1 text-[8px] text-slate-300">Historial ${h.count} casos (${h.wins} aciertos / ${h.losses} fallos) · Media pronosticada ${pct(h.meanPredicted)} vs frecuencia real ${pct(h.observed)} · Brecha ${signedPp(h.gap)}</div><div class="text-[8px] text-slate-500">Brier ${h.brier.toFixed(3)} · Log Loss ${h.logLoss.toFixed(3)}${item.nearbyFrequency !== null ? ` · Casos cercanos: ${pct(item.nearbyFrequency)} (${item.nearbyCount})` : ` · Frecuencia cercana: muestra insuficiente (${item.nearbyCount}/5)`}</div>`
+                        : '<div class="mt-1 text-[8px] text-amber-300">Sin historial liquidado de esta liga y selección: calidad y frecuencia real aún no evaluables.</div>';
                     const oddsLine = item.odds
-                        ? `<div class="mt-1 text-[8px] text-slate-400">Cuota ${item.odds.toFixed(2)} · EV ${item.ev >= 0 ? '+' : ''}${(item.ev * 100).toFixed(1)}% por unidad (sin comisión)</div>`
+                        ? `<div class="mt-1 text-[8px] text-slate-400">Cuota ${item.odds.toFixed(2)} · EV con prob. ${h.model.ready ? 'calibrada' : 'original'} ${item.ev >= 0 ? '+' : ''}${(item.ev * 100).toFixed(1)}% por unidad (sin comisión)</div>`
                         : '<div class="mt-1 text-[8px] text-slate-500">Sin cuota · EV no calculable</div>';
                     return `<article class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
-                        <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${index + 1} · ${escapeModelPredictionHtml(r.league || 'Sin competición')}</span><span class="text-[11px] font-black text-white tabular-nums">${pct(pick.probability)}</span></div>
+                        <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${index + 1} · ${escapeModelPredictionHtml(r.league || 'Sin competición')}</span><span class="text-[11px] font-black text-white tabular-nums">${pct(item.calibratedProbability)}</span></div>
                         <div class="mt-1 text-[9px] font-bold text-slate-100 break-words">${escapeModelPredictionHtml(r.home || 'Local')} vs ${escapeModelPredictionHtml(r.away || 'Visitante')}</div>
                         <div class="text-[9px] font-black text-amber-200 mt-1">${escapeModelPredictionHtml(pick.label)}</div>
-                        ${oddsLine}
+                        ${calibrationLine}${qualityLine}${oddsLine}
                         <div class="text-[7px] text-slate-600 mt-1">${escapeModelPredictionHtml(r.matchDate || '')}${r.kickoff ? ' · ' + escapeModelPredictionHtml(r.kickoff) : ''}</div>
                     </article>`;
                 }).join('');
@@ -7442,8 +7510,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (pendingEl) pendingEl.textContent = String(pending.length);
             if (candidatesEl) candidatesEl.textContent = String(totalCandidates);
             if (note) note.textContent = pending.length
-                ? `Se revisaron ${pending.length} partidos pendientes de Área 1. Se muestra como máximo una selección por partido en cada mercado, hasta 5 por mercado; un mismo partido puede aparecer en mercados distintos. El ranking usa probabilidades originales congeladas y no altera el historial.`
-                : 'No hay partidos pendientes en Área 1. Guarda nuevos pronósticos para que el preselector pueda examinarlos. Los partidos resueltos quedan fuera.';
+                ? `Se analizaron ${pending.length} partidos pendientes. El ranking prioriza la probabilidad calibrada por liga/selección cuando hay al menos 15 casos liquidados (mínimo 5 aciertos y 5 fallos); también muestra Brier, Log Loss y probabilidad media vs frecuencia real de esa selección. Sin muestra suficiente, conserva la probabilidad original y lo señala. Máximo 5 candidatos por mercado; no se mezclan ligas ni apuestas reales.`
+                : 'No hay partidos pendientes en Área 1. Guarda nuevos pronósticos para que el preselector pueda examinarlos. Los partidos resueltos se utilizan únicamente como historial de calidad y calibración.';
         }
 
         function renderModelPredictionStats() {
