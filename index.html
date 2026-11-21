@@ -3899,6 +3899,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         function openLogBetModal(market = '', selection = '', prob = 0) {
+            pendingModelPreselectorOrigin = null;
             betModalIsEditing = false;
             const homeName = document.getElementById('homeName').value.trim() || 'Local';
             const awayName = document.getElementById('awayName').value.trim() || 'Visitante';
@@ -4368,7 +4369,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 status: document.getElementById('logStatus').value,
                 inParallel: sendToParallel,
                 closingOdds: closingOdds > 1 ? closingOdds.toFixed(2) : '',
-                clv: clv !== null ? clv.toFixed(2) : ''
+                clv: clv !== null ? clv.toFixed(2) : '',
+                preselectorOrigin: index >= 0
+                    ? (betLogData[index].preselectorOrigin || null)
+                    : (pendingModelPreselectorOrigin ? { ...pendingModelPreselectorOrigin } : null)
             };
             // Un registro con misma fecha, partido, mercado, selección, casa y stake
             // se considera duplicado. Para editar se excluye el propio registro.
@@ -4403,6 +4407,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             saveBetLogToStorage();
             saveParallelBetLogToStorage();
+            // Consumir el origen únicamente después de guardar correctamente.
+            pendingModelPreselectorOrigin = null;
             updateMarketFilterDropdown();
             updateTrackerMetrics();
             updateParallelTrackerMetrics();
@@ -7076,6 +7082,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         const MODEL_PREDICTIONS_STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
         let modelPredictionRecords = [];
         let modelPredictionPreviewRows = [];
+        // Origen temporal del formulario: solo se asigna al abrirlo desde el preselector.
+        // Se guarda como metadato en la apuesta real; no altera pronósticos ni calibradores.
+        let pendingModelPreselectorOrigin = null;
 
         function loadModelPredictionRecords() {
             try {
@@ -7413,6 +7422,90 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 gap: count ? observed - meanPredicted : null, brier, logLoss, model };
         }
 
+        function registerModelPreselectorBet(recordIndex, marketId, outcomeKey) {
+            const record = Array.isArray(modelPredictionRecords) ? modelPredictionRecords[recordIndex] : null;
+            if (!record || record.status === 'SETTLED') {
+                showToast('Este pronóstico ya no está pendiente o no está disponible.');
+                renderModelPreselector();
+                return;
+            }
+            const marketDefinitions = {
+                '1x2': { market: 'Resultado Final (1X2)', keys: {
+                    homeWin: { label: `Gana ${record.home}`, selection: 'Local', odd: 'homeWin' },
+                    draw: { label: 'Empate', selection: 'Empate (X)', odd: 'draw' },
+                    awayWin: { label: `Gana ${record.away}`, selection: 'Visitante', odd: 'awayWin' }
+                }},
+                goals: { market: 'Over / Under Goles', keys: {
+                    over25: { label: 'Más de 2.5', selection: 'Over 2.5', odd: 'over25' },
+                    under25: { label: 'Menos de 2.5', selection: 'Under 2.5', odd: 'under25' }
+                }},
+                btts: { market: 'Ambos Anotan', keys: {
+                    bttsYes: { label: 'Ambos sí', selection: 'Ambos Anotan Si', odd: 'bttsYes' },
+                    bttsNo: { label: 'Ambos no', selection: 'Ambos Anotan No', odd: 'bttsNo' }
+                }}
+            };
+            const definition = marketDefinitions[marketId];
+            const pick = definition && definition.keys[outcomeKey];
+            if (!definition || !pick) {
+                showToast('No se pudo identificar el mercado o la selección sugerida.');
+                return;
+            }
+            const probabilities = (record.probabilities && record.probabilities.original && typeof record.probabilities.original === 'object')
+                ? record.probabilities.original : (record.probabilities || {});
+            const rawProbability = Number(probabilities[outcomeKey]);
+            if (!Number.isFinite(rawProbability) || rawProbability <= 0 || rawProbability >= 1) {
+                showToast('La probabilidad original de esta selección no es válida.');
+                return;
+            }
+            // Revalidar los mismos filtros obligatorios justo antes de abrir el formulario.
+            const history = buildModelPreselectorSelectionHistory(record.league, definition.market, pick.selection);
+            const minimumSample = history.count >= 15 && history.wins >= 5 && history.losses >= 5;
+            const qualityAvailable = Number.isFinite(history.brier) && Number.isFinite(history.gap);
+            if (!minimumSample || !history.model || !history.model.ready || !qualityAvailable) {
+                showToast('La selección ya no cumple todos los filtros obligatorios del preselector.');
+                renderModelPreselector();
+                return;
+            }
+            const calibratedProbability = Math.max(0.000001, Math.min(0.999999,
+                poissonCalibrationSigmoid(history.model.a + history.model.b * poissonCalibrationLogit(rawProbability))));
+
+            // Abrir el formulario EXISTENTE de apuestas reales; nunca guardar automáticamente.
+            const preselectorOrigin = {
+                source: 'preselector_area1',
+                predictionId: record.id || null,
+                marketId,
+                outcomeKey,
+                rawProbability: Number((rawProbability * 100).toFixed(4)),
+                calibratedProbability: Number((calibratedProbability * 100).toFixed(4)),
+                historyCount: history.count,
+                historyWins: history.wins,
+                historyLosses: history.losses,
+                brier: history.brier,
+                probabilityFrequencyGap: history.gap,
+                suggestedAt: new Date().toISOString()
+            };
+            openLogBetModal(definition.market, pick.label, calibratedProbability);
+            pendingModelPreselectorOrigin = preselectorOrigin;
+            document.getElementById('logLeague').value = record.league || '';
+            document.getElementById('logMatch').value = `${record.home || 'Local'} vs ${record.away || 'Visitante'}`;
+            document.getElementById('logMarket').value = definition.market;
+            document.getElementById('logSelection').value = pick.label;
+            document.getElementById('logProb').value = (calibratedProbability * 100).toFixed(1);
+            document.getElementById('logFairOdds').value = (1 / calibratedProbability).toFixed(2);
+            // No se inventa una cuota de casa: el usuario debe introducir la cuota real.
+            document.getElementById('logBookieOdds').value = '';
+            document.getElementById('logClosingOdds').value = '';
+            document.getElementById('logStatus').value = 'PENDING';
+            if (record.matchDate && /^\d{4}-\d{2}-\d{2}$/.test(String(record.matchDate))) {
+                document.getElementById('logDate').value = record.matchDate;
+            }
+            updateBetModalConfidence();
+            checkSelectionHistoricalProfit();
+            calculateLogEv();
+            scheduleBetModalInlineMc();
+            showToast('Sugerencia cargada en Registrar Apuesta. Revisa cuota y stake antes de guardar.');
+        }
+
         function renderModelPreselector() {
             const panel = document.getElementById('modelPreselectorPanel');
             if (!panel) return;
@@ -7517,6 +7610,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         <div class="text-[9px] font-black text-amber-200 mt-1">${escapeModelPredictionHtml(pick.label)}</div>
                         ${calibrationLine}${qualityLine}${oddsLine}
                         <div class="text-[7px] text-slate-600 mt-1">${escapeModelPredictionHtml(r.matchDate || '')}${r.kickoff ? ' · ' + escapeModelPredictionHtml(r.kickoff) : ''}</div>
+                        <button type="button" onclick="registerModelPreselectorBet(${modelPredictionRecords.indexOf(r)}, '${def.id}', '${pick.key}')" class="mt-2 w-full rounded-lg border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 text-[9px] font-black px-2.5 py-2 transition-colors"><i class="fa-solid fa-plus-circle mr-1"></i>REGISTRAR APUESTA</button>
                     </article>`;
                 }).join('');
             });
@@ -8965,7 +9059,7 @@ document.addEventListener('keydown', function(event) {
             <div id="modelPreselectorPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-amber-500/30">
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-filter-circle-dollar text-amber-300"></i> Preselector de partidos</h3>
-                    <p class="text-[9px] text-slate-400 mt-1">Examina los partidos pendientes guardados en Área 1 y ordena por la probabilidad más alta de cada mercado. Máximo 5 partidos distintos por mercado; no crea apuestas ni modifica pronósticos.</p></div>
+                    <p class="text-[9px] text-slate-400 mt-1">Examina los partidos pendientes guardados en Área 1 y ordena por la probabilidad más alta de cada mercado. Máximo 5 partidos distintos por mercado; permite precargar el formulario de apuesta sin guardar automáticamente.</p></div>
                     <button type="button" onclick="renderModelPreselector()" class="shrink-0 text-[9px] font-black bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-lg px-2.5 py-2"><i class="fa-solid fa-rotate mr-1"></i>ACTUALIZAR</button>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
