@@ -294,6 +294,10 @@
 #sec-prediction-memory.poisson-premium #modelPredictionStatsPanel > .rounded-xl > div:first-child {
   background: linear-gradient(90deg, rgba(8,145,178,.17), rgba(30,41,59,.45));
 }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSelections tr:nth-child(3n+1) { border-left: 2px solid rgba(129,140,248,.75); }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSelections tr:nth-child(3n+2) { border-left: 2px solid rgba(34,211,238,.75); }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSelections tr:nth-child(3n) { border-left: 2px solid rgba(52,211,153,.75); }
+#sec-prediction-memory.poisson-premium #modelPredictionStatsSelections td { vertical-align: middle; }
 #sec-prediction-memory.poisson-premium table thead {
   background: linear-gradient(90deg, rgba(8,47,73,.78), rgba(15,23,42,.9));
 }
@@ -7366,8 +7370,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function renderModelPredictionStats() {
             const summary=document.getElementById('modelPredictionStatsSummary');
             const marketBody=document.getElementById('modelPredictionStatsMarkets');
+            const selectionBody=document.getElementById('modelPredictionStatsSelections');
             const reliability=document.getElementById('modelPredictionReliability');
-            if(!summary||!marketBody||!reliability)return;
+            if(!summary||!marketBody||!selectionBody||!reliability)return;
             const filter=document.getElementById('modelStatsLeagueFilter');
             const allSettled=modelPredictionRecords.filter(r=>r.status==='SETTLED'&&Number.isInteger(Number(r.actualHomeGoals))&&Number.isInteger(Number(r.actualAwayGoals)));
             const leagues=[...new Set(modelPredictionRecords.map(r=>String(r.league||'Sin competición').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
@@ -7422,6 +7427,49 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             summary.innerHTML=cards.map(([label,value,sub])=>`<div class="rounded-xl border border-slate-800 bg-slate-950/70 p-2"><div class="text-[8px] text-slate-500 font-bold">${label}</div><div class="text-base font-black text-white mt-0.5">${value}</div><div class="text-[8px] text-slate-500">${sub}</div></div>`).join('');
             const badge=document.getElementById('modelStatsSampleBadge');if(badge)badge.textContent=`${settled.length} evaluados`;
             marketBody.innerHTML=marketMetrics.map(m=>`<tr><td class="p-2 text-slate-200 font-bold">${m.label}</td><td class="p-2 text-slate-300">${m.n}</td><td class="p-2 text-slate-300">${pct(m.accuracy)}</td><td class="p-2 text-cyan-200">${fmt(m.brier)}</td><td class="p-2 text-cyan-200">${fmt(m.logloss)}</td></tr>`).join('');
+
+            // Desglose independiente por selección: cada probabilidad se contrasta
+            // contra la ocurrencia real de ese evento, usando siempre el snapshot original.
+            const selectionDefinitions=[
+                {market:'1X2',label:'Local',key:'homeWin',actual:a=>a.homeWin,type:'multi'},
+                {market:'1X2',label:'Empate',key:'draw',actual:a=>a.draw,type:'multi'},
+                {market:'1X2',label:'Visitante',key:'awayWin',actual:a=>a.awayWin,type:'multi'},
+                {market:'Goles 2.5',label:'Over 2.5',key:'over25',actual:a=>a.over25,type:'binary'},
+                {market:'Goles 2.5',label:'Under 2.5',key:'under25',actual:a=>!a.over25,type:'binary',complementOf:'over25'},
+                {market:'BTTS',label:'Sí anotan ambos',key:'bttsYes',actual:a=>a.bttsYes,type:'binary'},
+                {market:'BTTS',label:'No anotan ambos',key:'bttsNo',actual:a=>!a.bttsYes,type:'binary',complementOf:'bttsYes'}
+            ];
+            const selectionMetrics=selectionDefinitions.map(def=>{
+                let n=0,probSum=0,observedSum=0,brierSum=0,logLossSum=0,picked=0,pickHits=0;
+                for(const r of settled){
+                    const p=(r.probabilities?.original&&typeof r.probabilities.original==='object')?r.probabilities.original:(r.probabilities||{});
+                    let prob=Number(p[def.key]);
+                    if(def.complementOf && !Number.isFinite(prob)){
+                        const base=Number(p[def.complementOf]);
+                        if(Number.isFinite(base))prob=1-base;
+                    }
+                    if(!Number.isFinite(prob)||prob<0||prob>1)continue;
+                    if(def.type==='multi'){
+                        const keys=['homeWin','draw','awayWin'],raw=keys.map(k=>Number(p[k]));
+                        if(!raw.every(v=>Number.isFinite(v)&&v>=0&&v<=1))continue;
+                        const sum=raw.reduce((a,b)=>a+b,0);if(sum<=0)continue;
+                        prob=raw[keys.indexOf(def.key)]/sum;
+                    }
+                    const actual=actualFor(r),outcome=def.actual(actual),y=outcome?1:0;
+                    n++;probSum+=prob;observedSum+=y;brierSum+=(prob-y)**2;
+                    logLossSum+=-(y?Math.log(clampProb(prob)):Math.log(clampProb(1-prob)));
+                    let isPicked=false;
+                    if(def.type==='multi'){
+                        const keys=['homeWin','draw','awayWin'],raw=keys.map(k=>Number(p[k])),sum=raw.reduce((a,b)=>a+b,0);
+                        const normalized=raw.map(v=>v/sum),max=Math.max(...normalized);
+                        isPicked=Math.abs(prob-max)<1e-12;
+                    } else isPicked=prob>=0.5;
+                    if(isPicked){picked++;if(outcome)pickHits++;}
+                }
+                return {...def,n,meanProb:n?probSum/n:NaN,observed:n?observedSum/n:NaN,
+                    brier:n?brierSum/n:NaN,logloss:n?logLossSum/n:NaN,picked,pickHits};
+            });
+            selectionBody.innerHTML=selectionMetrics.map(m=>`<tr class="${m.market==='1X2'?'bg-indigo-950/15':m.market==='Goles 2.5'?'bg-cyan-950/10':'bg-emerald-950/10'}"><td class="p-2 text-slate-100 font-bold">${m.label}<span class="block text-[7px] text-slate-500 font-normal">${m.market}</span></td><td class="p-2 text-slate-300">${m.n}</td><td class="p-2 text-slate-300 whitespace-nowrap">${pct(m.meanProb)} / ${pct(m.observed)}</td><td class="p-2 text-slate-300 whitespace-nowrap">${m.picked?`${m.pickHits}/${m.picked} · ${pct(m.pickHits/m.picked)}`:'—'}</td><td class="p-2 text-cyan-200">${fmt(m.brier)}</td><td class="p-2 text-cyan-200">${fmt(m.logloss)}</td></tr>`).join('');
             const bins=Array.from({length:5},(_,i)=>({lo:i*0.1+0.5,hi:i===4?1:(i+1)*0.1+0.5,n:0,confidence:0,observed:0}));
             for(const r of settled){
                 const p=(r.probabilities?.original&&typeof r.probabilities.original==='object')?r.probabilities.original:(r.probabilities||{}),keys=['homeWin','draw','awayWin'],vals=keys.map(k=>Number(p[k]));
@@ -8745,8 +8793,13 @@ document.addEventListener('keydown', function(event) {
                     <span id="modelStatsPendingHint" class="text-[9px] text-slate-500 ml-auto">Los pendientes no entran en las métricas.</span>
                 </div>
                 <div id="modelPredictionStatsSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
+                <div class="rounded-xl border border-indigo-500/30 overflow-hidden">
+                    <div class="px-2.5 py-2 bg-gradient-to-r from-indigo-950/90 to-cyan-950/60 text-[9px] font-black text-indigo-100">CALIDAD DE PROBABILIDAD POR SELECCIÓN</div>
+                    <div class="overflow-x-auto"><table class="w-full text-[9px] text-left"><thead class="bg-slate-950 text-slate-400"><tr><th class="p-2">Selección</th><th class="p-2">Muestra</th><th class="p-2">Prob. media / real</th><th class="p-2">Acierto al elegir</th><th class="p-2">Brier ↓</th><th class="p-2">Log Loss ↓</th></tr></thead><tbody id="modelPredictionStatsSelections" class="divide-y divide-slate-800"></tbody></table></div>
+                    <p class="px-2.5 py-2 text-[8px] text-slate-500 bg-slate-950/60">Cada selección se evalúa por separado. Muestra, Brier y Log Loss usan todos los partidos válidos; el acierto se calcula solo cuando esa selección fue la más probable del mercado (o tuvo probabilidad ≥50% en mercados binarios).</p>
+                </div>
                 <div class="rounded-xl border border-slate-800 overflow-hidden">
-                    <div class="px-2.5 py-2 bg-slate-900/80 text-[9px] font-black text-slate-200">CALIDAD DE PROBABILIDADES POR MERCADO</div>
+                    <div class="px-2.5 py-2 bg-slate-900/80 text-[9px] font-black text-slate-200">RESUMEN GENERAL POR MERCADO · MÉTRICA CONSERVADA</div>
                     <div class="overflow-x-auto"><table class="w-full text-[9px] text-left"><thead class="bg-slate-950 text-slate-500"><tr><th class="p-2">Mercado</th><th class="p-2">Muestra</th><th class="p-2">Acierto</th><th class="p-2">Brier ↓</th><th class="p-2">Log Loss ↓</th></tr></thead><tbody id="modelPredictionStatsMarkets" class="divide-y divide-slate-800"></tbody></table></div>
                 </div>
                 <div class="rounded-xl border border-slate-800 p-2.5 space-y-2">
