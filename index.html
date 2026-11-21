@@ -7367,13 +7367,171 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const r=modelPredictionRecords.find(x=>x.id===id); if(!r)return;
             const hg=Number(document.getElementById(`mp_home_score_${id}`)?.value), ag=Number(document.getElementById(`mp_away_score_${id}`)?.value);
             if(!Number.isInteger(hg)||!Number.isInteger(ag)||hg<0||ag<0){showToast('Introduce un marcador válido para ambos equipos.');return;}
-            const oneX=hg>ag?'homeWin':hg===ag?'draw':'awayWin'; const over=hg+ag>=3;
-            const btts=hg>0&&ag>0;
-            r.actualHomeGoals=hg;r.actualAwayGoals=ag;r.status='SETTLED';r.settledAt=new Date().toISOString();
-            r.results={oneXTwo:oneX,overUnder:over?'over25':'under25',btts:btts?'bttsYes':'bttsNo',
-                homeWin:hg>ag?'WON':'LOST',draw:hg===ag?'WON':'LOST',awayWin:hg<ag?'WON':'LOST',over25:over?'WON':'LOST',under25:over?'LOST':'WON',bttsYes:btts?'WON':'LOST',bttsNo:btts?'LOST':'WON'};
+            if (!applyModelPredictionScore(r,hg,ag,'manual')) { showToast('Este pronóstico ya está resuelto o el marcador no es válido.'); return; }
             persistModelPredictionRecords(); if(currentUser&&supabaseClient)syncModelPredictionsToCloud([r]);
             showToast('Marcador guardado: se resolvieron 1X2, Over/Under 2.5 y BTTS.');
+        }
+
+        // IMPORTADOR ADITIVO DE RESULTADOS: resuelve pronósticos existentes de Área 1
+        // usando Competition + Home + Away + marcador final. Nunca crea pronósticos nuevos.
+        let modelPredictionResultsPreviewRows = [];
+
+        function normalizeModelResultCompetition(value) {
+            return modelPredictionNormalize(value).replace(/^[a-z]{2,3}(?:-[a-z]{2,3})?\s+/, '').trim();
+        }
+
+        function normalizeModelResultTeam(value) {
+            return modelPredictionNormalize(value).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function parseModelResultScore(value) {
+            const raw = String(value || '').trim();
+            const match = raw.match(/^(\d{1,2})\s*[:\-]\s*(\d{1,2})$/);
+            if (!match) return null;
+            const leftText = match[1], rightText = match[2];
+            const homeGoals = Number(leftText), awayGoals = Number(rightText);
+            if (!Number.isInteger(homeGoals) || !Number.isInteger(awayGoals) || homeGoals < 0 || awayGoals < 0) return null;
+            // Los horarios de la tabla (p. ej. 13:45, 17:00) no son marcadores.
+            // Se reconocen como hora cuando tienen formato HH:MM de dos dígitos.
+            if (/^\d{2}:\d{2}$/.test(raw) && homeGoals <= 23 && awayGoals <= 59) return null;
+            // Marcadores de fútbol superiores a 10 goles son excepcionales; se evita
+            // interpretar horas de una cifra como 9:00 como si fueran un resultado.
+            if (rightText.length === 2 && homeGoals <= 23 && awayGoals <= 59) return null;
+            if (leftText.length === 2 && rightText.length === 2 && homeGoals <= 23 && awayGoals <= 59) return null;
+            return { homeGoals, awayGoals };
+        }
+
+        function parseModelPredictionResultsTable(rawText) {
+            const lines = String(rawText || '').replace(/\r/g, '').split('\n').filter(line => line.trim());
+            if (lines.length < 2) throw new Error('Pega los encabezados y al menos una fila de la tabla de resultados.');
+            const headers = lines[0].split('\t').map(value => value.trim());
+            const compIdx = modelPredictionHeaderIndex(headers, ['Competition','League','Competicion','Liga']);
+            const homeIdx = modelPredictionHeaderIndex(headers, ['Home','Local']);
+            const timeIdx = modelPredictionHeaderIndex(headers, ['Time','Score','Resultado','Marcador']);
+            const awayIdx = modelPredictionHeaderIndex(headers, ['Away','Visitante']);
+            if ([compIdx,homeIdx,timeIdx,awayIdx].some(index => index < 0)) {
+                throw new Error('No encuentro Competition, Home, Time y Away. Usa la tabla con sus encabezados originales.');
+            }
+            const body = lines.slice(1);
+            const physical = body.map((line,index) => ({ lineNo:index+2, cells:line.split('\t').map(value => value.trim()) }));
+            let logical = [];
+            if (physical.every(row => row.cells.length >= headers.length)) {
+                logical = physical.map(row => ({ lineNo:row.lineNo, cells:row.cells }));
+            } else {
+                // Algunas exportaciones separan cada partido en cinco bloques físicos;
+                // otras entregan una celda por línea. Se reconstruyen solo si el total
+                // de celdas coincide exactamente con el número de encabezados por fila.
+                let rebuilt = false;
+                for (const groupSize of [5, headers.length]) {
+                    if (body.length % groupSize !== 0) continue;
+                    const candidate = [];
+                    let valid = true;
+                    for (let offset=0; offset<physical.length; offset+=groupSize) {
+                        const group = physical.slice(offset,offset+groupSize);
+                        const cells = group.flatMap(row => row.cells);
+                        while (cells.length && cells[cells.length-1] === '') cells.pop();
+                        if (cells.length !== headers.length) { valid=false; break; }
+                        candidate.push({ lineNo:group[0].lineNo, cells });
+                    }
+                    if (valid) { logical=candidate; rebuilt=true; break; }
+                }
+                if (!rebuilt) throw new Error(`No pude reconstruir la tabla: se esperan ${headers.length} columnas por partido. Copia la tabla completa conservando sus tabulaciones.`);
+            }
+            const rows = [], errors = [];
+            logical.forEach(row => {
+                const cells=row.cells;
+                const league=String(cells[compIdx]||'').trim();
+                const home=String(cells[homeIdx]||'').trim();
+                const away=String(cells[awayIdx]||'').trim();
+                const scoreText=String(cells[timeIdx]||'').trim();
+                if (!league || !home || !away) { errors.push(`Fila ${row.lineNo}: competición o equipos incompletos.`); return; }
+                const score=parseModelResultScore(scoreText);
+                rows.push({ league,home,away,scoreText,score,lineNo:row.lineNo });
+            });
+            return { rows, errors };
+        }
+
+        function previewModelPredictionResultsImport() {
+            const status=document.getElementById('modelPredictionResultsStatus');
+            const preview=document.getElementById('modelPredictionResultsPreview');
+            const applyBtn=document.getElementById('applyModelPredictionResultsBtn');
+            try {
+                const parsed=parseModelPredictionResultsTable(document.getElementById('modelPredictionResultsPaste')?.value||'');
+                const seen=new Map();
+                modelPredictionResultsPreviewRows=[];
+                let noScore=0, unmatched=0, ambiguous=0, already=0;
+                parsed.rows.forEach(row => {
+                    if (!row.score) { noScore++; return; }
+                    const key=[normalizeModelResultCompetition(row.league),normalizeModelResultTeam(row.home),normalizeModelResultTeam(row.away)].join('|');
+                    const previous=seen.get(key);
+                    if (previous) {
+                        if (previous.score.homeGoals!==row.score.homeGoals || previous.score.awayGoals!==row.score.awayGoals) {
+                            previous.status='AMBIGUOUS'; previous.message='La tabla contiene marcadores distintos para el mismo partido.'; ambiguous++;
+                        }
+                        return;
+                    }
+                    seen.set(key,row);
+                    const candidates=modelPredictionRecords.filter(record =>
+                        normalizeModelResultCompetition(record.league)===normalizeModelResultCompetition(row.league) &&
+                        normalizeModelResultTeam(record.home)===normalizeModelResultTeam(row.home) &&
+                        normalizeModelResultTeam(record.away)===normalizeModelResultTeam(row.away));
+                    const pending=candidates.filter(record => record.status!=='SETTLED');
+                    if (pending.length===1) {
+                        row.status='MATCHED'; row.recordId=pending[0].id; row.message='Pronóstico pendiente encontrado.';
+                    } else if (pending.length>1 || candidates.length>1) {
+                        row.status='AMBIGUOUS'; row.message='Hay más de un pronóstico coincidente; no se actualizará automáticamente.'; ambiguous++;
+                    } else if (candidates.length===1 && candidates[0].status==='SETTLED') {
+                        const oldHome=Number(candidates[0].actualHomeGoals), oldAway=Number(candidates[0].actualAwayGoals);
+                        if (oldHome===row.score.homeGoals && oldAway===row.score.awayGoals) { row.status='ALREADY'; row.message='Este resultado ya estaba guardado.'; already++; }
+                        else { row.status='PROTECTED'; row.message='Ya está resuelto con otro marcador; no se sobrescribirá.'; already++; }
+                    } else { row.status='UNMATCHED'; row.message='No existe un pronóstico coincidente en Área 1.'; unmatched++; }
+                    if (row.status==='AMBIGUOUS' && !row.message) { row.message='Partido ambiguo en la tabla.'; ambiguous++; }
+                    modelPredictionResultsPreviewRows.push(row);
+                });
+                const ready=modelPredictionResultsPreviewRows.filter(row=>row.status==='MATCHED');
+                const statusLabel=`${ready.length} listos para actualizar · ${noScore} filas sin marcador final · ${already} ya resueltos/protegidos · ${unmatched} sin coincidencia · ${ambiguous} ambiguos · ${parsed.errors.length} filas incompletas.`;
+                status.innerHTML=`<b class="text-emerald-300">${escapeModelPredictionHtml(statusLabel)}</b>${parsed.errors.length?`<div class="mt-1 text-rose-300">${parsed.errors.map(escapeModelPredictionHtml).join('<br>')}</div>`:''}`;
+                const rowsHtml=modelPredictionResultsPreviewRows.map(row=>{
+                    const score=row.score?`${row.score.homeGoals}–${row.score.awayGoals}`:'—';
+                    const color=row.status==='MATCHED'?'text-emerald-300':row.status==='ALREADY'?'text-cyan-300':row.status==='UNMATCHED'?'text-amber-300':'text-rose-300';
+                    return `<tr class="border-t border-slate-800"><td class="p-2">${escapeModelPredictionHtml(row.league)}</td><td class="p-2">${escapeModelPredictionHtml(row.home)} vs ${escapeModelPredictionHtml(row.away)}</td><td class="p-2 text-center font-black">${score}</td><td class="p-2 ${color}">${escapeModelPredictionHtml(row.message)}</td></tr>`;
+                }).join('');
+                preview.innerHTML=`<table class="w-full text-[9px] min-w-[540px]"><thead class="bg-slate-900 text-slate-400"><tr><th class="p-2 text-left">Competición</th><th class="p-2 text-left">Partido</th><th class="p-2">Marcador</th><th class="p-2 text-left">Estado</th></tr></thead><tbody>${rowsHtml||'<tr><td colspan="4" class="p-3 text-center text-slate-400">No se encontraron filas con marcador final.</td></tr>'}</tbody></table>`;
+                preview.classList.remove('hidden');
+                applyBtn.disabled=ready.length===0;
+            } catch(error) {
+                modelPredictionResultsPreviewRows=[]; applyBtn.disabled=true; preview.classList.add('hidden'); status.textContent=error.message;
+            }
+        }
+
+        function applyModelPredictionScore(record, homeGoals, awayGoals, source='manual') {
+            if (!record || !Number.isInteger(homeGoals) || !Number.isInteger(awayGoals) || homeGoals<0 || awayGoals<0) return false;
+            if (record.status==='SETTLED') return false;
+            const over=homeGoals+awayGoals>=3, btts=homeGoals>0&&awayGoals>0;
+            record.actualHomeGoals=homeGoals; record.actualAwayGoals=awayGoals; record.status='SETTLED'; record.settledAt=new Date().toISOString();
+            record.results={oneXTwo:homeGoals>awayGoals?'homeWin':homeGoals===awayGoals?'draw':'awayWin',overUnder:over?'over25':'under25',btts:btts?'bttsYes':'bttsNo',
+                homeWin:homeGoals>awayGoals?'WON':'LOST',draw:homeGoals===awayGoals?'WON':'LOST',awayWin:homeGoals<awayGoals?'WON':'LOST',over25:over?'WON':'LOST',under25:over?'LOST':'WON',bttsYes:btts?'WON':'LOST',bttsNo:btts?'LOST':'WON',
+                source:source==='table_import'?'results_table_import':'manual_entry'};
+            return true;
+        }
+
+        async function applyModelPredictionResultsImport() {
+            const ready=modelPredictionResultsPreviewRows.filter(row=>row.status==='MATCHED');
+            if (!ready.length) return;
+            const updated=[];
+            ready.forEach(row=>{
+                const record=modelPredictionRecords.find(item=>item.id===row.recordId);
+                if (record && applyModelPredictionScore(record,row.score.homeGoals,row.score.awayGoals,'table_import')) updated.push(record);
+            });
+            if (!updated.length) { showToast('No se actualizaron registros; revisa si ya fueron resueltos.'); return; }
+            persistModelPredictionRecords();
+            if (currentUser && supabaseClient) await syncModelPredictionsToCloud(updated);
+            const status=document.getElementById('modelPredictionResultsStatus');
+            const applyBtn=document.getElementById('applyModelPredictionResultsBtn');
+            applyBtn.disabled=true;
+            status.innerHTML=`<b class="text-emerald-300">Se actualizaron ${updated.length} pronósticos.</b> Se resolvieron automáticamente 1X2, Over/Under 2.5 y Ambos Anotan. Los registros ya estaban en la memoria; no se crearon apuestas.`;
+            modelPredictionResultsPreviewRows=[];
+            showToast(`${updated.length} resultados importados y pronósticos resueltos.`);
         }
 
         // PRESELECTOR ADITIVO: candidatos pendientes + calidad/calibración histórica
@@ -9055,6 +9213,20 @@ document.addEventListener('keydown', function(event) {
                 </div>
                 <div id="modelPredictionParseStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">La revisión previa detecta filas incompletas y duplicados antes de guardar.</div>
                 <div id="modelPredictionPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
+            </div>
+            <div id="modelPredictionResultsImportPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-emerald-500/35">
+                <div class="flex items-start justify-between gap-2">
+                    <div><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-file-import text-emerald-300"></i> Actualizar resultados desde tabla</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Pega la tabla de resultados con Competition, Home, Time y Away. El sistema buscará los pronósticos correspondientes en esta memoria y solo resolverá los que tengan marcador final.</p></div>
+                    <span class="shrink-0 text-[8px] font-black uppercase tracking-wider text-emerald-200 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-2 py-1">Importación segura</span>
+                </div>
+                <textarea id="modelPredictionResultsPaste" rows="6" spellcheck="false" placeholder="Pega aquí la tabla de resultados completa, incluidos los encabezados Competition, Home, Time y Away..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-[10px] leading-relaxed text-slate-200 font-mono focus:outline-none focus:border-emerald-400"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="previewModelPredictionResultsImport()" class="py-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/35 text-emerald-200 font-black text-[11px]"><i class="fa-solid fa-magnifying-glass mr-1"></i> Revisar resultados</button>
+                    <button type="button" id="applyModelPredictionResultsBtn" onclick="applyModelPredictionResultsImport()" disabled class="py-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 font-black text-[11px] disabled:opacity-40"><i class="fa-solid fa-check-double mr-1"></i> Actualizar pronósticos</button>
+                </div>
+                <div id="modelPredictionResultsStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">Primero revisa la tabla. No se crearán pronósticos nuevos ni se sobrescribirán resultados ya guardados.</div>
+                <div id="modelPredictionResultsPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
             </div>
             <div id="modelPreselectorPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-amber-500/30">
                 <div class="flex flex-wrap items-start justify-between gap-2">
