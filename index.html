@@ -8131,6 +8131,136 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const pendingHint=document.getElementById('modelStatsPendingHint');if(pendingHint)pendingHint.textContent=`${pending} pendientes excluidos`;
         }
 
+        // ELO independiente por competición: se reconstruye desde los resultados liquidados
+        // de Área 1. No escribe en la memoria, no modifica Poisson y no mezcla ligas.
+        const MODEL_ELO_INITIAL_RATING = 1500;
+        const MODEL_ELO_K_FACTOR = 24;
+        const MODEL_ELO_HOME_ADVANTAGE = 65;
+        let modelEloLeagueFilter = 'ALL';
+
+        function normalizeModelEloTeam(value) {
+            return String(value || '').trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+        }
+
+        function buildModelEloSnapshot(records) {
+            const settled = (Array.isArray(records) ? records : []).filter(r =>
+                r && r.status === 'SETTLED' && String(r.league || '').trim() &&
+                String(r.home || '').trim() && String(r.away || '').trim() &&
+                normalizeModelEloTeam(r.home) !== normalizeModelEloTeam(r.away) &&
+                r.actualHomeGoals !== null && r.actualHomeGoals !== undefined && String(r.actualHomeGoals).trim() !== '' &&
+                Number.isInteger(Number(r.actualHomeGoals)) && Number(r.actualHomeGoals) >= 0 &&
+                r.actualAwayGoals !== null && r.actualAwayGoals !== undefined && String(r.actualAwayGoals).trim() !== '' &&
+                Number.isInteger(Number(r.actualAwayGoals)) && Number(r.actualAwayGoals) >= 0
+            );
+            const leagueGroups = new Map();
+            for (const r of settled) {
+                const leagueKey = String(r.league).trim().toLocaleLowerCase('es');
+                if (!leagueGroups.has(leagueKey)) leagueGroups.set(leagueKey, { name: String(r.league).trim(), records: [] });
+                leagueGroups.get(leagueKey).records.push(r);
+            }
+            const leagues = new Map();
+            const allHistory = [];
+            let teamCount = 0;
+            for (const [leagueKey, leagueData] of leagueGroups) {
+                const teams = new Map();
+                const dateKey = r => {
+                    const date = /^\d{4}-\d{2}-\d{2}$/.test(String(r.matchDate || '')) ? String(r.matchDate) : String(r.settledAt || r.analyzedAt || '').slice(0, 10);
+                    // Agrupar por fecha completa: si hay varios partidos el mismo día,
+                    // ninguno utiliza el resultado de otro encuentro de esa jornada.
+                    return date || '9999-99-99';
+                };
+                const ordered = [...leagueData.records].sort((a, b) => dateKey(a).localeCompare(dateKey(b)) || String(a.analyzedAt || '').localeCompare(String(b.analyzedAt || '')) || String(a.id || '').localeCompare(String(b.id || '')));
+                // Todos los partidos de una misma fecha comparten ratings previos;
+                // sus resultados se aplican juntos para evitar filtración dentro de la jornada.
+                const batches = new Map();
+                ordered.forEach(r => {
+                    const key = dateKey(r);
+                    if (!batches.has(key)) batches.set(key, []);
+                    batches.get(key).push(r);
+                });
+                const history = [];
+                for (const [batchKey, batch] of batches) {
+                    const updates = new Map();
+                    const getRating = key => teams.get(key)?.rating ?? MODEL_ELO_INITIAL_RATING;
+                    const addUpdate = (key, delta) => updates.set(key, (updates.get(key) || 0) + delta);
+                    for (const r of batch) {
+                        const homeKey = normalizeModelEloTeam(r.home), awayKey = normalizeModelEloTeam(r.away);
+                        const homeRating = getRating(homeKey), awayRating = getRating(awayKey);
+                        const adjustedDiff = homeRating + MODEL_ELO_HOME_ADVANTAGE - awayRating;
+                        const expectedHomeScore = 1 / (1 + Math.pow(10, -adjustedDiff / 400));
+                        const hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals);
+                        const actualHomeScore = hg > ag ? 1 : hg === ag ? 0.5 : 0;
+                        const delta = MODEL_ELO_K_FACTOR * (actualHomeScore - expectedHomeScore);
+                        addUpdate(homeKey, delta);
+                        addUpdate(awayKey, -delta);
+                        const snapshot = {
+                            league: leagueData.name, leagueKey, home: String(r.home), away: String(r.away),
+                            matchDate: String(r.matchDate || '').slice(0, 10), kickoff: String(r.kickoff || ''),
+                            analyzedAt: String(r.analyzedAt || ''), homeRating, awayRating,
+                            expectedHomeScore, actualHomeScore, actualHomeGoals: hg, actualAwayGoals: ag
+                        };
+                        history.push(snapshot);
+                        allHistory.push(snapshot);
+                    }
+                    for (const [teamKey, delta] of updates) {
+                        const existing = teams.get(teamKey) || { name: '', rating: MODEL_ELO_INITIAL_RATING, matches: 0 };
+                        existing.rating += delta;
+                        teams.set(teamKey, existing);
+                    }
+                    for (const r of batch) {
+                        const hk = normalizeModelEloTeam(r.home), ak = normalizeModelEloTeam(r.away);
+                        if (!teams.has(hk)) teams.set(hk, { name: String(r.home), rating: MODEL_ELO_INITIAL_RATING, matches: 0 });
+                        if (!teams.has(ak)) teams.set(ak, { name: String(r.away), rating: MODEL_ELO_INITIAL_RATING, matches: 0 });
+                        teams.get(hk).name = teams.get(hk).name || String(r.home);
+                        teams.get(ak).name = teams.get(ak).name || String(r.away);
+                        teams.get(hk).matches++;
+                        teams.get(ak).matches++;
+                    }
+                }
+                const sortedTeams = [...teams.values()].sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name, 'es'));
+                teamCount += sortedTeams.length;
+                history.sort((a, b) => (b.matchDate || '').localeCompare(a.matchDate || '') || (b.kickoff || '').localeCompare(a.kickoff || '') || b.analyzedAt.localeCompare(a.analyzedAt));
+                leagues.set(leagueKey, { name: leagueData.name, teams: sortedTeams, history, matches: leagueData.records.length });
+            }
+            allHistory.sort((a, b) => (b.matchDate || '').localeCompare(a.matchDate || '') || (b.kickoff || '').localeCompare(a.kickoff || '') || b.analyzedAt.localeCompare(a.analyzedAt));
+            return { leagues, history: allHistory, matches: settled.length, teams: teamCount };
+        }
+
+        function changeModelEloLeague(value) {
+            modelEloLeagueFilter = value || 'ALL';
+            renderModelEloPanel();
+        }
+
+        function renderModelEloPanel() {
+            const root = document.getElementById('modelEloPanel');
+            if (!root) return;
+            const snapshot = buildModelEloSnapshot(modelPredictionRecords);
+            const matchesEl = document.getElementById('modelEloMatches');
+            const leaguesEl = document.getElementById('modelEloLeagues');
+            const teamsEl = document.getElementById('modelEloTeams');
+            const filter = document.getElementById('modelEloLeagueFilter');
+            const ratingsBody = document.getElementById('modelEloRatingsBody');
+            const historyBody = document.getElementById('modelEloHistoryBody');
+            if (matchesEl) matchesEl.textContent = String(snapshot.matches);
+            if (leaguesEl) leaguesEl.textContent = String(snapshot.leagues.size);
+            if (teamsEl) teamsEl.textContent = String(snapshot.teams);
+            if (!filter || !ratingsBody || !historyBody) return;
+            const options = [...snapshot.leagues.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name, 'es'));
+            if (modelEloLeagueFilter !== 'ALL' && !snapshot.leagues.has(modelEloLeagueFilter)) modelEloLeagueFilter = 'ALL';
+            const optionHtml = `<option value="ALL">Todas las ligas</option>` + options.map(([key, league]) => `<option value="${escapeModelPredictionHtml(key)}" ${modelEloLeagueFilter === key ? 'selected' : ''}>${escapeModelPredictionHtml(league.name)}</option>`).join('');
+            if (filter.innerHTML !== optionHtml) filter.innerHTML = optionHtml;
+            const selectedLeagues = modelEloLeagueFilter === 'ALL' ? options.map(([key]) => key) : [modelEloLeagueFilter];
+            const selectedTeams = selectedLeagues.flatMap(key => (snapshot.leagues.get(key)?.teams || []).map(team => ({ ...team, leagueName: snapshot.leagues.get(key).name })));
+            selectedTeams.sort((a, b) => b.rating - a.rating || a.name.localeCompare(b.name, 'es'));
+            ratingsBody.innerHTML = selectedTeams.length ? selectedTeams.map(team => `<tr class="border-t border-slate-800"><td class="p-2 text-left text-slate-200 font-bold">${escapeModelPredictionHtml(team.name)}${modelEloLeagueFilter === 'ALL' ? `<span class="block text-[7px] text-slate-500 font-normal">${escapeModelPredictionHtml(team.leagueName)}</span>` : ''}</td><td class="p-2 text-right text-violet-200 font-black tabular-nums">${team.rating.toFixed(0)}</td><td class="p-2 text-right text-slate-400 tabular-nums">${team.matches}</td></tr>`).join('') : '<tr><td colspan="3" class="p-3 text-center text-slate-500">Aún no hay partidos liquidados con marcador válido en esta liga.</td></tr>';
+            const history = selectedLeagues.flatMap(key => snapshot.leagues.get(key)?.history || []).sort((a, b) => (b.matchDate || '').localeCompare(a.matchDate || '') || (b.kickoff || '').localeCompare(a.kickoff || '') || b.analyzedAt.localeCompare(a.analyzedAt)).slice(0, 10);
+            historyBody.innerHTML = history.length ? history.map(match => `<tr class="border-t border-slate-800"><td class="p-2 text-left text-slate-200">${escapeModelPredictionHtml(match.home)} ${match.actualHomeGoals}-${match.actualAwayGoals} ${escapeModelPredictionHtml(match.away)}<span class="block text-[7px] text-slate-500">${escapeModelPredictionHtml(match.league)} · ${escapeModelPredictionHtml(match.matchDate || 'Fecha no disponible')}${match.kickoff ? ' · ' + escapeModelPredictionHtml(match.kickoff) : ''}</span></td><td class="p-2 text-right text-slate-300 tabular-nums">${match.homeRating.toFixed(0)} / ${match.awayRating.toFixed(0)}</td><td class="p-2 text-right text-slate-300 tabular-nums">${(match.expectedHomeScore * 100).toFixed(1)}% / ${(match.actualHomeScore * 100).toFixed(0)}%</td></tr>`).join('') : '<tr><td colspan="3" class="p-3 text-center text-slate-500">Sin historial disponible.</td></tr>';
+            const note = document.getElementById('modelEloNote');
+            if (note) note.textContent = snapshot.matches
+                ? `Muestra actual: ${snapshot.matches} partidos liquidados de ${snapshot.leagues.size} ligas y ${snapshot.teams} equipos. Cada liga empieza en 1,500 puntos; K=${MODEL_ELO_K_FACTOR}, ventaja local=${MODEL_ELO_HOME_ADVANTAGE}. El porcentaje mostrado es expectativa de puntos del local (victoria=1, empate=0.5, derrota=0), NO probabilidad directa de ganar. Solo se reconstruye con resultados presentes en Área 1; si faltan jornadas anteriores, el rating parte de una muestra incompleta.`
+                : 'Aún no hay resultados liquidados para calcular ELO. Cada liga comenzará con 1,500 puntos por equipo cuando existan marcadores finales. El módulo no modifica Poisson, la calibración ni las apuestas.';
+        }
+
         // La bitácora se pagina únicamente en pantalla: el historial completo permanece intacto.
         const modelPredictionLogPages = { PENDING: 0, SETTLED: 0 };
         const MODEL_PREDICTION_PAGE_SIZE = 10;
@@ -8145,6 +8275,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const root=document.getElementById('modelPredictionLog'); if(!root)return;
             renderModelPredictionStats();
             renderModelPreselector();
+            renderModelEloPanel();
             const pending=modelPredictionRecords.filter(r=>r.status!=='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
             const settled=modelPredictionRecords.filter(r=>r.status==='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
             const count=document.getElementById('modelPredictionCount'); if(count)count.innerText=`${modelPredictionRecords.length} registros · ${pending.length} pendientes · ${settled.length} resueltos`;
@@ -9440,6 +9571,30 @@ document.addEventListener('keydown', function(event) {
                 </div>
                 <div id="modelPredictionResultsStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">Primero revisa la tabla. No se crearán pronósticos nuevos ni se sobrescribirán resultados ya guardados.</div>
                 <div id="modelPredictionResultsPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
+            </div>
+            <div id="modelEloPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-violet-500/30">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-ranking-star text-violet-300"></i> ELO independiente por liga</h3>
+                    <p class="text-[9px] text-slate-400 mt-1">Fuerza relativa de los equipos calculada exclusivamente con partidos liquidados de su propia competición. Módulo experimental, separado de Poisson y de las apuestas.</p></div>
+                    <span class="shrink-0 text-[8px] font-black uppercase tracking-wider text-violet-200 bg-violet-500/10 border border-violet-500/25 rounded-lg px-2 py-1">Experimental</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">PARTIDOS EVALUADOS</span><b id="modelEloMatches" class="block text-lg text-white tabular-nums">0</b></div>
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">LIGAS ACTIVAS</span><b id="modelEloLeagues" class="block text-lg text-violet-300 tabular-nums">0</b></div>
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">EQUIPOS</span><b id="modelEloTeams" class="block text-lg text-cyan-300 tabular-nums">0</b></div>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <label class="text-[9px] text-slate-400 font-bold" for="modelEloLeagueFilter">CONSULTAR LIGA</label>
+                    <select id="modelEloLeagueFilter" onchange="changeModelEloLeague(this.value)" class="min-w-0 max-w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-[10px] text-white"><option value="ALL">Todas las ligas</option></select>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-800">
+                    <table class="w-full text-[9px] min-w-[280px]"><thead class="bg-slate-900 text-slate-400"><tr><th class="p-2 text-left">Equipo</th><th class="p-2 text-right">ELO actual</th><th class="p-2 text-right">PJ</th></tr></thead><tbody id="modelEloRatingsBody"><tr><td colspan="3" class="p-3 text-center text-slate-500">Aún no hay partidos liquidados.</td></tr></tbody></table>
+                </div>
+                <details class="rounded-xl border border-slate-800 bg-slate-950/40 p-2">
+                    <summary class="cursor-pointer text-[9px] font-black text-slate-300">Últimos partidos y ELO previo al encuentro</summary>
+                    <div class="overflow-x-auto mt-2"><table class="w-full text-[8px] min-w-[390px]"><thead class="text-slate-500"><tr><th class="p-2 text-left">Partido</th><th class="p-2 text-right">ELO previo L/V</th><th class="p-2 text-right">Puntos esperados / reales del local</th></tr></thead><tbody id="modelEloHistoryBody"><tr><td colspan="3" class="p-3 text-center text-slate-500">Sin historial disponible.</td></tr></tbody></table></div>
+                </details>
+                <p id="modelEloNote" class="text-[8px] leading-relaxed text-slate-500">Inicio de referencia: 1,500 puntos por equipo y liga. Solo se utilizan marcadores liquidados guardados en Área 1. Los 65 puntos de ventaja local y K=24 son parámetros iniciales experimentales; el ELO no representa directamente una probabilidad de victoria.</p>
             </div>
             <div id="modelPreselectorPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-amber-500/30">
                 <div class="flex flex-wrap items-start justify-between gap-2">
