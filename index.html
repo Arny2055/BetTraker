@@ -1879,6 +1879,66 @@ GP W D L GF GA GD Pts PPG
         // ============================================================
         const SUPABASE_URL = 'https://djvjhtkvghxnwlmaldiz.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_UrdIPeKXpOlKJkXkWDSy1Q_2P5Ui44c';
+        // Área 1 central: el UUID del propietario se valida también mediante RLS en Supabase.
+        const AREA1_OWNER_USER_ID = 'f48abf07-f50f-443d-a42e-8cb72a66b974';
+        let sharedPreselectorPicks = [];
+        let sharedPreselectorMeta = { pendingCount: 0, publishedAt: null };
+        let lastArea1PublicationSignature = '';
+        let area1LoadedOwnerId = null;
+        let area1CentralLoaded = false;
+
+        function isArea1Admin() {
+            return !!(currentUser && String(currentUser.id) === AREA1_OWNER_USER_ID);
+        }
+
+        function updateArea1RoleUI() {
+            const admin = isArea1Admin();
+            document.querySelectorAll('.area1-admin-only').forEach(el => {
+                el.classList.toggle('hidden', !admin);
+            });
+            const roleNotice = document.getElementById('area1RoleNotice');
+            if (roleNotice) {
+                roleNotice.textContent = admin
+                    ? 'ADMINISTRADOR · Tu cuenta controla la memoria central, resultados y publicación.'
+                    : (currentUser ? 'USUARIO · Solo lectura de los partidos publicados por el administrador.' : 'Inicia sesión para consultar los partidos publicados.');
+                roleNotice.className = 'text-[8px] rounded-lg border px-2.5 py-2 ' + (admin
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200'
+                    : 'border-sky-500/30 bg-sky-500/10 text-sky-200');
+            }
+            if (!currentUser) {
+                // Al cerrar sesión se vacía la memoria en ejecución; el respaldo local del propietario
+                // permanece intacto para restaurarse únicamente cuando vuelva a autenticarse.
+                modelPredictionRecords = [];
+                area1LoadedOwnerId = null;
+                area1CentralLoaded = false;
+                lastArea1PublicationSignature = '';
+                renderModelPredictionLog();
+                renderModelPreselector();
+            } else if (!admin) {
+                // Nunca conservar en memoria de ejecución los registros privados del propietario
+                // al cambiar a una cuenta de solo lectura en el mismo navegador.
+                modelPredictionRecords = [];
+                area1LoadedOwnerId = null;
+                area1CentralLoaded = false;
+                lastArea1PublicationSignature = '';
+                renderModelPredictionLog();
+                renderModelPreselector();
+            } else if (admin) {
+                // Al entrar como propietario (incluso después de otra cuenta en el mismo navegador),
+                // restaura únicamente la copia local que ya pertenecía al propietario.
+                if (area1LoadedOwnerId !== AREA1_OWNER_USER_ID) {
+                    area1CentralLoaded = false;
+                    lastArea1PublicationSignature = '';
+                    try {
+                        const raw = localStorage.getItem(MODEL_PREDICTIONS_STORAGE_KEY);
+                        const cached = raw ? JSON.parse(raw) : [];
+                        modelPredictionRecords = Array.isArray(cached) ? cached : [];
+                    } catch (e) { modelPredictionRecords = []; }
+                    area1LoadedOwnerId = AREA1_OWNER_USER_ID;
+                }
+                renderModelPredictionLog();
+            }
+        }
 
         let supabaseClient = null;
         let currentUser = null;
@@ -1961,6 +2021,7 @@ GP W D L GF GA GD Pts PPG
                 if (loggedIn) loggedIn.classList.add('hidden');
                 setSyncStatus('offline');
             }
+            updateArea1RoleUI();
         }
 
         function toggleAuthModal(show) {
@@ -2336,8 +2397,14 @@ GP W D L GF GA GD Pts PPG
                     await pullFromSupabase(false);
                     await pushAllToSupabase();
                 }
-                if (modelPredictionRecords.length) await syncModelPredictionsToCloud(modelPredictionRecords);
-                await syncModelPredictionsFromCloud();
+                if (isArea1Admin()) {
+                    if (modelPredictionRecords.length) await syncModelPredictionsToCloud(modelPredictionRecords);
+                    await syncModelPredictionsFromCloud();
+                    renderModelPreselector();
+                } else {
+                    modelPredictionRecords = [];
+                    await syncModelPredictionsFromCloud();
+                }
 
                 setSyncStatus('synced');
                 showToast('☁️ Sincronización inicial completada.');
@@ -7129,16 +7196,25 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         let pendingModelPreselectorOrigin = null;
 
         function loadModelPredictionRecords() {
+            // La memoria local del propietario no se carga en sesiones anónimas ni de usuarios.
+            if (!isArea1Admin()) {
+                modelPredictionRecords = [];
+                renderModelPredictionLog();
+                fitPoissonCalibrationFromModelPredictions();
+                return;
+            }
             try {
                 const raw = localStorage.getItem(MODEL_PREDICTIONS_STORAGE_KEY);
                 modelPredictionRecords = raw ? JSON.parse(raw) : [];
                 if (!Array.isArray(modelPredictionRecords)) modelPredictionRecords = [];
+                area1LoadedOwnerId = AREA1_OWNER_USER_ID;
             } catch (e) { console.warn('[ModelPredictions] No se pudo leer memoria local:', e); modelPredictionRecords = []; }
             renderModelPredictionLog();
             fitPoissonCalibrationFromModelPredictions();
         }
 
         function persistModelPredictionRecords() {
+            if (currentUser && !isArea1Admin()) { showToast('Área 1 es de solo lectura para esta cuenta.'); return; }
             localStorage.setItem(MODEL_PREDICTIONS_STORAGE_KEY, JSON.stringify(modelPredictionRecords));
             renderModelPredictionLog();
             fitPoissonCalibrationFromModelPredictions();
@@ -7148,14 +7224,15 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         // Si existe sesión de Supabase, elimina primero la copia en la nube para
         // evitar que vuelva a descargarse en una sincronización posterior.
         async function deleteModelPrediction(id) {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede eliminar pronósticos de Área 1.'); return; }
             const record = modelPredictionRecords.find(r => r.id === id);
             if (!record) return;
             const label = `${record.home || 'Local'} vs ${record.away || 'Visitante'}`;
             if (!confirm(`¿Eliminar de la bitácora de predicciones del modelo el registro:\n${label}?\n\nEsta acción no se puede deshacer.`)) return;
             if (currentUser && supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('match_predictions')
-                        .delete().eq('user_id', currentUser.id).eq('id', id);
+                    const { error } = await supabaseClient.from('owner_match_predictions')
+                        .delete().eq('user_id', AREA1_OWNER_USER_ID).eq('id', id);
                     if (error) throw error;
                 } catch (e) {
                     console.error('[ModelPredictions] No se pudo eliminar el registro en la nube:', e);
@@ -7307,6 +7384,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         function previewModelPredictionBatch() {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede cargar pronósticos en Área 1.'); return; }
             const status = document.getElementById('modelPredictionParseStatus');
             const preview = document.getElementById('modelPredictionPreview');
             const saveBtn = document.getElementById('saveModelPredictionBatchBtn');
@@ -7329,6 +7407,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         async function saveModelPredictionBatch() {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede cargar pronósticos en Área 1.'); return; }
             if (!modelPredictionPreviewRows.length) return;
             const now = new Date().toISOString();
             const newRows = modelPredictionPreviewRows.map(r=>({
@@ -7351,7 +7430,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         function modelPredictionToDb(r) {
-            return {id:r.id,user_id:currentUser.id,fingerprint:r.fingerprint,match_key:r.matchKey,league:r.league,home_team:r.home,away_team:r.away,
+            return {id:r.id,user_id:AREA1_OWNER_USER_ID,fingerprint:r.fingerprint,match_key:r.matchKey,league:r.league,home_team:r.home,away_team:r.away,
                 match_date:/^\d{4}-\d{2}-\d{2}$/.test(r.matchDate||'')?r.matchDate:null,analyzed_at:r.analyzedAt,model_version:r.modelVersion,
                 inputs:{...r.inputs,kickoff:r.kickoff},probabilities:r.probabilities,lambdas:r.lambdas,status:r.status,
                 actual_home_goals:r.actualHomeGoals,actual_away_goals:r.actualAwayGoals,settled_at:r.settledAt,
@@ -7359,19 +7438,94 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         async function syncModelPredictionsToCloud(rows) {
-            if (!currentUser || !supabaseClient || !rows?.length) return false;
+            if (!isArea1Admin() || !supabaseClient || !rows?.length) return false;
             try {
                 const payload=rows.map(modelPredictionToDb);
-                const {error}=await supabaseClient.from('match_predictions').upsert(payload,{onConflict:'user_id,fingerprint'});
+                const {error}=await supabaseClient.from('owner_match_predictions').upsert(payload,{onConflict:'user_id,fingerprint'});
                 if(error) throw error;
                 return true;
-            } catch(e) { console.warn('[ModelPredictions] Supabase sync failed:',e); showToast('Guardado local; sincronización pendiente. Verifica que aplicaste el SQL de la tabla match_predictions.'); return false; }
+            } catch(e) { console.warn('[ModelPredictions] Supabase sync failed:',e); showToast('Guardado local; sincronización central pendiente. Verifica que aplicaste el SQL de roles de Área 1.'); return false; }
+        }
+
+        async function publishSharedPreselectorPicks(candidates, pendingCount) {
+            if (!isArea1Admin() || !supabaseClient || !area1CentralLoaded) return false;
+            const safeCandidates = Array.isArray(candidates) ? candidates : [];
+            const publication = {
+                publishedMatchCount: new Set(safeCandidates.map(p => `${p.league}|${p.home}|${p.away}|${p.matchDate}`)).size,
+                publishedAt: new Date().toISOString(),
+                candidates: safeCandidates
+            };
+            const signature = JSON.stringify({ publishedMatchCount: publication.publishedMatchCount, candidates: publication.candidates });
+            if (signature === lastArea1PublicationSignature) return true;
+            try {
+                const { error } = await supabaseClient.from('area1_preselector_publication').upsert({
+                    id: 'current', owner_id: AREA1_OWNER_USER_ID, payload: publication, published_at: publication.publishedAt
+                }, { onConflict: 'id' });
+                if (error) throw error;
+                lastArea1PublicationSignature = signature;
+                return true;
+            } catch (e) {
+                console.error('[Área 1] No se pudo publicar el preselector:', e);
+                showToast('No se pudo publicar el preselector. Revisa el SQL de permisos de Área 1.');
+                return false;
+            }
+        }
+
+        function renderSharedPreselector() {
+            const groups = [
+                { id: '1x2', target: 'modelPreselector1x2', count: 'modelPreselectorCount1x2', title: '1X2' },
+                { id: 'goals', target: 'modelPreselectorGoals', count: 'modelPreselectorCountGoals', title: 'MÁS / MENOS 2.5' },
+                { id: 'btts', target: 'modelPreselectorBtts', count: 'modelPreselectorCountBtts', title: 'AMBOS ANOTAN' }
+            ];
+            const picks = Array.isArray(sharedPreselectorPicks) ? sharedPreselectorPicks : [];
+            const pct = v => `${(Number(v || 0) * 100).toFixed(1)}%`;
+            let total = 0;
+            groups.forEach(group => {
+                const rows = picks.filter(p => p.marketId === group.id);
+                total += rows.length;
+                const count = document.getElementById(group.count);
+                const target = document.getElementById(group.target);
+                if (count) count.textContent = `${rows.length} / 5`;
+                if (target) target.innerHTML = rows.length ? rows.map((p, i) => `
+                    <article class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
+                        <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${i+1} · ${escapeModelPredictionHtml(p.league || 'Sin competición')}</span><span class="text-[11px] font-black text-white tabular-nums">${pct(p.calibratedProbability)}</span></div>
+                        <div class="mt-1 text-[9px] font-bold text-slate-100">${escapeModelPredictionHtml(p.home)} vs ${escapeModelPredictionHtml(p.away)}</div>
+                        <div class="text-[9px] font-black text-amber-200 mt-1">${escapeModelPredictionHtml(p.selectionLabel || p.selection)}</div>
+                        <div class="mt-1 text-[8px] text-cyan-200">Calibrada ${pct(p.calibratedProbability)} · Original ${pct(p.rawProbability)}</div>
+                        <div class="text-[8px] text-slate-300">Historial ${Number(p.historyCount || 0)} · ${Number(p.wins || 0)} aciertos / ${Number(p.losses || 0)} fallos · N efectivo ${Number(p.effectiveCount || 0).toFixed(1)}</div>
+                        <div class="text-[8px] text-slate-500">Brier ${Number(p.brier || 0).toFixed(3)} · Log Loss ${Number(p.logLoss || 0).toFixed(3)} · Brecha ${(Number(p.gap || 0)*100).toFixed(1)} pp</div>
+                        <div class="text-[8px] text-slate-500 mt-1">${escapeModelPredictionHtml(p.matchDate || '')}${p.kickoff ? ' · ' + escapeModelPredictionHtml(p.kickoff) : ''}${p.odds ? ' · Cuota ' + Number(p.odds).toFixed(2) : ''}</div>
+                    </article>`).join('') : '<p class="text-[9px] text-slate-500">No hay candidatos publicados en este mercado.</p>';
+            });
+            const pendingEl = document.getElementById('modelPreselectorPending');
+            const candidatesEl = document.getElementById('modelPreselectorCandidates');
+            const note = document.getElementById('modelPreselectorNote');
+            if (pendingEl) pendingEl.textContent = String(sharedPreselectorMeta.publishedMatchCount || 0);
+            const pendingLabel = pendingEl?.parentElement?.querySelector('span'); if (pendingLabel) pendingLabel.textContent = 'PARTIDOS PUBLICADOS';
+            if (candidatesEl) candidatesEl.textContent = String(total);
+            if (note) note.textContent = `Vista de solo lectura. Publicación del administrador: ${sharedPreselectorMeta.publishedAt ? new Date(sharedPreselectorMeta.publishedAt).toLocaleString('es-MX') : 'sin publicaciones'}. Se muestran exclusivamente candidatos aprobados por el preselector central; no se comparte la memoria histórica completa de Área 1.`;
         }
 
         async function syncModelPredictionsFromCloud() {
-            if (!currentUser || !supabaseClient) { showToast('Inicia sesión para sincronizar entre dispositivos.'); return; }
+            if (!currentUser || !supabaseClient) { showToast('Inicia sesión para consultar los partidos publicados.'); return; }
+            if (!isArea1Admin()) {
+                try {
+                    const { data, error } = await supabaseClient.from('area1_preselector_publication').select('payload,published_at').eq('id', 'current').maybeSingle();
+                    if (error) throw error;
+                    const payload = data?.payload || {};
+                    sharedPreselectorPicks = Array.isArray(payload.candidates) ? payload.candidates : [];
+                    sharedPreselectorMeta = { publishedMatchCount: Number(payload.publishedMatchCount || new Set(sharedPreselectorPicks.map(p => `${p.league}|${p.home}|${p.away}|${p.matchDate}`)).size), publishedAt: data?.published_at || payload.publishedAt || null };
+                    renderSharedPreselector();
+                    showToast('Preselector central actualizado.');
+                    return;
+                } catch (e) {
+                    console.error('[Área 1] Error consultando publicación:', e);
+                    showToast('No se pudo consultar el preselector. El administrador debe aplicar el SQL de Área 1.');
+                    return;
+                }
+            }
             try {
-                const {data,error}=await supabaseClient.from('match_predictions').select('*').eq('user_id',currentUser.id).order('analyzed_at',{ascending:false}).limit(1000);
+                const {data,error}=await supabaseClient.from('owner_match_predictions').select('*').eq('user_id',AREA1_OWNER_USER_ID).order('analyzed_at',{ascending:false}).limit(1000);
                 if(error) throw error;
                 const map=new Map(modelPredictionRecords.map(r=>[r.fingerprint || r.id,r]));
                 (data||[]).forEach(db=>{
@@ -7392,20 +7546,24 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     }
                 });
                 modelPredictionRecords=Array.from(map.values()).sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
+                area1CentralLoaded = true;
                 persistModelPredictionRecords();
                 fitPoissonCalibrationFromModelPredictions();
                 if (modelPredictionCalibrationEnabled && Number(document.getElementById('homeGf')?.value || 0) + Number(document.getElementById('awayGf')?.value || 0) > 0) calculatePoisson();
-                showToast('Memoria de predicciones sincronizada y calibración histórica actualizada.');
-            } catch(e) { console.error('[ModelPredictions] Cloud read failed:',e); showToast('No se pudo sincronizar. Comprueba la migración SQL de match_predictions.'); }
+                renderModelPreselector();
+                showToast('Memoria central de Área 1 sincronizada y calibración histórica actualizada.');
+            } catch(e) { console.error('[ModelPredictions] Cloud read failed:',e); showToast('No se pudo sincronizar. Comprueba el SQL de roles de Área 1.'); }
         }
 
         function updateModelPredictionOdds(id, market, value) {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede modificar Área 1.'); return; }
             const r=modelPredictionRecords.find(x=>x.id===id); if(!r||r.status==='SETTLED')return;
             r.odds=r.odds||{}; r.odds[market]=value===''?'':Math.max(1,Number(value)||1).toString();
             persistModelPredictionRecords(); if(currentUser&&supabaseClient)syncModelPredictionsToCloud([r]);
         }
 
         function settleModelPrediction(id) {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede liquidar pronósticos de Área 1.'); return; }
             const r=modelPredictionRecords.find(x=>x.id===id); if(!r)return;
             const hg=Number(document.getElementById(`mp_home_score_${id}`)?.value), ag=Number(document.getElementById(`mp_away_score_${id}`)?.value);
             if(!Number.isInteger(hg)||!Number.isInteger(ag)||hg<0||ag<0){showToast('Introduce un marcador válido para ambos equipos.');return;}
@@ -7502,6 +7660,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         function previewModelPredictionResultsImport() {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede revisar y actualizar resultados de Área 1.'); return; }
             const status=document.getElementById('modelPredictionResultsStatus');
             const preview=document.getElementById('modelPredictionResultsPreview');
             const applyBtn=document.getElementById('applyModelPredictionResultsBtn');
@@ -7566,6 +7725,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         async function applyModelPredictionResultsImport() {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede actualizar resultados de Área 1.'); return; }
             const ready=modelPredictionResultsPreviewRows.filter(row=>row.status==='MATCHED');
             if (!ready.length) return;
             const updated=[];
@@ -7637,6 +7797,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         }
 
         function registerModelPreselectorBet(recordIndex, marketId, outcomeKey) {
+            if (!isArea1Admin()) { showToast('Esta cuenta solo puede consultar los partidos publicados.'); return; }
             const record = Array.isArray(modelPredictionRecords) ? modelPredictionRecords[recordIndex] : null;
             if (!record || record.status === 'SETTLED') {
                 showToast('Este pronóstico ya no está pendiente o no está disponible.');
@@ -7736,7 +7897,16 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function renderModelPreselector() {
             const panel = document.getElementById('modelPreselectorPanel');
             if (!panel) return;
+            if (!isArea1Admin()) {
+                if (currentUser) renderSharedPreselector();
+                else {
+                    ['modelPreselector1x2','modelPreselectorGoals','modelPreselectorBtts'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML='<p class="text-[9px] text-slate-500">Inicia sesión para consultar los partidos publicados.</p>'; });
+                    const note=document.getElementById('modelPreselectorNote'); if(note) note.textContent='El preselector compartido requiere una cuenta autenticada.';
+                }
+                return;
+            }
             const allRecords = Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [];
+            const publishedCandidates = [];
             const pending = allRecords.filter(r => r && r.status !== 'SETTLED');
             const definitions = [
                 { id: '1x2', target: 'modelPreselector1x2', count: 'modelPreselectorCount1x2', market: 'Resultado Final (1X2)', keys: [
@@ -7819,6 +7989,16 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     String(b.record.analyzedAt || '').localeCompare(String(a.record.analyzedAt || ''))
                 );
                 const selected = candidates.slice(0, 5);
+                selected.forEach(item => {
+                    const r=item.record, pick=item.chosen, h=item.history;
+                    publishedCandidates.push({
+                        marketId:def.id, market:def.market, selection:pick.selection, selectionLabel:pick.label,
+                        league:r.league||'', home:r.home||'', away:r.away||'', matchDate:r.matchDate||'', kickoff:r.kickoff||'',
+                        calibratedProbability:item.calibratedProbability, rawProbability:item.rawProbability,
+                        historyCount:h.count, wins:h.wins, losses:h.losses, effectiveCount:h.effectiveCount,
+                        brier:h.brier, logLoss:h.logLoss, gap:h.gap, odds:item.odds||null
+                    });
+                });
                 totalCandidates += selected.length;
                 const target = document.getElementById(def.target);
                 const count = document.getElementById(def.count);
@@ -7849,6 +8029,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                     </article>`;
                 }).join('');
             });
+            publishSharedPreselectorPicks(publishedCandidates, pending.length);
             const pendingEl = document.getElementById('modelPreselectorPending');
             const candidatesEl = document.getElementById('modelPreselectorCandidates');
             const note = document.getElementById('modelPreselectorNote');
@@ -9272,12 +9453,13 @@ document.addEventListener('keydown', function(event) {
             </div>
             <div id="modelTrackingModalContent" class="overflow-y-auto overscroll-contain p-2 sm:p-4">
         <section id="sec-prediction-memory" class="poisson-premium space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
+            <div id="area1RoleNotice" class="text-[8px] rounded-lg border px-2.5 py-2 border-slate-700 bg-slate-900 text-slate-300">Verificando permisos de Área 1…</div>
             <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 px-3 py-2 flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i><div><div class="text-[10px] font-black text-indigo-200 uppercase tracking-wider">Área 1 · Seguimiento independiente de Poisson</div><div class="text-[9px] text-slate-400">Pronósticos sin apuesta, métricas históricas y bitácora propia. No modifica el bankroll ni la calibración de apuestas.</div></div></div>
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">3 · Memoria de predicciones</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-indigo-500/30 to-transparent"></div>
             </div>
-            <div class="glass-card rounded-2xl p-3.5 space-y-3 border border-indigo-500/35">
+            <div id="area1AdminUploadPanel" class="area1-admin-only hidden glass-card rounded-2xl p-3.5 space-y-3 border border-indigo-500/35">
                 <div class="flex items-start justify-between gap-2">
                     <div><h2 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i> Seguimiento automático del modelo</h2>
                     <p class="text-[10px] text-slate-400 mt-1">Pega la tabla tabulada con Competition, estadísticas Home/Away, equipos y hora. Se guarda una fotografía inmutable de cada pronóstico; no crea apuestas ni mueve el bankroll.</p></div>
@@ -9291,7 +9473,7 @@ document.addEventListener('keydown', function(event) {
                 <div id="modelPredictionParseStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">La revisión previa detecta filas incompletas y duplicados antes de guardar.</div>
                 <div id="modelPredictionPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
             </div>
-            <div id="modelPredictionResultsImportPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-emerald-500/35">
+            <div id="modelPredictionResultsImportPanel" class="area1-admin-only hidden glass-card rounded-2xl p-3.5 space-y-3 border border-emerald-500/35">
                 <div class="flex items-start justify-between gap-2">
                     <div><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-file-import text-emerald-300"></i> Actualizar resultados desde tabla</h3>
                     <p class="text-[10px] text-slate-400 mt-1">Pega la tabla de resultados con Competition, Home, Time y Away. El sistema buscará los pronósticos correspondientes en esta memoria y solo resolverá los que tengan marcador final.</p></div>
@@ -9309,7 +9491,7 @@ document.addEventListener('keydown', function(event) {
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-filter-circle-dollar text-amber-300"></i> Preselector de partidos</h3>
                     <p class="text-[9px] text-slate-400 mt-1">Examina los partidos pendientes guardados en Área 1 y ordena por la probabilidad más alta de cada mercado. Máximo 5 partidos distintos por mercado; permite precargar el formulario de apuesta sin guardar automáticamente.</p></div>
-                    <button type="button" onclick="renderModelPreselector()" class="shrink-0 text-[9px] font-black bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-lg px-2.5 py-2"><i class="fa-solid fa-rotate mr-1"></i>ACTUALIZAR</button>
+                    <button type="button" onclick="isArea1Admin() ? renderModelPreselector() : syncModelPredictionsFromCloud()" class="shrink-0 text-[9px] font-black bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-lg px-2.5 py-2"><i class="fa-solid fa-rotate mr-1"></i>ACTUALIZAR</button>
                 </div>
                 <div class="grid grid-cols-3 gap-2">
                     <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">PARTIDOS PENDIENTES</span><b id="modelPreselectorPending" class="block text-lg text-white tabular-nums">0</b></div>
@@ -9324,7 +9506,7 @@ document.addEventListener('keydown', function(event) {
                 </div>
                 <p id="modelPreselectorNote" class="text-[8px] text-slate-500">Se usan únicamente pronósticos pendientes de Área 1 y las probabilidades originales congeladas. Los partidos resueltos quedan fuera.</p>
             </div>
-            <div id="modelPredictionStatsPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-cyan-500/30">
+            <div id="modelPredictionStatsPanel" class="area1-admin-only hidden glass-card rounded-2xl p-3.5 space-y-3 border border-cyan-500/30">
                 <div class="flex items-start justify-between gap-2">
                     <div><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-cyan-300"></i> Rendimiento histórico de Poisson</h3>
                     <p class="text-[9px] text-slate-400 mt-1">Evalúa las probabilidades Poisson originales (sin el ajuste histórico de apuestas reales) en pronósticos del seguimiento automático ya resueltos. No mezcla apuestas reales ni modifica la autocalibración.</p></div>
@@ -9352,7 +9534,7 @@ document.addEventListener('keydown', function(event) {
                 </div>
                 <div id="modelPredictionStatsNote" class="text-[9px] text-slate-500 bg-slate-950/60 rounded-lg p-2">Aún no hay suficientes pronósticos resueltos para calcular métricas.</div>
             </div>
-            <details id="modelPredictionLogDetails" class="glass-card rounded-2xl border border-slate-700/80 group">
+            <details id="modelPredictionLogDetails" class="area1-admin-only hidden glass-card rounded-2xl border border-slate-700/80 group">
                 <summary class="list-none cursor-pointer select-none p-3.5 flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
                     <span class="text-xs font-black text-white"><i class="fa-solid fa-list-check text-emerald-400 mr-1"></i> Bitácora de predicciones del modelo <span class="ml-1 text-[9px] font-normal text-slate-500">(abrir para consultar)</span></span>
                     <i class="fa-solid fa-chevron-down text-slate-400 text-[10px] transition-transform group-open:rotate-180"></i>
