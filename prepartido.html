@@ -53,33 +53,27 @@
       box-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.75);
     }
 
-    .league-banner {
-      background: linear-gradient(90deg, rgba(16, 185, 129, 0.14) 0%, rgba(15, 23, 42, 0.98) 42%, rgba(11, 17, 32, 0.98) 100%);
-      border-top: 1px solid #22314f;
-      border-bottom: 1px solid #1e2b45;
-    }
-
-    .match-card {
+    .match-row {
       background-color: #090e1a;
       border-bottom: 1px solid #172036;
       transition: background-color 0.15s ease;
     }
-    .match-card:nth-child(even) {
+    .match-row:nth-child(even) {
       background-color: #0b1120;
     }
-    .match-card:hover {
+    .match-row:hover {
       background-color: #111b33;
     }
-    .match-card.is-settled {
+    .match-row.is-settled {
       background-color: rgba(10, 16, 29, 0.78);
     }
-    .match-card.is-settled:hover {
+    .match-row.is-settled:hover {
       background-color: #111b33;
     }
 
-    .fixture-layout {
+    .row-layout {
       display: grid;
-      grid-template-columns: minmax(360px, 1.35fr) auto;
+      grid-template-columns: minmax(340px, 1.3fr) auto;
       gap: 16px;
       align-items: center;
     }
@@ -116,8 +110,8 @@
 
     .odd-box {
       font-family: 'JetBrains Mono', monospace;
-      min-width: 60px;
-      padding: 5px 7px;
+      min-width: 62px;
+      padding: 5px 8px;
       border-radius: 7px;
       background-color: #0e1628;
       border: 1px solid #21304d;
@@ -141,13 +135,12 @@
     }
 
     .odd-val {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 800;
       line-height: 1.1;
       color: #f1f5f9;
     }
 
-    /* Destacado de probabilidad máxima por mercado */
     .odd-box.best-1x2 {
       background: linear-gradient(180deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 116, 144, 0.12) 100%);
       border-color: rgba(56, 189, 248, 0.55);
@@ -169,39 +162,11 @@
     .odd-box.best-btts .odd-lbl { color: #6ee7b7; }
     .odd-box.best-btts .odd-val { color: #34d399; }
 
-    /* Resultado acertado */
     .odd-box.hit-outcome {
       outline: 2px solid #10b981;
       outline-offset: -1px;
       box-shadow: 0 0 14px rgba(16, 185, 129, 0.28);
     }
-
-    .team-streak-card {
-      background-color: #060a14;
-      border: 1px solid #18233a;
-      border-radius: 8px;
-      padding: 7px 10px;
-    }
-
-    .form-chip {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
-      font-weight: 800;
-      width: 17px;
-      height: 17px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      line-height: 1;
-    }
-    .w { background: rgba(16, 185, 129, 0.20); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.42); }
-    .d { background: rgba(148, 163, 184, 0.18); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.35); }
-    .l { background: rgba(244, 63, 94, 0.20); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.42); }
-    .o { background: rgba(56, 189, 248, 0.20); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.42); }
-    .u { background: rgba(245, 158, 11, 0.20); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.42); }
-    .y { background: rgba(16, 185, 129, 0.20); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.42); }
-    .n { background: rgba(244, 63, 94, 0.20); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.42); }
 
     .filter-pill.active {
       background-color: rgba(16, 185, 129, 0.18);
@@ -211,7 +176,7 @@
     }
 
     @media (max-width: 1140px) {
-      .fixture-layout {
+      .row-layout {
         grid-template-columns: 1fr;
         gap: 10px;
       }
@@ -235,7 +200,7 @@
             </span>
           </div>
           <p class="hidden sm:block text-[11px] text-slate-400 mt-0.5 truncate">
-            Pendientes desde hoy en adelante + resueltos de ayer y hoy · rachas históricas por liga
+            Pendientes desde hoy en adelante + resueltos de ayer y hoy · lista cronológica de probabilidades
           </p>
         </div>
       </div>
@@ -377,12 +342,12 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-300">
-          <span class="inline-flex items-center gap-1.5"><span class="form-chip w">W</span> Victoria</span>
-          <span class="inline-flex items-center gap-1.5"><span class="form-chip d">D</span> Empate</span>
-          <span class="inline-flex items-center gap-1.5"><span class="form-chip l">L</span> Derrota</span>
-          <span class="text-slate-600">|</span>
           <span class="inline-flex items-center gap-1.5 text-emerald-300 font-semibold">
             <span class="w-2.5 h-2.5 rounded-sm border-2 border-emerald-400 inline-block"></span> Resultado real
+          </span>
+          <span class="text-slate-600">|</span>
+          <span class="font-mono text-[10.5px] text-slate-400">
+            <i class="fa-solid fa-arrow-down-short-wide text-emerald-400 mr-1"></i>Orden cronológico
           </span>
           <button type="button" onclick="resetFilters()" class="text-[11px] font-semibold text-slate-400 hover:text-white underline underline-offset-2 ml-1 cursor-pointer">
             Limpiar filtros
@@ -391,7 +356,7 @@
       </div>
     </section>
 
-    <!-- Listado de Partidos Agrupados por Liga -->
+    <!-- Lista Cronológica de Partidos -->
     <section class="quant-panel overflow-hidden">
       <div id="matchList">
         <div class="p-12 text-center text-slate-400 text-xs">
@@ -525,86 +490,6 @@
       if (leagues.includes(old)) sel.value = old;
     }
 
-    function teamHistory(team, league, fixture) {
-      let key = norm(team), lk = norm(league), cutoff = timestamp(fixture);
-      return allRecords
-        .filter(r => isSettled(r) && validScore(r) && norm(r.league) === lk && (norm(r.home) === key || norm(r.away) === key) && timestamp(r) < cutoff)
-        .sort((a, b) => timestamp(b) - timestamp(a));
-    }
-
-    function outcomes(team, records) {
-      let key = norm(team);
-      return records.map(r => {
-        let hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals), home = norm(r.home) === key, gf = home ? hg : ag, ga = home ? ag : hg;
-        return {
-          one: gf > ga ? 'W' : gf === ga ? 'D' : 'L',
-          goals: hg + ag >= 3 ? 'O' : 'U',
-          btts: hg > 0 && ag > 0 ? 'Y' : 'N'
-        };
-      });
-    }
-
-    function getStreakInfo(seq, k) {
-      let val = seq[0]?.[k];
-      if (!val) return { run: 0, desc: 'sin historial', chips: '' };
-      let run = 0;
-      for (let x of seq) {
-        if (x[k] !== val) break;
-        run++;
-      }
-      let desc = k === 'one'
-        ? (val === 'W' ? 'victorias' : val === 'D' ? 'empates' : 'derrotas')
-        : k === 'goals'
-          ? (val === 'O' ? 'Over 2.5' : 'Under 2.5')
-          : (val === 'Y' ? 'BTTS Sí' : 'BTTS No');
-
-      let chips = seq.slice(0, 5).map(x => {
-        let cls = k === 'one'
-          ? (x[k] === 'W' ? 'w' : x[k] === 'D' ? 'd' : 'l')
-          : k === 'goals'
-            ? (x[k] === 'O' ? 'o' : 'u')
-            : (x[k] === 'Y' ? 'y' : 'n');
-        return `<span class="form-chip ${cls}">${x[k]}</span>`;
-      }).join('');
-
-      return { run, desc, chips };
-    }
-
-    function teamStreakBlock(team, league, fixture, sideLabel) {
-      let hist = teamHistory(team, league, fixture);
-      let seq = outcomes(team, hist);
-      let s1 = getStreakInfo(seq, 'one');
-      let sg = getStreakInfo(seq, 'goals');
-      let sb = getStreakInfo(seq, 'btts');
-
-      return `<div class="team-streak-card min-w-0">
-        <div class="flex items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-[#141e33]">
-          <div class="flex items-center gap-1.5 min-w-0">
-            <span class="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 shrink-0">${sideLabel}</span>
-            <span class="text-xs font-extrabold text-slate-100 truncate">${esc(team)}</span>
-          </div>
-          <span class="text-[9.5px] font-mono font-semibold text-slate-400 shrink-0">${hist.length} PJ</span>
-        </div>
-
-        <div class="space-y-1 text-[10.5px]">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-slate-400 font-medium"><b class="font-mono text-slate-500">1X2:</b> ${s1.run ? `<span class="text-slate-200 font-semibold">${s1.run} ${s1.desc}</span>` : '<span class="italic text-slate-600">sin historial</span>'}</span>
-            <span class="inline-flex gap-0.5 shrink-0">${s1.chips}</span>
-          </div>
-
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-slate-400 font-medium"><b class="font-mono text-slate-500">Goles:</b> ${sg.run ? `<span class="text-slate-200 font-semibold">${sg.run} ${sg.desc}</span>` : '<span class="italic text-slate-600">sin historial</span>'}</span>
-            <span class="inline-flex gap-0.5 shrink-0">${sg.chips}</span>
-          </div>
-
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-slate-400 font-medium"><b class="font-mono text-slate-500">BTTS:</b> ${sb.run ? `<span class="text-slate-200 font-semibold">${sb.run} ${sb.desc}</span>` : '<span class="italic text-slate-600">sin historial</span>'}</span>
-            <span class="inline-flex gap-0.5 shrink-0">${sb.chips}</span>
-          </div>
-        </div>
-      </div>`;
-    }
-
     function getActualWinners(r) {
       if (!isSettled(r) || !validScore(r)) return null;
       const hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals);
@@ -653,6 +538,7 @@
       let settled = isSettled(r);
       let winners = getActualWinners(r);
       let timeBadge = `${esc(r.matchDate || 'Fecha por definir')}${r.kickoff ? ' · ' + esc(r.kickoff) : ''}`;
+      let leagueName = esc(r.league || 'Sin liga');
 
       let statusBadge = settled
         ? `<span class="prob text-[10.5px] font-extrabold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-0.5 rounded-md shrink-0">
@@ -666,28 +552,24 @@
       const showOu = marketFocus === 'all' || marketFocus === 'ou';
       const showBtts = marketFocus === 'all' || marketFocus === 'btts';
 
-      return `<article class="match-card ${settled ? 'is-settled' : ''} px-3.5 py-3 sm:px-5">
-        <div class="fixture-layout">
+      return `<article class="match-row ${settled ? 'is-settled' : ''} px-3.5 py-3 sm:px-5">
+        <div class="row-layout">
           <div class="min-w-0">
-            <!-- Línea de estado, fecha y encuentro -->
-            <div class="flex flex-wrap items-center gap-2 mb-2.5">
+            <div class="flex flex-wrap items-center gap-2 mb-1.5">
               ${statusBadge}
               <span class="prob text-[11px] font-bold text-slate-300 bg-[#0d1628] border border-[#21304d] px-2.5 py-0.5 rounded-md shrink-0">
-                <i class="fa-regular fa-clock text-slate-500 mr-1"></i>${timeBadge}
+                <i class="fa-regular fa-clock text-emerald-400 mr-1"></i>${timeBadge}
               </span>
-              <h3 class="text-sm sm:text-[15.5px] font-black tracking-tight text-white truncate">
-                ${esc(r.home)} <span class="text-xs font-mono font-bold text-slate-500 mx-1.5">VS</span> ${esc(r.away)}
-              </h3>
+              <span class="text-[10.5px] font-mono font-bold text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-md truncate max-w-[220px]">
+                ${leagueName}
+              </span>
             </div>
 
-            <!-- Rachas comparativas Local vs Visita -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-              ${teamStreakBlock(r.home, r.league, r, 'LOC')}
-              ${teamStreakBlock(r.away, r.league, r, 'VIS')}
-            </div>
+            <h3 class="text-sm sm:text-[15.5px] font-black tracking-tight text-white truncate">
+              ${esc(r.home)} <span class="text-xs font-mono font-bold text-slate-500 mx-1.5">VS</span> ${esc(r.away)}
+            </h3>
           </div>
 
-          <!-- Bloques de probabilidades -->
           <div class="markets-strip">
             ${show1x2 ? marketBox('1X2 · RESULTADO', [['1', p.homeWin], ['X', p.draw], ['2', p.awayWin]], 'cyan', winners?.one || null) : ''}
             ${showOu ? marketBox('GOLES 2.5', [['O 2.5', p.over25], ['U 2.5', p.under25]], 'amber', winners?.ou || null) : ''}
@@ -708,53 +590,24 @@
           tomorrow = new Date(today.getTime() + 86400000),
           week = new Date(today.getTime() + 7 * 86400000);
 
-      let rows = windowMatches.filter(r => {
-        const settled = isSettled(r);
-        if (statusMode === 'pending' && settled) return false;
-        if (statusMode === 'settled' && !settled) return false;
-        if (league && (r.league || 'Sin liga') !== league) return false;
-        if (q && !norm([r.home, r.away, r.league].join(' ')).includes(q)) return false;
+      let rows = windowMatches
+        .filter(r => {
+          const settled = isSettled(r);
+          if (statusMode === 'pending' && settled) return false;
+          if (statusMode === 'settled' && !settled) return false;
+          if (league && (r.league || 'Sin liga') !== league) return false;
+          if (q && !norm([r.home, r.away, r.league].join(' ')).includes(q)) return false;
 
-        let dt = parseFixtureDay(r);
-        if (mode === 'yesterday' && (!dt || dt.toDateString() !== yesterday.toDateString())) return false;
-        if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
-        if (mode === 'tomorrow' && (!dt || dt.toDateString() !== tomorrow.toDateString())) return false;
-        if (mode === 'week' && (!dt || dt < today || dt > week)) return false;
-        return true;
-      });
+          let dt = parseFixtureDay(r);
+          if (mode === 'yesterday' && (!dt || dt.toDateString() !== yesterday.toDateString())) return false;
+          if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
+          if (mode === 'tomorrow' && (!dt || dt.toDateString() !== tomorrow.toDateString())) return false;
+          if (mode === 'week' && (!dt || dt < today || dt > week)) return false;
+          return true;
+        })
+        .sort((a, b) => timestamp(a) - timestamp(b));
 
-      const grouped = new Map();
-      rows.forEach(r => {
-        const lg = r.league || 'Sin liga';
-        if (!grouped.has(lg)) grouped.set(lg, []);
-        grouped.get(lg).push(r);
-      });
-
-      let html = '';
-      grouped.forEach((items, lg) => {
-        const pendingCount = items.filter(x => !isSettled(x)).length;
-        const settledCount = items.length - pendingCount;
-
-        html += `<div class="league-banner px-3.5 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2.5 min-w-0">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/60 shrink-0"></span>
-            <span class="text-xs sm:text-sm font-black tracking-wide text-white truncate">${esc(lg)}</span>
-            <span class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
-              ${items.length} ${items.length === 1 ? 'partido' : 'partidos'}
-            </span>
-          </div>
-          <div class="flex items-center gap-2 text-[10px] font-mono text-slate-400 shrink-0">
-            ${pendingCount ? `<span class="text-sky-300">${pendingCount} pend.</span>` : ''}
-            ${pendingCount && settledCount ? `<span>·</span>` : ''}
-            ${settledCount ? `<span class="text-emerald-300">${settledCount} res.</span>` : ''}
-            <span class="hidden sm:inline text-slate-600">|</span>
-            <span class="hidden sm:inline">Ventana -1d · +∞</span>
-          </div>
-        </div>`;
-        html += items.map(fixtureRow).join('');
-      });
-
-      document.getElementById('matchList').innerHTML = html;
+      document.getElementById('matchList').innerHTML = rows.map(fixtureRow).join('');
       document.getElementById('emptyState').classList.toggle('hidden', rows.length > 0);
     }
 
