@@ -212,11 +212,11 @@
           <div class="flex items-center gap-2 flex-wrap">
             <span class="font-black tracking-tight text-white text-base sm:text-lg leading-none">BETAGS VIP PRO</span>
             <span class="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/35">
-              PREPARTIDO · -1D A +∞
+              PREPARTIDO · 0D A +4D
             </span>
           </div>
           <p class="hidden sm:block text-[11px] text-slate-400 mt-0.5 truncate">
-            Pendientes desde hoy en adelante + resueltos de ayer y hoy · lista cronológica de probabilidades
+            Pendientes y resueltos desde hoy hasta +4 días · lista cronológica de probabilidades
           </p>
         </div>
       </div>
@@ -248,7 +248,7 @@
       <div>
         <div class="flex items-center gap-2 text-[10.5px] font-mono font-extrabold uppercase tracking-wider text-emerald-400">
           <i class="fa-solid fa-microchip"></i>
-          <span>BETAGS VIP PRO · VENTANA OPERATIVA (-1D · FUTURO)</span>
+          <span>BETAGS VIP PRO · VENTANA OPERATIVA (HOY · +4 DÍAS)</span>
         </div>
         <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
           Centro de Partidos <span class="text-emerald-400">Prepartido</span>
@@ -319,7 +319,7 @@
           >
             <option value="all">Estado: Pendientes y resueltos</option>
             <option value="pending">Solo pendientes</option>
-            <option value="settled">Solo resueltos (-1d a hoy)</option>
+            <option value="settled">Solo resueltos (hoy a +4d)</option>
           </select>
         </div>
 
@@ -339,11 +339,10 @@
             onchange="renderBoard()"
             class="w-full bg-[#060a14] border border-[#1f2d47] focus:border-emerald-400 rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 outline-none transition cursor-pointer"
           >
-            <option value="">Fecha: Completa</option>
-            <option value="yesterday">Ayer (resueltos)</option>
+            <option value="">Fecha: Completa (0d a +4d)</option>
             <option value="today">Hoy</option>
-            <option value="tomorrow">Mañana</option>
-            <option value="week">Próximos 7 días</option>
+            <option value="tomorrow">Mañana (+1d)</option>
+            <option value="week">Hoy a +4 días</option>
           </select>
         </div>
       </div>
@@ -387,19 +386,20 @@
         </div>
         <div class="font-extrabold text-base text-slate-100">No hay partidos en esta ventana</div>
         <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-          Se muestran partidos resueltos de hasta 1 día atrás y partidos pendientes o resueltos desde hoy hacia adelante.
+          Se muestran partidos pendientes y resueltos desde hoy hasta 4 días adelante.
         </p>
       </div>
     </section>
 
     <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500 py-4">
       <div>BETAGS VIP PRO · PREPARTIDO · Lectura directa de la memoria de Área 1.</div>
-      <div class="font-mono">WINDOW: -1D TO +∞ · SYNC LOCAL</div>
+      <div class="font-mono">WINDOW: 0D TO +4D · SYNC LOCAL</div>
     </footer>
   </main>
 
   <script>
     const STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
+    const WINDOW_DAYS = 4;
     let allRecords = [], windowMatches = [], marketFocus = 'all';
 
     const norm = v => String(v || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
@@ -436,18 +436,12 @@
       return new Date(y, m - 1, day);
     }
 
-    function inOperationalWindow(r, yesterday, today) {
+    function inOperationalWindow(r, today, maxDay) {
       if (!r || !r.home || !r.away) return false;
-      const settled = isSettled(r);
       const dayObj = parseFixtureDay(r);
-
-      if (settled) {
-        if (!dayObj) return false;
-        return dayObj.getTime() >= yesterday.getTime();
-      } else {
-        if (!dayObj) return true;
-        return dayObj.getTime() >= today.getTime();
-      }
+      if (!dayObj) return false;
+      const t = dayObj.getTime();
+      return t >= today.getTime() && t <= maxDay.getTime();
     }
 
     function setMarketFocus(mode) {
@@ -477,9 +471,9 @@
 
       const now = new Date();
       const today = startOfDay(now);
-      const yesterday = new Date(today.getTime() - 86400000);
+      const maxDay = new Date(today.getTime() + WINDOW_DAYS * 86400000);
 
-      windowMatches = allRecords.filter(r => inOperationalWindow(r, yesterday, today));
+      windowMatches = allRecords.filter(r => inOperationalWindow(r, today, maxDay));
       windowMatches.sort((a, b) => timestamp(a) - timestamp(b) || String(a.league || '').localeCompare(String(b.league || '')));
 
       document.getElementById('statPending').textContent = windowMatches.length;
@@ -621,9 +615,8 @@
           mode = document.getElementById('dateFilter').value,
           now = new Date(),
           today = startOfDay(now),
-          yesterday = new Date(today.getTime() - 86400000),
           tomorrow = new Date(today.getTime() + 86400000),
-          week = new Date(today.getTime() + 7 * 86400000);
+          windowEnd = new Date(today.getTime() + WINDOW_DAYS * 86400000);
 
       let rows = windowMatches
         .filter(r => {
@@ -634,10 +627,9 @@
           if (q && !norm([r.home, r.away, r.league].join(' ')).includes(q)) return false;
 
           let dt = parseFixtureDay(r);
-          if (mode === 'yesterday' && (!dt || dt.toDateString() !== yesterday.toDateString())) return false;
           if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
           if (mode === 'tomorrow' && (!dt || dt.toDateString() !== tomorrow.toDateString())) return false;
-          if (mode === 'week' && (!dt || dt < today || dt > week)) return false;
+          if (mode === 'week' && (!dt || dt < today || dt > windowEnd)) return false;
           return true;
         })
         .sort((a, b) => timestamp(a) - timestamp(b));
