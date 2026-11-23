@@ -54,7 +54,6 @@
     ::-webkit-scrollbar-thumb { background: #1f2738; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
-    /* BetPractice Coupon + OddAlerts Hybrid Surfaces */
     .bp-panel {
       background-color: #111622;
       border: 1px solid #1f2738;
@@ -69,7 +68,7 @@
 
     .bp-fixture-row {
       background-color: #111622;
-      transition: background-color 0.14s ease, border-color 0.14s ease;
+      transition: background-color 0.14s ease;
     }
     .bp-fixture-row:hover {
       background-color: #151c2c;
@@ -80,12 +79,11 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Compact Coupon Market Cells */
     .coupon-cell {
       background-color: #090c12;
       border: 1px solid #1f2738;
       border-radius: 5px;
-      padding: 6px 4px;
+      padding: 4px 3px;
       transition: border-color 0.14s ease, background-color 0.14s ease;
     }
     .coupon-cell.top-cyan {
@@ -101,17 +99,16 @@
       border-color: rgba(16, 185, 129, 0.38);
     }
 
-    /* Form & Streak Badges */
     .form-chip {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 9.5px;
+      font-size: 9px;
       font-weight: 800;
-      width: 19px;
-      height: 19px;
+      width: 17px;
+      height: 17px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: 3px;
       line-height: 1;
     }
     .w { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
@@ -122,26 +119,30 @@
     .y { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
     .n { background: rgba(244, 63, 94, 0.16); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
 
-    /* Coupon Table Layout */
-    @media (min-width: 980px) {
+    /* Horizontal Compact Coupon Grid */
+    @media (min-width: 1024px) {
       .matches-grid {
         display: grid;
-        grid-template-columns: minmax(340px, 1.5fr) minmax(228px, 1fr) minmax(176px, 0.78fr) minmax(176px, 0.78fr);
-        gap: 12px;
+        grid-template-columns: minmax(380px, 1.55fr) minmax(205px, 0.92fr) minmax(150px, 0.7fr) minmax(150px, 0.7fr);
+        gap: 10px;
         align-items: center;
       }
       .market-mobile-label { display: none; }
     }
 
-    @media (max-width: 979px) {
+    @media (max-width: 1023px) {
       .desktop-head { display: none; }
-      .team-form-grid {
-        display: grid;
+    }
+
+    /* Horizontal Team Streak Strip inside each row */
+    .horizontal-teams-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    @media (max-width: 639px) {
+      .horizontal-teams-strip {
         grid-template-columns: 1fr;
-        gap: 8px;
-      }
-      @media (min-width: 580px) {
-        .team-form-grid { grid-template-columns: 1fr 1fr; }
       }
     }
   </style>
@@ -150,7 +151,7 @@
 
   <!-- Top Coupon & SaaS Control Header -->
   <header class="sticky top-0 z-30 bg-[#090c12]/95 backdrop-blur-md border-b border-[#1f2738]">
-    <div class="max-w-[1380px] mx-auto px-3 sm:px-5 h-13 py-2 flex items-center justify-between gap-3">
+    <div class="max-w-[1440px] mx-auto px-3 sm:px-5 py-2 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 min-w-0">
         <div class="w-8 h-8 rounded-md bg-emerald-500 text-slate-950 flex items-center justify-center font-black text-sm shrink-0">
           <i class="fa-solid fa-table-cells-large"></i>
@@ -183,58 +184,58 @@
   </header>
 
   <!-- Main Coupon Workspace -->
-  <main class="max-w-[1380px] w-full mx-auto px-3 sm:px-5 py-4 flex-1">
+  <main class="max-w-[1440px] w-full mx-auto px-3 sm:px-5 py-3.5 flex-1">
 
-    <!-- Title + Coupon KPI Strip -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 mb-4">
+    <!-- Title + Compact Horizontal KPI Strip -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
       <div>
-        <div class="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400 mb-0.5">
+        <div class="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
           <i class="fa-solid fa-sliders"></i>
           <span>BETAGS VIP PRO · COUPON MATRIX</span>
         </div>
         <h1 class="text-lg sm:text-xl font-black tracking-tight text-white">
           Centro de Partidos <span class="text-slate-400 font-semibold">Prepartido</span>
         </h1>
-        <p class="text-xs text-slate-400">Mercados · forma reciente · rachas por liga</p>
+        <p class="text-[11px] text-slate-400">Mercados · forma reciente · rachas por liga</p>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:min-w-[500px]">
-        <div class="bp-panel px-3 py-2">
-          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            <span>Pendientes</span>
-            <i class="fa-regular fa-futbol text-slate-500"></i>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:min-w-[490px]">
+        <div class="bp-panel px-2.5 py-1.5 flex items-center justify-between">
+          <div>
+            <div class="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Pendientes</div>
+            <div id="statPending" class="prob text-base font-extrabold text-white">0</div>
           </div>
-          <div id="statPending" class="prob text-lg font-extrabold text-white mt-0.5">0</div>
+          <i class="fa-regular fa-futbol text-slate-500 text-xs"></i>
         </div>
 
-        <div class="bp-panel px-3 py-2">
-          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            <span>Ligas</span>
-            <i class="fa-solid fa-trophy text-sky-400"></i>
+        <div class="bp-panel px-2.5 py-1.5 flex items-center justify-between">
+          <div>
+            <div class="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Ligas</div>
+            <div id="statLeagues" class="prob text-base font-extrabold text-sky-400">0</div>
           </div>
-          <div id="statLeagues" class="prob text-lg font-extrabold text-sky-400 mt-0.5">0</div>
+          <i class="fa-solid fa-trophy text-sky-400 text-xs"></i>
         </div>
 
-        <div class="bp-panel px-3 py-2">
-          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            <span>Historial</span>
-            <i class="fa-solid fa-database text-emerald-400"></i>
+        <div class="bp-panel px-2.5 py-1.5 flex items-center justify-between">
+          <div>
+            <div class="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Historial</div>
+            <div id="statHistory" class="prob text-base font-extrabold text-emerald-400">0</div>
           </div>
-          <div id="statHistory" class="prob text-lg font-extrabold text-emerald-400 mt-0.5">0</div>
+          <i class="fa-solid fa-database text-emerald-400 text-xs"></i>
         </div>
 
-        <div class="bp-panel px-3 py-2">
-          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-            <span>Lectura</span>
-            <i class="fa-regular fa-clock text-slate-500"></i>
+        <div class="bp-panel px-2.5 py-1.5 flex items-center justify-between">
+          <div>
+            <div class="text-[9px] font-semibold uppercase tracking-wider text-slate-400">Lectura</div>
+            <div id="statUpdated" class="prob text-xs font-bold text-slate-200 mt-0.5">—</div>
           </div>
-          <div id="statUpdated" class="prob text-sm font-bold text-slate-200 mt-1">—</div>
+          <i class="fa-regular fa-clock text-slate-500 text-xs"></i>
         </div>
       </div>
     </div>
 
     <!-- Coupon Filter Bar & Market Ribbon -->
-    <section class="bp-panel p-2.5 sm:p-3 mb-3.5">
+    <section class="bp-panel p-2.5 mb-3">
       <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
         <div class="relative flex-1">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
@@ -242,14 +243,14 @@
             id="searchInput"
             oninput="renderBoard()"
             placeholder="Buscar equipo o partido..."
-            class="w-full bg-[#090c12] border border-[#1f2738] focus:border-emerald-500 rounded-md pl-8 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none transition"
+            class="w-full bg-[#090c12] border border-[#1f2738] focus:border-emerald-500 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 outline-none transition"
           >
         </div>
 
         <select
           id="leagueFilter"
           onchange="renderBoard()"
-          class="bg-[#090c12] border border-[#1f2738] focus:border-emerald-500 rounded-md px-3 py-2 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[185px]"
+          class="bg-[#090c12] border border-[#1f2738] focus:border-emerald-500 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[185px]"
         >
           <option value="">Todas las ligas</option>
         </select>
@@ -257,7 +258,7 @@
         <select
           id="dateFilter"
           onchange="renderBoard()"
-          class="bg-[#090c12] border border-[#1f2738] focus:border-emerald-500 rounded-md px-3 py-2 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[160px]"
+          class="bg-[#090c12] border border-[#1f2738] focus:border-emerald-500 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[160px]"
         >
           <option value="">Todas las fechas</option>
           <option value="today">Hoy</option>
@@ -266,7 +267,7 @@
         </select>
       </div>
 
-      <div class="flex flex-wrap items-center justify-between gap-2 mt-2.5 pt-2 border-t border-[#1a2232]">
+      <div class="flex flex-wrap items-center justify-between gap-2 mt-2 pt-2 border-t border-[#1a2232]">
         <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-mono font-bold">
           <span class="text-[10px] font-sans font-semibold uppercase text-slate-500 mr-1">Cupón:</span>
           <span class="px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/25">1X2</span>
@@ -307,9 +308,9 @@
       </div>
     </section>
 
-    <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500 py-5">
+    <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500 py-4">
       <div>BETAGS VIP PRO · PREPARTIDO · Lectura directa de la memoria de Área 1.</div>
-      <div class="font-mono">COUPON VIEW</div>
+      <div class="font-mono">COUPON VIEW · HORIZONTAL COMPACT</div>
     </footer>
   </main>
 
@@ -392,11 +393,11 @@
       });
     }
 
-    function streak(label, seq, k) {
+    function streakCompact(label, seq, k) {
       let val = seq[0]?.[k];
       if (!val) {
-        return `<div class="flex items-center justify-between text-[9.5px] text-slate-600 mt-1 pt-1 border-t border-[#1a2232]">
-          <span>${label}</span>
+        return `<div class="flex items-center justify-between gap-1 text-[9px] text-slate-600 mt-1">
+          <span class="font-mono">${label}</span>
           <span class="italic">sin historial</span>
         </div>`;
       }
@@ -420,25 +421,25 @@
         return `<span class="form-chip ${cls}">${x[k]}</span>`;
       }).join('');
 
-      return `<div class="mt-1 pt-1 border-t border-[#1a2232]">
-        <div class="flex items-center justify-between gap-1">
-          <span class="text-[9.5px] text-slate-400 font-medium">${label}</span>
-          <span class="text-[9.5px] font-bold text-slate-200">${run} ${desc}</span>
+      return `<div class="mt-1 pt-1 border-t border-[#1a2232]/80">
+        <div class="flex items-center justify-between gap-1 leading-tight">
+          <span class="text-[9px] font-mono text-slate-400">${label}</span>
+          <span class="text-[9px] font-bold text-slate-200 truncate">${run} ${desc}</span>
         </div>
-        <div class="flex items-center gap-1 mt-1">${chips}</div>
+        <div class="flex items-center gap-0.5 mt-0.5">${chips}</div>
       </div>`;
     }
 
     function teamForm(team, league, fixture) {
       let hist = teamHistory(team, league, fixture), seq = outcomes(team, hist);
-      return `<div class="bp-subpanel p-2">
-        <div class="flex items-center justify-between gap-1.5">
-          <div class="text-[10.5px] font-bold text-slate-100 truncate">${esc(team)}</div>
-          <span class="text-[9px] font-mono text-slate-500 shrink-0">${hist.length} PJ · misma liga</span>
+      return `<div class="bp-subpanel px-2 py-1.5">
+        <div class="flex items-center justify-between gap-1">
+          <div class="text-[10px] font-bold text-slate-100 truncate">${esc(team)}</div>
+          <span class="text-[8.5px] font-mono text-slate-500 shrink-0">${hist.length} PJ · liga</span>
         </div>
-        ${streak('1X2', seq, 'one')}
-        ${streak('Goles', seq, 'goals')}
-        ${streak('BTTS', seq, 'btts')}
+        ${streakCompact('1X2', seq, 'one')}
+        ${streakCompact('Goles', seq, 'goals')}
+        ${streakCompact('BTTS', seq, 'btts')}
       </div>`;
     }
 
@@ -457,14 +458,14 @@
       const t = themeMap[theme] || themeMap.cyan;
 
       return `<div class="bp-subpanel p-1.5">
-        <div class="market-mobile-label text-[9.5px] uppercase tracking-wider font-mono font-bold ${t.label} mb-1 px-0.5">${title}</div>
+        <div class="market-mobile-label text-[9px] uppercase tracking-wider font-mono font-bold ${t.label} mb-1 px-0.5">${title}</div>
         <div class="grid gap-1" style="grid-template-columns:repeat(${items.length},minmax(0,1fr))">
           ${items.map(it => {
             const num = Number(it[1]);
             const isTop = Number.isFinite(num) && num === maxVal && maxVal > 0;
             return `<div class="coupon-cell text-center ${isTop ? t.topBox : ''}">
-              <div class="text-[8.5px] font-mono text-slate-400 font-bold tracking-tight">${it[0]}</div>
-              <div class="prob text-xs sm:text-[13px] font-extrabold ${isTop ? t.topText : 'text-slate-200'} mt-0.5">${pct(it[1])}</div>
+              <div class="text-[8px] font-mono text-slate-400 font-bold tracking-tight">${it[0]}</div>
+              <div class="prob text-xs font-extrabold ${isTop ? t.topText : 'text-slate-200'} mt-0.5">${pct(it[1])}</div>
             </div>`;
           }).join('')}
         </div>
@@ -473,30 +474,30 @@
 
     function card(r) {
       let p = r.probabilities || {};
-      let details = `<div>
-        <div class="flex items-center justify-between gap-2 mb-1">
-          <span class="inline-flex items-center gap-1 text-[9.5px] font-mono font-bold text-emerald-400 uppercase tracking-wider truncate">
-            <i class="fa-solid fa-layer-group text-[8.5px]"></i>
-            ${esc(r.league || 'Sin liga')}
-          </span>
-          <span class="prob text-[10px] font-medium text-slate-400 bg-[#090c12] border border-[#1f2738] px-1.5 py-0.5 rounded shrink-0">
+      let details = `<div class="min-w-0">
+        <div class="flex flex-wrap items-center justify-between gap-1.5 mb-1">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="inline-flex items-center gap-1 text-[9px] font-mono font-bold text-emerald-400 uppercase tracking-wider shrink-0">
+              <i class="fa-solid fa-layer-group text-[8px]"></i>
+              ${esc(r.league || 'Sin liga')}
+            </span>
+            <span class="text-slate-700 text-[10px]">•</span>
+            <span class="text-xs sm:text-[13px] font-extrabold text-white truncate">
+              ${esc(r.home)} <span class="text-[10px] font-mono font-semibold text-slate-500 mx-0.5">vs</span> ${esc(r.away)}
+            </span>
+          </div>
+          <span class="prob text-[9.5px] font-medium text-slate-400 bg-[#090c12] border border-[#1f2738] px-1.5 py-0.5 rounded shrink-0">
             ${esc(r.matchDate || 'Fecha por definir')} ${r.kickoff ? '· ' + esc(r.kickoff) : ''}
           </span>
         </div>
 
-        <div class="flex items-center gap-2 text-sm font-extrabold text-white">
-          <span class="truncate">${esc(r.home)}</span>
-          <span class="text-[10px] font-mono font-bold text-slate-500 px-1.5 py-0.5 rounded bg-[#090c12] border border-[#1a2232] shrink-0">vs</span>
-          <span class="truncate">${esc(r.away)}</span>
-        </div>
-
-        <div class="team-form-grid mt-2">
-          <div>${teamForm(r.home, r.league, r)}</div>
-          <div>${teamForm(r.away, r.league, r)}</div>
+        <div class="horizontal-teams-strip">
+          ${teamForm(r.home, r.league, r)}
+          ${teamForm(r.away, r.league, r)}
         </div>
       </div>`;
 
-      return `<article class="bp-fixture-row p-3 sm:px-3.5 sm:py-3">
+      return `<article class="bp-fixture-row px-3 py-2 sm:px-3.5 sm:py-2.5">
         <div class="matches-grid">
           ${details}
           ${market('1X2', [['LOCAL', p.homeWin], ['EMPATE', p.draw], ['VISITA', p.awayWin]], 'cyan')}
