@@ -70,6 +70,9 @@
     .match-row.is-settled:hover {
       background-color: #111b33;
     }
+    .match-row.is-live {
+      background: linear-gradient(90deg, rgba(244, 63, 94, 0.08) 0%, rgba(11, 17, 32, 0.96) 35%);
+    }
 
     .row-layout {
       display: grid;
@@ -162,14 +165,12 @@
     .odd-box.best-btts .odd-lbl { color: #6ee7b7; }
     .odd-box.best-btts .odd-val { color: #34d399; }
 
-    /* Opción no ganadora en un partido resuelto */
     .odd-box.loser-box {
       opacity: 0.42;
       background-color: #070b14;
       border-color: #151f33;
     }
 
-    /* Resultado real acertado */
     .odd-box.hit-outcome {
       opacity: 1 !important;
       background: linear-gradient(180deg, rgba(16, 185, 129, 0.26) 0%, rgba(5, 150, 105, 0.16) 100%) !important;
@@ -227,6 +228,11 @@
           <span>Leyendo memoria de Área 1…</span>
         </div>
 
+        <button onclick="toggleLiveDrawer()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-extrabold text-rose-200 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 transition cursor-pointer">
+          <i class="fa-solid fa-tower-broadcast text-rose-400"></i>
+          <span>Gestor LIVE (<span id="liveCountBadge">0</span>)</span>
+        </button>
+
         <a href="index.html" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-slate-200 bg-[#0c1324] hover:bg-[#15203b] border border-[#1e2b45] transition">
           <i class="fa-solid fa-arrow-left text-emerald-400"></i>
           <span>Volver a BETAGS</span>
@@ -242,6 +248,71 @@
 
   <!-- Espacio Principal -->
   <main class="max-w-[1540px] w-full mx-auto px-3 sm:px-6 py-4 flex-1">
+
+    <!-- Gestor de Múltiples Encuentros LIVE -->
+    <section id="liveManagerPanel" class="hidden quant-panel p-4 mb-4 border-rose-500/35">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-[#19243d]">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+          <h2 class="text-sm font-black tracking-tight text-white uppercase">
+            Gestor Multi-Encuentro LIVE <span class="text-rose-400 font-mono text-xs">(SoccerStats / Manual)</span>
+          </h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <label class="inline-flex items-center gap-1.5 text-slate-300 bg-[#060a14] border border-[#1f2d47] px-2.5 py-1.5 rounded-lg cursor-pointer">
+            <input id="autoPollToggle" type="checkbox" onchange="configureAutoPoll()" class="accent-rose-500">
+            <span class="font-mono text-[11px] font-bold">Auto-poll 60s</span>
+          </label>
+          <button type="button" onclick="pollAllLiveMatches()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold text-white bg-rose-500 hover:bg-rose-400 transition cursor-pointer">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Sincronizar todos LIVE</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Proxy Endpoint opcional para consultar URLs de SoccerStats sin CORS -->
+      <div class="mb-3">
+        <label class="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
+          Endpoint Proxy / Worker propio (opcional, ej. <span class="text-sky-300">/api/proxy?url=</span> o <span class="text-sky-300">https://tu-worker.workers.dev/?url=</span>)
+        </label>
+        <input
+          id="liveProxyUrl"
+          oninput="saveProxyConfig()"
+          placeholder="Déjalo vacío para ingreso manual o ingresa tu endpoint proxy/worker que devuelva HTML o JSON"
+          class="w-full bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-3 py-1.5 text-xs font-mono text-slate-200 placeholder-slate-500 outline-none"
+        >
+      </div>
+
+      <!-- Formulario para agregar o actualizar un encuentro LIVE -->
+      <form onsubmit="addOrUpdateLiveMatch(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 mb-3">
+        <input id="lvHome" required placeholder="Local (ej. Asteras Tripolis)" class="lg:col-span-2 bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-2.5 py-2 text-xs text-white placeholder-slate-500 outline-none">
+        <input id="lvAway" required placeholder="Visita (ej. Aris)" class="lg:col-span-2 bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-2.5 py-2 text-xs text-white placeholder-slate-500 outline-none">
+        <input id="lvLeague" placeholder="Liga (ej. Super League)" class="lg:col-span-2 bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-2.5 py-2 text-xs text-white placeholder-slate-500 outline-none">
+        <input id="lvUrl" placeholder="URL SoccerStats (opcional)" class="lg:col-span-3 bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-2.5 py-2 text-xs font-mono text-sky-200 placeholder-slate-500 outline-none">
+
+        <div class="lg:col-span-3 grid grid-cols-4 gap-1.5">
+          <input id="lvHg" type="number" min="0" step="1" placeholder="GL" title="Goles Local" class="bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-2 py-2 text-xs font-mono text-center text-white placeholder-slate-500 outline-none">
+          <input id="lvAg" type="number" min="0" step="1" placeholder="GV" title="Goles Visita" class="bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-2 py-2 text-xs font-mono text-center text-white placeholder-slate-500 outline-none">
+          <input id="lvMin" placeholder="Min" title="Minuto (ej. 64')" class="bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-2 py-2 text-xs font-mono text-center text-white placeholder-slate-500 outline-none">
+          <select id="lvStatus" class="bg-[#060a14] border border-[#1f2d47] focus:border-rose-400 rounded-lg px-1.5 py-2 text-[11px] font-mono font-bold text-rose-300 outline-none cursor-pointer">
+            <option value="LIVE">LIVE</option>
+            <option value="SETTLED">FT</option>
+          </select>
+        </div>
+
+        <div class="sm:col-span-2 lg:col-span-12 flex items-center justify-between gap-2 pt-1">
+          <span id="liveFeedback" class="text-[11px] font-mono text-slate-400">Agrega todos los encuentros en vivo que necesites monitorear.</span>
+          <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-extrabold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition cursor-pointer shrink-0">
+            <i class="fa-solid fa-plus"></i>
+            <span>Guardar / Agregar LIVE</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Lista de encuentros LIVE registrados -->
+      <div id="liveTrackedList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2"></div>
+    </section>
 
     <!-- Título + Telemetría -->
     <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4">
@@ -394,13 +465,17 @@
 
     <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500 py-4">
       <div>BETAGS VIP PRO · PREPARTIDO · Lectura directa de la memoria de Área 1.</div>
-      <div class="font-mono">WINDOW: -1D TO +∞ · SYNC LOCAL</div>
+      <div class="font-mono">WINDOW: -1D TO +∞ · SYNC LOCAL + MULTI-LIVE</div>
     </footer>
   </main>
 
   <script>
     const STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
+    const LIVE_SOURCES_KEY = 'betags_vip_pro_live_sources_v1';
+    const LIVE_PROXY_KEY = 'betags_vip_pro_live_proxy_v1';
+
     let allRecords = [], windowMatches = [], marketFocus = 'all';
+    let liveSources = [], livePollTimer = null;
 
     const norm = v => String(v || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
     const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -417,7 +492,12 @@
       return Number.isFinite(v) ? v : 0;
     }
 
+    function isLive(r) {
+      return String(r.status || '').toUpperCase() === 'LIVE';
+    }
+
     function isSettled(r) {
+      if (isLive(r)) return false;
       return String(r.status || '').toUpperCase() === 'SETTLED' || (r.actualHomeGoals !== null && r.actualAwayGoals !== null && Number.isFinite(Number(r.actualHomeGoals)) && Number.isFinite(Number(r.actualAwayGoals)));
     }
 
@@ -438,6 +518,7 @@
 
     function inOperationalWindow(r, yesterday, today) {
       if (!r || !r.home || !r.away) return false;
+      if (isLive(r)) return true;
       const settled = isSettled(r);
       const dayObj = parseFixtureDay(r);
 
@@ -466,7 +547,326 @@
       setMarketFocus('all');
     }
 
+    // --- GESTIÓN MULTI-ENCUENTRO LIVE ---
+    function toggleLiveDrawer() {
+      document.getElementById('liveManagerPanel').classList.toggle('hidden');
+      renderLiveSourcesList();
+    }
+
+    function loadLiveSources() {
+      try {
+        const raw = localStorage.getItem(LIVE_SOURCES_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        liveSources = Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        liveSources = [];
+      }
+
+      const proxyEl = document.getElementById('liveProxyUrl');
+      if (proxyEl) {
+        proxyEl.value = localStorage.getItem(LIVE_PROXY_KEY) || '';
+      }
+      document.getElementById('liveCountBadge').textContent = liveSources.length;
+    }
+
+    function saveLiveSources() {
+      localStorage.setItem(LIVE_SOURCES_KEY, JSON.stringify(liveSources));
+      document.getElementById('liveCountBadge').textContent = liveSources.length;
+      renderLiveSourcesList();
+    }
+
+    function saveProxyConfig() {
+      const proxyEl = document.getElementById('liveProxyUrl');
+      if (proxyEl) {
+        localStorage.setItem(LIVE_PROXY_KEY, proxyEl.value.trim());
+      }
+    }
+
+    function syncMatchRecordToStorage({ home, away, league, matchDate, kickoff, homeGoals, awayGoals, status, minute, sourceUrl }) {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const records = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(records)) return;
+
+      const nh = norm(home);
+      const na = norm(away);
+      const idx = records.findIndex(r =>
+        norm(r.home) === nh &&
+        norm(r.away) === na &&
+        (!matchDate || dateKey(r) === matchDate)
+      );
+
+      const hg = (homeGoals !== '' && homeGoals !== null && homeGoals !== undefined && Number.isFinite(Number(homeGoals)))
+        ? Number(homeGoals)
+        : (idx >= 0 ? records[idx].actualHomeGoals : null);
+
+      const ag = (awayGoals !== '' && awayGoals !== null && awayGoals !== undefined && Number.isFinite(Number(awayGoals)))
+        ? Number(awayGoals)
+        : (idx >= 0 ? records[idx].actualAwayGoals : null);
+
+      const cleanStatus = String(status || 'LIVE').toUpperCase();
+
+      if (idx >= 0) {
+        records[idx] = {
+          ...records[idx],
+          league: league || records[idx].league || 'Super League',
+          status: cleanStatus,
+          liveMinute: minute !== undefined ? minute : (records[idx].liveMinute || ''),
+          liveSourceUrl: sourceUrl || records[idx].liveSourceUrl || '',
+          actualHomeGoals: hg,
+          actualAwayGoals: ag,
+          updatedAt: new Date().toISOString()
+        };
+      } else {
+        records.push({
+          id: `live_${nh}_${na}_${Date.now()}`,
+          home,
+          away,
+          league: league || 'Super League',
+          matchDate: matchDate || new Date().toISOString().slice(0, 10),
+          kickoff: kickoff || new Date().toTimeString().slice(0, 5),
+          status: cleanStatus,
+          liveMinute: minute || '',
+          liveSourceUrl: sourceUrl || '',
+          actualHomeGoals: hg,
+          actualAwayGoals: ag,
+          probabilities: {}
+        });
+      }
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function addOrUpdateLiveMatch(e) {
+      e.preventDefault();
+      const home = document.getElementById('lvHome').value.trim();
+      const away = document.getElementById('lvAway').value.trim();
+      const league = document.getElementById('lvLeague').value.trim() || 'Super League';
+      const url = document.getElementById('lvUrl').value.trim();
+      const hgVal = document.getElementById('lvHg').value;
+      const agVal = document.getElementById('lvAg').value;
+      const minute = document.getElementById('lvMin').value.trim();
+      const status = document.getElementById('lvStatus').value;
+
+      if (!home || !away) return;
+
+      const existingIdx = liveSources.findIndex(item => norm(item.home) === norm(home) && norm(item.away) === norm(away));
+      const entry = {
+        id: existingIdx >= 0 ? liveSources[existingIdx].id : `src_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        home,
+        away,
+        league,
+        url,
+        homeGoals: hgVal !== '' ? Number(hgVal) : (existingIdx >= 0 ? liveSources[existingIdx].homeGoals : null),
+        awayGoals: agVal !== '' ? Number(agVal) : (existingIdx >= 0 ? liveSources[existingIdx].awayGoals : null),
+        minute: minute || (existingIdx >= 0 ? liveSources[existingIdx].minute : ''),
+        status,
+        lastSync: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+      };
+
+      if (existingIdx >= 0) {
+        liveSources[existingIdx] = entry;
+      } else {
+        liveSources.push(entry);
+      }
+
+      saveLiveSources();
+      syncMatchRecordToStorage({
+        home: entry.home,
+        away: entry.away,
+        league: entry.league,
+        homeGoals: entry.homeGoals,
+        awayGoals: entry.awayGoals,
+        status: entry.status,
+        minute: entry.minute,
+        sourceUrl: entry.url
+      });
+
+      document.getElementById('liveFeedback').textContent = `Guardado ${entry.home} vs ${entry.away} (${entry.status}).`;
+      readRecords();
+    }
+
+    function removeLiveSource(id) {
+      liveSources = liveSources.filter(item => item.id !== id);
+      saveLiveSources();
+    }
+
+    function quickScoreDelta(id, side, delta) {
+      const item = liveSources.find(x => x.id === id);
+      if (!item) return;
+      if (side === 'home') {
+        item.homeGoals = Math.max(0, (Number(item.homeGoals) || 0) + delta);
+      } else {
+        item.awayGoals = Math.max(0, (Number(item.awayGoals) || 0) + delta);
+      }
+      item.status = 'LIVE';
+      item.lastSync = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      saveLiveSources();
+      syncMatchRecordToStorage({
+        home: item.home,
+        away: item.away,
+        league: item.league,
+        homeGoals: item.homeGoals,
+        awayGoals: item.awayGoals,
+        status: item.status,
+        minute: item.minute,
+        sourceUrl: item.url
+      });
+      readRecords();
+    }
+
+    function finishLiveSource(id) {
+      const item = liveSources.find(x => x.id === id);
+      if (!item) return;
+      item.status = 'SETTLED';
+      item.minute = 'FT';
+      item.lastSync = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+      saveLiveSources();
+      syncMatchRecordToStorage({
+        home: item.home,
+        away: item.away,
+        league: item.league,
+        homeGoals: item.homeGoals,
+        awayGoals: item.awayGoals,
+        status: 'SETTLED',
+        minute: 'FT',
+        sourceUrl: item.url
+      });
+      readRecords();
+    }
+
+    function parseSoccerStatsPayload(rawText) {
+      try {
+        const json = JSON.parse(rawText);
+        if (json && (json.homeGoals !== undefined || json.awayGoals !== undefined)) {
+          return {
+            homeGoals: Number.isFinite(Number(json.homeGoals)) ? Number(json.homeGoals) : null,
+            awayGoals: Number.isFinite(Number(json.awayGoals)) ? Number(json.awayGoals) : null,
+            status: json.status || 'LIVE',
+            minute: json.minute || ''
+          };
+        }
+      } catch (_) {}
+
+      const doc = new DOMParser().parseFromString(rawText, 'text/html');
+      const bodyText = (doc.body?.textContent || '').replace(/\s+/g, ' ').trim();
+      const scoreMatch = bodyText.match(/\b([0-9])\s*[-–]\s*([0-9])\b/);
+      const isFinished = /\b(FT|Full[- ]?time|Finalizado)\b/i.test(bodyText);
+      const minMatch = bodyText.match(/\b([1-9][0-9]?['′])\b/);
+
+      return {
+        homeGoals: scoreMatch ? Number(scoreMatch[1]) : null,
+        awayGoals: scoreMatch ? Number(scoreMatch[2]) : null,
+        status: isFinished ? 'SETTLED' : (scoreMatch ? 'LIVE' : 'LIVE'),
+        minute: isFinished ? 'FT' : (minMatch ? minMatch[1] : '')
+      };
+    }
+
+    async function pollSingleLiveSource(id) {
+      const item = liveSources.find(x => x.id === id);
+      if (!item) return;
+
+      const proxyBase = (document.getElementById('liveProxyUrl')?.value || '').trim();
+      if (!item.url || !proxyBase) {
+        document.getElementById('liveFeedback').textContent = `Para consultar URL de ${item.home} vs ${item.away}, indica URL y Endpoint Proxy.`;
+        return;
+      }
+
+      try {
+        const joiner = proxyBase.includes('?') ? '&' : '?';
+        const endpoint = proxyBase.endsWith('=') ? `${proxyBase}${encodeURIComponent(item.url)}` : `${proxyBase}${joiner}url=${encodeURIComponent(item.url)}`;
+        const res = await fetch(endpoint, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const text = await res.text();
+        const parsed = parseSoccerStatsPayload(text);
+
+        if (parsed.homeGoals !== null) item.homeGoals = parsed.homeGoals;
+        if (parsed.awayGoals !== null) item.awayGoals = parsed.awayGoals;
+        if (parsed.minute) item.minute = parsed.minute;
+        if (parsed.status) item.status = parsed.status;
+        item.lastSync = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+        saveLiveSources();
+        syncMatchRecordToStorage({
+          home: item.home,
+          away: item.away,
+          league: item.league,
+          homeGoals: item.homeGoals,
+          awayGoals: item.awayGoals,
+          status: item.status,
+          minute: item.minute,
+          sourceUrl: item.url
+        });
+        document.getElementById('liveFeedback').textContent = `Sincronizado ${item.home} vs ${item.away} (${item.homeGoals ?? '—'}-${item.awayGoals ?? '—'}).`;
+        readRecords();
+      } catch (err) {
+        document.getElementById('liveFeedback').textContent = `Error en ${item.home} vs ${item.away}: ${err.message}`;
+      }
+    }
+
+    async function pollAllLiveMatches() {
+      const active = liveSources.filter(x => x.status === 'LIVE' && x.url);
+      if (!active.length) {
+        document.getElementById('liveFeedback').textContent = 'No hay encuentros LIVE con URL configurada para sincronizar.';
+        return;
+      }
+      for (const item of active) {
+        await pollSingleLiveSource(item.id);
+      }
+    }
+
+    function configureAutoPoll() {
+      if (livePollTimer) {
+        clearInterval(livePollTimer);
+        livePollTimer = null;
+      }
+      const checked = document.getElementById('autoPollToggle')?.checked;
+      if (checked) {
+        livePollTimer = setInterval(() => {
+          if (liveSources.some(x => x.status === 'LIVE' && x.url)) {
+            pollAllLiveMatches();
+          }
+        }, 60000);
+      }
+    }
+
+    function renderLiveSourcesList() {
+      const box = document.getElementById('liveTrackedList');
+      if (!box) return;
+
+      if (!liveSources.length) {
+        box.innerHTML = `<div class="col-span-full text-xs text-slate-500 py-2">Aún no has agregado encuentros en vivo. Usa el formulario superior para añadir uno o varios.</div>`;
+        return;
+      }
+
+      box.innerHTML = liveSources.map(item => `
+        <div class="bg-[#060a14] border border-[#1d2a44] rounded-lg p-2.5 flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[9.5px] font-mono font-extrabold px-1.5 py-0.5 rounded ${item.status === 'LIVE' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/35'}">${esc(item.status)}</span>
+              <span class="text-xs font-extrabold text-white truncate">${esc(item.home)} vs ${esc(item.away)}</span>
+            </div>
+            <div class="text-[10.5px] font-mono text-slate-400 mt-0.5">
+              Marcador: <strong class="text-white">${item.homeGoals ?? '—'} - ${item.awayGoals ?? '—'}</strong>
+              ${item.minute ? `· ${esc(item.minute)}` : ''}
+              ${item.lastSync ? `· sync ${esc(item.lastSync)}` : ''}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-1 shrink-0">
+            <button type="button" onclick="quickScoreDelta('${item.id}','home',1)" title="+1 Local" class="px-2 py-1 rounded bg-[#0e1628] hover:bg-[#172440] border border-[#223252] text-[10.5px] font-mono font-bold text-sky-300 cursor-pointer">+L</button>
+            <button type="button" onclick="quickScoreDelta('${item.id}','away',1)" title="+1 Visita" class="px-2 py-1 rounded bg-[#0e1628] hover:bg-[#172440] border border-[#223252] text-[10.5px] font-mono font-bold text-amber-300 cursor-pointer">+V</button>
+            ${item.url ? `<button type="button" onclick="pollSingleLiveSource('${item.id}')" title="Consultar URL" class="px-2 py-1 rounded bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-[10.5px] font-mono font-bold text-rose-300 cursor-pointer"><i class="fa-solid fa-rotate"></i></button>` : ''}
+            ${item.status === 'LIVE' ? `<button type="button" onclick="finishLiveSource('${item.id}')" title="Marcar Finalizado (FT)" class="px-2 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-[10.5px] font-mono font-bold text-emerald-300 cursor-pointer">FT</button>` : ''}
+            <button type="button" onclick="removeLiveSource('${item.id}')" title="Quitar de lista LIVE" class="px-2 py-1 rounded bg-slate-800/70 hover:bg-rose-500/20 text-[10.5px] text-slate-400 hover:text-rose-300 cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+    // --- FIN GESTIÓN MULTI-ENCUENTRO LIVE ---
+
     function readRecords() {
+      loadLiveSources();
       try {
         let raw = localStorage.getItem(STORAGE_KEY), data = raw ? JSON.parse(raw) : [];
         allRecords = Array.isArray(data) ? data : [];
@@ -560,18 +960,23 @@
 
     function fixtureRow(r) {
       let p = r.probabilities || {};
+      let live = isLive(r);
       let settled = isSettled(r);
       let winners = getActualWinners(r);
       let timeBadge = `${esc(r.matchDate || 'Fecha por definir')}${r.kickoff ? ' · ' + esc(r.kickoff) : ''}`;
       let leagueName = esc(r.league || 'Sin liga');
 
-      let statusBadge = settled
-        ? `<span class="prob text-[10.5px] font-extrabold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-0.5 rounded-md shrink-0">
-             RESUELTO${validScore(r) ? ` · <strong class="text-white text-xs">${Number(r.actualHomeGoals)} - ${Number(r.actualAwayGoals)}</strong>` : ''}
+      let statusBadge = live
+        ? `<span class="prob text-[10.5px] font-extrabold text-rose-300 bg-rose-500/15 border border-rose-500/45 px-2.5 py-0.5 rounded-md shrink-0">
+             ● LIVE${r.liveMinute ? ` · ${esc(r.liveMinute)}` : ''}${validScore(r) ? ` · <strong class="text-white text-xs">${Number(r.actualHomeGoals)} - ${Number(r.actualAwayGoals)}</strong>` : ''}
            </span>`
-        : `<span class="prob text-[10.5px] font-extrabold text-sky-300 bg-sky-500/12 border border-sky-500/30 px-2.5 py-0.5 rounded-md shrink-0">
-             PENDIENTE
-           </span>`;
+        : settled
+          ? `<span class="prob text-[10.5px] font-extrabold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-0.5 rounded-md shrink-0">
+               RESUELTO${validScore(r) ? ` · <strong class="text-white text-xs">${Number(r.actualHomeGoals)} - ${Number(r.actualAwayGoals)}</strong>` : ''}
+             </span>`
+          : `<span class="prob text-[10.5px] font-extrabold text-sky-300 bg-sky-500/12 border border-sky-500/30 px-2.5 py-0.5 rounded-md shrink-0">
+               PENDIENTE
+             </span>`;
 
       let settledSummary = settled && winners
         ? `<div class="flex flex-wrap items-center gap-1.5 mt-1.5 text-[10px] font-mono">
@@ -586,7 +991,7 @@
       const showOu = marketFocus === 'all' || marketFocus === 'ou';
       const showBtts = marketFocus === 'all' || marketFocus === 'btts';
 
-      return `<article class="match-row ${settled ? 'is-settled' : ''} px-3.5 py-3 sm:px-5">
+      return `<article class="match-row ${live ? 'is-live' : ''} ${settled ? 'is-settled' : ''} px-3.5 py-3 sm:px-5">
         <div class="row-layout">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2 mb-1.5">
@@ -627,12 +1032,14 @@
 
       let rows = windowMatches
         .filter(r => {
+          const live = isLive(r);
           const settled = isSettled(r);
-          if (statusMode === 'pending' && settled) return false;
+          if (statusMode === 'pending' && (settled || live)) return false;
           if (statusMode === 'settled' && !settled) return false;
           if (league && (r.league || 'Sin liga') !== league) return false;
           if (q && !norm([r.home, r.away, r.league].join(' ')).includes(q)) return false;
 
+          if (live) return true;
           let dt = parseFixtureDay(r);
           if (mode === 'yesterday' && (!dt || dt.toDateString() !== yesterday.toDateString())) return false;
           if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
@@ -648,7 +1055,7 @@
 
     function refreshBoard() { readRecords(); }
 
-    window.addEventListener('storage', e => { if (e.key === STORAGE_KEY || e.key === null) readRecords(); });
+    window.addEventListener('storage', e => { if (e.key === STORAGE_KEY || e.key === LIVE_SOURCES_KEY || e.key === null) readRecords(); });
     window.addEventListener('focus', readRecords);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) readRecords(); });
     readRecords();
