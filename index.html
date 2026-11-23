@@ -429,6 +429,7 @@
                     <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">3</span> Pronósticos
                 </button>
                 <button onclick="openModelTrackingWindow('modelPredictionStatsPanel')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-cyan-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-chart-line"></i> Rendimiento Poisson</button>
+                <button onclick="openModelTrackingWindow('modelStreaksPanel')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-amber-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-fire"></i> Rachas</button>
                 <button onclick="scrollToSection('sec-match')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-400 text-[9px] font-black flex items-center justify-center">2</span> Partido
                 </button>
@@ -8271,11 +8272,117 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             renderModelPredictionLog();
         }
 
+        // RACHAS INFORMATIVAS DE ÁREA 1: solo resultados resueltos de la misma liga.
+        // Es un panel descriptivo independiente; no modifica Poisson, ELO, calibración ni preselector.
+        function modelStreakNormalizeLeague(value) {
+            return String(value || '').trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+        }
+
+        function modelStreakDateKey(record) {
+            const raw = String(record?.matchDate || '').trim();
+            const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+            const parsed = Date.parse(raw);
+            return Number.isFinite(parsed) ? new Date(parsed).toISOString().slice(0, 10) : '';
+        }
+
+        function modelStreakTeamKey(value) {
+            return String(value || '').trim().toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+
+        function modelStreakDescribe(record, teamName) {
+            const home = modelStreakTeamKey(record.home) === modelStreakTeamKey(teamName);
+            const teamGoals = home ? Number(record.actualHomeGoals) : Number(record.actualAwayGoals);
+            const rivalGoals = home ? Number(record.actualAwayGoals) : Number(record.actualHomeGoals);
+            const total = teamGoals + rivalGoals;
+            const outcome = teamGoals > rivalGoals ? 'Victoria' : teamGoals === rivalGoals ? 'Empate' : 'Derrota';
+            const overUnder = threshold => total > threshold ? 'Más' : 'Menos';
+            return {
+                form: outcome,
+                total15: overUnder(1.5),
+                total25: overUnder(2.5),
+                total35: overUnder(3.5),
+                btts: teamGoals > 0 && rivalGoals > 0 ? 'Sí' : 'No',
+                team05: teamGoals >= 1 ? 'Sí' : 'No',
+                team15: teamGoals >= 2 ? 'Sí' : 'No',
+                cleanSheet: rivalGoals === 0 ? 'Sí' : 'No'
+            };
+        }
+
+        function modelStreakCurrent(history, teamName, field) {
+            if (!history.length) return { label: 'Sin datos', count: 0 };
+            const latest = modelStreakDescribe(history[0], teamName)[field];
+            let count = 0;
+            for (const match of history) {
+                if (modelStreakDescribe(match, teamName)[field] !== latest) break;
+                count++;
+            }
+            return { label: `${latest} × ${count}`, count, outcome: latest };
+        }
+
+        function modelStreakHistoryForFixture(fixture, teamName) {
+            const fixtureDate = modelStreakDateKey(fixture);
+            if (!fixtureDate) return [];
+            const leagueKey = modelStreakNormalizeLeague(fixture.league);
+            return modelPredictionRecords.filter(record => {
+                if (record.status !== 'SETTLED' || record.id === fixture.id) return false;
+                if (modelStreakNormalizeLeague(record.league) !== leagueKey) return false;
+                if (modelStreakTeamKey(record.home) !== modelStreakTeamKey(teamName) && modelStreakTeamKey(record.away) !== modelStreakTeamKey(teamName)) return false;
+                const date = modelStreakDateKey(record);
+                if (!date || date >= fixtureDate) return false;
+                const hg = Number(record.actualHomeGoals), ag = Number(record.actualAwayGoals);
+                return Number.isInteger(hg) && Number.isInteger(ag) && hg >= 0 && ag >= 0;
+            }).sort((a, b) => modelStreakDateKey(b).localeCompare(modelStreakDateKey(a)) || String(b.kickoff || '').localeCompare(String(a.kickoff || '')) || String(b.analyzedAt || '').localeCompare(String(a.analyzedAt || '')));
+        }
+
+        function renderModelStreaksPanel() {
+            const root = document.getElementById('modelStreaksContent');
+            if (!root) return;
+            const filter = document.getElementById('modelStreakLeagueFilter');
+            const previous = filter?.value || 'ALL';
+            const pending = modelPredictionRecords.filter(record => record.status !== 'SETTLED');
+            const leagues = [...new Set(pending.map(record => String(record.league || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+            if (filter) {
+                const options = '<option value="ALL">Todas las competiciones</option>' + leagues.map(league => `<option value="${escapeModelPredictionHtml(league)}">${escapeModelPredictionHtml(league)}</option>`).join('');
+                if (filter.dataset.optionsKey !== options) { filter.innerHTML = options; filter.dataset.optionsKey = options; }
+                filter.value = leagues.includes(previous) || previous === 'ALL' ? previous : 'ALL';
+            }
+            const selectedLeague = filter?.value || 'ALL';
+            const fixtures = pending.filter(record => selectedLeague === 'ALL' || String(record.league || '').trim() === selectedLeague)
+                .sort((a, b) => modelStreakDateKey(a).localeCompare(modelStreakDateKey(b)) || String(a.kickoff || '').localeCompare(String(b.kickoff || '')) || String(a.analyzedAt || '').localeCompare(String(b.analyzedAt || '')));
+            const count = document.getElementById('modelStreakMatchCount');
+            if (count) count.textContent = `${fixtures.length} ${fixtures.length === 1 ? 'partido' : 'partidos'}`;
+            if (!fixtures.length) {
+                root.innerHTML = '<p class="text-center text-[9px] text-slate-500 py-4">No hay partidos pendientes en esta competición. Las rachas aparecerán cuando cargues próximos partidos en Área 1.</p>';
+                return;
+            }
+            const markets = [
+                ['form', 'Forma · 1X2'], ['total15', 'Total goles · 1.5'], ['total25', 'Total goles · 2.5'],
+                ['total35', 'Total goles · 3.5'], ['btts', 'Ambos anotan'], ['team05', 'Equipo marca · 0.5'],
+                ['team15', 'Equipo marca · 1.5'], ['cleanSheet', 'Portería a cero']
+            ];
+            const renderTeam = (fixture, team, accent) => {
+                const history = modelStreakHistoryForFixture(fixture, team);
+                const rows = markets.map(([field, label]) => {
+                    const streak = modelStreakCurrent(history, team, field);
+                    const tone = streak.count >= 3 ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20' : streak.count > 0 ? 'text-slate-200 bg-slate-800/70 border-slate-700' : 'text-slate-500 bg-slate-900 border-slate-800';
+                    return `<div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-800/70 last:border-0"><span class="text-[8px] text-slate-400">${label}</span><span class="shrink-0 text-[8px] font-black px-2 py-1 rounded-md border ${tone}">${escapeModelPredictionHtml(streak.label)}</span></div>`;
+                }).join('');
+                return `<div class="rounded-xl border ${accent} bg-slate-950/50 p-2.5"><div class="flex items-center justify-between gap-2 mb-1.5"><b class="text-[10px] text-white truncate">${escapeModelPredictionHtml(team)}</b><span class="text-[7px] text-slate-500 shrink-0">${history.length} previos</span></div>${rows}</div>`;
+            };
+            root.innerHTML = fixtures.map(fixture => {
+                const date = modelStreakDateKey(fixture);
+                const hasDate = Boolean(date);
+                return `<article class="rounded-xl border border-slate-800 bg-slate-900/60 p-2.5 space-y-2"><div class="flex flex-wrap items-center justify-between gap-1"><span class="text-[8px] font-black text-indigo-200">${escapeModelPredictionHtml(fixture.league || 'Sin competición')}</span><span class="text-[8px] text-slate-500">${escapeModelPredictionHtml(fixture.matchDate || 'Fecha sin definir')}${fixture.kickoff ? ' · ' + escapeModelPredictionHtml(fixture.kickoff) : ''}</span></div><div class="text-center text-[10px] font-black text-white">${escapeModelPredictionHtml(fixture.home || 'Local')} <span class="text-slate-500">vs</span> ${escapeModelPredictionHtml(fixture.away || 'Visitante')}</div>${hasDate ? `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${renderTeam(fixture, fixture.home, 'border-cyan-500/20')}${renderTeam(fixture, fixture.away, 'border-amber-500/20')}</div>` : '<p class="text-center text-[8px] text-amber-300">No se puede calcular la racha: este partido no tiene una fecha reconocible.</p>'}</article>`;
+            }).join('');
+        }
+
         function renderModelPredictionLog() {
             const root=document.getElementById('modelPredictionLog'); if(!root)return;
             renderModelPredictionStats();
             renderModelPreselector();
             renderModelEloPanel();
+            renderModelStreaksPanel();
             const pending=modelPredictionRecords.filter(r=>r.status!=='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
             const settled=modelPredictionRecords.filter(r=>r.status==='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
             const count=document.getElementById('modelPredictionCount'); if(count)count.innerText=`${modelPredictionRecords.length} registros · ${pending.length} pendientes · ${settled.length} resueltos`;
@@ -9540,6 +9647,19 @@ document.addEventListener('keydown', function(event) {
         <section id="sec-prediction-memory" class="poisson-premium space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
             <div id="area1RoleNotice" class="text-[8px] rounded-lg border px-2.5 py-2 border-slate-700 bg-slate-900 text-slate-300">Verificando permisos de Área 1…</div>
             <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 px-3 py-2 flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i><div><div class="text-[10px] font-black text-indigo-200 uppercase tracking-wider">Área 1 · Seguimiento independiente de Poisson</div><div class="text-[9px] text-slate-400">Pronósticos sin apuesta, métricas históricas y bitácora propia. No modifica el bankroll ni la calibración de apuestas.</div></div></div>
+            <div id="modelStreaksPanel" class="rounded-xl border border-emerald-500/25 bg-emerald-950/10 p-3 space-y-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div><div class="text-[10px] font-black text-emerald-200 uppercase tracking-wider"><i class="fa-solid fa-fire mr-1 text-amber-300"></i> Rachas informativas · Prepartido</div><p class="text-[8px] text-slate-400 mt-1">Consulta las rachas históricas de los equipos en los partidos pendientes de Área 1. Solo usa marcadores resueltos de la misma competición; no modifica pronósticos ni genera recomendaciones.</p></div>
+                    <span id="modelStreakMatchCount" class="text-[8px] font-black text-emerald-200 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-1">0 partidos</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <label for="modelStreakLeagueFilter" class="text-[8px] text-slate-400 font-bold">Competición</label>
+                    <select id="modelStreakLeagueFilter" onchange="renderModelStreaksPanel()" class="min-w-0 flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[9px] text-slate-200"><option value="ALL">Todas las competiciones</option></select>
+                    <button type="button" onclick="renderModelStreaksPanel()" class="text-[8px] font-black text-emerald-200 bg-slate-900 border border-emerald-500/20 rounded-lg px-2.5 py-1.5"><i class="fa-solid fa-rotate mr-1"></i>ACTUALIZAR</button>
+                </div>
+                <div id="modelStreaksContent" class="space-y-3"><p class="text-center text-[9px] text-slate-500 py-4">Se mostrarán las rachas cuando existan partidos pendientes y resultados resueltos.</p></div>
+                <p class="text-[8px] text-slate-500">Lectura: “Más × 3” significa que el mercado Over se cumplió en los últimos 3 partidos consecutivos del equipo. Las rachas se calculan antes de la fecha del partido pendiente; no se incluyen resultados del mismo día ni del propio encuentro. Si no hay historial suficiente, se indica “Sin datos”.</p>
+            </div>
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">3 · Memoria de predicciones</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-indigo-500/30 to-transparent"></div>
