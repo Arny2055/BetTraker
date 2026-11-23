@@ -9572,6 +9572,12 @@ document.addEventListener('keydown', function(event) {
                 <div id="modelPredictionResultsStatus" class="text-[10px] text-slate-400 bg-slate-950/70 border border-slate-800 rounded-xl p-2">Primero revisa la tabla. No se crearán pronósticos nuevos ni se sobrescribirán resultados ya guardados.</div>
                 <div id="modelPredictionResultsPreview" class="hidden overflow-x-auto rounded-xl border border-slate-800"></div>
             </div>
+            <details id="modelEloAccordion" class="rounded-2xl border border-violet-500/30 bg-slate-950/40">
+                <summary class="cursor-pointer list-none flex items-center justify-between gap-3 p-3.5 text-xs font-black text-violet-200 select-none">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-ranking-star text-violet-300"></i> ELO independiente por liga</span>
+                    <span class="flex items-center gap-2 text-[9px] text-slate-400"><span>Mostrar / ocultar</span><i class="fa-solid fa-chevron-down transition-transform"></i></span>
+                </summary>
+                <div class="px-2 pb-2.5">
             <div id="modelEloPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-violet-500/30">
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-ranking-star text-violet-300"></i> ELO independiente por liga</h3>
@@ -9596,6 +9602,8 @@ document.addEventListener('keydown', function(event) {
                 </details>
                 <p id="modelEloNote" class="text-[8px] leading-relaxed text-slate-500">Inicio de referencia: 1,500 puntos por equipo y liga. Solo se utilizan marcadores liquidados guardados en Área 1. Los 65 puntos de ventaja local y K=24 son parámetros iniciales experimentales; el ELO no representa directamente una probabilidad de victoria.</p>
             </div>
+                </div>
+            </details>
             <div id="modelPreselectorPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-amber-500/30">
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-filter-circle-dollar text-amber-300"></i> Preselector de partidos</h3>
