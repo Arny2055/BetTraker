@@ -429,7 +429,6 @@
                     <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">3</span> Pronósticos
                 </button>
                 <button onclick="openModelTrackingWindow('modelPredictionStatsPanel')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-cyan-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-chart-line"></i> Rendimiento Poisson</button>
-                <button type="button" onclick="openArea1StreaksPage()" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-amber-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-fire"></i> Rachas Prepartido</button>
                 <button onclick="scrollToSection('sec-match')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-400 text-[9px] font-black flex items-center justify-center">2</span> Partido
                 </button>
@@ -7142,19 +7141,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         // ============================================================
         const MODEL_PREDICTIONS_STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
         let modelPredictionRecords = [];
-
-        // Puente de solo lectura para la página independiente de rachas.
-        // No guarda, modifica ni sincroniza registros: únicamente responde a la ventana abierta desde BETAGS.
-        window.addEventListener('message', function(event) {
-            if (!event || !event.data || event.data.type !== 'BETAGS_AREA1_STREAKS_REQUEST') return;
-            if (!event.source || !Array.isArray(modelPredictionRecords)) return;
-            event.source.postMessage({ type: 'BETAGS_AREA1_STREAKS_DATA', records: modelPredictionRecords }, '*');
-        });
-
-        function openArea1StreaksPage() {
-            const page = window.open('BETAGS_VIP_PRO_RACHAS_PREPARTIDO.html', 'BETAGS_VIP_PRO_RACHAS_PREPARTIDO');
-            if (!page) { alert('El navegador bloqueó la ventana. Permite las ventanas emergentes para abrir Rachas Prepartido.'); return; }
-        }
         let modelPredictionPreviewRows = [];
         // Origen temporal del formulario: solo se asigna al abrirlo desde el preselector.
         // Se guarda como metadato en la apuesta real; no altera pronósticos ni calibradores.
