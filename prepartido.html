@@ -1,66 +1,572 @@
 <!DOCTYPE html>
-<html lang="es"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#07111f">
-<title>BETAGS · Prepartido</title>
-<script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{background:radial-gradient(ellipse at top,#10243a 0%,#07111f 48%,#050b14 100%);font-family:Inter,ui-sans-serif,system-ui,sans-serif}
-.glass{background:linear-gradient(145deg,rgba(15,31,50,.96),rgba(8,18,31,.98));border:1px solid rgba(100,140,180,.18);box-shadow:0 16px 45px rgba(0,0,0,.22)}
-.metric{background:rgba(3,11,21,.55);border:1px solid rgba(100,130,160,.15)}.match-card{background:linear-gradient(110deg,rgba(13,27,44,.98),rgba(9,20,34,.98));border:1px solid rgba(71,105,139,.22)}
-.pill{border:1px solid rgba(100,130,160,.22);background:rgba(10,22,36,.8)}.prob{font-variant-numeric:tabular-nums}
-.form-chip{font-size:9px;font-weight:900;min-width:19px;height:19px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;padding:0 4px}
-.w{background:#064e3b;color:#6ee7b7}.d{background:#334155;color:#cbd5e1}.l{background:#881337;color:#fda4af}.o{background:#164e63;color:#67e8f9}.u{background:#78350f;color:#fcd34d}.y{background:#064e3b;color:#6ee7b7}.n{background:#881337;color:#fda4af}
-@media(min-width:900px){.matches-grid{display:grid;grid-template-columns:minmax(220px,1.25fr) minmax(210px,1fr) minmax(175px,.85fr) minmax(165px,.8fr);gap:10px;align-items:center}.market-mobile-label{display:none}}
-@media(max-width:899px){.desktop-head{display:none}.match-card{padding:13px}.team-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
-</style></head>
-<body class="min-h-screen text-slate-100">
-<div class="max-w-7xl mx-auto px-3 py-4 md:px-6 md:py-6">
-<header class="glass rounded-2xl p-4 mb-4">
-<div class="flex flex-wrap items-center justify-between gap-3">
-<div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 text-slate-950 flex items-center justify-center text-xl"><i class="fa-solid fa-chart-simple"></i></div>
-<div><div class="text-[10px] tracking-[.22em] font-black text-cyan-300">BETAGS VIP PRO</div><h1 class="text-xl md:text-2xl font-black">CENTRO DE PARTIDOS <span class="text-cyan-300">PREPARTIDO</span></h1><p class="text-[10px] text-slate-400">Mercados · forma reciente · rachas por liga</p></div></div>
-<div class="flex gap-2"><a href="index.html" class="pill rounded-xl px-3 py-2 text-xs font-bold"><i class="fa-solid fa-arrow-left mr-1 text-cyan-300"></i> Volver a BETAGS</a><button onclick="refreshBoard()" class="rounded-xl px-3 py-2 text-xs font-black bg-cyan-400 text-slate-950"><i class="fa-solid fa-rotate mr-1"></i> Actualizar</button></div>
-</div>
-<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-<div class="metric rounded-xl p-3"><div class="text-[9px] text-slate-500 font-bold uppercase">Partidos pendientes</div><div id="statPending" class="text-2xl font-black">0</div></div>
-<div class="metric rounded-xl p-3"><div class="text-[9px] text-slate-500 font-bold uppercase">Ligas</div><div id="statLeagues" class="text-2xl font-black text-cyan-300">0</div></div>
-<div class="metric rounded-xl p-3"><div class="text-[9px] text-slate-500 font-bold uppercase">Historial disponible</div><div id="statHistory" class="text-2xl font-black text-emerald-300">0</div></div>
-<div class="metric rounded-xl p-3"><div class="text-[9px] text-slate-500 font-bold uppercase">Última lectura</div><div id="statUpdated" class="text-sm font-black mt-1">—</div></div></div>
-</header>
-<section class="glass rounded-2xl p-3 md:p-4 mb-4">
-<div class="flex flex-col md:flex-row gap-2">
-<div class="relative flex-1"><i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i><input id="searchInput" oninput="renderBoard()" placeholder="Buscar equipo o partido..." class="w-full bg-slate-950/70 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs outline-none"></div>
-<select id="leagueFilter" onchange="renderBoard()" class="bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-xs"><option value="">Todas las ligas</option></select>
-<select id="dateFilter" onchange="renderBoard()" class="bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-xs"><option value="">Todas las fechas</option><option value="today">Hoy</option><option value="tomorrow">Mañana</option><option value="week">Próximos 7 días</option></select></div>
-<div class="flex flex-wrap items-center justify-between gap-2 mt-3"><div class="flex gap-1.5 text-[9px] font-black"><span class="pill rounded-lg px-2 py-1 text-cyan-200">1X2</span><span class="pill rounded-lg px-2 py-1 text-amber-200">OVER / UNDER 2.5</span><span class="pill rounded-lg px-2 py-1 text-emerald-200">BTTS</span></div><div id="syncStatus" class="text-[9px] text-slate-500">Leyendo memoria de Área 1…</div></div>
-</section>
-<section class="glass rounded-2xl overflow-hidden">
-<div class="desktop-head px-4 py-3 matches-grid text-[9px] tracking-wider uppercase font-black text-slate-400 bg-slate-900/80"><div>Partido / rachas recientes</div><div class="text-center text-cyan-200">1X2</div><div class="text-center text-amber-200">Más / Menos 2.5</div><div class="text-center text-emerald-200">Ambos anotan</div></div>
-<div id="matchList" class="divide-y divide-slate-800/70"><div class="p-10 text-center text-slate-500 text-xs">Cargando partidos de Área 1…</div></div>
-<div id="emptyState" class="hidden p-10 text-center"><div class="text-4xl mb-3 text-slate-700"><i class="fa-regular fa-calendar-xmark"></i></div><div class="font-black text-sm text-slate-300">No hay partidos para mostrar</div><p class="text-[10px] text-slate-500 mt-1">Carga o actualiza los partidos desde Área 1 en BETAGS y vuelve a esta pantalla.</p></div>
-</section><footer class="text-center text-[9px] text-slate-600 py-5">BETAGS VIP PRO · PREPARTIDO · Lectura directa de la memoria de Área 1.</footer>
-</div>
-<script>
-const STORAGE_KEY='betags_vip_pro_model_predictions_v1';let allRecords=[],pendingMatches=[];
-const norm=v=>String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const pct=v=>v!==undefined&&v!==null&&Number.isFinite(Number(v))?(Number(v)*100).toFixed(1)+'%':'—';
-function dateKey(r){let d=String(r.matchDate||'');return /^\d{4}-\d{2}-\d{2}$/.test(d)?d:String(r.analyzedAt||'').slice(0,10)}
-function timestamp(r){let d=dateKey(r),t=String(r.kickoff||'').match(/^(\d{1,2}:\d{2})/);let v=Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(d)?d+'T'+(t?t[1]:'12:00')+':00':r.analyzedAt||'');return Number.isFinite(v)?v:0}
-function isSettled(r){return String(r.status||'').toUpperCase()==='SETTLED'||(r.actualHomeGoals!==null&&r.actualAwayGoals!==null&&Number.isFinite(Number(r.actualHomeGoals))&&Number.isFinite(Number(r.actualAwayGoals)))}
-function validScore(r){return r.actualHomeGoals!==null&&r.actualAwayGoals!==null&&Number.isFinite(Number(r.actualHomeGoals))&&Number.isFinite(Number(r.actualAwayGoals))}
-function readRecords(){try{let raw=localStorage.getItem(STORAGE_KEY),data=raw?JSON.parse(raw):[];allRecords=Array.isArray(data)?data:[]}catch(e){allRecords=[];console.error(e)}
-pendingMatches=allRecords.filter(r=>r&&String(r.status||'PENDING').toUpperCase()!=='SETTLED'&&r.home&&r.away);
-pendingMatches.sort((a,b)=>timestamp(a)-timestamp(b)||String(a.league||'').localeCompare(String(b.league||'')));
-document.getElementById('statPending').textContent=pendingMatches.length;document.getElementById('statLeagues').textContent=new Set(pendingMatches.map(r=>r.league||'Sin liga')).size;document.getElementById('statHistory').textContent=allRecords.filter(r=>isSettled(r)&&validScore(r)).length;document.getElementById('statUpdated').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});document.getElementById('syncStatus').textContent='Conectado a la memoria local de Área 1 · sincronización al guardar';populateLeagues();renderBoard()}
-function populateLeagues(){let sel=document.getElementById('leagueFilter'),old=sel.value,leagues=[...new Set(pendingMatches.map(r=>r.league||'Sin liga'))].sort((a,b)=>a.localeCompare(b,'es'));sel.innerHTML='<option value="">Todas las ligas</option>'+leagues.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');if(leagues.includes(old))sel.value=old}
-function teamHistory(team,league,fixture){let key=norm(team),lk=norm(league),cutoff=timestamp(fixture);return allRecords.filter(r=>isSettled(r)&&validScore(r)&&norm(r.league)===lk&&(norm(r.home)===key||norm(r.away)===key)&&timestamp(r)<cutoff).sort((a,b)=>timestamp(b)-timestamp(a))}
-function outcomes(team,records){let key=norm(team);return records.map(r=>{let hg=Number(r.actualHomeGoals),ag=Number(r.actualAwayGoals),home=norm(r.home)===key,gf=home?hg:ag,ga=home?ag:hg;return {one:gf>ga?'W':gf===ga?'D':'L',goals:hg+ag>=3?'O':'U',btts:hg>0&&ag>0?'Y':'N'}})}
-function streak(label,seq,k){let val=seq[0]?.[k];if(!val)return `<div class="text-[8px] text-slate-600 mt-1">${label}: sin historial</div>`;let run=0;for(let x of seq){if(x[k]!==val)break;run++}let desc=k==='one'?(val==='W'?'victorias':val==='D'?'empates':'derrotas'):k==='goals'?(val==='O'?'Over 2.5':'Under 2.5'):(val==='Y'?'BTTS Sí':'BTTS No');let chips=seq.slice(0,5).map(x=>`<span class="form-chip ${k==='one'?(x[k]==='W'?'w':x[k]==='D'?'d':'l'):k==='goals'?(x[k]==='O'?'o':'u'):(x[k]==='Y'?'y':'n')}">${x[k]}</span>`).join('');return `<div class="mt-1"><div class="flex justify-between gap-1"><span class="text-[8px] text-slate-500">${label}</span><b class="text-[8px] text-slate-300">${run} ${desc}</b></div><div class="flex gap-1 mt-1">${chips}</div></div>`}
-function teamForm(team,league,fixture){let hist=teamHistory(team,league,fixture),seq=outcomes(team,hist);return `<div class="metric rounded-lg p-2"><div class="text-[9px] font-black text-slate-200 truncate">${esc(team)}</div><div class="text-[8px] text-slate-600">${hist.length} partidos previos · misma liga</div>${streak('1X2',seq,'one')}${streak('Goles',seq,'goals')}${streak('BTTS',seq,'btts')}</div>`}
-function market(title,items,color){return `<div class="metric rounded-xl p-2"><div class="market-mobile-label text-[8px] uppercase tracking-wider font-black ${color} mb-2">${title}</div><div class="grid gap-1" style="grid-template-columns:repeat(${items.length},minmax(0,1fr))">${items.map(it=>`<div class="text-center"><div class="text-[8px] text-slate-500 font-bold">${it[0]}</div><div class="prob text-xs md:text-sm font-black ${color} mt-1">${pct(it[1])}</div></div>`).join('')}</div></div>`}
-function card(r){let p=r.probabilities||{};let details=`<div><div class="flex justify-between gap-2"><span class="text-[8px] font-black text-cyan-300 uppercase">${esc(r.league||'Sin liga')}</span><span class="text-[8px] text-slate-500">${esc(r.matchDate||'Fecha por definir')} ${esc(r.kickoff||'')}</span></div><div class="font-black text-sm mt-1">${esc(r.home)} <span class="text-slate-600 font-medium">vs</span> ${esc(r.away)}</div><div class="team-form-grid mt-2"><div>${teamForm(r.home,r.league,r)}</div><div>${teamForm(r.away,r.league,r)}</div></div></div>`;return `<article class="match-card p-3 md:px-4 md:py-3"><div class="matches-grid">${details}${market('1X2',[['LOCAL',p.homeWin],['EMPATE',p.draw],['VISITA',p.awayWin]],'text-cyan-200')}${market('OVER / UNDER 2.5',[['OVER',p.over25],['UNDER',p.under25]],'text-amber-200')}${market('BTTS',[['SÍ',p.bttsYes],['NO',p.bttsNo]],'text-emerald-200')}</div></article>`}
-function renderBoard(){let q=norm(document.getElementById('searchInput').value),league=document.getElementById('leagueFilter').value,mode=document.getElementById('dateFilter').value,now=new Date(),today=new Date(now.getFullYear(),now.getMonth(),now.getDate()),tomorrow=new Date(+today+86400000),week=new Date(+today+7*86400000);let rows=pendingMatches.filter(r=>{if(league&&(r.league||'Sin liga')!==league)return false;if(q&&!norm([r.home,r.away,r.league].join(' ')).includes(q))return false;let d=dateKey(r),dt=/^\d{4}-\d{2}-\d{2}$/.test(d)?new Date(d+'T12:00:00'):null;if(mode==='today'&&(!dt||dt.toDateString()!==today.toDateString()))return false;if(mode==='tomorrow'&&(!dt||dt.toDateString()!==tomorrow.toDateString()))return false;if(mode==='week'&&(!dt||dt<today||dt>week))return false;return true});document.getElementById('matchList').innerHTML=rows.map(card).join('');document.getElementById('emptyState').classList.toggle('hidden',rows.length>0)}
-function refreshBoard(){readRecords()}
-window.addEventListener('storage',e=>{if(e.key===STORAGE_KEY||e.key===null)readRecords()});window.addEventListener('focus',readRecords);document.addEventListener('visibilitychange',()=>{if(!document.hidden)readRecords()});readRecords();
-</script></body></html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0e14">
+  <title>BETAGS · Prepartido</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            oa: {
+              bg: '#0b0e14',
+              surface: '#12161f',
+              surfaceHover: '#171c28',
+              elevated: '#1a202c',
+              border: '#232a38',
+              borderLight: '#2e3749',
+              green: '#00d084',
+              greenDim: 'rgba(0, 208, 132, 0.12)',
+              amber: '#f59e0b',
+              amberDim: 'rgba(245, 158, 11, 0.12)',
+              blue: '#38bdf8',
+              blueDim: 'rgba(56, 189, 248, 0.12)',
+              red: '#f43f5e',
+              redDim: 'rgba(244, 63, 94, 0.12)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      background-color: #0b0e14;
+      color: #f1f5f9;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b0e14; }
+    ::-webkit-scrollbar-thumb { background: #232a38; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #333d52; }
+
+    /* OddAlerts-style crisp borders & cards */
+    .oa-card {
+      background-color: #12161f;
+      border: 1px solid #232a38;
+      border-radius: 10px;
+    }
+
+    .oa-subcard {
+      background-color: #0e121a;
+      border: 1px solid #1e2432;
+      border-radius: 8px;
+    }
+
+    .oa-row {
+      background-color: #12161f;
+      transition: background-color 0.15s ease;
+    }
+    .oa-row:hover {
+      background-color: #161b26;
+    }
+
+    .prob {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Form & Streak Badges */
+    .form-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .w { background: rgba(0, 208, 132, 0.16); color: #00d084; border: 1px solid rgba(0, 208, 132, 0.35); }
+    .d { background: rgba(148, 163, 184, 0.14); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.28); }
+    .l { background: rgba(244, 63, 94, 0.16); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
+    .o { background: rgba(56, 189, 248, 0.16); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
+    .u { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .y { background: rgba(0, 208, 132, 0.16); color: #00d084; border: 1px solid rgba(0, 208, 132, 0.35); }
+    .n { background: rgba(244, 63, 94, 0.16); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
+
+    /* Probability Pill Boxes */
+    .odds-box {
+      background-color: #0b0e14;
+      border: 1px solid #232a38;
+      border-radius: 6px;
+      padding: 6px 4px;
+      transition: all 0.15s ease;
+    }
+    .odds-box.highlight-green {
+      background-color: rgba(0, 208, 132, 0.08);
+      border-color: rgba(0, 208, 132, 0.35);
+    }
+    .odds-box.highlight-amber {
+      background-color: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .odds-box.highlight-blue {
+      background-color: rgba(56, 189, 248, 0.08);
+      border-color: rgba(56, 189, 248, 0.35);
+    }
+
+    @media (min-width: 960px) {
+      .matches-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 1.45fr) minmax(225px, 1fr) minmax(175px, 0.78fr) minmax(175px, 0.78fr);
+        gap: 14px;
+        align-items: center;
+      }
+      .market-mobile-label { display: none; }
+    }
+
+    @media (max-width: 959px) {
+      .desktop-head { display: none; }
+      .team-form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      @media (min-width: 580px) {
+        .team-form-grid { grid-template-columns: 1fr 1fr; }
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar (OddAlerts SaaS Header) -->
+  <nav class="sticky top-0 z-30 bg-[#0b0e14]/95 backdrop-blur-md border-b border-[#232a38]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-[#00d084] text-[#0b0e14] flex items-center justify-center font-black text-base shadow-[0_0_15px_rgba(0,208,132,0.3)]">
+          <i class="fa-solid fa-bolt"></i>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="font-black tracking-tight text-white text-base">BETAGS</span>
+          <span class="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-[#00d084]/15 text-[#00d084] border border-[#00d084]/30">PREPARTIDO</span>
+        </div>
+        <span class="hidden md:inline-block text-slate-600 text-xs">|</span>
+        <span class="hidden md:inline-block text-xs text-slate-400 font-medium">Centro de Probabilidades y Rachas</span>
+      </div>
+
+      <!-- Navigation Actions -->
+      <div class="flex items-center gap-2.5">
+        <div id="syncStatus" class="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-slate-400 bg-[#12161f] border border-[#232a38] px-2.5 py-1 rounded-md">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#00d084] animate-pulse"></span>
+          <span>Leyendo memoria de Área 1…</span>
+        </div>
+
+        <a href="index.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 bg-[#12161f] hover:bg-[#1a202c] border border-[#232a38] transition">
+          <i class="fa-solid fa-arrow-left text-[11px] text-slate-400"></i>
+          <span>Volver a BETAGS</span>
+        </a>
+
+        <button onclick="refreshBoard()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#0b0e14] bg-[#00d084] hover:bg-[#00e692] transition shadow-sm cursor-pointer">
+          <i class="fa-solid fa-rotate text-[11px]"></i>
+          <span>Actualizar</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 flex-1">
+
+    <!-- Page Title & KPI Strip -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+      <div>
+        <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#00d084] mb-1">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>BETAGS VIP PRO · DATA ENGINE</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+          Centro de Partidos <span class="text-slate-400 font-semibold">/ Prepartido</span>
+        </h1>
+        <p class="text-xs text-slate-400 mt-0.5">Mercados calculados, forma reciente y rachas estadísticas por liga</p>
+      </div>
+
+      <!-- Compact SaaS KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 lg:min-w-[520px]">
+        <div class="oa-card px-3.5 py-2.5">
+          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <span>Pendientes</span>
+            <i class="fa-regular fa-futbol text-slate-500"></i>
+          </div>
+          <div id="statPending" class="prob text-xl font-extrabold text-white mt-1">0</div>
+        </div>
+
+        <div class="oa-card px-3.5 py-2.5">
+          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <span>Ligas</span>
+            <i class="fa-solid fa-trophy text-[#38bdf8]"></i>
+          </div>
+          <div id="statLeagues" class="prob text-xl font-extrabold text-[#38bdf8] mt-1">0</div>
+        </div>
+
+        <div class="oa-card px-3.5 py-2.5">
+          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <span>Historial</span>
+            <i class="fa-solid fa-database text-[#00d084]"></i>
+          </div>
+          <div id="statHistory" class="prob text-xl font-extrabold text-[#00d084] mt-1">0</div>
+        </div>
+
+        <div class="oa-card px-3.5 py-2.5">
+          <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            <span>Lectura</span>
+            <i class="fa-regular fa-clock text-slate-500"></i>
+          </div>
+          <div id="statUpdated" class="prob text-base font-bold text-slate-200 mt-1.5">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Market Toolbar -->
+    <section class="oa-card p-3 mb-4">
+      <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+        <!-- Search Input -->
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input
+            id="searchInput"
+            oninput="renderBoard()"
+            placeholder="Filtrar por equipo, enfrentamiento o competición..."
+            class="w-full bg-[#0b0e14] border border-[#232a38] focus:border-[#00d084] rounded-lg pl-8 pr-3 py-2 text-xs text-slate-100 placeholder-slate-500 outline-none transition"
+          >
+        </div>
+
+        <!-- League Dropdown -->
+        <div class="relative min-w-[190px]">
+          <select
+            id="leagueFilter"
+            onchange="renderBoard()"
+            class="w-full bg-[#0b0e14] border border-[#232a38] focus:border-[#00d084] rounded-lg px-3 py-2 text-xs font-medium text-slate-200 outline-none transition cursor-pointer"
+          >
+            <option value="">Todas las ligas</option>
+          </select>
+        </div>
+
+        <!-- Date Filter Dropdown -->
+        <div class="relative min-w-[165px]">
+          <select
+            id="dateFilter"
+            onchange="renderBoard()"
+            class="w-full bg-[#0b0e14] border border-[#232a38] focus:border-[#00d084] rounded-lg px-3 py-2 text-xs font-medium text-slate-200 outline-none transition cursor-pointer"
+          >
+            <option value="">Todas las fechas</option>
+            <option value="today">Hoy</option>
+            <option value="tomorrow">Mañana</option>
+            <option value="week">Próximos 7 días</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Market Legend Strip -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-2.5 border-t border-[#1e2432]">
+        <div class="flex flex-wrap items-center gap-2 text-[10px] font-bold tracking-wide">
+          <span class="text-slate-500 uppercase mr-1">Mercados Activos:</span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#38bdf8]/10 text-[#38bdf8] border border-[#38bdf8]/25">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#38bdf8]"></span> 1X2
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#f59e0b]/10 text-[#fbbf24] border border-[#f59e0b]/25">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#f59e0b]"></span> OVER / UNDER 2.5
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#00d084]/10 text-[#00d084] border border-[#00d084]/25">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#00d084]"></span> BTTS
+          </span>
+        </div>
+
+        <div class="flex items-center gap-3 text-[10px] text-slate-500">
+          <span class="inline-flex items-center gap-1"><span class="form-chip w !w-4 !h-4 !text-[9px]">W</span> Victoria</span>
+          <span class="inline-flex items-center gap-1"><span class="form-chip d !w-4 !h-4 !text-[9px]">D</span> Empate</span>
+          <span class="inline-flex items-center gap-1"><span class="form-chip l !w-4 !h-4 !text-[9px]">L</span> Derrota</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Fixtures & Odds Data Table -->
+    <section class="oa-card overflow-hidden">
+      <!-- Desktop Column Header -->
+      <div class="desktop-head px-4 py-2.5 matches-grid text-[10px] tracking-wider uppercase font-bold text-slate-400 bg-[#0e121a] border-b border-[#232a38]">
+        <div class="flex items-center gap-2">
+          <span>Partido &amp; Rachas Recientes</span>
+        </div>
+        <div class="text-center text-[#38bdf8]">Probabilidad 1X2</div>
+        <div class="text-center text-[#fbbf24]">Más / Menos 2.5</div>
+        <div class="text-center text-[#00d084]">Ambos Anotan</div>
+      </div>
+
+      <!-- Fixtures Container -->
+      <div id="matchList" class="divide-y divide-[#232a38]">
+        <div class="p-12 text-center text-slate-500 text-xs font-medium">
+          <i class="fa-solid fa-circle-notch fa-spin text-[#00d084] text-base mb-2 block"></i>
+          Cargando partidos de Área 1…
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden py-14 px-6 text-center">
+        <div class="w-12 h-12 rounded-xl bg-[#1a202c] border border-[#2e3749] mx-auto flex items-center justify-center text-slate-400 text-lg mb-3">
+          <i class="fa-regular fa-calendar-xmark"></i>
+        </div>
+        <div class="font-bold text-sm text-slate-200">No hay partidos para mostrar</div>
+        <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+          Carga o actualiza los partidos desde Área 1 en BETAGS o ajusta los filtros de búsqueda para visualizar resultados.
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500 py-6 mt-2">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-400">BETAGS VIP PRO</span>
+        <span>·</span>
+        <span>Módulo Prepartido</span>
+      </div>
+      <div>Lectura directa y sincronizada de la memoria local de Área 1</div>
+    </footer>
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
+    let allRecords = [], pendingMatches = [];
+
+    const norm = v => String(v || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const pct = v => v !== undefined && v !== null && Number.isFinite(Number(v)) ? (Number(v) * 100).toFixed(1) + '%' : '—';
+
+    function dateKey(r) {
+      let d = String(r.matchDate || '');
+      return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : String(r.analyzedAt || '').slice(0, 10);
+    }
+
+    function timestamp(r) {
+      let d = dateKey(r), t = String(r.kickoff || '').match(/^(\d{1,2}:\d{2})/);
+      let v = Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + 'T' + (t ? t[1] : '12:00') + ':00' : r.analyzedAt || '');
+      return Number.isFinite(v) ? v : 0;
+    }
+
+    function isSettled(r) {
+      return String(r.status || '').toUpperCase() === 'SETTLED' || (r.actualHomeGoals !== null && r.actualAwayGoals !== null && Number.isFinite(Number(r.actualHomeGoals)) && Number.isFinite(Number(r.actualAwayGoals)));
+    }
+
+    function validScore(r) {
+      return r.actualHomeGoals !== null && r.actualAwayGoals !== null && Number.isFinite(Number(r.actualHomeGoals)) && Number.isFinite(Number(r.actualAwayGoals));
+    }
+
+    function readRecords() {
+      try {
+        let raw = localStorage.getItem(STORAGE_KEY), data = raw ? JSON.parse(raw) : [];
+        allRecords = Array.isArray(data) ? data : [];
+      } catch (e) {
+        allRecords = [];
+        console.error(e);
+      }
+
+      pendingMatches = allRecords.filter(r => r && String(r.status || 'PENDING').toUpperCase() !== 'SETTLED' && r.home && r.away);
+      pendingMatches.sort((a, b) => timestamp(a) - timestamp(b) || String(a.league || '').localeCompare(String(b.league || '')));
+
+      document.getElementById('statPending').textContent = pendingMatches.length;
+      document.getElementById('statLeagues').textContent = new Set(pendingMatches.map(r => r.league || 'Sin liga')).size;
+      document.getElementById('statHistory').textContent = allRecords.filter(r => isSettled(r) && validScore(r)).length;
+      document.getElementById('statUpdated').textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+      const syncEl = document.getElementById('syncStatus');
+      if (syncEl) {
+        syncEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-[#00d084]"></span><span>Conectado a Área 1 · Sincronizado</span>`;
+      }
+
+      populateLeagues();
+      renderBoard();
+    }
+
+    function populateLeagues() {
+      let sel = document.getElementById('leagueFilter'), old = sel.value;
+      let leagues = [...new Set(pendingMatches.map(r => r.league || 'Sin liga'))].sort((a, b) => a.localeCompare(b, 'es'));
+      sel.innerHTML = '<option value="">Todas las ligas</option>' + leagues.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
+      if (leagues.includes(old)) sel.value = old;
+    }
+
+    function teamHistory(team, league, fixture) {
+      let key = norm(team), lk = norm(league), cutoff = timestamp(fixture);
+      return allRecords
+        .filter(r => isSettled(r) && validScore(r) && norm(r.league) === lk && (norm(r.home) === key || norm(r.away) === key) && timestamp(r) < cutoff)
+        .sort((a, b) => timestamp(b) - timestamp(a));
+    }
+
+    function outcomes(team, records) {
+      let key = norm(team);
+      return records.map(r => {
+        let hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals), home = norm(r.home) === key, gf = home ? hg : ag, ga = home ? ag : hg;
+        return {
+          one: gf > ga ? 'W' : gf === ga ? 'D' : 'L',
+          goals: hg + ag >= 3 ? 'O' : 'U',
+          btts: hg > 0 && ag > 0 ? 'Y' : 'N'
+        };
+      });
+    }
+
+    function streak(label, seq, k) {
+      let val = seq[0]?.[k];
+      if (!val) {
+        return `<div class="flex items-center justify-between text-[10px] text-slate-600 mt-1.5 pt-1 border-t border-[#1e2432]/60">
+          <span>${label}</span>
+          <span class="italic">Sin historial</span>
+        </div>`;
+      }
+      let run = 0;
+      for (let x of seq) {
+        if (x[k] !== val) break;
+        run++;
+      }
+      let desc = k === 'one'
+        ? (val === 'W' ? 'victorias' : val === 'D' ? 'empates' : 'derrotas')
+        : k === 'goals'
+          ? (val === 'O' ? 'Over 2.5' : 'Under 2.5')
+          : (val === 'Y' ? 'BTTS Sí' : 'BTTS No');
+
+      let chips = seq.slice(0, 5).map(x => {
+        let cls = k === 'one'
+          ? (x[k] === 'W' ? 'w' : x[k] === 'D' ? 'd' : 'l')
+          : k === 'goals'
+            ? (x[k] === 'O' ? 'o' : 'u')
+            : (x[k] === 'Y' ? 'y' : 'n');
+        return `<span class="form-chip ${cls}">${x[k]}</span>`;
+      }).join('');
+
+      return `<div class="mt-1.5 pt-1.5 border-t border-[#1e2432]/70">
+        <div class="flex items-center justify-between gap-1">
+          <span class="text-[10px] font-medium text-slate-400">${label}</span>
+          <span class="text-[10px] font-bold text-slate-200">${run} ${desc}</span>
+        </div>
+        <div class="flex items-center gap-1 mt-1">${chips}</div>
+      </div>`;
+    }
+
+    function teamForm(team, league, fixture) {
+      let hist = teamHistory(team, league, fixture), seq = outcomes(team, hist);
+      return `<div class="oa-subcard p-2.5">
+        <div class="flex items-center justify-between gap-1.5">
+          <div class="text-[11px] font-bold text-slate-100 truncate">${esc(team)}</div>
+          <span class="text-[9px] font-mono font-semibold text-slate-500 shrink-0">${hist.length} PJ</span>
+        </div>
+        ${streak('1X2', seq, 'one')}
+        ${streak('Goles', seq, 'goals')}
+        ${streak('BTTS', seq, 'btts')}
+      </div>`;
+    }
+
+    function market(title, items, theme) {
+      // Find highest probability in this market to subtly highlight the leading outcome
+      let maxVal = -1;
+      items.forEach(it => {
+        const n = Number(it[1]);
+        if (Number.isFinite(n) && n > maxVal) maxVal = n;
+      });
+
+      const themeMap = {
+        blue: { label: 'text-[#38bdf8]', activeBox: 'highlight-blue', activeText: 'text-[#38bdf8]' },
+        amber: { label: 'text-[#fbbf24]', activeBox: 'highlight-amber', activeText: 'text-[#fbbf24]' },
+        green: { label: 'text-[#00d084]', activeBox: 'highlight-green', activeText: 'text-[#00d084]' }
+      };
+      const t = themeMap[theme] || themeMap.blue;
+
+      return `<div class="oa-subcard p-2">
+        <div class="market-mobile-label text-[10px] uppercase tracking-wider font-bold ${t.label} mb-1.5 px-0.5">${title}</div>
+        <div class="grid gap-1.5" style="grid-template-columns:repeat(${items.length},minmax(0,1fr))">
+          ${items.map(it => {
+            const num = Number(it[1]);
+            const isTop = Number.isFinite(num) && num === maxVal && maxVal > 0;
+            return `<div class="odds-box text-center ${isTop ? t.activeBox : ''}">
+              <div class="text-[9px] text-slate-400 font-bold tracking-wide">${it[0]}</div>
+              <div class="prob text-xs sm:text-[13px] font-extrabold ${isTop ? t.activeText : 'text-slate-200'} mt-0.5">${pct(it[1])}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }
+
+    function card(r) {
+      let p = r.probabilities || {};
+      let details = `<div>
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-[#00d084] uppercase tracking-wider">
+            <i class="fa-solid fa-shield-halved text-[9px]"></i>
+            ${esc(r.league || 'Sin liga')}
+          </span>
+          <span class="prob text-[11px] font-medium text-slate-400 bg-[#0b0e14] border border-[#232a38] px-2 py-0.5 rounded">
+            ${esc(r.matchDate || 'Por definir')} ${r.kickoff ? '· ' + esc(r.kickoff) : ''}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 text-sm sm:text-[15px] font-extrabold text-white tracking-tight">
+          <span class="truncate">${esc(r.home)}</span>
+          <span class="text-[11px] font-mono font-bold text-slate-500 px-1.5 py-0.5 rounded bg-[#0b0e14] border border-[#1e2432]">VS</span>
+          <span class="truncate">${esc(r.away)}</span>
+        </div>
+
+        <div class="team-form-grid mt-2.5">
+          <div>${teamForm(r.home, r.league, r)}</div>
+          <div>${teamForm(r.away, r.league, r)}</div>
+        </div>
+      </div>`;
+
+      return `<article class="oa-row p-3.5 sm:px-4 sm:py-3.5">
+        <div class="matches-grid">
+          ${details}
+          ${market('1X2', [['LOCAL', p.homeWin], ['EMPATE', p.draw], ['VISITA', p.awayWin]], 'blue')}
+          ${market('OVER / UNDER 2.5', [['OVER', p.over25], ['UNDER', p.under25]], 'amber')}
+          ${market('BTTS', [['SÍ', p.bttsYes], ['NO', p.bttsNo]], 'green')}
+        </div>
+      </article>`;
+    }
+
+    function renderBoard() {
+      let q = norm(document.getElementById('searchInput').value),
+          league = document.getElementById('leagueFilter').value,
+          mode = document.getElementById('dateFilter').value,
+          now = new Date(),
+          today = new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+          tomorrow = new Date(+today + 86400000),
+          week = new Date(+today + 7 * 86400000);
+
+      let rows = pendingMatches.filter(r => {
+        if (league && (r.league || 'Sin liga') !== league) return false;
+        if (q && !norm([r.home, r.away, r.league].join(' ')).includes(q)) return false;
+        let d = dateKey(r), dt = /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T12:00:00') : null;
+        if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
+        if (mode === 'tomorrow' && (!dt || dt.toDateString() !== tomorrow.toDateString())) return false;
+        if (mode === 'week' && (!dt || dt < today || dt > week)) return false;
+        return true;
+      });
+
+      document.getElementById('matchList').innerHTML = rows.map(card).join('');
+      document.getElementById('emptyState').classList.toggle('hidden', rows.length > 0);
+    }
+
+    function refreshBoard() { readRecords(); }
+
+    window.addEventListener('storage', e => { if (e.key === STORAGE_KEY || e.key === null) readRecords(); });
+    window.addEventListener('focus', readRecords);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) readRecords(); });
+    readRecords();
+  </script>
+</body>
+</html>
