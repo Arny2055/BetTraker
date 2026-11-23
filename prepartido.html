@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#050811">
-  <title>BETAGS VIP PRO · Prepartido</title>
+  <title>BETAGS VIP PRO · Prepartido & Resultados</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,7 +43,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Quant-first terminal cards & strips */
     .quant-card {
       background: linear-gradient(180deg, rgba(13, 19, 34, 0.96) 0%, rgba(9, 14, 26, 0.98) 100%);
       border: 1px solid #1b263b;
@@ -51,7 +50,7 @@
     }
 
     .league-header {
-      background: linear-gradient(90deg, rgba(16, 185, 129, 0.08) 0%, rgba(12, 18, 32, 0.96) 35%, rgba(9, 14, 26, 0.98) 100%);
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.09) 0%, rgba(12, 18, 32, 0.96) 35%, rgba(9, 14, 26, 0.98) 100%);
       border-top: 1px solid #1b263b;
       border-bottom: 1px solid #1b263b;
     }
@@ -63,6 +62,12 @@
     }
     .match-row:hover {
       background-color: rgba(17, 26, 46, 0.96);
+    }
+    .match-row.is-settled {
+      background-color: rgba(11, 17, 31, 0.72);
+    }
+    .match-row.is-settled:hover {
+      background-color: rgba(16, 24, 42, 0.92);
     }
 
     .row-grid {
@@ -113,6 +118,7 @@
       text-align: center;
       min-width: 48px;
       line-height: 1.15;
+      position: relative;
     }
 
     .odd-cell.best-1x2 {
@@ -132,6 +138,11 @@
       border-color: rgba(16, 185, 129, 0.45);
       color: #34d399;
       box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.15);
+    }
+
+    .odd-cell.hit-outcome {
+      outline: 1.5px solid #34d399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.22);
     }
 
     .form-chip {
@@ -179,10 +190,10 @@
         </div>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="font-black tracking-tight text-white text-sm sm:text-base">BETAGS VIP PRO</span>
-          <span class="text-[9.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">PREPARTIDO · QUANT</span>
+          <span class="text-[9.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">PREPARTIDO · -1D A +∞</span>
         </div>
         <span class="hidden xl:inline-block text-slate-700 text-xs">|</span>
-        <span class="hidden xl:inline-block text-xs text-slate-400 font-medium truncate">1X2 · Over/Under 2.5 · BTTS · Rachas por liga</span>
+        <span class="hidden xl:inline-block text-xs text-slate-400 font-medium truncate">Pendientes y resueltos (hasta 1 día atrás · todo hacia adelante)</span>
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
@@ -212,18 +223,18 @@
       <div>
         <div class="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
           <i class="fa-solid fa-microchip"></i>
-          <span>BETAGS VIP PRO · PRE-MATCH PROBABILITY DESK</span>
+          <span>BETAGS VIP PRO · VENTANA OPERATIVA (-1D · FUTURO)</span>
         </div>
         <h1 class="text-lg sm:text-xl font-black tracking-tight text-white">
           Centro de Partidos <span class="text-emerald-400">Prepartido</span>
         </h1>
-        <p class="text-[11px] text-slate-400">Mercados · forma reciente · rachas por liga</p>
+        <p class="text-[11px] text-slate-400">Pendientes desde hoy en adelante + resueltos de ayer y hoy · rachas por liga</p>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:min-w-[510px]">
         <div class="quant-card px-2.5 py-1.5 flex items-center justify-between">
           <div>
-            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">Pendientes</div>
+            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">En ventana</div>
             <div id="statPending" class="prob text-base font-extrabold text-white">0</div>
           </div>
           <i class="fa-regular fa-futbol text-slate-500 text-xs"></i>
@@ -239,7 +250,7 @@
 
         <div class="quant-card px-2.5 py-1.5 flex items-center justify-between">
           <div>
-            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">Historial</div>
+            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">Historial total</div>
             <div id="statHistory" class="prob text-base font-extrabold text-emerald-400">0</div>
           </div>
           <i class="fa-solid fa-database text-emerald-400 text-xs"></i>
@@ -269,6 +280,16 @@
         </div>
 
         <select
+          id="statusFilter"
+          onchange="renderBoard()"
+          class="bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[165px]"
+        >
+          <option value="all">Pendientes y resueltos</option>
+          <option value="pending">Solo pendientes</option>
+          <option value="settled">Solo resueltos (-1d a hoy)</option>
+        </select>
+
+        <select
           id="leagueFilter"
           onchange="renderBoard()"
           class="bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[185px]"
@@ -279,9 +300,10 @@
         <select
           id="dateFilter"
           onchange="renderBoard()"
-          class="bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[160px]"
+          class="bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[165px]"
         >
-          <option value="">Todas las fechas</option>
+          <option value="">Ventana completa (-1d · +∞)</option>
+          <option value="yesterday">Ayer (resueltos)</option>
           <option value="today">Hoy</option>
           <option value="tomorrow">Mañana</option>
           <option value="week">Próximos 7 días</option>
@@ -318,20 +340,20 @@
         <div class="w-11 h-11 rounded-lg bg-[#0e1627] border border-[#1e2c46] mx-auto flex items-center justify-center text-slate-400 text-base mb-2.5">
           <i class="fa-regular fa-calendar-xmark"></i>
         </div>
-        <div class="font-bold text-sm text-slate-200">No hay partidos para mostrar</div>
-        <p class="text-xs text-slate-500 mt-1">Carga o actualiza los partidos desde Área 1 en BETAGS y vuelve a esta pantalla.</p>
+        <div class="font-bold text-sm text-slate-200">No hay partidos en esta ventana</div>
+        <p class="text-xs text-slate-500 mt-1">Se muestran resueltos de hasta 1 día atrás y partidos pendientes/resueltos desde hoy hacia adelante.</p>
       </div>
     </section>
 
     <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500 py-4">
       <div>BETAGS VIP PRO · PREPARTIDO · Lectura directa de la memoria de Área 1.</div>
-      <div class="font-mono">QUANT DESK · SYNC LOCAL</div>
+      <div class="font-mono">WINDOW: -1D TO +∞ · SYNC LOCAL</div>
     </footer>
   </main>
 
   <script>
     const STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
-    let allRecords = [], pendingMatches = [], marketFocus = 'all';
+    let allRecords = [], windowMatches = [], marketFocus = 'all';
 
     const norm = v => String(v || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
     const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -356,6 +378,34 @@
       return r.actualHomeGoals !== null && r.actualAwayGoals !== null && Number.isFinite(Number(r.actualHomeGoals)) && Number.isFinite(Number(r.actualAwayGoals));
     }
 
+    function startOfDay(dateObj) {
+      return new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+    }
+
+    function parseFixtureDay(r) {
+      let d = dateKey(r);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return null;
+      const [y, m, day] = d.split('-').map(Number);
+      return new Date(y, m - 1, day);
+    }
+
+    // Rule:
+    // - Settled matches: max 1 day back (yesterday or today, and if any future settled exist, allow >= yesterday)
+    // - Pending matches: today onwards (and if user has pending without valid date, keep them; if dated, >= today)
+    function inOperationalWindow(r, yesterday, today) {
+      if (!r || !r.home || !r.away) return false;
+      const settled = isSettled(r);
+      const dayObj = parseFixtureDay(r);
+
+      if (settled) {
+        if (!dayObj) return false;
+        return dayObj.getTime() >= yesterday.getTime();
+      } else {
+        if (!dayObj) return true;
+        return dayObj.getTime() >= today.getTime();
+      }
+    }
+
     function setMarketFocus(mode) {
       marketFocus = mode;
       document.querySelectorAll('.filter-pill').forEach(btn => {
@@ -373,11 +423,15 @@
         console.error(e);
       }
 
-      pendingMatches = allRecords.filter(r => r && String(r.status || 'PENDING').toUpperCase() !== 'SETTLED' && r.home && r.away);
-      pendingMatches.sort((a, b) => timestamp(a) - timestamp(b) || String(a.league || '').localeCompare(String(b.league || '')));
+      const now = new Date();
+      const today = startOfDay(now);
+      const yesterday = new Date(today.getTime() - 86400000);
 
-      document.getElementById('statPending').textContent = pendingMatches.length;
-      document.getElementById('statLeagues').textContent = new Set(pendingMatches.map(r => r.league || 'Sin liga')).size;
+      windowMatches = allRecords.filter(r => inOperationalWindow(r, yesterday, today));
+      windowMatches.sort((a, b) => timestamp(a) - timestamp(b) || String(a.league || '').localeCompare(String(b.league || '')));
+
+      document.getElementById('statPending').textContent = windowMatches.length;
+      document.getElementById('statLeagues').textContent = new Set(windowMatches.map(r => r.league || 'Sin liga')).size;
       document.getElementById('statHistory').textContent = allRecords.filter(r => isSettled(r) && validScore(r)).length;
       document.getElementById('statUpdated').textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
@@ -392,7 +446,7 @@
 
     function populateLeagues() {
       let sel = document.getElementById('leagueFilter'), old = sel.value;
-      let leagues = [...new Set(pendingMatches.map(r => r.league || 'Sin liga'))].sort((a, b) => a.localeCompare(b, 'es'));
+      let leagues = [...new Set(windowMatches.map(r => r.league || 'Sin liga'))].sort((a, b) => a.localeCompare(b, 'es'));
       sel.innerHTML = '<option value="">Todas las ligas</option>' + leagues.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
       if (leagues.includes(old)) sel.value = old;
     }
@@ -471,7 +525,17 @@
       </div>`;
     }
 
-    function marketBox(title, items, theme) {
+    function getActualWinners(r) {
+      if (!isSettled(r) || !validScore(r)) return null;
+      const hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals);
+      return {
+        one: hg > ag ? 'LOCAL' : hg === ag ? 'EMPATE' : 'VISITA',
+        ou: hg + ag >= 3 ? 'OVER' : 'UNDER',
+        btts: hg > 0 && ag > 0 ? 'SÍ' : 'NO'
+      };
+    }
+
+    function marketBox(title, items, theme, hitKey = null) {
       let maxVal = -1;
       items.forEach(it => {
         const n = Number(it[1]);
@@ -494,7 +558,11 @@
           ${items.map(it => {
             const num = Number(it[1]);
             const isTop = Number.isFinite(num) && num === maxVal && maxVal > 0;
-            return `<div class="odd-cell ${isTop ? t.bestCls : ''}" title="${title} · ${it[0]}">${pct(it[1])}</div>`;
+            const isHit = hitKey && it[0] === hitKey;
+            return `<div class="odd-cell ${isTop ? t.bestCls : ''} ${isHit ? 'hit-outcome' : ''}" title="${title} · ${it[0]}${isHit ? ' (Resultado real)' : ''}">
+              ${pct(it[1])}
+              ${isHit ? `<span class="block text-[7.5px] font-mono text-emerald-300 leading-none mt-0.5">✓</span>` : ''}
+            </div>`;
           }).join('')}
         </div>
       </div>`;
@@ -502,17 +570,28 @@
 
     function fixtureRow(r) {
       let p = r.probabilities || {};
+      let settled = isSettled(r);
+      let winners = getActualWinners(r);
       let timeBadge = `${esc(r.matchDate || 'Fecha por definir')}${r.kickoff ? ' · ' + esc(r.kickoff) : ''}`;
+
+      let statusBadge = settled
+        ? `<span class="prob text-[9.5px] font-extrabold text-emerald-300 bg-emerald-500/15 border border-emerald-500/35 px-2 py-0.5 rounded shrink-0">
+             RESUELTO${validScore(r) ? ` · ${Number(r.actualHomeGoals)}-${Number(r.actualAwayGoals)}` : ''}
+           </span>`
+        : `<span class="prob text-[9.5px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded shrink-0">
+             PENDIENTE
+           </span>`;
 
       const show1x2 = marketFocus === 'all' || marketFocus === '1x2';
       const showOu = marketFocus === 'all' || marketFocus === 'ou';
       const showBtts = marketFocus === 'all' || marketFocus === 'btts';
 
-      return `<article class="match-row px-3 py-2 sm:px-4">
+      return `<article class="match-row ${settled ? 'is-settled' : ''} px-3 py-2 sm:px-4">
         <div class="row-grid">
           <div class="min-w-0">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="prob text-[10px] font-bold text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded shrink-0">
+            <div class="flex flex-wrap items-center gap-1.5 mb-1">
+              ${statusBadge}
+              <span class="prob text-[10px] font-bold text-slate-300 bg-[#0d1526] border border-[#1e2c46] px-2 py-0.5 rounded shrink-0">
                 ${timeBadge}
               </span>
               <span class="text-xs sm:text-[13.5px] font-extrabold text-white truncate">
@@ -527,9 +606,9 @@
           </div>
 
           <div class="markets-rail">
-            ${show1x2 ? marketBox('1X2', [['LOCAL', p.homeWin], ['EMPATE', p.draw], ['VISITA', p.awayWin]], 'cyan') : ''}
-            ${showOu ? marketBox('OVER / UNDER 2.5', [['OVER', p.over25], ['UNDER', p.under25]], 'amber') : ''}
-            ${showBtts ? marketBox('BTTS', [['SÍ', p.bttsYes], ['NO', p.bttsNo]], 'emerald') : ''}
+            ${show1x2 ? marketBox('1X2', [['LOCAL', p.homeWin], ['EMPATE', p.draw], ['VISITA', p.awayWin]], 'cyan', winners?.one || null) : ''}
+            ${showOu ? marketBox('OVER / UNDER 2.5', [['OVER', p.over25], ['UNDER', p.under25]], 'amber', winners?.ou || null) : ''}
+            ${showBtts ? marketBox('BTTS', [['SÍ', p.bttsYes], ['NO', p.bttsNo]], 'emerald', winners?.btts || null) : ''}
           </div>
         </div>
       </article>`;
@@ -537,17 +616,24 @@
 
     function renderBoard() {
       let q = norm(document.getElementById('searchInput').value),
+          statusMode = document.getElementById('statusFilter').value,
           league = document.getElementById('leagueFilter').value,
           mode = document.getElementById('dateFilter').value,
           now = new Date(),
-          today = new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-          tomorrow = new Date(+today + 86400000),
-          week = new Date(+today + 7 * 86400000);
+          today = startOfDay(now),
+          yesterday = new Date(today.getTime() - 86400000),
+          tomorrow = new Date(today.getTime() + 86400000),
+          week = new Date(today.getTime() + 7 * 86400000);
 
-      let rows = pendingMatches.filter(r => {
+      let rows = windowMatches.filter(r => {
+        const settled = isSettled(r);
+        if (statusMode === 'pending' && settled) return false;
+        if (statusMode === 'settled' && !settled) return false;
         if (league && (r.league || 'Sin liga') !== league) return false;
         if (q && !norm([r.home, r.away, r.league].join(' ')).includes(q)) return false;
-        let d = dateKey(r), dt = /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T12:00:00') : null;
+
+        let dt = parseFixtureDay(r);
+        if (mode === 'yesterday' && (!dt || dt.toDateString() !== yesterday.toDateString())) return false;
         if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
         if (mode === 'tomorrow' && (!dt || dt.toDateString() !== tomorrow.toDateString())) return false;
         if (mode === 'week' && (!dt || dt < today || dt > week)) return false;
@@ -569,7 +655,7 @@
             <span class="text-[11px] font-extrabold tracking-wide text-slate-100 truncate">${esc(lg)}</span>
             <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 shrink-0">${items.length}</span>
           </div>
-          <span class="text-[9.5px] font-mono text-slate-400 shrink-0">Prepartido · Misma liga</span>
+          <span class="text-[9.5px] font-mono text-slate-400 shrink-0">Ventana -1d · +∞ · Misma liga</span>
         </div>`;
         html += items.map(fixtureRow).join('');
       });
