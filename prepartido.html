@@ -27,15 +27,18 @@
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
     body {
-      background: radial-gradient(circle at 50% -10%, rgba(16, 185, 129, 0.08), transparent 42%), #050811;
-      color: #f1f5f9;
+      background:
+        radial-gradient(circle at 18% -8%, rgba(16, 185, 129, 0.09), transparent 38%),
+        radial-gradient(circle at 85% 0%, rgba(56, 189, 248, 0.06), transparent 35%),
+        #050811;
+      color: #f8fafc;
       font-family: 'Inter', system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
     ::-webkit-scrollbar-track { background: #050811; }
-    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
     .prob {
@@ -43,309 +46,372 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .quant-card {
-      background: linear-gradient(180deg, rgba(13, 19, 34, 0.96) 0%, rgba(9, 14, 26, 0.98) 100%);
-      border: 1px solid #1b263b;
-      border-radius: 10px;
+    .quant-panel {
+      background: linear-gradient(180deg, rgba(14, 21, 38, 0.96) 0%, rgba(9, 14, 26, 0.98) 100%);
+      border: 1px solid #1e2b45;
+      border-radius: 12px;
+      box-shadow: 0 10px 28px -12px rgba(0, 0, 0, 0.75);
     }
 
-    .league-header {
-      background: linear-gradient(90deg, rgba(16, 185, 129, 0.09) 0%, rgba(12, 18, 32, 0.96) 35%, rgba(9, 14, 26, 0.98) 100%);
-      border-top: 1px solid #1b263b;
-      border-bottom: 1px solid #1b263b;
+    .league-banner {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.14) 0%, rgba(15, 23, 42, 0.98) 42%, rgba(11, 17, 32, 0.98) 100%);
+      border-top: 1px solid #22314f;
+      border-bottom: 1px solid #1e2b45;
     }
 
-    .match-row {
-      background-color: rgba(9, 14, 26, 0.92);
-      border-bottom: 1px solid #151e30;
-      transition: background-color 0.14s ease, border-color 0.14s ease;
+    .match-card {
+      background-color: #090e1a;
+      border-bottom: 1px solid #172036;
+      transition: background-color 0.15s ease;
     }
-    .match-row:hover {
-      background-color: rgba(17, 26, 46, 0.96);
+    .match-card:nth-child(even) {
+      background-color: #0b1120;
     }
-    .match-row.is-settled {
-      background-color: rgba(11, 17, 31, 0.72);
+    .match-card:hover {
+      background-color: #111b33;
     }
-    .match-row.is-settled:hover {
-      background-color: rgba(16, 24, 42, 0.92);
+    .match-card.is-settled {
+      background-color: rgba(10, 16, 29, 0.78);
+    }
+    .match-card.is-settled:hover {
+      background-color: #111b33;
     }
 
-    .row-grid {
+    .fixture-layout {
       display: grid;
-      grid-template-columns: minmax(320px, 1.35fr) auto;
-      gap: 10px;
+      grid-template-columns: minmax(360px, 1.35fr) auto;
+      gap: 16px;
       align-items: center;
     }
 
-    .markets-rail {
+    .markets-strip {
       display: flex;
       align-items: stretch;
-      gap: 8px;
+      gap: 10px;
       overflow-x: auto;
       padding-bottom: 2px;
     }
 
-    .mkt-box {
+    .mkt-group {
       background-color: #060a14;
-      border: 1px solid #182236;
-      border-radius: 7px;
-      padding: 5px 7px;
+      border: 1px solid #1b2740;
+      border-radius: 9px;
+      padding: 6px 8px;
       flex-shrink: 0;
     }
 
-    .mkt-head {
+    .mkt-title {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 8.5px;
+      font-size: 9.5px;
       font-weight: 800;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 4px;
+      margin-bottom: 5px;
+      padding: 0 2px;
     }
 
-    .odd-cell {
+    .odd-box {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 800;
-      padding: 4px 6px;
-      border-radius: 5px;
-      background-color: #0e1627;
-      border: 1px solid #1e2c46;
-      color: #e2e8f0;
+      min-width: 60px;
+      padding: 5px 7px;
+      border-radius: 7px;
+      background-color: #0e1628;
+      border: 1px solid #21304d;
+      color: #cbd5e1;
       text-align: center;
-      min-width: 48px;
-      line-height: 1.15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
       position: relative;
+      transition: transform 0.12s ease, border-color 0.12s ease;
     }
 
-    .odd-cell.best-1x2 {
-      background-color: rgba(56, 189, 248, 0.14);
-      border-color: rgba(56, 189, 248, 0.45);
-      color: #38bdf8;
-      box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.15);
-    }
-    .odd-cell.best-ou {
-      background-color: rgba(245, 158, 11, 0.14);
-      border-color: rgba(245, 158, 11, 0.45);
-      color: #fbbf24;
-      box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.15);
-    }
-    .odd-cell.best-btts {
-      background-color: rgba(16, 185, 129, 0.15);
-      border-color: rgba(16, 185, 129, 0.45);
-      color: #34d399;
-      box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.15);
+    .odd-lbl {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #64748b;
+      line-height: 1;
     }
 
-    .odd-cell.hit-outcome {
-      outline: 1.5px solid #34d399;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.22);
+    .odd-val {
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.1;
+      color: #f1f5f9;
+    }
+
+    /* Destacado de probabilidad máxima por mercado */
+    .odd-box.best-1x2 {
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.18) 0%, rgba(14, 116, 144, 0.12) 100%);
+      border-color: rgba(56, 189, 248, 0.55);
+    }
+    .odd-box.best-1x2 .odd-lbl { color: #7dd3fc; }
+    .odd-box.best-1x2 .odd-val { color: #38bdf8; }
+
+    .odd-box.best-ou {
+      background: linear-gradient(180deg, rgba(245, 158, 11, 0.18) 0%, rgba(180, 83, 9, 0.12) 100%);
+      border-color: rgba(245, 158, 11, 0.55);
+    }
+    .odd-box.best-ou .odd-lbl { color: #fcd34d; }
+    .odd-box.best-ou .odd-val { color: #fbbf24; }
+
+    .odd-box.best-btts {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.20) 0%, rgba(4, 120, 87, 0.12) 100%);
+      border-color: rgba(16, 185, 129, 0.55);
+    }
+    .odd-box.best-btts .odd-lbl { color: #6ee7b7; }
+    .odd-box.best-btts .odd-val { color: #34d399; }
+
+    /* Resultado acertado */
+    .odd-box.hit-outcome {
+      outline: 2px solid #10b981;
+      outline-offset: -1px;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.28);
+    }
+
+    .team-streak-card {
+      background-color: #060a14;
+      border: 1px solid #18233a;
+      border-radius: 8px;
+      padding: 7px 10px;
     }
 
     .form-chip {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 8.5px;
+      font-size: 9.5px;
       font-weight: 800;
-      width: 15px;
-      height: 15px;
+      width: 17px;
+      height: 17px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: 3px;
+      border-radius: 4px;
       line-height: 1;
     }
-    .w { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
-    .d { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.25); }
-    .l { background: rgba(244, 63, 94, 0.18); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
-    .o { background: rgba(56, 189, 248, 0.18); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
-    .u { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
-    .y { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
-    .n { background: rgba(244, 63, 94, 0.18); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
+    .w { background: rgba(16, 185, 129, 0.20); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.42); }
+    .d { background: rgba(148, 163, 184, 0.18); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.35); }
+    .l { background: rgba(244, 63, 94, 0.20); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.42); }
+    .o { background: rgba(56, 189, 248, 0.20); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.42); }
+    .u { background: rgba(245, 158, 11, 0.20); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.42); }
+    .y { background: rgba(16, 185, 129, 0.20); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.42); }
+    .n { background: rgba(244, 63, 94, 0.20); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.42); }
 
     .filter-pill.active {
-      background-color: rgba(16, 185, 129, 0.16);
-      border-color: rgba(16, 185, 129, 0.5);
+      background-color: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.6);
       color: #34d399;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
     }
 
-    @media (max-width: 1080px) {
-      .row-grid {
+    @media (max-width: 1140px) {
+      .fixture-layout {
         grid-template-columns: 1fr;
-        gap: 8px;
+        gap: 10px;
       }
     }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-  <!-- Top Terminal Header -->
-  <header class="sticky top-0 z-30 bg-[#050811]/95 backdrop-blur-md border-b border-[#1b263b]">
-    <div class="max-w-[1480px] mx-auto px-3 sm:px-5 py-2 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 flex items-center justify-center font-black text-sm shrink-0">
+  <!-- Barra Superior Fija -->
+  <header class="sticky top-0 z-30 bg-[#050811]/95 backdrop-blur-md border-b border-[#1e2b45]">
+    <div class="max-w-[1540px] mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-slate-950 flex items-center justify-center font-black text-base shadow-lg shadow-emerald-500/20 shrink-0">
           <i class="fa-solid fa-wave-square"></i>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <span class="font-black tracking-tight text-white text-sm sm:text-base">BETAGS VIP PRO</span>
-          <span class="text-[9.5px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">PREPARTIDO · -1D A +∞</span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-black tracking-tight text-white text-base sm:text-lg leading-none">BETAGS VIP PRO</span>
+            <span class="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/35">
+              PREPARTIDO · -1D A +∞
+            </span>
+          </div>
+          <p class="hidden sm:block text-[11px] text-slate-400 mt-0.5 truncate">
+            Pendientes desde hoy en adelante + resueltos de ayer y hoy · rachas históricas por liga
+          </p>
         </div>
-        <span class="hidden xl:inline-block text-slate-700 text-xs">|</span>
-        <span class="hidden xl:inline-block text-xs text-slate-400 font-medium truncate">Pendientes y resueltos (hasta 1 día atrás · todo hacia adelante)</span>
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
-        <div id="syncStatus" class="hidden md:flex items-center gap-1.5 text-[11px] font-medium text-slate-400 bg-[#0b111e] border border-[#1b263b] px-2.5 py-1 rounded-md">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div id="syncStatus" class="hidden lg:flex items-center gap-2 text-xs font-medium text-slate-300 bg-[#0c1324] border border-[#1e2b45] px-3 py-1.5 rounded-lg">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>Leyendo memoria de Área 1…</span>
         </div>
 
-        <a href="index.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-slate-300 bg-[#0b111e] hover:bg-[#131d32] border border-[#1b263b] transition">
-          <i class="fa-solid fa-arrow-left text-[11px] text-emerald-400"></i>
+        <a href="index.html" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-slate-200 bg-[#0c1324] hover:bg-[#15203b] border border-[#1e2b45] transition">
+          <i class="fa-solid fa-arrow-left text-emerald-400"></i>
           <span>Volver a BETAGS</span>
         </a>
 
-        <button onclick="refreshBoard()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-extrabold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition cursor-pointer">
-          <i class="fa-solid fa-rotate text-[11px]"></i>
+        <button onclick="refreshBoard()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-extrabold text-slate-950 bg-emerald-400 hover:bg-emerald-300 shadow-md shadow-emerald-500/15 transition cursor-pointer">
+          <i class="fa-solid fa-rotate"></i>
           <span>Actualizar</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Workspace -->
-  <main class="max-w-[1480px] w-full mx-auto px-3 sm:px-5 py-3.5 flex-1">
+  <!-- Espacio Principal -->
+  <main class="max-w-[1540px] w-full mx-auto px-3 sm:px-6 py-4 flex-1">
 
-    <!-- Title + Telemetry Strip -->
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-3">
+    <!-- Título + Telemetría -->
+    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4">
       <div>
-        <div class="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
+        <div class="flex items-center gap-2 text-[10.5px] font-mono font-extrabold uppercase tracking-wider text-emerald-400">
           <i class="fa-solid fa-microchip"></i>
           <span>BETAGS VIP PRO · VENTANA OPERATIVA (-1D · FUTURO)</span>
         </div>
-        <h1 class="text-lg sm:text-xl font-black tracking-tight text-white">
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
           Centro de Partidos <span class="text-emerald-400">Prepartido</span>
         </h1>
-        <p class="text-[11px] text-slate-400">Pendientes desde hoy en adelante + resueltos de ayer y hoy · rachas por liga</p>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:min-w-[510px]">
-        <div class="quant-card px-2.5 py-1.5 flex items-center justify-between">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 xl:min-w-[580px]">
+        <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
           <div>
-            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">En ventana</div>
-            <div id="statPending" class="prob text-base font-extrabold text-white">0</div>
+            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">En ventana</div>
+            <div id="statPending" class="prob text-xl font-black text-white mt-0.5">0</div>
           </div>
-          <i class="fa-regular fa-futbol text-slate-500 text-xs"></i>
+          <div class="w-8 h-8 rounded-lg bg-slate-800/70 flex items-center justify-center text-slate-300 text-sm">
+            <i class="fa-regular fa-futbol"></i>
+          </div>
         </div>
 
-        <div class="quant-card px-2.5 py-1.5 flex items-center justify-between">
+        <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
           <div>
-            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">Ligas</div>
-            <div id="statLeagues" class="prob text-base font-extrabold text-sky-400">0</div>
+            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Ligas activas</div>
+            <div id="statLeagues" class="prob text-xl font-black text-sky-400 mt-0.5">0</div>
           </div>
-          <i class="fa-solid fa-trophy text-sky-400 text-xs"></i>
+          <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 text-sm">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
         </div>
 
-        <div class="quant-card px-2.5 py-1.5 flex items-center justify-between">
+        <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
           <div>
-            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">Historial total</div>
-            <div id="statHistory" class="prob text-base font-extrabold text-emerald-400">0</div>
+            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Historial total</div>
+            <div id="statHistory" class="prob text-xl font-black text-emerald-400 mt-0.5">0</div>
           </div>
-          <i class="fa-solid fa-database text-emerald-400 text-xs"></i>
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm">
+            <i class="fa-solid fa-database"></i>
+          </div>
         </div>
 
-        <div class="quant-card px-2.5 py-1.5 flex items-center justify-between">
+        <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
           <div>
-            <div class="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">Última lectura</div>
-            <div id="statUpdated" class="prob text-xs font-bold text-slate-200 mt-0.5">—</div>
+            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Última lectura</div>
+            <div id="statUpdated" class="prob text-base font-extrabold text-slate-100 mt-1">—</div>
           </div>
-          <i class="fa-regular fa-clock text-slate-500 text-xs"></i>
+          <div class="w-8 h-8 rounded-lg bg-slate-800/70 flex items-center justify-center text-slate-300 text-sm">
+            <i class="fa-regular fa-clock"></i>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Filter & Quick Market Focus Toolbar -->
-    <section class="quant-card p-2.5 mb-3">
-      <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-        <div class="relative flex-1">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+    <!-- Barra de Filtros y Foco de Mercado -->
+    <section class="quant-panel p-3.5 mb-4">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+        <div class="relative md:col-span-4">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
           <input
             id="searchInput"
             oninput="renderBoard()"
-            placeholder="Buscar equipo o partido..."
-            class="w-full bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 outline-none transition"
+            placeholder="Buscar equipo, rival o liga..."
+            class="w-full bg-[#060a14] border border-[#1f2d47] focus:border-emerald-400 rounded-lg pl-9 pr-3 py-2 text-xs font-medium text-white placeholder-slate-500 outline-none transition"
           >
         </div>
 
-        <select
-          id="statusFilter"
-          onchange="renderBoard()"
-          class="bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[165px]"
-        >
-          <option value="all">Pendientes y resueltos</option>
-          <option value="pending">Solo pendientes</option>
-          <option value="settled">Solo resueltos (-1d a hoy)</option>
-        </select>
-
-        <select
-          id="leagueFilter"
-          onchange="renderBoard()"
-          class="bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[185px]"
-        >
-          <option value="">Todas las ligas</option>
-        </select>
-
-        <select
-          id="dateFilter"
-          onchange="renderBoard()"
-          class="bg-[#060a14] border border-[#1b263b] focus:border-emerald-400 rounded-md px-3 py-1.5 text-xs font-medium text-slate-200 outline-none transition cursor-pointer min-w-[165px]"
-        >
-          <option value="">Ventana completa (-1d · +∞)</option>
-          <option value="yesterday">Ayer (resueltos)</option>
-          <option value="today">Hoy</option>
-          <option value="tomorrow">Mañana</option>
-          <option value="week">Próximos 7 días</option>
-        </select>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-2 mt-2 pt-2 border-t border-[#151e30]">
-        <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-mono font-bold">
-          <span class="text-[10px] font-sans font-semibold uppercase text-slate-500 mr-1">Foco:</span>
-          <button type="button" data-focus="all" onclick="setMarketFocus('all')" class="filter-pill active px-2 py-0.5 rounded bg-[#0a1120] text-slate-300 border border-[#1e2c46] cursor-pointer transition">TODOS</button>
-          <button type="button" data-focus="1x2" onclick="setMarketFocus('1x2')" class="filter-pill px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/25 cursor-pointer transition">1X2</button>
-          <button type="button" data-focus="ou" onclick="setMarketFocus('ou')" class="filter-pill px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/25 cursor-pointer transition">OVER / UNDER 2.5</button>
-          <button type="button" data-focus="btts" onclick="setMarketFocus('btts')" class="filter-pill px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 cursor-pointer transition">BTTS</button>
+        <div class="md:col-span-3">
+          <select
+            id="statusFilter"
+            onchange="renderBoard()"
+            class="w-full bg-[#060a14] border border-[#1f2d47] focus:border-emerald-400 rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 outline-none transition cursor-pointer"
+          >
+            <option value="all">Estado: Pendientes y resueltos</option>
+            <option value="pending">Solo pendientes</option>
+            <option value="settled">Solo resueltos (-1d a hoy)</option>
+          </select>
         </div>
 
-        <div class="flex items-center gap-2.5 text-[10px] text-slate-400">
-          <span class="inline-flex items-center gap-1"><span class="form-chip w !w-4 !h-4 !text-[8.5px]">W</span> Victoria</span>
-          <span class="inline-flex items-center gap-1"><span class="form-chip d !w-4 !h-4 !text-[8.5px]">D</span> Empate</span>
-          <span class="inline-flex items-center gap-1"><span class="form-chip l !w-4 !h-4 !text-[8.5px]">L</span> Derrota</span>
+        <div class="md:col-span-3">
+          <select
+            id="leagueFilter"
+            onchange="renderBoard()"
+            class="w-full bg-[#060a14] border border-[#1f2d47] focus:border-emerald-400 rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 outline-none transition cursor-pointer"
+          >
+            <option value="">Todas las ligas</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-2">
+          <select
+            id="dateFilter"
+            onchange="renderBoard()"
+            class="w-full bg-[#060a14] border border-[#1f2d47] focus:border-emerald-400 rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 outline-none transition cursor-pointer"
+          >
+            <option value="">Fecha: Completa</option>
+            <option value="yesterday">Ayer (resueltos)</option>
+            <option value="today">Hoy</option>
+            <option value="tomorrow">Mañana</option>
+            <option value="week">Próximos 7 días</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-[#172036]">
+        <div class="flex flex-wrap items-center gap-2 text-[11px] font-mono font-bold">
+          <span class="text-[10.5px] font-sans font-bold uppercase tracking-wider text-slate-400 mr-1">Foco de mercado:</span>
+          <button type="button" data-focus="all" onclick="setMarketFocus('all')" class="filter-pill active px-2.5 py-1 rounded-md bg-[#0a1120] text-slate-200 border border-[#22314f] cursor-pointer transition">TODOS</button>
+          <button type="button" data-focus="1x2" onclick="setMarketFocus('1x2')" class="filter-pill px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-300 border border-sky-500/30 cursor-pointer transition">1X2</button>
+          <button type="button" data-focus="ou" onclick="setMarketFocus('ou')" class="filter-pill px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 cursor-pointer transition">OVER / UNDER 2.5</button>
+          <button type="button" data-focus="btts" onclick="setMarketFocus('btts')" class="filter-pill px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 cursor-pointer transition">BTTS (AMBOS ANOTAN)</button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-300">
+          <span class="inline-flex items-center gap-1.5"><span class="form-chip w">W</span> Victoria</span>
+          <span class="inline-flex items-center gap-1.5"><span class="form-chip d">D</span> Empate</span>
+          <span class="inline-flex items-center gap-1.5"><span class="form-chip l">L</span> Derrota</span>
+          <span class="text-slate-600">|</span>
+          <span class="inline-flex items-center gap-1.5 text-emerald-300 font-semibold">
+            <span class="w-2.5 h-2.5 rounded-sm border-2 border-emerald-400 inline-block"></span> Resultado real
+          </span>
+          <button type="button" onclick="resetFilters()" class="text-[11px] font-semibold text-slate-400 hover:text-white underline underline-offset-2 ml-1 cursor-pointer">
+            Limpiar filtros
+          </button>
         </div>
       </div>
     </section>
 
-    <!-- Matches Grouped by League -->
-    <section class="quant-card overflow-hidden">
+    <!-- Listado de Partidos Agrupados por Liga -->
+    <section class="quant-panel overflow-hidden">
       <div id="matchList">
-        <div class="p-10 text-center text-slate-500 text-xs">
-          <i class="fa-solid fa-circle-notch fa-spin text-emerald-400 text-base mb-2 block"></i>
+        <div class="p-12 text-center text-slate-400 text-xs">
+          <i class="fa-solid fa-circle-notch fa-spin text-emerald-400 text-lg mb-2.5 block"></i>
           Cargando partidos de Área 1…
         </div>
       </div>
 
-      <div id="emptyState" class="hidden py-12 px-5 text-center">
-        <div class="w-11 h-11 rounded-lg bg-[#0e1627] border border-[#1e2c46] mx-auto flex items-center justify-center text-slate-400 text-base mb-2.5">
+      <div id="emptyState" class="hidden py-14 px-6 text-center">
+        <div class="w-12 h-12 rounded-xl bg-[#0e1627] border border-[#22314f] mx-auto flex items-center justify-center text-slate-400 text-lg mb-3">
           <i class="fa-regular fa-calendar-xmark"></i>
         </div>
-        <div class="font-bold text-sm text-slate-200">No hay partidos en esta ventana</div>
-        <p class="text-xs text-slate-500 mt-1">Se muestran resueltos de hasta 1 día atrás y partidos pendientes/resueltos desde hoy hacia adelante.</p>
+        <div class="font-extrabold text-base text-slate-100">No hay partidos en esta ventana</div>
+        <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+          Se muestran partidos resueltos de hasta 1 día atrás y partidos pendientes o resueltos desde hoy hacia adelante.
+        </p>
       </div>
     </section>
 
-    <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-slate-500 py-4">
+    <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500 py-4">
       <div>BETAGS VIP PRO · PREPARTIDO · Lectura directa de la memoria de Área 1.</div>
       <div class="font-mono">WINDOW: -1D TO +∞ · SYNC LOCAL</div>
     </footer>
@@ -389,9 +455,9 @@
       return new Date(y, m - 1, day);
     }
 
-    // Rule:
-    // - Settled matches: max 1 day back (yesterday or today, and if any future settled exist, allow >= yesterday)
-    // - Pending matches: today onwards (and if user has pending without valid date, keep them; if dated, >= today)
+    // Ventana operativa:
+    // - Resueltos: máximo 1 día atrás (ayer en adelante)
+    // - Pendientes: hoy en adelante (o sin fecha válida definida)
     function inOperationalWindow(r, yesterday, today) {
       if (!r || !r.home || !r.away) return false;
       const settled = isSettled(r);
@@ -412,6 +478,14 @@
         btn.classList.toggle('active', btn.dataset.focus === mode);
       });
       renderBoard();
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('statusFilter').value = 'all';
+      document.getElementById('leagueFilter').value = '';
+      document.getElementById('dateFilter').value = '';
+      setMarketFocus('all');
     }
 
     function readRecords() {
@@ -437,7 +511,7 @@
 
       const syncEl = document.getElementById('syncStatus');
       if (syncEl) {
-        syncEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>Conectado a la memoria local de Área 1 · sincronización al guardar</span>`;
+        syncEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Conectado a Área 1 · sincronización automática</span>`;
       }
 
       populateLeagues();
@@ -496,31 +570,37 @@
       return { run, desc, chips };
     }
 
-    function teamStreakBlock(team, league, fixture) {
+    function teamStreakBlock(team, league, fixture, sideLabel) {
       let hist = teamHistory(team, league, fixture);
       let seq = outcomes(team, hist);
       let s1 = getStreakInfo(seq, 'one');
       let sg = getStreakInfo(seq, 'goals');
       let sb = getStreakInfo(seq, 'btts');
 
-      return `<div class="bg-[#060a14] border border-[#162033] rounded px-2 py-1 min-w-0">
-        <div class="flex items-center justify-between gap-1.5">
-          <span class="text-[10.5px] font-bold text-slate-100 truncate">${esc(team)}</span>
-          <span class="text-[8.5px] font-mono text-slate-500 shrink-0">${hist.length} PJ · misma liga</span>
+      return `<div class="team-streak-card min-w-0">
+        <div class="flex items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-[#141e33]">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 shrink-0">${sideLabel}</span>
+            <span class="text-xs font-extrabold text-slate-100 truncate">${esc(team)}</span>
+          </div>
+          <span class="text-[9.5px] font-mono font-semibold text-slate-400 shrink-0">${hist.length} PJ</span>
         </div>
-        <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-0.5 text-[9px]">
-          <span class="inline-flex items-center gap-1 text-slate-300">
-            <b class="font-mono text-slate-500">1X2:</b>
-            ${s1.run ? `<span>${s1.run} ${s1.desc}</span><span class="inline-flex gap-0.5">${s1.chips}</span>` : `<span class="italic text-slate-600">sin historial</span>`}
-          </span>
-          <span class="inline-flex items-center gap-1 text-slate-300">
-            <b class="font-mono text-slate-500">Goles:</b>
-            ${sg.run ? `<span>${sg.run} ${sg.desc}</span><span class="inline-flex gap-0.5">${sg.chips}</span>` : `<span class="italic text-slate-600">sin historial</span>`}
-          </span>
-          <span class="inline-flex items-center gap-1 text-slate-300">
-            <b class="font-mono text-slate-500">BTTS:</b>
-            ${sb.run ? `<span>${sb.run} ${sb.desc}</span><span class="inline-flex gap-0.5">${sb.chips}</span>` : `<span class="italic text-slate-600">sin historial</span>`}
-          </span>
+
+        <div class="space-y-1 text-[10.5px]">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-slate-400 font-medium"><b class="font-mono text-slate-500">1X2:</b> ${s1.run ? `<span class="text-slate-200 font-semibold">${s1.run} ${s1.desc}</span>` : '<span class="italic text-slate-600">sin historial</span>'}</span>
+            <span class="inline-flex gap-0.5 shrink-0">${s1.chips}</span>
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-slate-400 font-medium"><b class="font-mono text-slate-500">Goles:</b> ${sg.run ? `<span class="text-slate-200 font-semibold">${sg.run} ${sg.desc}</span>` : '<span class="italic text-slate-600">sin historial</span>'}</span>
+            <span class="inline-flex gap-0.5 shrink-0">${sg.chips}</span>
+          </div>
+
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-slate-400 font-medium"><b class="font-mono text-slate-500">BTTS:</b> ${sb.run ? `<span class="text-slate-200 font-semibold">${sb.run} ${sb.desc}</span>` : '<span class="italic text-slate-600">sin historial</span>'}</span>
+            <span class="inline-flex gap-0.5 shrink-0">${sb.chips}</span>
+          </div>
         </div>
       </div>`;
     }
@@ -529,8 +609,8 @@
       if (!isSettled(r) || !validScore(r)) return null;
       const hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals);
       return {
-        one: hg > ag ? 'LOCAL' : hg === ag ? 'EMPATE' : 'VISITA',
-        ou: hg + ag >= 3 ? 'OVER' : 'UNDER',
+        one: hg > ag ? '1' : hg === ag ? 'X' : '2',
+        ou: hg + ag >= 3 ? 'O 2.5' : 'U 2.5',
         btts: hg > 0 && ag > 0 ? 'SÍ' : 'NO'
       };
     }
@@ -549,19 +629,19 @@
       };
       const t = themeMap[theme] || themeMap.cyan;
 
-      return `<div class="mkt-box">
-        <div class="mkt-head ${t.headCls}">
+      return `<div class="mkt-group">
+        <div class="mkt-title ${t.headCls}">
           <span>${title}</span>
-          <span class="text-[8px] text-slate-500">${items.map(i => i[0]).join(' · ')}</span>
+          ${hitKey ? `<span class="text-[8.5px] px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">HIT: ${hitKey}</span>` : ''}
         </div>
-        <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1.5">
           ${items.map(it => {
             const num = Number(it[1]);
             const isTop = Number.isFinite(num) && num === maxVal && maxVal > 0;
             const isHit = hitKey && it[0] === hitKey;
-            return `<div class="odd-cell ${isTop ? t.bestCls : ''} ${isHit ? 'hit-outcome' : ''}" title="${title} · ${it[0]}${isHit ? ' (Resultado real)' : ''}">
-              ${pct(it[1])}
-              ${isHit ? `<span class="block text-[7.5px] font-mono text-emerald-300 leading-none mt-0.5">✓</span>` : ''}
+            return `<div class="odd-box ${isTop ? t.bestCls : ''} ${isHit ? 'hit-outcome' : ''}" title="${title} · ${it[0]}${isHit ? ' (Resultado real)' : ''}">
+              <span class="odd-lbl">${it[0]}${isHit ? ' ✓' : ''}</span>
+              <span class="odd-val">${pct(it[1])}</span>
             </div>`;
           }).join('')}
         </div>
@@ -575,10 +655,10 @@
       let timeBadge = `${esc(r.matchDate || 'Fecha por definir')}${r.kickoff ? ' · ' + esc(r.kickoff) : ''}`;
 
       let statusBadge = settled
-        ? `<span class="prob text-[9.5px] font-extrabold text-emerald-300 bg-emerald-500/15 border border-emerald-500/35 px-2 py-0.5 rounded shrink-0">
-             RESUELTO${validScore(r) ? ` · ${Number(r.actualHomeGoals)}-${Number(r.actualAwayGoals)}` : ''}
+        ? `<span class="prob text-[10.5px] font-extrabold text-emerald-300 bg-emerald-500/15 border border-emerald-500/40 px-2.5 py-0.5 rounded-md shrink-0">
+             RESUELTO${validScore(r) ? ` · <strong class="text-white text-xs">${Number(r.actualHomeGoals)} - ${Number(r.actualAwayGoals)}</strong>` : ''}
            </span>`
-        : `<span class="prob text-[9.5px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded shrink-0">
+        : `<span class="prob text-[10.5px] font-extrabold text-sky-300 bg-sky-500/12 border border-sky-500/30 px-2.5 py-0.5 rounded-md shrink-0">
              PENDIENTE
            </span>`;
 
@@ -586,29 +666,32 @@
       const showOu = marketFocus === 'all' || marketFocus === 'ou';
       const showBtts = marketFocus === 'all' || marketFocus === 'btts';
 
-      return `<article class="match-row ${settled ? 'is-settled' : ''} px-3 py-2 sm:px-4">
-        <div class="row-grid">
+      return `<article class="match-card ${settled ? 'is-settled' : ''} px-3.5 py-3 sm:px-5">
+        <div class="fixture-layout">
           <div class="min-w-0">
-            <div class="flex flex-wrap items-center gap-1.5 mb-1">
+            <!-- Línea de estado, fecha y encuentro -->
+            <div class="flex flex-wrap items-center gap-2 mb-2.5">
               ${statusBadge}
-              <span class="prob text-[10px] font-bold text-slate-300 bg-[#0d1526] border border-[#1e2c46] px-2 py-0.5 rounded shrink-0">
-                ${timeBadge}
+              <span class="prob text-[11px] font-bold text-slate-300 bg-[#0d1628] border border-[#21304d] px-2.5 py-0.5 rounded-md shrink-0">
+                <i class="fa-regular fa-clock text-slate-500 mr-1"></i>${timeBadge}
               </span>
-              <span class="text-xs sm:text-[13.5px] font-extrabold text-white truncate">
-                ${esc(r.home)} <span class="text-[10px] font-mono font-semibold text-slate-500 mx-1">vs</span> ${esc(r.away)}
-              </span>
+              <h3 class="text-sm sm:text-[15.5px] font-black tracking-tight text-white truncate">
+                ${esc(r.home)} <span class="text-xs font-mono font-bold text-slate-500 mx-1.5">VS</span> ${esc(r.away)}
+              </h3>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-1.5">
-              ${teamStreakBlock(r.home, r.league, r)}
-              ${teamStreakBlock(r.away, r.league, r)}
+            <!-- Rachas comparativas Local vs Visita -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              ${teamStreakBlock(r.home, r.league, r, 'LOC')}
+              ${teamStreakBlock(r.away, r.league, r, 'VIS')}
             </div>
           </div>
 
-          <div class="markets-rail">
-            ${show1x2 ? marketBox('1X2', [['LOCAL', p.homeWin], ['EMPATE', p.draw], ['VISITA', p.awayWin]], 'cyan', winners?.one || null) : ''}
-            ${showOu ? marketBox('OVER / UNDER 2.5', [['OVER', p.over25], ['UNDER', p.under25]], 'amber', winners?.ou || null) : ''}
-            ${showBtts ? marketBox('BTTS', [['SÍ', p.bttsYes], ['NO', p.bttsNo]], 'emerald', winners?.btts || null) : ''}
+          <!-- Bloques de probabilidades -->
+          <div class="markets-strip">
+            ${show1x2 ? marketBox('1X2 · RESULTADO', [['1', p.homeWin], ['X', p.draw], ['2', p.awayWin]], 'cyan', winners?.one || null) : ''}
+            ${showOu ? marketBox('GOLES 2.5', [['O 2.5', p.over25], ['U 2.5', p.under25]], 'amber', winners?.ou || null) : ''}
+            ${showBtts ? marketBox('AMBOS ANOTAN', [['SÍ', p.bttsYes], ['NO', p.bttsNo]], 'emerald', winners?.btts || null) : ''}
           </div>
         </div>
       </article>`;
@@ -649,13 +732,24 @@
 
       let html = '';
       grouped.forEach((items, lg) => {
-        html += `<div class="league-header px-3 sm:px-4 py-1.5 flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-            <span class="text-[11px] font-extrabold tracking-wide text-slate-100 truncate">${esc(lg)}</span>
-            <span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 shrink-0">${items.length}</span>
+        const pendingCount = items.filter(x => !isSettled(x)).length;
+        const settledCount = items.length - pendingCount;
+
+        html += `<div class="league-banner px-3.5 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/60 shrink-0"></span>
+            <span class="text-xs sm:text-sm font-black tracking-wide text-white truncate">${esc(lg)}</span>
+            <span class="text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shrink-0">
+              ${items.length} ${items.length === 1 ? 'partido' : 'partidos'}
+            </span>
           </div>
-          <span class="text-[9.5px] font-mono text-slate-400 shrink-0">Ventana -1d · +∞ · Misma liga</span>
+          <div class="flex items-center gap-2 text-[10px] font-mono text-slate-400 shrink-0">
+            ${pendingCount ? `<span class="text-sky-300">${pendingCount} pend.</span>` : ''}
+            ${pendingCount && settledCount ? `<span>·</span>` : ''}
+            ${settledCount ? `<span class="text-emerald-300">${settledCount} res.</span>` : ''}
+            <span class="hidden sm:inline text-slate-600">|</span>
+            <span class="hidden sm:inline">Ventana -1d · +∞</span>
+          </div>
         </div>`;
         html += items.map(fixtureRow).join('');
       });
