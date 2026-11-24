@@ -2431,6 +2431,11 @@ GP W D L GF GA GD Pts PPG
                 localStorage.setItem('poisson_vip_box_transactions', JSON.stringify(boxTransactionsLog));
             } catch(e) {}
 
+            // Tras cada descarga de Supabase, vuelve a cruzar los marcadores A1
+            // ya liquidados con la bitácora recién fusionada para no dejar PENDING
+            // apuestas cuyo resultado ya existe en el historial local de Área 1.
+            if (typeof reconcileSettledA1Bets === 'function') reconcileSettledA1Bets();
+
             try {
                 populateBankrollDropdowns();
                 populateLeagueDropdowns();
@@ -7232,6 +7237,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             } catch (e) { console.warn('[ModelPredictions] No se pudo leer memoria local:', e); modelPredictionRecords = []; }
             renderModelPredictionLog();
             fitPoissonCalibrationFromModelPredictions();
+            // Reconciliación al iniciar: recupera apuestas A1 que ya tenían
+            // marcador final antes de que la bitácora terminara de cargar/sincronizar.
+            reconcileSettledA1Bets();
         }
 
         function persistModelPredictionRecords() {
@@ -7821,47 +7829,89 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
         }
 
-        // Liquida automáticamente las apuestas SENCILLAS registradas desde
-        // "Pendientes A1" cuando el partido recibe marcador final. Los parlays
-        // y las apuestas sin vínculo explícito con A1 permanecen intactos.
+        // Liquida automáticamente las apuestas sencillas de A1. Primero usa
+        // el vínculo explícito; como respaldo, acepta coincidencia exacta de liga
+        // y partido para recuperar metadatos que una sincronización antigua pudo
+        // no conservar. Nunca usa coincidencias parciales de nombres.
         function settleA1LinkedPendingBets(record, homeGoals, awayGoals) {
             if (!record || !Array.isArray(betLogData)) return 0;
-            const predictionId = String(record.id);
+            homeGoals = Number(homeGoals);
+            awayGoals = Number(awayGoals);
+            if (!Number.isInteger(homeGoals) || !Number.isInteger(awayGoals) || homeGoals < 0 || awayGoals < 0) return 0;
+            const predictionId = String(record.id ?? '');
+            const norm = value => normalizeBetDuplicateField(value || '');
+            const expectedMatch = norm(`${record.home || ''} vs ${record.away || ''}`);
+            const expectedLeague = norm(record.league || 'Sin competición');
             const totalGoals = homeGoals + awayGoals;
             const btts = homeGoals > 0 && awayGoals > 0;
             let updated = 0;
+            const allLists = [betLogData, Array.isArray(parallelBetLogData) ? parallelBetLogData : []];
+            const processed = new Set();
 
-            betLogData.forEach(bet => {
-                const origin = bet && bet.preselectorOrigin;
-                if (!bet || bet.status !== 'PENDING' || bet.isParlay ||
-                    !origin || origin.source !== 'area1_pending_geometric' ||
-                    String(origin.predictionId) !== predictionId) return;
+            allLists.forEach(list => list.forEach(bet => {
+                if (!bet || bet.status !== 'PENDING' || bet.isParlay) return;
+                const origin = bet.preselectorOrigin;
+                const explicitLink = !!(origin && origin.source === 'area1_pending_geometric' &&
+                    String(origin.predictionId ?? '') === predictionId);
+                const exactFallbackLink = !origin && norm(bet.league) === expectedLeague &&
+                    norm(bet.match) === expectedMatch;
+                if (!explicitLink && !exactFallbackLink) return;
+                const uniqueKey = String(bet.id ?? `${norm(bet.match)}|${norm(bet.selection)}|${bet.date || ''}`);
+                if (processed.has(uniqueKey)) return;
+                processed.add(uniqueKey);
 
-                const selection = normalizeBetDuplicateField(bet.selection || '');
+                const selection = norm(bet.selection || '');
                 let won = null;
-                if (selection === 'over 2.5' || selection === 'más de 2.5' || selection === 'mas de 2.5') {
+                if (['over 2.5', 'mas de 2.5', 'mas de 2.5 goles', 'over 2.5 goles'].includes(selection)) {
                     won = totalGoals >= 3;
-                } else if (selection === 'under 2.5' || selection === 'menos de 2.5') {
+                } else if (['under 2.5', 'menos de 2.5', 'menos de 2.5 goles', 'under 2.5 goles'].includes(selection)) {
                     won = totalGoals <= 2;
-                } else if (selection === 'ambos anotan si' || selection === 'btts sí' || selection === 'btts si') {
+                } else if (['ambos anotan si', 'btts si', 'ambos equipos anotan si'].includes(selection)) {
                     won = btts;
-                } else if (selection === 'ambos anotan no' || selection === 'btts no') {
+                } else if (['ambos anotan no', 'btts no', 'ambos equipos anotan no'].includes(selection)) {
                     won = !btts;
                 }
                 if (won === null) return;
 
-                bet.status = won ? 'WON' : 'LOST';
-                bet.a1SettledScore = `${homeGoals}-${awayGoals}`;
-                bet.a1SettledAt = record.settledAt || new Date().toISOString();
-                bet.a1PredictionId = predictionId;
+                const applyResult = target => {
+                    if (!target || String(target.id) !== String(bet.id)) return;
+                    if (target.status !== 'PENDING') return;
+                    target.status = won ? 'WON' : 'LOST';
+                    target.a1SettledScore = `${homeGoals}-${awayGoals}`;
+                    target.a1SettledAt = record.settledAt || new Date().toISOString();
+                    target.a1PredictionId = predictionId;
+                };
+                applyResult(bet);
+                // Mantiene sincronizada la bitácora paralela si contiene el mismo registro.
+                const mirror = parallelBetLogData.find(item => String(item.id) === String(bet.id));
+                if (mirror) applyResult(mirror);
                 updated++;
-            });
+            }));
 
             if (updated) {
                 saveBetLogToStorage();
+                if (typeof saveParallelBetLogToStorage === 'function') saveParallelBetLogToStorage();
                 if (typeof updateTrackerMetrics === 'function') updateTrackerMetrics();
+                if (typeof updateParallelTrackerMetrics === 'function') updateParallelTrackerMetrics();
             }
             return updated;
+        }
+
+        // Revisa también partidos que ya estaban liquidados en A1 antes de abrir
+        // la herramienta. Esto evita que una apuesta añadida/cargada después quede
+        // pendiente para siempre por el bloqueo de doble liquidación del marcador.
+        function reconcileSettledA1Bets() {
+            if (!Array.isArray(modelPredictionRecords) || !Array.isArray(betLogData)) return 0;
+            let total = 0;
+            modelPredictionRecords.forEach(record => {
+                if (!record || record.status !== 'SETTLED') return;
+                const home = Number(record.actualHomeGoals);
+                const away = Number(record.actualAwayGoals);
+                if (Number.isInteger(home) && Number.isInteger(away)) {
+                    total += settleA1LinkedPendingBets(record, home, away);
+                }
+            });
+            return total;
         }
 
         function applyModelPredictionScore(record, homeGoals, awayGoals, source='manual') {
