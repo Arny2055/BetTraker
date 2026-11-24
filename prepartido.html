@@ -232,6 +232,27 @@
     .match-row {
       min-width: 0;
     }
+    .day-group-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 14px;
+      background: linear-gradient(90deg, rgba(16,185,129,.13), rgba(14,21,38,.96));
+      border-top: 1px solid #1e3a43;
+      border-bottom: 1px solid #1e2b45;
+      color: #d1fae5;
+      font: 800 10px/1.3 'JetBrains Mono', monospace;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+    }
+    .day-group-heading small {
+      color: #94a3b8;
+      font: 600 9px/1.3 'Inter', sans-serif;
+      letter-spacing: 0;
+      text-transform: none;
+      text-align: right;
+    }
     .row-layout > *,
     .match-row > * {
       min-width: 0;
@@ -316,6 +337,15 @@
         min-height: 34px;
         padding: 7px 9px !important;
         font-size: 10px;
+      }
+      .day-group-heading {
+        padding: 9px 10px;
+        align-items: flex-start;
+        font-size: 9px;
+      }
+      .day-group-heading small {
+        max-width: 48%;
+        font-size: 8px;
       }
       .match-row {
         padding: 11px 10px !important;
@@ -498,7 +528,7 @@
         </h1>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 xl:min-w-[580px]">
+      <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 xl:min-w-[760px]">
         <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
           <div>
             <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">En ventana</div>
@@ -506,6 +536,26 @@
           </div>
           <div class="w-8 h-8 rounded-lg bg-slate-800/70 flex items-center justify-center text-slate-300 text-sm">
             <i class="fa-regular fa-futbol"></i>
+          </div>
+        </div>
+
+        <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
+          <div>
+            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Pendientes</div>
+            <div id="statOnlyPending" class="prob text-xl font-black text-sky-300 mt-0.5">0</div>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-300 text-sm">
+            <i class="fa-regular fa-hourglass-half"></i>
+          </div>
+        </div>
+
+        <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
+          <div>
+            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">Resueltos</div>
+            <div id="statOnlySettled" class="prob text-xl font-black text-emerald-300 mt-0.5">0</div>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300 text-sm">
+            <i class="fa-solid fa-check-double"></i>
           </div>
         </div>
 
@@ -540,6 +590,71 @@
         </div>
       </div>
     </div>
+
+    <!-- Rendimiento histórico por mercado: análisis descriptivo de resultados ya resueltos -->
+    <details id="historicalPerformance" class="quant-panel mb-4 overflow-hidden">
+      <summary class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer select-none list-none">
+        <span class="flex items-center gap-2 min-w-0">
+          <span class="w-8 h-8 rounded-lg bg-violet-500/10 border border-violet-500/25 flex items-center justify-center text-violet-300 shrink-0">
+            <i class="fa-solid fa-chart-line"></i>
+          </span>
+          <span class="min-w-0">
+            <span class="block text-sm font-black text-white">Rendimiento histórico por mercado</span>
+            <span class="block text-[10px] text-slate-400 mt-0.5">Evaluación de probabilidades frente a marcadores reales</span>
+          </span>
+        </span>
+        <span class="flex items-center gap-2 shrink-0">
+          <span id="performanceSample" class="text-[10px] font-mono text-slate-400">Muestras por mercado</span>
+          <i class="fa-solid fa-chevron-down text-slate-400 text-xs"></i>
+        </span>
+      </summary>
+      <div class="px-3 pb-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <article class="quant-panel p-3 border border-sky-500/20">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-extrabold tracking-wider text-sky-300 uppercase">1X2</span>
+              <i class="fa-solid fa-house-flag text-sky-400"></i>
+            </div>
+            <div id="perf1x2Accuracy" class="prob text-2xl font-black text-white mt-2">—</div>
+            <div class="text-[10px] text-slate-400">Acierto de la opción más probable</div>
+            <div class="flex justify-between gap-2 mt-3 pt-2 border-t border-slate-700/60 text-[10px]">
+              <span class="text-slate-400">Muestra: <b id="perf1x2N" class="text-slate-200">0</b></span>
+              <span class="text-slate-400">Brier: <b id="perf1x2Brier" class="text-slate-200">—</b></span>
+            </div>
+          </article>
+          <article class="quant-panel p-3 border border-amber-500/20">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-extrabold tracking-wider text-amber-300 uppercase">Over / Under 2.5</span>
+              <i class="fa-solid fa-bullseye text-amber-400"></i>
+            </div>
+            <div id="perfOuAccuracy" class="prob text-2xl font-black text-white mt-2">—</div>
+            <div class="text-[10px] text-slate-400">Acierto de la opción más probable</div>
+            <div class="flex justify-between gap-2 mt-3 pt-2 border-t border-slate-700/60 text-[10px]">
+              <span class="text-slate-400">Muestra: <b id="perfOuN" class="text-slate-200">0</b></span>
+              <span class="text-slate-400">Brier: <b id="perfOuBrier" class="text-slate-200">—</b></span>
+            </div>
+          </article>
+          <article class="quant-panel p-3 border border-emerald-500/20">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[10px] font-extrabold tracking-wider text-emerald-300 uppercase">BTTS</span>
+              <i class="fa-solid fa-arrows-left-right text-emerald-400"></i>
+            </div>
+            <div id="perfBttsAccuracy" class="prob text-2xl font-black text-white mt-2">—</div>
+            <div class="text-[10px] text-slate-400">Acierto de la opción más probable</div>
+            <div class="flex justify-between gap-2 mt-3 pt-2 border-t border-slate-700/60 text-[10px]">
+              <span class="text-slate-400">Muestra: <b id="perfBttsN" class="text-slate-200">0</b></span>
+              <span class="text-slate-400">Brier: <b id="perfBttsBrier" class="text-slate-200">—</b></span>
+            </div>
+          </article>
+        </div>
+        <p class="text-[10px] leading-relaxed text-slate-400 mt-3 px-1">
+          Solo incluye partidos con marcador real y probabilidades completas del mercado correspondiente.
+          Acierto = porcentaje de veces que la opción con mayor probabilidad coincidió con el resultado.
+          Brier = error probabilístico medio normalizado (0 es mejor; cuanto menor, mejor).
+          Las muestras de cada mercado pueden ser distintas. Es una evaluación histórica, no una garantía predictiva.
+        </p>
+      </div>
+    </details>
 
     <!-- Barra de Filtros y Foco de Mercado -->
     <section class="quant-panel p-3.5 mb-4">
@@ -679,6 +794,14 @@
       return new Date(y, m - 1, day);
     }
 
+    function formatDayHeading(dayKey) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) return 'Fecha por definir';
+      const [y, m, d] = dayKey.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString('es-MX', {
+        weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+      });
+    }
+
     function inOperationalWindow(r, today, maxDay) {
       if (!r || !r.home || !r.away) return false;
       const dayObj = parseFixtureDay(r);
@@ -703,6 +826,79 @@
       setMarketFocus('all');
     }
 
+    function probabilityPair(values) {
+      const nums = values.map(v => Number(v));
+      return nums.every((v, i) => values[i] !== null && values[i] !== undefined &&
+        Number.isFinite(v) && v >= 0 && v <= 1) ? nums : null;
+    }
+
+    function marketPerformance(records, market) {
+      let evaluated = 0, hits = 0, brierTotal = 0;
+
+      records.forEach(r => {
+        if (!isSettled(r) || !validScore(r)) return;
+        const p = r.probabilities || {};
+        let probs = null, actual = null;
+
+        if (market === '1x2') {
+          probs = probabilityPair([p.homeWin, p.draw, p.awayWin]);
+          if (!probs) return;
+          const hg = Number(r.actualHomeGoals), ag = Number(r.actualAwayGoals);
+          actual = hg > ag ? 0 : hg === ag ? 1 : 2;
+          const predicted = probs.indexOf(Math.max(...probs));
+          const target = [0, 1, 2].map(i => i === actual ? 1 : 0);
+          brierTotal += probs.reduce((sum, value, i) => sum + Math.pow(value - target[i], 2), 0) / 2;
+          if (predicted === actual) hits++;
+        } else if (market === 'ou') {
+          probs = probabilityPair([p.over25, p.under25]);
+          if (!probs) return;
+          const total = Number(r.actualHomeGoals) + Number(r.actualAwayGoals);
+          actual = total >= 3 ? 0 : 1;
+          const predicted = probs[0] >= probs[1] ? 0 : 1;
+          const target = [actual === 0 ? 1 : 0, actual === 1 ? 1 : 0];
+          brierTotal += probs.reduce((sum, value, i) => sum + Math.pow(value - target[i], 2), 0) / 2;
+          if (predicted === actual) hits++;
+        } else if (market === 'btts') {
+          probs = probabilityPair([p.bttsYes, p.bttsNo]);
+          if (!probs) return;
+          const bothScored = Number(r.actualHomeGoals) > 0 && Number(r.actualAwayGoals) > 0;
+          actual = bothScored ? 0 : 1;
+          const predicted = probs[0] >= probs[1] ? 0 : 1;
+          const target = [actual === 0 ? 1 : 0, actual === 1 ? 1 : 0];
+          brierTotal += probs.reduce((sum, value, i) => sum + Math.pow(value - target[i], 2), 0) / 2;
+          if (predicted === actual) hits++;
+        }
+
+        evaluated++;
+      });
+
+      return {
+        n: evaluated,
+        accuracy: evaluated ? hits / evaluated : null,
+        brier: evaluated ? brierTotal / evaluated : null
+      };
+    }
+
+    function updateHistoricalPerformance() {
+      const results = {
+        '1x2': marketPerformance(allRecords, '1x2'),
+        ou: marketPerformance(allRecords, 'ou'),
+        btts: marketPerformance(allRecords, 'btts')
+      };
+      document.getElementById('performanceSample').textContent = 'Muestras por mercado';
+
+      const paint = (prefix, result) => {
+        document.getElementById(prefix + 'Accuracy').textContent =
+          result.accuracy === null ? '—' : (result.accuracy * 100).toFixed(1) + '%';
+        document.getElementById(prefix + 'N').textContent = result.n;
+        document.getElementById(prefix + 'Brier').textContent =
+          result.brier === null ? '—' : result.brier.toFixed(3);
+      };
+      paint('perf1x2', results['1x2']);
+      paint('perfOu', results.ou);
+      paint('perfBtts', results.btts);
+    }
+
     function readRecords() {
       try {
         let raw = localStorage.getItem(STORAGE_KEY), data = raw ? JSON.parse(raw) : [];
@@ -720,8 +916,11 @@
       windowMatches.sort((a, b) => timestamp(a) - timestamp(b) || String(a.league || '').localeCompare(String(b.league || '')));
 
       document.getElementById('statPending').textContent = windowMatches.length;
+      document.getElementById('statOnlyPending').textContent = windowMatches.filter(r => !isSettled(r)).length;
+      document.getElementById('statOnlySettled').textContent = windowMatches.filter(r => isSettled(r)).length;
       document.getElementById('statLeagues').textContent = new Set(windowMatches.map(r => r.league || 'Sin liga')).size;
       document.getElementById('statHistory').textContent = allRecords.filter(r => isSettled(r) && validScore(r)).length;
+      updateHistoricalPerformance();
       document.getElementById('statUpdated').textContent = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
 
       const syncEl = document.getElementById('syncStatus');
@@ -877,7 +1076,29 @@
         })
         .sort((a, b) => timestamp(a) - timestamp(b));
 
-      document.getElementById('matchList').innerHTML = rows.map(fixtureRow).join('');
+      let groupedHtml = '';
+      let activeDay = null;
+      let dayRows = [];
+      const flushDay = () => {
+        if (!dayRows.length) return;
+        const pendingCount = dayRows.filter(r => !isSettled(r)).length;
+        const settledCount = dayRows.length - pendingCount;
+        groupedHtml += `<div class="day-group-heading">
+          <span><i class="fa-regular fa-calendar mr-1.5 text-emerald-400"></i>${esc(formatDayHeading(activeDay))}</span>
+          <small>${dayRows.length} partidos · ${pendingCount} pendientes · ${settledCount} resueltos</small>
+        </div>`;
+        groupedHtml += dayRows.map(fixtureRow).join('');
+        dayRows = [];
+      };
+      rows.forEach(r => {
+        const key = dateKey(r) || 'sin-fecha';
+        if (activeDay !== null && key !== activeDay) flushDay();
+        activeDay = key;
+        dayRows.push(r);
+      });
+      flushDay();
+
+      document.getElementById('matchList').innerHTML = groupedHtml;
       document.getElementById('emptyState').classList.toggle('hidden', rows.length > 0);
     }
 
