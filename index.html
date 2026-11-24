@@ -1666,6 +1666,28 @@
             <div class="p-4 space-y-3 overflow-y-auto flex-1">
                 <input type="hidden" id="editBetIndex" value="-1">
                 <input type="hidden" id="logIsParlay" value="false">
+                <!-- Importación directa desde PREPARTIDO: solo lectura; no modifica su memoria original. -->
+                <section id="prepartidoImportPanel" class="bg-sky-950/25 border border-sky-500/35 rounded-xl p-3 space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0"><div class="text-[10px] font-black uppercase tracking-wide text-sky-300"><i class="fa-solid fa-arrow-right-to-bracket mr-1"></i> Cargar desde PREPARTIDO</div><p class="text-[9px] text-slate-400 mt-0.5">Recupera partidos y probabilidades guardados en Área 1.</p></div>
+                        <button type="button" onclick="refreshPrepartidoImportOptions()" class="shrink-0 text-[9px] font-bold text-sky-300 border border-sky-500/30 bg-sky-500/10 rounded-lg px-2 py-1"><i class="fa-solid fa-rotate mr-1"></i>Actualizar</button>
+                    </div>
+                    <div><label for="prepartidoFixtureSelect" class="block text-[9px] font-bold text-slate-400 mb-1">Partido guardado</label><select id="prepartidoFixtureSelect" onchange="updatePrepartidoImportMarkets()" class="w-full bg-slate-950 border border-sky-500/30 rounded-lg px-2.5 py-2 text-[10px] text-white font-bold"><option value="">Cargando partidos…</option></select></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label for="prepartidoMarketSelect" class="block text-[9px] font-bold text-slate-400 mb-1">Mercado</label><select id="prepartidoMarketSelect" onchange="updatePrepartidoImportOutcomes()" class="w-full bg-slate-950 border border-sky-500/30 rounded-lg px-2 py-2 text-[10px] text-white font-bold"><option value="1x2">1X2</option><option value="ou">Goles 2.5</option><option value="btts">Ambos anotan</option></select></div>
+                        <div><label for="prepartidoOutcomeSelect" class="block text-[9px] font-bold text-slate-400 mb-1">Selección / Probabilidad</label><select id="prepartidoOutcomeSelect" onchange="updatePrepartidoImportPreview()" class="w-full bg-slate-950 border border-sky-500/30 rounded-lg px-2 py-2 text-[10px] text-white font-bold"></select></div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span id="prepartidoImportPreview" class="text-[10px] font-mono font-bold text-emerald-300">Probabilidad: —</span>
+                        <span id="prepartidoParlayCount" class="text-[9px] text-indigo-300 font-bold">0 selecciones para parlay</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="loadPrepartidoSelectionToBet()" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black text-[10px] px-2 py-2 rounded-lg"><i class="fa-solid fa-file-import mr-1"></i>Cargar sencilla</button>
+                        <button type="button" onclick="addPrepartidoSelectionToParlay()" class="bg-indigo-500 hover:bg-indigo-400 text-white font-black text-[10px] px-2 py-2 rounded-lg"><i class="fa-solid fa-layer-group mr-1"></i>Añadir al parlay</button>
+                    </div>
+                    <button type="button" id="openPrepartidoParlayButton" onclick="openPrepartidoImportedParlay()" class="hidden w-full bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-400/40 text-indigo-200 font-black text-[10px] px-2 py-2 rounded-lg"><i class="fa-solid fa-clipboard-check mr-1"></i>Abrir registro del parlay cargado</button>
+                    <p id="prepartidoImportMessage" class="text-[9px] text-slate-500 leading-relaxed">La cuota de casa no viene en PREPARTIDO: deberás introducir la cuota real antes de guardar. La importación no registra la apuesta automáticamente.</p>
+                </section>
                 <div id="selectionHistoryWidget" class="hidden bg-emerald-950/30 border border-emerald-500/40 p-2.5 rounded-xl space-y-1.5 text-xs">
                     <div class="flex items-center justify-between"><div class="flex items-center gap-2"><i class="fa-solid fa-chart-line text-emerald-400"></i><span class="text-slate-300 text-[10px]">Rentabilidad en <b id="widgetLeagueNameText">Liga</b>:</span></div><span id="selectionHistoricalProfitVal" class="font-black text-emerald-400 text-xs">$0.00</span></div>
                     <div class="flex items-center justify-between pt-1 border-t border-emerald-500/20 text-[11px]"><span class="text-slate-300 font-bold"><i class="fa-solid fa-bullseye text-gold-400 mr-1"></i> Rango EV+:</span><span id="widgetBestEvRangeVal" class="font-black text-gold-400">...</span></div>
@@ -3969,6 +3991,220 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             );
         }
 
+        // =========================================================
+        // PREPARTIDO -> REGISTRO DE APUESTAS
+        // Lee la misma memoria local que utiliza el módulo PREPARTIDO.
+        // Es una importación de solo lectura: no borra ni altera predicciones.
+        // =========================================================
+        const PREPARTIDO_IMPORT_STORAGE_KEY = 'betags_vip_pro_model_predictions_v1';
+        let prepartidoImportRecords = [];
+
+        function getPrepartidoImportRecord() {
+            const select = document.getElementById('prepartidoFixtureSelect');
+            if (!select || select.value === '') return null;
+            const index = Number(select.value);
+            return Number.isInteger(index) && index >= 0 ? prepartidoImportRecords[index] || null : null;
+        }
+
+        function getPrepartidoImportProbabilities(record) {
+            const p = record && record.probabilities ? record.probabilities : {};
+            return p.original && typeof p.original === 'object' ? p.original : p;
+        }
+
+        function getPrepartidoMarketDefinition(marketId) {
+            const definitions = {
+                '1x2': { market: 'Resultado 1X2', outcomes: [
+                    { key: 'homeWin', label: '1 · Gana local' },
+                    { key: 'draw', label: 'X · Empate' },
+                    { key: 'awayWin', label: '2 · Gana visitante' }
+                ]},
+                'ou': { market: 'Goles 2.5', outcomes: [
+                    { key: 'over25', label: 'Over 2.5 goles' },
+                    { key: 'under25', label: 'Under 2.5 goles' }
+                ]},
+                'btts': { market: 'Ambos anotan (BTTS)', outcomes: [
+                    { key: 'bttsYes', label: 'Sí · Ambos anotan' },
+                    { key: 'bttsNo', label: 'No · Ambos anotan' }
+                ]}
+            };
+            return definitions[marketId] || definitions['1x2'];
+        }
+
+        function refreshPrepartidoImportOptions() {
+            const select = document.getElementById('prepartidoFixtureSelect');
+            if (!select) return;
+            const previous = select.value;
+            try {
+                const raw = localStorage.getItem(PREPARTIDO_IMPORT_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                prepartidoImportRecords = Array.isArray(parsed) ? parsed.filter(r => r && r.home && r.away) : [];
+            } catch (error) {
+                console.warn('[PREPARTIDO Import] No se pudo leer la memoria:', error);
+                prepartidoImportRecords = [];
+            }
+            // Mostrar todos los registros guardados, no solo los de la ventana de 0 a +4 días.
+            prepartidoImportRecords.sort((a, b) => {
+                const da = String(a.matchDate || a.analyzedAt || '');
+                const db = String(b.matchDate || b.analyzedAt || '');
+                return db.localeCompare(da);
+            });
+            if (!prepartidoImportRecords.length) {
+                select.innerHTML = '<option value="">No hay partidos guardados en PREPARTIDO</option>';
+                updatePrepartidoImportOutcomes();
+                const msg = document.getElementById('prepartidoImportMessage');
+                if (msg) msg.textContent = 'No se encontraron registros en la memoria compartida. Abre PREPARTIDO y verifica que ambos módulos estén en el mismo origen/navegador.';
+                return;
+            }
+            select.innerHTML = '<option value="">Selecciona un partido…</option>' + prepartidoImportRecords.map((r, i) => {
+                const date = r.matchDate || 'Sin fecha';
+                const league = r.league || 'Sin liga';
+                const hasRealScore = r.actualHomeGoals !== null && r.actualHomeGoals !== undefined && r.actualAwayGoals !== null && r.actualAwayGoals !== undefined && Number.isFinite(Number(r.actualHomeGoals)) && Number.isFinite(Number(r.actualAwayGoals));
+                const settled = String(r.status || '').toUpperCase() === 'SETTLED' || hasRealScore;
+                const state = settled ? ' · RESUELTO' : ' · PENDIENTE';
+                return `<option value="${i}">${esc(date)} · ${esc(league)} · ${esc(r.home)} vs ${esc(r.away)}${state}</option>`;
+            }).join('');
+            if (previous && Number(previous) < prepartidoImportRecords.length) select.value = previous;
+            if (!select.value) select.value = '0';
+            const msg = document.getElementById('prepartidoImportMessage');
+            if (msg) msg.textContent = `${prepartidoImportRecords.length} partidos recuperados de PREPARTIDO. La información original permanece intacta; la cuota de casa se captura manualmente.`;
+            updatePrepartidoImportMarkets();
+        }
+
+        function updatePrepartidoImportMarkets() {
+            const record = getPrepartidoImportRecord();
+            const marketSelect = document.getElementById('prepartidoMarketSelect');
+            if (!record || !marketSelect) { updatePrepartidoImportOutcomes(); return; }
+            const p = getPrepartidoImportProbabilities(record);
+            const available = [
+                ['1x2', ['homeWin', 'draw', 'awayWin']],
+                ['ou', ['over25', 'under25']],
+                ['btts', ['bttsYes', 'bttsNo']]
+            ].filter(([, keys]) => keys.some(key => p[key] !== undefined && p[key] !== null && Number.isFinite(Number(p[key]))));
+            const current = marketSelect.value;
+            marketSelect.innerHTML = available.map(([id]) => `<option value="${id}">${getPrepartidoMarketDefinition(id).market}</option>`).join('');
+            if (!available.length) marketSelect.innerHTML = '<option value="1x2">Sin probabilidades disponibles</option>';
+            else if (available.some(([id]) => id === current)) marketSelect.value = current;
+            updatePrepartidoImportOutcomes();
+        }
+
+        function updatePrepartidoImportOutcomes() {
+            const record = getPrepartidoImportRecord();
+            const marketId = document.getElementById('prepartidoMarketSelect')?.value || '1x2';
+            const outcomeSelect = document.getElementById('prepartidoOutcomeSelect');
+            if (!outcomeSelect) return;
+            if (!record) {
+                outcomeSelect.innerHTML = '<option value="">Selecciona un partido primero</option>';
+                updatePrepartidoImportPreview();
+                return;
+            }
+            const p = getPrepartidoImportProbabilities(record);
+            const definition = getPrepartidoMarketDefinition(marketId);
+            outcomeSelect.innerHTML = definition.outcomes.map(o => {
+                const value = Number(p[o.key]);
+                const valid = p[o.key] !== undefined && p[o.key] !== null && Number.isFinite(value) && value > 0 && value <= 1;
+                return `<option value="${o.key}" ${valid ? '' : 'disabled'}>${o.label} · ${valid ? (value * 100).toFixed(1) + '%' : 'N/D'}</option>`;
+            }).join('');
+            const firstValid = definition.outcomes.find(o => p[o.key] !== undefined && p[o.key] !== null && Number.isFinite(Number(p[o.key])) && Number(p[o.key]) > 0 && Number(p[o.key]) <= 1);
+            if (firstValid) outcomeSelect.value = firstValid.key;
+            updatePrepartidoImportPreview();
+        }
+
+        function getSelectedPrepartidoPick() {
+            const record = getPrepartidoImportRecord();
+            if (!record) return null;
+            const marketId = document.getElementById('prepartidoMarketSelect')?.value || '1x2';
+            const outcomeKey = document.getElementById('prepartidoOutcomeSelect')?.value || '';
+            const definition = getPrepartidoMarketDefinition(marketId);
+            const outcome = definition.outcomes.find(o => o.key === outcomeKey);
+            const probabilities = getPrepartidoImportProbabilities(record);
+            const prob = Number(probabilities[outcomeKey]);
+            if (!outcome || !Number.isFinite(prob) || prob <= 0 || prob > 1) return null;
+            return {
+                record, marketId, outcomeKey, market: definition.market,
+                selection: outcome.label, prob,
+                fairOdds: 1 / prob,
+                match: `${record.home} vs ${record.away}`,
+                league: record.league || 'Sin liga',
+                date: /^\d{4}-\d{2}-\d{2}$/.test(String(record.matchDate || '')) ? record.matchDate : new Date().toISOString().slice(0, 10)
+            };
+        }
+
+        function updatePrepartidoImportPreview() {
+            const preview = document.getElementById('prepartidoImportPreview');
+            if (!preview) return;
+            const pick = getSelectedPrepartidoPick();
+            preview.textContent = pick ? `Probabilidad: ${(pick.prob * 100).toFixed(1)}% · Cuota justa: ${pick.fairOdds.toFixed(2)}` : 'Probabilidad: no disponible para esta selección';
+        }
+
+        function loadPrepartidoSelectionToBet() {
+            const pick = getSelectedPrepartidoPick();
+            if (!pick) { showToast('Selecciona un partido, mercado y resultado con probabilidad válida.'); return; }
+            betModalIsEditing = false;
+            pendingModelPreselectorOrigin = {
+                source: 'prepartido_area1', sourceLabel: 'PREPARTIDO · Área 1',
+                predictionId: pick.record.id || null, marketId: pick.marketId,
+                outcomeKey: pick.outcomeKey, originalProbability: Number((pick.prob * 100).toFixed(4)),
+                importedAt: new Date().toISOString()
+            };
+            document.getElementById('editBetIndex').value = '-1';
+            document.getElementById('logIsParlay').value = 'false';
+            document.getElementById('logBetModalTitle').innerText = 'Registrar Apuesta · PREPARTIDO';
+            document.getElementById('logDate').value = pick.date;
+            document.getElementById('logLeague').value = pick.league;
+            document.getElementById('logMatch').value = pick.match;
+            document.getElementById('logMarket').value = pick.market;
+            document.getElementById('logSelection').value = pick.selection;
+            document.getElementById('logProb').value = (pick.prob * 100).toFixed(1);
+            document.getElementById('logFairOdds').value = pick.fairOdds.toFixed(2);
+            // PREPARTIDO no almacena cuotas de casa: nunca inventar una cuota.
+            document.getElementById('logBookieOdds').value = '';
+            document.getElementById('logClosingOdds').value = '';
+            document.getElementById('logStatus').value = 'PENDING';
+            updateBetModalConfidence();
+            checkSelectionHistoricalProfit();
+            calculateClvDisplay();
+            calculateLogEv();
+            scheduleBetModalInlineMc();
+            showToast('Selección de PREPARTIDO cargada. Revisa cuota y stake; todavía no se ha guardado.');
+        }
+
+        function addPrepartidoSelectionToParlay() {
+            const pick = getSelectedPrepartidoPick();
+            if (!pick) { showToast('Selecciona un resultado con probabilidad válida para añadirlo al parlay.'); return; }
+            const duplicate = parlaySelections.some(item => item.match === pick.match && item.market === pick.market && item.selection === pick.selection);
+            if (duplicate) { showToast('Esa selección de PREPARTIDO ya está añadida al parlay.'); return; }
+            parlaySelections.push({
+                league: pick.league, match: pick.match, market: pick.market,
+                selection: pick.selection, prob: pick.prob, fairOdds: pick.fairOdds,
+                source: 'prepartido_area1', predictionId: pick.record.id || null,
+                predictionDate: pick.record.matchDate || ''
+            });
+            pendingModelPreselectorOrigin = {
+                source: 'prepartido_area1_parlay', sourceLabel: 'PREPARTIDO · Área 1',
+                selections: parlaySelections.filter(item => item.source === 'prepartido_area1').map(item => ({
+                    predictionId: item.predictionId || null, match: item.match, market: item.market,
+                    selection: item.selection, probability: Number((item.prob * 100).toFixed(4))
+                })), importedAt: new Date().toISOString()
+            };
+            const count = document.getElementById('prepartidoParlayCount');
+            if (count) count.textContent = `${parlaySelections.length} selecciones para parlay`;
+            const openButton = document.getElementById('openPrepartidoParlayButton');
+            if (openButton) openButton.classList.remove('hidden');
+            showToast(`Selección añadida al parlay (${parlaySelections.length}). Puedes añadir más partidos o abrir el registro.`);
+        }
+
+        function openPrepartidoImportedParlay() {
+            if (!parlaySelections.length) { showToast('Añade al menos una selección de PREPARTIDO.'); return; }
+            if (!pendingModelPreselectorOrigin || pendingModelPreselectorOrigin.source !== 'prepartido_area1_parlay') {
+                pendingModelPreselectorOrigin = {
+                    source: 'prepartido_area1_parlay', sourceLabel: 'PREPARTIDO · Área 1',
+                    selections: parlaySelections.map(item => ({ match: item.match, market: item.market, selection: item.selection, probability: Number((item.prob * 100).toFixed(4)) })),
+                    importedAt: new Date().toISOString()
+                };
+            }
+            openLogParlayModal();
+        }
+
         function openLogBetModal(market = '', selection = '', prob = 0) {
             pendingModelPreselectorOrigin = null;
             betModalIsEditing = false;
@@ -4004,6 +4240,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             calculateLogEv();
             // Auto-disparar MC al abrir
             scheduleBetModalInlineMc();
+            refreshPrepartidoImportOptions();
+            const parlayCount = document.getElementById('prepartidoParlayCount');
+            if (parlayCount) parlayCount.textContent = `${parlaySelections.length} selecciones para parlay`;
             toggleLogBetModal(true);
         }
 
@@ -4051,6 +4290,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
 
             calculateLogEv();
             scheduleBetModalInlineMc();
+            refreshPrepartidoImportOptions();
+            const parlayCount = document.getElementById('prepartidoParlayCount');
+            if (parlayCount) parlayCount.textContent = `${parlaySelections.length} selecciones para parlay`;
             toggleLogBetModal(true);
         }
 
