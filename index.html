@@ -425,6 +425,9 @@
 
         <nav id="quickNav" class="sticky top-1 z-30 glass-card rounded-2xl p-1.5 border border-emerald-500/30 shadow-xl">
             <div class="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                <button onclick="scrollToSection('sec-a1-pending-markets')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-amber-200 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                    <span class="w-5 h-5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[9px] font-black flex items-center justify-center">A1</span> Pendientes A1
+                </button>
                 <button onclick="scrollToSection('sec-setup')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">1</span> Setup
                 </button>
@@ -452,6 +455,33 @@
         </nav>
 
         <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-3 py-2 flex items-center gap-2" style="grid-column:1 / -1;"><i class="fa-solid fa-bullseye text-emerald-300"></i><div><div class="text-[10px] font-black text-emerald-200 uppercase tracking-wider">Área 2 · Análisis para apuestas reales</div><div class="text-[9px] text-slate-400">Configuración, partido, mercados y herramientas de selección. La autocalibración usa exclusivamente apuestas reales liquidadas.</div></div></div>
+
+        <!-- ÁREA 1 → BITÁCORA: módulo independiente; no modifica ni liquida pronósticos -->
+        <section id="sec-a1-pending-markets" class="space-y-3.5 scroll-mt-28">
+            <div class="flex items-center gap-2 px-1">
+                <span class="text-[9px] font-black bg-amber-500/15 text-amber-200 border border-amber-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">Área 1 · Registro de pendientes</span>
+                <div class="flex-1 h-px bg-gradient-to-r from-amber-500/30 to-transparent"></div>
+            </div>
+            <section class="glass-card rounded-2xl p-3.5 space-y-3 border border-amber-500/30 bg-gradient-to-br from-slate-900 via-amber-950/10 to-slate-900">
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <h2 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-list-check text-amber-300"></i> Partidos pendientes de A1</h2>
+                        <p class="text-[9px] text-slate-400 mt-1">Agrupados por liga. Los mercados se recalculan con los GF/GA guardados y Poisson de media geométrica. Registra cada selección como sencilla o añádela al constructor de Parlay.</p>
+                    </div>
+                    <button type="button" onclick="renderA1PendingMarkets()" class="shrink-0 text-[9px] font-black bg-amber-500/10 border border-amber-400/30 text-amber-200 rounded-lg px-2.5 py-2"><i class="fa-solid fa-rotate mr-1"></i>ACTUALIZAR</button>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">PARTIDOS PENDIENTES</span><b id="a1PendingMarketsCount" class="block text-lg text-amber-200 tabular-nums">0</b></div>
+                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">LIGAS</span><b id="a1PendingMarketsLeagues" class="block text-lg text-cyan-200 tabular-nums">0</b></div>
+                </div>
+                <p id="a1PendingMarketsNotice" class="text-[9px] text-slate-400 rounded-lg bg-slate-950/50 border border-slate-800 p-2">Cargando partidos pendientes de Área 1…</p>
+                <div id="a1PendingMarketsLeagueList" class="space-y-2">
+                    <p class="text-[9px] text-slate-500 text-center py-3">Aún no hay partidos para mostrar.</p>
+                </div>
+                <p class="text-[8px] leading-relaxed text-slate-500">Las probabilidades mostradas son las del modelo Poisson geométrico original calculado desde inputs de Área 1. Este apartado no modifica la memoria de pronósticos, no marca partidos como resueltos y no inventa cuotas: la cuota real se captura en el formulario de la apuesta.</p>
+            </section>
+        </section>
+
         <section id="sec-setup" class="space-y-3.5 scroll-mt-28">
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">1 · Configuración</span>
@@ -2402,6 +2432,7 @@ GP W D L GF GA GD Pts PPG
                     if (modelPredictionRecords.length) await syncModelPredictionsToCloud(modelPredictionRecords);
                     await syncModelPredictionsFromCloud();
                     renderModelPreselector();
+                    renderA1PendingMarkets();
                 } else {
                     modelPredictionRecords = [];
                     await syncModelPredictionsFromCloud();
@@ -2655,6 +2686,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             loadBetLogFromStorage();
             loadParallelBetLogFromStorage();
             loadModelPredictionRecords();
+            renderA1PendingMarkets();
             updateModelPredictionCalibrationModeUI();
             updateModelPredictionCalibrationStatus();
             populateLeagueDropdowns();
@@ -7172,6 +7204,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             localStorage.setItem(MODEL_PREDICTIONS_STORAGE_KEY, JSON.stringify(modelPredictionRecords));
             renderModelPredictionLog();
             fitPoissonCalibrationFromModelPredictions();
+            renderA1PendingMarkets();
         }
 
         // Eliminación segura de pronósticos de Área 1.
@@ -7932,6 +7965,177 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             calculateLogEv();
             scheduleBetModalInlineMc();
             showToast(`Sugerencia cargada con Platt de Área 1 (${(calibratedProbability * 100).toFixed(1)}%). Revisa cuota y stake antes de guardar.`);
+        }
+
+
+        // ============================================================
+        // ÁREA 1 → BITÁCORA: mercados OU 2.5 y BTTS desde Poisson geométrico.
+        // Lee exclusivamente registros pendientes; no altera sus datos ni estados.
+        // ============================================================
+        function calculateA1PendingGeometricMarkets(record) {
+            const input = record && record.inputs ? record.inputs : {};
+            const lambdaHome = Math.sqrt(Math.max(0, Number(input.homeGF) * Number(input.awayGA))) || 0;
+            const lambdaAway = Math.sqrt(Math.max(0, Number(input.awayGF) * Number(input.homeGA))) || 0;
+            const maxGoals = Math.max(12, Number(POISSON_MAX_GOALS) || 10);
+            const poisson = (k, lambda) => {
+                if (lambda <= 0) return k === 0 ? 1 : 0;
+                let value = Math.exp(-lambda);
+                for (let n = 1; n <= k; n++) value *= lambda / n;
+                return value;
+            };
+            const home = Array.from({length:maxGoals + 1}, (_,k) => poisson(k,lambdaHome));
+            const away = Array.from({length:maxGoals + 1}, (_,k) => poisson(k,lambdaAway));
+            let total = 0, over = 0, bttsYes = 0;
+            for (let h = 0; h <= maxGoals; h++) {
+                for (let a = 0; a <= maxGoals; a++) {
+                    const p = home[h] * away[a];
+                    total += p;
+                    if (h + a >= 3) over += p;
+                    if (h > 0 && a > 0) bttsYes += p;
+                }
+            }
+            if (!(total > 0)) return null;
+            const pOver = Math.max(0, Math.min(1, over / total));
+            const pBtts = Math.max(0, Math.min(1, bttsYes / total));
+            return {
+                lambdaHome, lambdaAway,
+                over25:pOver, under25:1-pOver,
+                bttsYes:pBtts, bttsNo:1-pBtts
+            };
+        }
+
+        function registerA1PendingMarketBet(recordId, marketKey, asParlay) {
+            const record = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
+                .find(item => String(item.id) === String(recordId));
+            if (!record || record.status === 'SETTLED') {
+                showToast('El partido ya no está pendiente o no está disponible. Actualiza el apartado.');
+                renderA1PendingMarkets();
+                return;
+            }
+            const markets = calculateA1PendingGeometricMarkets(record);
+            if (!markets) { showToast('No se pudieron calcular los mercados: revisa los GF/GA guardados en A1.'); return; }
+            const definitions = {
+                over25:{market:'Over / Under Goles',selection:'Over 2.5',prob:markets.over25,marketType:'ou25',side:'over'},
+                under25:{market:'Over / Under Goles',selection:'Under 2.5',prob:markets.under25,marketType:'ou25',side:'under'},
+                bttsYes:{market:'Ambos Anotan',selection:'Ambos Anotan Si',prob:markets.bttsYes,marketType:'btts',side:'yes'},
+                bttsNo:{market:'Ambos Anotan',selection:'Ambos Anotan No',prob:markets.bttsNo,marketType:'btts',side:'no'}
+            };
+            const pick = definitions[marketKey];
+            if (!pick || !Number.isFinite(pick.prob) || pick.prob <= 0 || pick.prob >= 1) {
+                showToast('La probabilidad de esta selección no es válida.');
+                return;
+            }
+            const league = String(record.league || 'Sin competición');
+            const match = `${record.home || 'Local'} vs ${record.away || 'Visitante'}`;
+            const fairOdds = 1 / pick.prob;
+            if (asParlay) {
+                const exists = parlaySelections.some(item => item.match === match && item.market === pick.market);
+                if (exists) { showToast(`Ya existe una selección de ${pick.market} para este partido en el Parlay.`); return; }
+                parlaySelections.push({
+                    league, match, market:pick.market, selection:pick.selection,
+                    prob:pick.prob, fairOdds, marketType:pick.marketType, side:pick.side,
+                    source:'area1_pending', predictionId:record.id
+                });
+                renderParlayBuilder();
+                showToast(`${pick.selection} añadido al constructor de Parlay. Revisa y guarda el Parlay cuando esté listo.`);
+                return;
+            }
+
+            // Reutiliza el formulario y el flujo normal de la bitácora de apuestas reales.
+            openLogBetModal(pick.market, pick.selection, pick.prob);
+            document.getElementById('logLeague').value = league;
+            document.getElementById('logMatch').value = match;
+            document.getElementById('logMarket').value = pick.market;
+            document.getElementById('logSelection').value = pick.selection;
+            document.getElementById('logProb').value = (pick.prob * 100).toFixed(1);
+            document.getElementById('logFairOdds').value = fairOdds.toFixed(2);
+            document.getElementById('logBookieOdds').value = '';
+            document.getElementById('logClosingOdds').value = '';
+            document.getElementById('logStatus').value = 'PENDING';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(String(record.matchDate || ''))) {
+                document.getElementById('logDate').value = record.matchDate;
+            }
+            pendingModelPreselectorOrigin = {
+                source:'area1_pending_geometric',
+                predictionId:record.id,
+                calibrationSource:'Poisson geométrico original · inputs de Área 1',
+                rawProbability:Number((pick.prob * 100).toFixed(4)),
+                lambdaHome:markets.lambdaHome,
+                lambdaAway:markets.lambdaAway
+            };
+            updateBetModalConfidence();
+            checkSelectionHistoricalProfit();
+            calculateLogEv();
+            scheduleBetModalInlineMc();
+            showToast('Selección cargada en la bitácora. Completa cuota real y stake antes de guardar.');
+        }
+
+        function renderA1PendingMarkets() {
+            const root = document.getElementById('a1PendingMarketsLeagueList');
+            const countEl = document.getElementById('a1PendingMarketsCount');
+            const leaguesEl = document.getElementById('a1PendingMarketsLeagues');
+            const notice = document.getElementById('a1PendingMarketsNotice');
+            if (!root) return;
+            if (!isArea1Admin()) {
+                root.innerHTML = '<p class="text-[9px] text-amber-200 text-center py-3">La consulta de partidos privados de Área 1 requiere iniciar sesión con la cuenta propietaria.</p>';
+                if (notice) notice.textContent = 'Área 1 mantiene sus permisos originales: esta vista no publica ni modifica pronósticos.';
+                if (countEl) countEl.textContent = '0';
+                if (leaguesEl) leaguesEl.textContent = '0';
+                return;
+            }
+            const pending = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
+                .filter(record => record && record.status !== 'SETTLED' && record.inputs &&
+                    ['homeGF','homeGA','awayGF','awayGA'].every(key => Number.isFinite(Number(record.inputs[key]))))
+                .sort((a,b) => String(a.matchDate || '').localeCompare(String(b.matchDate || '')) ||
+                    String(a.kickoff || '').localeCompare(String(b.kickoff || '')));
+            const groups = new Map();
+            pending.forEach(record => {
+                const league = String(record.league || 'Sin competición');
+                if (!groups.has(league)) groups.set(league, []);
+                groups.get(league).push(record);
+            });
+            if (countEl) countEl.textContent = String(pending.length);
+            if (leaguesEl) leaguesEl.textContent = String(groups.size);
+            if (notice) notice.textContent = pending.length
+                ? `${pending.length} partidos pendientes agrupados en ${groups.size} ligas. Cada partido muestra los cuatro lados de los mercados solicitados.`
+                : 'No hay partidos pendientes con inputs GF/GA válidos en la memoria disponible de Área 1.';
+            if (!pending.length) {
+                root.innerHTML = '<p class="text-[9px] text-slate-500 text-center py-4">No hay partidos pendientes para registrar.</p>';
+                return;
+            }
+            const esc = value => escapeModelPredictionHtml(String(value ?? ''));
+            const pct = value => `${(value * 100).toFixed(1)}%`;
+            root.innerHTML = Array.from(groups.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([league, records], index) => `
+                <details class="rounded-xl border border-slate-700/80 bg-slate-950/45 overflow-hidden" ${index===0?'open':''}>
+                    <summary class="cursor-pointer list-none flex items-center justify-between gap-2 px-3 py-3 bg-slate-900/80">
+                        <span class="min-w-0"><b class="block text-[11px] text-white truncate">${esc(league)}</b><small class="text-[8px] text-slate-400">${records.length} partido(s) pendiente(s)</small></span>
+                        <span class="text-[9px] font-black text-amber-200 border border-amber-500/30 bg-amber-500/10 rounded-lg px-2 py-1">VER PARTIDOS <i class="fa-solid fa-chevron-down ml-1"></i></span>
+                    </summary>
+                    <div class="p-2 space-y-2">${records.map(record => {
+                        const m = calculateA1PendingGeometricMarkets(record);
+                        if (!m) return '';
+                        const matchId = esc(record.id);
+                        const matchName = `${esc(record.home || 'Local')} vs ${esc(record.away || 'Visitante')}`;
+                        const dateLine = `${esc(record.matchDate || 'Fecha no disponible')}${record.kickoff ? ' · '+esc(record.kickoff) : ''}`;
+                        const card = (key,label,prob,color) => `<div class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
+                            <div class="flex items-center justify-between gap-1"><b class="text-[9px] ${color}">${label}</b><strong class="text-sm ${color} tabular-nums">${pct(prob)}</strong></div>
+                            <div class="grid grid-cols-2 gap-1 mt-2">
+                                <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',false)" class="rounded-md border border-emerald-500/35 bg-emerald-500/10 text-emerald-200 text-[8px] font-black py-2"><i class="fa-solid fa-plus mr-1"></i>SENCILLA</button>
+                                <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',true)" class="rounded-md border border-amber-500/35 bg-amber-500/10 text-amber-200 text-[8px] font-black py-2"><i class="fa-solid fa-layer-group mr-1"></i>PARLAY</button>
+                            </div>
+                        </div>`;
+                        return `<article class="rounded-xl border border-slate-700/70 bg-slate-950/55 p-2.5">
+                            <div class="flex items-start justify-between gap-2 mb-2"><div class="min-w-0"><b class="block text-[10px] text-white break-words">${matchName}</b><span class="text-[8px] text-slate-500">${dateLine}</span></div><span class="shrink-0 text-[8px] font-black text-cyan-200">λ ${m.lambdaHome.toFixed(2)} / ${m.lambdaAway.toFixed(2)}</span></div>
+                            <div class="grid grid-cols-2 gap-2">
+                                ${card('over25','OVER 2.5',m.over25,'text-emerald-300')}
+                                ${card('under25','UNDER 2.5',m.under25,'text-slate-200')}
+                                ${card('bttsYes','BTTS SÍ',m.bttsYes,'text-amber-200')}
+                                ${card('bttsNo','BTTS NO',m.bttsNo,'text-slate-200')}
+                            </div>
+                        </article>`;
+                    }).join('')}</div>
+                </details>
+            `).join('');
         }
 
         function renderModelPreselector() {
