@@ -521,7 +521,7 @@
       <div>
         <div class="flex items-center gap-2 text-[10.5px] font-mono font-extrabold uppercase tracking-wider text-emerald-400">
           <i class="fa-solid fa-microchip"></i>
-          <span>BETAGS VIP PRO · VENTANA OPERATIVA (HOY · +4 DÍAS)</span>
+          <span>BETAGS VIP PRO · PENDIENTES SIEMPRE VISIBLES</span>
         </div>
         <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
           Centro de Partidos <span class="text-emerald-400">Prepartido</span>
@@ -531,7 +531,7 @@
       <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 xl:min-w-[760px]">
         <div class="quant-panel px-3.5 py-2.5 flex items-center justify-between">
           <div>
-            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">En ventana</div>
+            <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">En lista</div>
             <div id="statPending" class="prob text-xl font-black text-white mt-0.5">0</div>
           </div>
           <div class="w-8 h-8 rounded-lg bg-slate-800/70 flex items-center justify-center text-slate-300 text-sm">
@@ -697,7 +697,7 @@
             onchange="renderBoard()"
             class="w-full bg-[#060a14] border border-[#1f2d47] focus:border-emerald-400 rounded-lg px-3 py-2 text-xs font-semibold text-slate-100 outline-none transition cursor-pointer"
           >
-            <option value="">Fecha: Completa (0d a +4d)</option>
+            <option value="">Fecha: Pendientes + resueltos 0d a +4d</option>
             <option value="today">Hoy</option>
             <option value="tomorrow">Mañana (+1d)</option>
             <option value="week">Hoy a +4 días</option>
@@ -744,14 +744,14 @@
         </div>
         <div class="font-extrabold text-base text-slate-100">No hay partidos en esta ventana</div>
         <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-          Se muestran partidos pendientes y resueltos desde hoy hasta 4 días adelante.
+          Se muestran todos los partidos pendientes, incluso si su fecha ya pasó o está por definir, además de los resueltos de hoy a 4 días adelante. Revisa que los filtros de fecha y liga no estén limitando la lista.
         </p>
       </div>
     </section>
 
     <footer class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-500 py-4">
       <div>BETAGS VIP PRO · PREPARTIDO · Lectura directa de la memoria de Área 1.</div>
-      <div class="font-mono">WINDOW: 0D TO +4D · SYNC LOCAL</div>
+      <div class="font-mono">PENDIENTES: SIEMPRE · RESUELTOS: 0D A +4D · SYNC LOCAL</div>
     </footer>
   </main>
 
@@ -912,7 +912,13 @@
       const today = startOfDay(now);
       const maxDay = new Date(today.getTime() + WINDOW_DAYS * 86400000);
 
-      windowMatches = allRecords.filter(r => inOperationalWindow(r, today, maxDay));
+      // Mantener visibles TODOS los pendientes, aunque su fecha sea anterior,
+      // posterior a la ventana o todavía no esté definida. Los resueltos
+      // conservan la ventana operativa original de hoy a +4 días.
+      windowMatches = allRecords.filter(r => {
+        if (!r || !r.home || !r.away) return false;
+        return !isSettled(r) || inOperationalWindow(r, today, maxDay);
+      });
       windowMatches.sort((a, b) => timestamp(a) - timestamp(b) || String(a.league || '').localeCompare(String(b.league || '')));
 
       document.getElementById('statPending').textContent = windowMatches.length;
@@ -1068,10 +1074,14 @@
           if (league && (r.league || 'Sin liga') !== league) return false;
           if (q && !norm([r.home, r.away, r.league].join(' ')).includes(q)) return false;
 
-          let dt = parseFixtureDay(r);
-          if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
-          if (mode === 'tomorrow' && (!dt || dt.toDateString() !== tomorrow.toDateString())) return false;
-          if (mode === 'week' && (!dt || dt < today || dt > windowEnd)) return false;
+          // Los filtros de fecha solo acotan los resueltos. Los pendientes
+          // permanecen visibles aunque la fecha seleccionada sea otra.
+          if (settled) {
+            let dt = parseFixtureDay(r);
+            if (mode === 'today' && (!dt || dt.toDateString() !== today.toDateString())) return false;
+            if (mode === 'tomorrow' && (!dt || dt.toDateString() !== tomorrow.toDateString())) return false;
+            if (mode === 'week' && (!dt || dt < today || dt > windowEnd)) return false;
+          }
           return true;
         })
         .sort((a, b) => timestamp(a) - timestamp(b));
