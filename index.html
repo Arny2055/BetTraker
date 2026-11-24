@@ -8135,6 +8135,88 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             };
         }
 
+        // Calibración de los mercados geométricos pendientes de A1.
+        // Entrena con el MISMO origen probabilístico (GF/GA geométrico) de partidos A1 ya liquidados,
+        // separado por liga + mercado + selección. Aplica las reglas de Área 1:
+        // mínimo 15 observaciones, 5 aciertos y 5 fallos, ventana 200 y vida media 120 días.
+        // Si una selección no cumple todos los requisitos, conserva la probabilidad original.
+        function buildA1GeometricPendingSelectionHistory(league, market, selection) {
+            const settled = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
+                .filter(r => r && r.status === 'SETTLED' &&
+                    normalizePoissonLeague(r.league) === normalizePoissonLeague(league) &&
+                    Number.isInteger(Number(r.actualHomeGoals)) && Number.isInteger(Number(r.actualAwayGoals)));
+            const rows = [];
+            settled.forEach(r => {
+                const historicalMarkets = calculateA1PendingGeometricMarkets(r);
+                if (!historicalMarkets) return;
+                let probability = null, won = false;
+                if (market === 'Over / Under Goles') {
+                    if (selection === 'Over 2.5') { probability = historicalMarkets.over25; won = Number(r.actualHomeGoals) + Number(r.actualAwayGoals) >= 3; }
+                    else if (selection === 'Under 2.5') { probability = historicalMarkets.under25; won = Number(r.actualHomeGoals) + Number(r.actualAwayGoals) < 3; }
+                } else if (market === 'Ambos Anotan') {
+                    if (selection === 'Ambos Anotan Si') { probability = historicalMarkets.bttsYes; won = Number(r.actualHomeGoals) > 0 && Number(r.actualAwayGoals) > 0; }
+                    else if (selection === 'Ambos Anotan No') { probability = historicalMarkets.bttsNo; won = !(Number(r.actualHomeGoals) > 0 && Number(r.actualAwayGoals) > 0); }
+                }
+                probability = Number(probability);
+                if (Number.isFinite(probability) && probability > 0 && probability < 1) {
+                    rows.push({ prob: probability * 100, status: won ? 'WON' : 'LOST',
+                        calibrationDate: r.matchDate || '', analyzedAt: r.analyzedAt || '' });
+                }
+            });
+            rows.sort((a, b) => getModelPredictionCalibrationTimestamp(b) - getModelPredictionCalibrationTimestamp(a));
+            const allCount = rows.length;
+            const recentRows = prepareRecentModelPredictionCalibrationRows(rows);
+            const count = recentRows.length;
+            const weightTotal = recentRows.reduce((sum, row) => sum + Number(row.calibrationWeight || 0), 0);
+            const wins = recentRows.filter(row => row.status === 'WON').length;
+            const losses = count - wins;
+            const weightedWins = recentRows.reduce((sum, row) => sum + (row.status === 'WON' ? Number(row.calibrationWeight || 0) : 0), 0);
+            const meanPredicted = count && weightTotal
+                ? recentRows.reduce((sum, row) => sum + (Number(row.prob) / 100) * Number(row.calibrationWeight || 0), 0) / weightTotal : null;
+            const observed = count && weightTotal ? weightedWins / weightTotal : null;
+            const brier = count && weightTotal ? recentRows.reduce((sum, row) => {
+                const error = Number(row.prob) / 100 - (row.status === 'WON' ? 1 : 0);
+                return sum + error * error * Number(row.calibrationWeight || 0);
+            }, 0) / weightTotal : null;
+            const gap = Number.isFinite(observed) && Number.isFinite(meanPredicted) ? observed - meanPredicted : null;
+            const model = fitPoissonMarketModel(recentRows);
+            return { rows: recentRows, count, allCount, wins, losses, effectiveCount: model.effectiveCount || 0,
+                windowLimit: MODEL_PREDICTION_CALIBRATION_WINDOW, halfLifeDays: MODEL_PREDICTION_CALIBRATION_HALF_LIFE_DAYS,
+                meanPredicted, observed, gap, brier, model };
+        }
+
+        function getA1PendingGeometricMarkets(record) {
+            const original = calculateA1PendingGeometricMarkets(record);
+            if (!original) return null;
+            const definitions = {
+                over25: { market:'Over / Under Goles', selection:'Over 2.5' },
+                under25: { market:'Over / Under Goles', selection:'Under 2.5' },
+                bttsYes: { market:'Ambos Anotan', selection:'Ambos Anotan Si' },
+                bttsNo: { market:'Ambos Anotan', selection:'Ambos Anotan No' }
+            };
+            const result = { ...original, original: { ...original }, calibration: {} };
+            Object.entries(definitions).forEach(([key, definition]) => {
+                const history = buildA1GeometricPendingSelectionHistory(record.league, definition.market, definition.selection);
+                const valid = history.count >= 15 && history.wins >= 5 && history.losses >= 5 &&
+                    !!history.model?.ready && Number.isFinite(history.brier) && Number.isFinite(history.gap);
+                const rawProbability = Number(original[key]);
+                const calibratedProbability = valid
+                    ? Math.max(0.000001, Math.min(0.999999,
+                        poissonCalibrationSigmoid(history.model.a + history.model.b * poissonCalibrationLogit(rawProbability))))
+                    : rawProbability;
+                result[key] = calibratedProbability;
+                result.calibration[key] = {
+                    active: valid, rawProbability, calibratedProbability,
+                    count: history.count, allCount: history.allCount, wins: history.wins, losses: history.losses,
+                    effectiveCount: history.effectiveCount, brier: history.brier, gap: history.gap,
+                    a: valid ? history.model.a : null, b: valid ? history.model.b : null,
+                    windowLimit: history.windowLimit, halfLifeDays: history.halfLifeDays,
+                    market: definition.market, selection: definition.selection
+                };
+            });
+            return result;
+        }
+
         function registerA1PendingMarketBet(recordId, marketKey, asParlay) {
             const record = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
                 .find(item => String(item.id) === String(recordId));
@@ -8143,13 +8225,13 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 renderA1PendingMarkets();
                 return;
             }
-            const markets = calculateA1PendingGeometricMarkets(record);
+            const markets = getA1PendingGeometricMarkets(record);
             if (!markets) { showToast('No se pudieron calcular los mercados: revisa los GF/GA guardados en A1.'); return; }
             const definitions = {
-                over25:{market:'Over / Under Goles',selection:'Over 2.5',prob:markets.over25,marketType:'ou25',side:'over'},
-                under25:{market:'Over / Under Goles',selection:'Under 2.5',prob:markets.under25,marketType:'ou25',side:'under'},
-                bttsYes:{market:'Ambos Anotan',selection:'Ambos Anotan Si',prob:markets.bttsYes,marketType:'btts',side:'yes'},
-                bttsNo:{market:'Ambos Anotan',selection:'Ambos Anotan No',prob:markets.bttsNo,marketType:'btts',side:'no'}
+                over25:{market:'Over / Under Goles',selection:'Over 2.5',prob:markets.over25,rawProb:markets.original.over25,calibration:markets.calibration.over25,marketType:'ou25',side:'over'},
+                under25:{market:'Over / Under Goles',selection:'Under 2.5',prob:markets.under25,rawProb:markets.original.under25,calibration:markets.calibration.under25,marketType:'ou25',side:'under'},
+                bttsYes:{market:'Ambos Anotan',selection:'Ambos Anotan Si',prob:markets.bttsYes,rawProb:markets.original.bttsYes,calibration:markets.calibration.bttsYes,marketType:'btts',side:'yes'},
+                bttsNo:{market:'Ambos Anotan',selection:'Ambos Anotan No',prob:markets.bttsNo,rawProb:markets.original.bttsNo,calibration:markets.calibration.bttsNo,marketType:'btts',side:'no'}
             };
             const pick = definitions[marketKey];
             if (!pick || !Number.isFinite(pick.prob) || pick.prob <= 0 || pick.prob >= 1) {
@@ -8164,8 +8246,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (exists) { showToast(`Ya existe una selección de ${pick.market} para este partido en el Parlay.`); return; }
                 parlaySelections.push({
                     league, match, market:pick.market, selection:pick.selection,
-                    prob:pick.prob, fairOdds, marketType:pick.marketType, side:pick.side,
-                    source:'area1_pending', predictionId:record.id
+                    prob:pick.prob, rawProbability:pick.rawProb, fairOdds, marketType:pick.marketType, side:pick.side,
+                    calibration:pick.calibration, source:'area1_pending', predictionId:record.id
                 });
                 renderParlayBuilder();
                 showToast(`${pick.selection} añadido al constructor de Parlay. Revisa y guarda el Parlay cuando esté listo.`);
@@ -8189,8 +8271,22 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             pendingModelPreselectorOrigin = {
                 source:'area1_pending_geometric',
                 predictionId:record.id,
-                calibrationSource:'Poisson geométrico original · inputs de Área 1',
-                rawProbability:Number((pick.prob * 100).toFixed(4)),
+                calibrationSource:pick.calibration.active ? 'Área 1 · Platt sobre histórico geométrico liquidado de la misma liga/selección' : 'Poisson geométrico original · muestra insuficiente para calibrar',
+                calibrationMethod:pick.calibration.active ? 'Platt Scaling ponderado por recencia' : 'Sin ajuste: reglas mínimas no alcanzadas',
+                calibrationVersion:'area1_geometric_platt_recent_weighted_v1',
+                calibrationWindow:pick.calibration.windowLimit,
+                calibrationHalfLifeDays:pick.calibration.halfLifeDays,
+                calibrationEffectiveCount:pick.calibration.effectiveCount,
+                calibrationCount:pick.calibration.count,
+                calibrationWins:pick.calibration.wins,
+                calibrationLosses:pick.calibration.losses,
+                calibrationA:pick.calibration.a,
+                calibrationB:pick.calibration.b,
+                calibrationLeague:league,
+                calibrationMarket:pick.market,
+                calibrationSelection:pick.selection,
+                rawProbability:Number((pick.rawProb * 100).toFixed(4)),
+                calibratedProbability:Number((pick.prob * 100).toFixed(4)),
                 lambdaHome:markets.lambdaHome,
                 lambdaAway:markets.lambdaAway
             };
@@ -8243,15 +8339,20 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         <span class="text-[9px] font-black text-amber-200 border border-amber-500/30 bg-amber-500/10 rounded-lg px-2 py-1">VER PARTIDOS <i class="fa-solid fa-chevron-down ml-1"></i></span>
                     </summary>
                     <div class="p-2 space-y-2">${records.map(record => {
-                        const m = calculateA1PendingGeometricMarkets(record);
+                        const m = getA1PendingGeometricMarkets(record);
                         if (!m) return '';
                         const matchId = esc(record.id);
                         const matchName = `${esc(record.home || 'Local')} vs ${esc(record.away || 'Visitante')}`;
                         const dateLine = `${esc(record.matchDate || 'Fecha no disponible')}${record.kickoff ? ' · '+esc(record.kickoff) : ''}`;
                         const card = (key,label,prob,color) => {
                             const fairOdds = Number(prob) > 0 ? (1 / Number(prob)) : null;
+                            const calibration = m.calibration[key] || {};
+                            const calibrationLine = calibration.active
+                                ? `<div class="mt-1 text-[7px] text-cyan-300">Platt Área 1 · Original ${pct(calibration.rawProbability)} · ${calibration.count}/15 · ${calibration.wins}G/${calibration.losses}P</div>`
+                                : `<div class="mt-1 text-[7px] text-slate-500">Sin ajuste · ${calibration.count || 0}/15 · requiere 5 ganadas y 5 perdidas</div>`;
                             return `<div class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
                             <div class="flex items-center justify-between gap-1"><b class="text-[9px] ${color}">${label}</b><strong class="text-sm ${color} tabular-nums">${pct(prob)}</strong></div>
+                            ${calibrationLine}
                             <div class="flex items-center justify-between gap-1 mt-1 rounded-md bg-slate-950/70 border border-slate-800/80 px-2 py-1"><span class="text-[8px] uppercase tracking-wide text-slate-500 font-bold">Cuota justa</span><strong class="text-[11px] text-cyan-300 font-black tabular-nums">${fairOdds !== null && Number.isFinite(fairOdds) ? fairOdds.toFixed(2) : '—'}</strong></div>
                             <div class="grid grid-cols-2 gap-1 mt-2">
                                 <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',false)" class="rounded-md border border-emerald-500/35 bg-emerald-500/10 text-emerald-200 text-[8px] font-black py-2"><i class="fa-solid fa-plus mr-1"></i>SENCILLA</button>
