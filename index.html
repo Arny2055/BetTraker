@@ -8117,13 +8117,17 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         const matchId = esc(record.id);
                         const matchName = `${esc(record.home || 'Local')} vs ${esc(record.away || 'Visitante')}`;
                         const dateLine = `${esc(record.matchDate || 'Fecha no disponible')}${record.kickoff ? ' · '+esc(record.kickoff) : ''}`;
-                        const card = (key,label,prob,color) => `<div class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
+                        const card = (key,label,prob,color) => {
+                            const fairOdds = Number(prob) > 0 ? (1 / Number(prob)) : null;
+                            return `<div class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
                             <div class="flex items-center justify-between gap-1"><b class="text-[9px] ${color}">${label}</b><strong class="text-sm ${color} tabular-nums">${pct(prob)}</strong></div>
+                            <div class="flex items-center justify-between gap-1 mt-1 rounded-md bg-slate-950/70 border border-slate-800/80 px-2 py-1"><span class="text-[8px] uppercase tracking-wide text-slate-500 font-bold">Cuota justa</span><strong class="text-[11px] text-cyan-300 font-black tabular-nums">${fairOdds !== null && Number.isFinite(fairOdds) ? fairOdds.toFixed(2) : '—'}</strong></div>
                             <div class="grid grid-cols-2 gap-1 mt-2">
                                 <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',false)" class="rounded-md border border-emerald-500/35 bg-emerald-500/10 text-emerald-200 text-[8px] font-black py-2"><i class="fa-solid fa-plus mr-1"></i>SENCILLA</button>
                                 <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',true)" class="rounded-md border border-amber-500/35 bg-amber-500/10 text-amber-200 text-[8px] font-black py-2"><i class="fa-solid fa-layer-group mr-1"></i>PARLAY</button>
                             </div>
                         </div>`;
+                        };
                         return `<article class="rounded-xl border border-slate-700/70 bg-slate-950/55 p-2.5">
                             <div class="flex items-start justify-between gap-2 mb-2"><div class="min-w-0"><b class="block text-[10px] text-white break-words">${matchName}</b><span class="text-[8px] text-slate-500">${dateLine}</span></div><span class="shrink-0 text-[8px] font-black text-cyan-200">λ ${m.lambdaHome.toFixed(2)} / ${m.lambdaAway.toFixed(2)}</span></div>
                             <div class="grid grid-cols-2 gap-2">
