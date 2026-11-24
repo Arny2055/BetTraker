@@ -1335,8 +1335,11 @@
                     </div>
                 </div>
             </div>
-            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex justify-between items-center">
-                <button onclick="openLogBetModal()" class="bg-gold-500 hover:bg-gold-600 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow-md flex items-center gap-1.5"><i class="fa-solid fa-plus-circle"></i> Nueva Apuesta</button>
+            <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex flex-wrap justify-between items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="openLogBetModal()" class="bg-gold-500 hover:bg-gold-600 text-slate-950 font-black text-xs px-3.5 py-1.5 rounded-xl shadow-md flex items-center gap-1.5"><i class="fa-solid fa-plus-circle"></i> Nueva sencilla</button>
+                    <button type="button" onclick="openManualParlayBetModal()" class="bg-indigo-500 hover:bg-indigo-600 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-md flex items-center gap-1.5"><i class="fa-solid fa-layer-group"></i> Nuevo parlay</button>
+                </div>
                 <button onclick="toggleTrackerModal(false)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-4 py-1.5 rounded-xl">Cerrar</button>
             </div>
         </div>
@@ -4000,6 +4003,53 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             checkSelectionHistoricalProfit();
             calculateLogEv();
             // Auto-disparar MC al abrir
+            scheduleBetModalInlineMc();
+            toggleLogBetModal(true);
+        }
+
+        // Registro manual de parlay desde la Bitácora.
+        // Reutiliza el mismo modal, validaciones, protección antiduplicados,
+        // almacenamiento local/nube y flujo de guardado de las apuestas existentes.
+        function openManualParlayBetModal() {
+            pendingModelPreselectorOrigin = null;
+            betModalIsEditing = false;
+
+            const activeLeague = document.getElementById('activeLeagueSelect')?.value || DEFAULT_LEAGUE_NAME;
+            const homeName = document.getElementById('homeName')?.value?.trim() || '';
+            const awayName = document.getElementById('awayName')?.value?.trim() || '';
+            const defaultMatch = (homeName || awayName)
+                ? `${homeName || 'Local'} vs ${awayName || 'Visitante'}`
+                : 'Parlay (varios partidos)';
+
+            document.getElementById('editBetIndex').value = "-1";
+            document.getElementById('logIsParlay').value = "true";
+            document.getElementById('logBetModalTitle').innerText = "Registrar Parlay manual";
+            document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('logLeague').value = activeLeague;
+            document.getElementById('logMatch').value = defaultMatch;
+            document.getElementById('logMarket').value = "Parlay manual";
+            document.getElementById('logSelection').value = "";
+            document.getElementById('logProb').value = "50.0";
+            document.getElementById('logFairOdds').value = "2.00";
+            document.getElementById('logBookieOdds').value = "2.00";
+            document.getElementById('logClosingOdds').value = "";
+            calculateClvDisplay();
+
+            const dynamicBankroll = getActiveAvailableBankroll();
+            const stakePct = parseFloat(document.getElementById('globalStakePct').value) || 2.0;
+            document.getElementById('logStake').value = Math.max(1, Math.round(Math.max(0, dynamicBankroll) * (stakePct / 100)));
+            document.getElementById('logBookmaker').value = "Bet365";
+            document.getElementById('logStatus').value = "PENDING";
+            document.getElementById('logParallelOption').value = "original_only";
+
+            const historyWidget = document.getElementById('selectionHistoryWidget');
+            if (historyWidget) historyWidget.classList.add('hidden');
+            const quickPanel = document.getElementById('betModalMcQuickPanel');
+            if (quickPanel) quickPanel.classList.add('hidden');
+            const inlineTbody = document.getElementById('betModalMcInlineTableBody');
+            if (inlineTbody) inlineTbody.innerHTML = '<tr><td colspan="7" class="p-2 text-center text-slate-500 italic">Cambia la cuota de la casa para ejecutar el MC automático.</td></tr>';
+
+            calculateLogEv();
             scheduleBetModalInlineMc();
             toggleLogBetModal(true);
         }
