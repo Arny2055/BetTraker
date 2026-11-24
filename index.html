@@ -7174,29 +7174,115 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             fitPoissonCalibrationFromModelPredictions();
         }
 
-        // Elimina únicamente el pronóstico seleccionado de la memoria del modelo.
-        // Si existe sesión de Supabase, elimina primero la copia en la nube para
-        // evitar que vuelva a descargarse en una sincronización posterior.
-        async function deleteModelPrediction(id) {
-            if (!isArea1Admin()) { showToast('Solo el administrador puede eliminar pronósticos de Área 1.'); return; }
-            const record = modelPredictionRecords.find(r => r.id === id);
-            if (!record) return;
+        // Eliminación segura de pronósticos de Área 1.
+        // Se usa un diálogo propio en lugar de window.confirm(), que puede quedar
+        // bloqueado o no mostrarse correctamente en Safari/iOS y algunas WebViews.
+        let pendingModelPredictionDeleteId = null;
+
+        function closeModelPredictionDeleteDialog() {
+            const dialog = document.getElementById('modelPredictionDeleteDialog');
+            if (dialog) dialog.remove();
+            pendingModelPredictionDeleteId = null;
+        }
+
+        function deleteModelPrediction(id) {
+            if (!isArea1Admin()) {
+                showToast('Solo el administrador puede eliminar pronósticos de Área 1.');
+                return;
+            }
+            const record = modelPredictionRecords.find(r => String(r.id) === String(id));
+            if (!record) {
+                showToast('No se encontró el partido. Actualiza la memoria e inténtalo de nuevo.');
+                return;
+            }
+
+            closeModelPredictionDeleteDialog();
+            pendingModelPredictionDeleteId = record.id;
+
             const label = `${record.home || 'Local'} vs ${record.away || 'Visitante'}`;
-            if (!confirm(`¿Eliminar de la bitácora de predicciones del modelo el registro:\n${label}?\n\nEsta acción no se puede deshacer.`)) return;
+            const dialog = document.createElement('div');
+            dialog.id = 'modelPredictionDeleteDialog';
+            dialog.className = 'fixed inset-0 z-[120] flex items-center justify-center p-4';
+            dialog.setAttribute('role', 'dialog');
+            dialog.setAttribute('aria-modal', 'true');
+            dialog.setAttribute('aria-labelledby', 'modelPredictionDeleteTitle');
+            dialog.innerHTML = `
+                <div class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm" data-delete-cancel></div>
+                <div class="relative w-full max-w-sm rounded-2xl border border-rose-500/40 bg-slate-900 p-4 shadow-2xl">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 shrink-0 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-300">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <h3 id="modelPredictionDeleteTitle" class="text-sm font-black text-white">Verificar eliminación</h3>
+                            <p class="text-[10px] text-slate-400">Área 1 · Memoria de pronósticos</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed mb-2">¿Confirmas que deseas eliminar este partido?</p>
+                    <div class="rounded-xl border border-slate-700 bg-slate-950/70 p-3 mb-3">
+                        <p class="text-sm font-black text-white break-words">${escapeModelPredictionHtml(label)}</p>
+                        <p class="text-[9px] text-rose-300 mt-1">Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" data-delete-cancel class="py-2.5 rounded-xl border border-slate-600 bg-slate-800 text-slate-200 text-xs font-black">Cancelar</button>
+                        <button type="button" id="confirmModelPredictionDeleteBtn" class="py-2.5 rounded-xl border border-rose-400/40 bg-rose-600 hover:bg-rose-500 text-white text-xs font-black">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Sí, eliminar
+                        </button>
+                    </div>
+                </div>`;
+            document.body.appendChild(dialog);
+
+            dialog.querySelectorAll('[data-delete-cancel]').forEach(button =>
+                button.addEventListener('click', closeModelPredictionDeleteDialog)
+            );
+            dialog.querySelector('#confirmModelPredictionDeleteBtn').addEventListener('click', () => {
+                const selectedId = pendingModelPredictionDeleteId;
+                closeModelPredictionDeleteDialog();
+                if (selectedId != null) executeModelPredictionDelete(selectedId);
+            });
+        }
+
+        async function executeModelPredictionDelete(id) {
+            if (!isArea1Admin()) {
+                showToast('La sesión ya no tiene permisos para eliminar en Área 1.');
+                return;
+            }
+            const record = modelPredictionRecords.find(r => String(r.id) === String(id));
+            if (!record) {
+                showToast('El partido ya no está disponible en la memoria local.');
+                return;
+            }
+
+            // Primero se confirma la eliminación remota. Si falla, no se toca
+            // la copia local para evitar que el partido reaparezca al sincronizar.
             if (currentUser && supabaseClient) {
                 try {
-                    const { error } = await supabaseClient.from('owner_match_predictions')
-                        .delete().eq('user_id', AREA1_OWNER_USER_ID).eq('id', id);
+                    const { data, error } = await supabaseClient
+                        .from('owner_match_predictions')
+                        .delete()
+                        .eq('user_id', AREA1_OWNER_USER_ID)
+                        .eq('id', id)
+                        .select('id');
+
                     if (error) throw error;
+                    if (!Array.isArray(data) || data.length === 0) {
+                        throw new Error('Supabase no confirmó ninguna fila eliminada. Verifica permisos/RLS y sincroniza antes de volver a intentar.');
+                    }
                 } catch (e) {
-                    console.error('[ModelPredictions] No se pudo eliminar el registro en la nube:', e);
-                    showToast('No se eliminó: no se pudo confirmar la eliminación en la nube. Intenta sincronizar y vuelve a intentarlo.');
+                    console.error('[ModelPredictions] No se pudo confirmar la eliminación en la nube:', e);
+                    showToast('No se eliminó el partido: ' + (e?.message || 'Supabase no confirmó la operación.'));
                     return;
                 }
             }
-            modelPredictionRecords = modelPredictionRecords.filter(r => r.id !== id);
-            persistModelPredictionRecords();
-            showToast('Pronóstico eliminado de la bitácora del modelo.');
+
+            modelPredictionRecords = modelPredictionRecords.filter(r => String(r.id) !== String(id));
+            try {
+                persistModelPredictionRecords();
+                showToast('Partido eliminado y memoria de Área 1 actualizada.');
+            } catch (e) {
+                console.error('[ModelPredictions] Error guardando la eliminación local:', e);
+                showToast('La nube confirmó el borrado, pero no se pudo actualizar la memoria local. Vuelve a sincronizar.');
+            }
         }
 
         function modelPredictionNormalize(value) {
