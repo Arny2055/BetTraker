@@ -2134,12 +2134,23 @@ GP W D L GF GA GD Pts PPG
             setSyncStatus('syncing');
             autoSyncPaused = true;
             try {
+                // Guardar metadatos locales antes de reemplazar las listas por la nube.
+                // Esto evita perder el vínculo A1 cuando la tabla remota aún no tiene
+                // columnas dedicadas para esos campos auxiliares.
+                const localBetMetadata = new Map(betLogData.map(b => [String(b.id), b]));
+                const localParallelMetadata = new Map(parallelBetLogData.map(b => [String(b.id), b]));
                 bankrollsData = [];
                 betLogData = [];
                 parallelBetLogData = [];
                 boxTransactionsLog = [];
                 recentlyDeletedIds.clear();
                 await pullFromSupabase(true);
+                betLogData = betLogData.map(b => preserveLocalBetMetadata(b, localBetMetadata.get(String(b.id))));
+                parallelBetLogData = parallelBetLogData.map(b => preserveLocalBetMetadata(b, localParallelMetadata.get(String(b.id))));
+                localStorage.setItem('poisson_vip_betlog', JSON.stringify(betLogData));
+                localStorage.setItem('poisson_vip_parallel_betlog', JSON.stringify(parallelBetLogData));
+                updateTrackerMetrics();
+                updateParallelTrackerMetrics();
                 setSyncStatus('synced');
                 showToast('✅ Datos descargados desde la nube.');
             } catch(e) {
@@ -2178,6 +2189,8 @@ GP W D L GF GA GD Pts PPG
             };
         }
 
+        // No agregar aquí columnas nuevas sin verificar primero el esquema real de
+        // Supabase. Los metadatos A1 se preservan localmente durante las fusiones.
         function betToRow(b) {
             return {
                 id: String(b.id),
@@ -2309,6 +2322,28 @@ GP W D L GF GA GD Pts PPG
             }, 2000);
         }
 
+        // Conserva metadatos locales que todavía no tienen una columna confirmada en
+        // el esquema remoto. Los campos principales (estado, stake, cuotas, etc.)
+        // siempre proceden de Supabase cuando preferRemote=true.
+        function preserveLocalBetMetadata(remoteBet, localBet) {
+            if (!remoteBet || !localBet) return remoteBet;
+            const metadataFields = [
+                'preselectorOrigin',
+                'a1SettledScore',
+                'a1SettledAt',
+                'a1PredictionId'
+            ];
+            metadataFields.forEach(key => {
+                if ((remoteBet[key] === undefined || remoteBet[key] === null) &&
+                    localBet[key] !== undefined && localBet[key] !== null) {
+                    remoteBet[key] = localBet[key];
+                }
+            });
+            if (remoteBet.closingOdds == null && localBet.closingOdds != null) remoteBet.closingOdds = localBet.closingOdds;
+            if (remoteBet.clv == null && localBet.clv != null) remoteBet.clv = localBet.clv;
+            return remoteBet;
+        }
+
         async function pullFromSupabase(preferRemote = false) {
             if (!currentUser || !supabaseClient) return;
 
@@ -2318,6 +2353,8 @@ GP W D L GF GA GD Pts PPG
                 supabaseClient.from('parallel_bets').select('*').eq('user_id', currentUser.id),
                 supabaseClient.from('box_transactions').select('*').eq('user_id', currentUser.id)
             ]);
+            const queryError = bankRes.error || betRes.error || pBetRes.error || txRes.error;
+            if (queryError) throw queryError;
 
             if (bankRes.data && bankRes.data.length > 0) {
                 const filtered = bankRes.data.filter(r => !isDeleted(r.id));
@@ -2345,11 +2382,7 @@ GP W D L GF GA GD Pts PPG
                     betLogData = filtered.map(r => {
                         const remote = rowToBet(r);
                         const local = betLogData.find(b => String(b.id) === String(remote.id));
-                        if (local) {
-                            if (remote.closingOdds == null && local.closingOdds != null) remote.closingOdds = local.closingOdds;
-                            if (remote.clv == null && local.clv != null) remote.clv = local.clv;
-                        }
-                        return remote;
+                        return preserveLocalBetMetadata(remote, local);
                     });
                 } else {
                     filtered.forEach(r => {
@@ -2366,11 +2399,7 @@ GP W D L GF GA GD Pts PPG
                     parallelBetLogData = filtered.map(r => {
                         const remote = rowToBet(r);
                         const local = parallelBetLogData.find(b => String(b.id) === String(remote.id));
-                        if (local) {
-                            if (remote.closingOdds == null && local.closingOdds != null) remote.closingOdds = local.closingOdds;
-                            if (remote.clv == null && local.clv != null) remote.clv = local.clv;
-                        }
-                        return remote;
+                        return preserveLocalBetMetadata(remote, local);
                     });
                 } else {
                     filtered.forEach(r => {
@@ -2503,10 +2532,16 @@ GP W D L GF GA GD Pts PPG
             if (autoSyncPaused) return;
             autoSyncInProgress = true;
             try {
-                if (bankrollsData.length) await supabaseClient.from('bankrolls').upsert(bankrollsData.map(bankrollToRow), { onConflict: 'id' });
+                if (bankrollsData.length) {
+                    const { error } = await supabaseClient.from('bankrolls').upsert(bankrollsData.map(bankrollToRow), { onConflict: 'id' });
+                    if (error) throw error;
+                }
                 if (betLogData.length) await upsertWithClvFallback('bets', betLogData.map(betToRow));
                 if (parallelBetLogData.length) await upsertWithClvFallback('parallel_bets', parallelBetLogData.map(betToRow));
-                if (boxTransactionsLog.length) await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
+                if (boxTransactionsLog.length) {
+                    const { error } = await supabaseClient.from('box_transactions').upsert(boxTransactionsLog.map(txToRow), { onConflict: 'id' });
+                    if (error) throw error;
+                }
 
                 await pullFromSupabase(true);
             } catch(e) {
