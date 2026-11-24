@@ -4472,13 +4472,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 clv: clv !== null ? clv.toFixed(2) : '',
                 preselectorOrigin: index >= 0
                     ? (betLogData[index].preselectorOrigin || null)
-                    : (pendingModelPreselectorOrigin ? { ...pendingModelPreselectorOrigin } : null),
-                // En parlays conserva el vínculo de cada pierna A1 para liquidarlas
-                // individualmente cuando se importe o capture el marcador final.
-                preselectorLegOrigins: index >= 0
-                    ? (Array.isArray(betLogData[index].preselectorLegOrigins) ? betLogData[index].preselectorLegOrigins : [])
-                    : (isParlay ? parlaySelections.filter(item => item && item.source === 'area1_pending' && item.predictionId != null)
-                        .map(item => ({ source:'area1_pending_geometric', predictionId:item.predictionId, marketKey:item.marketKey || '', match:item.match || '', selection:item.selection || '' })) : [])
+                    : (pendingModelPreselectorOrigin ? { ...pendingModelPreselectorOrigin } : null)
             };
             // Un registro con misma fecha, partido, mercado, selección, casa y stake
             // se considera duplicado. Para editar se excluye el propio registro.
@@ -7792,48 +7786,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
         }
 
-        function syncA1PredictionResultToBetLog(record) {
-            if (!record || !record.results || !Array.isArray(betLogData)) return { singles:0, legs:0, parlays:0 };
-            let singles=0, legs=0, parlays=0;
-            const getOutcome = origin => {
-                if (!origin || String(origin.predictionId) !== String(record.id)) return null;
-                const key=String(origin.marketKey || '');
-                return ['over25','under25','bttsYes','bttsNo'].includes(key) ? record.results[key] : null;
-            };
-            const updateBet = bet => {
-                if (!bet) return;
-                const direct=getOutcome(bet.preselectorOrigin);
-                if (direct && bet.status === 'PENDING') {
-                    bet.status=direct; bet.modelAutoSettled=true; bet.modelSettledPredictionId=record.id;
-                    bet.modelSettledScore=`${record.actualHomeGoals}-${record.actualAwayGoals}`; singles++;
-                }
-                if (Array.isArray(bet.preselectorLegOrigins) && bet.preselectorLegOrigins.length) {
-                    let changed=false;
-                    bet.preselectorLegOrigins.forEach(origin => {
-                        const outcome=getOutcome(origin);
-                        if (outcome && origin.resultStatus !== outcome) { origin.resultStatus=outcome; origin.resultScore=`${record.actualHomeGoals}-${record.actualAwayGoals}`; changed=true; legs++; }
-                    });
-                    // El parlay solo se liquida cuando todas sus piernas A1 tienen resultado.
-                    if (changed && bet.preselectorLegOrigins.every(origin => origin.resultStatus === 'WON' || origin.resultStatus === 'LOST')) {
-                        const finalStatus=bet.preselectorLegOrigins.every(origin => origin.resultStatus === 'WON') ? 'WON' : 'LOST';
-                        if (bet.status === 'PENDING') { bet.status=finalStatus; bet.modelAutoSettled=true; bet.modelSettledPredictionId=record.id; parlays++; }
-                    }
-                }
-            };
-            betLogData.forEach(updateBet);
-            if (Array.isArray(parallelBetLogData)) {
-                parallelBetLogData.forEach(parallelBet => {
-                    const source=betLogData.find(b => String(b.id) === String(parallelBet.id));
-                    if (source) { parallelBet.status=source.status; parallelBet.preselectorOrigin=source.preselectorOrigin || null; parallelBet.preselectorLegOrigins=source.preselectorLegOrigins || []; parallelBet.modelAutoSettled=!!source.modelAutoSettled; parallelBet.modelSettledScore=source.modelSettledScore || ''; }
-                });
-            }
-            if (singles || legs || parlays) {
-                saveBetLogToStorage(); saveParallelBetLogToStorage();
-                updateMarketFilterDropdown(); updateTrackerMetrics(); updateParallelTrackerMetrics();
-            }
-            return { singles, legs, parlays };
-        }
-
         function applyModelPredictionScore(record, homeGoals, awayGoals, source='manual') {
             if (!record || !Number.isInteger(homeGoals) || !Number.isInteger(awayGoals) || homeGoals<0 || awayGoals<0) return false;
             if (record.status==='SETTLED') return false;
@@ -7842,7 +7794,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             record.results={oneXTwo:homeGoals>awayGoals?'homeWin':homeGoals===awayGoals?'draw':'awayWin',overUnder:over?'over25':'under25',btts:btts?'bttsYes':'bttsNo',
                 homeWin:homeGoals>awayGoals?'WON':'LOST',draw:homeGoals===awayGoals?'WON':'LOST',awayWin:homeGoals<awayGoals?'WON':'LOST',over25:over?'WON':'LOST',under25:over?'LOST':'WON',bttsYes:btts?'WON':'LOST',bttsNo:btts?'LOST':'WON',
                 source:source==='table_import'?'results_table_import':'manual_entry'};
-            syncA1PredictionResultToBetLog(record);
             return true;
         }
 
@@ -8082,7 +8033,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (exists) { showToast(`Ya existe una selección de ${pick.market} para este partido en el Parlay.`); return; }
                 parlaySelections.push({
                     league, match, market:pick.market, selection:pick.selection,
-                    prob:pick.prob, fairOdds, marketType:pick.marketType, side:pick.side, marketKey,
+                    prob:pick.prob, fairOdds, marketType:pick.marketType, side:pick.side,
                     source:'area1_pending', predictionId:record.id
                 });
                 renderParlayBuilder();
@@ -8106,7 +8057,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             pendingModelPreselectorOrigin = {
                 source:'area1_pending_geometric',
-                predictionId:record.id, marketKey,
+                predictionId:record.id,
                 calibrationSource:'Poisson geométrico original · inputs de Área 1',
                 rawProbability:Number((pick.prob * 100).toFixed(4)),
                 lambdaHome:markets.lambdaHome,
