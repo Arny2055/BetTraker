@@ -7786,6 +7786,49 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
         }
 
+        // Liquida automáticamente las apuestas SENCILLAS registradas desde
+        // "Pendientes A1" cuando el partido recibe marcador final. Los parlays
+        // y las apuestas sin vínculo explícito con A1 permanecen intactos.
+        function settleA1LinkedPendingBets(record, homeGoals, awayGoals) {
+            if (!record || !Array.isArray(betLogData)) return 0;
+            const predictionId = String(record.id);
+            const totalGoals = homeGoals + awayGoals;
+            const btts = homeGoals > 0 && awayGoals > 0;
+            let updated = 0;
+
+            betLogData.forEach(bet => {
+                const origin = bet && bet.preselectorOrigin;
+                if (!bet || bet.status !== 'PENDING' || bet.isParlay ||
+                    !origin || origin.source !== 'area1_pending_geometric' ||
+                    String(origin.predictionId) !== predictionId) return;
+
+                const selection = normalizeBetDuplicateField(bet.selection || '');
+                let won = null;
+                if (selection === 'over 2.5' || selection === 'más de 2.5' || selection === 'mas de 2.5') {
+                    won = totalGoals >= 3;
+                } else if (selection === 'under 2.5' || selection === 'menos de 2.5') {
+                    won = totalGoals <= 2;
+                } else if (selection === 'ambos anotan si' || selection === 'btts sí' || selection === 'btts si') {
+                    won = btts;
+                } else if (selection === 'ambos anotan no' || selection === 'btts no') {
+                    won = !btts;
+                }
+                if (won === null) return;
+
+                bet.status = won ? 'WON' : 'LOST';
+                bet.a1SettledScore = `${homeGoals}-${awayGoals}`;
+                bet.a1SettledAt = record.settledAt || new Date().toISOString();
+                bet.a1PredictionId = predictionId;
+                updated++;
+            });
+
+            if (updated) {
+                saveBetLogToStorage();
+                if (typeof updateTrackerMetrics === 'function') updateTrackerMetrics();
+            }
+            return updated;
+        }
+
         function applyModelPredictionScore(record, homeGoals, awayGoals, source='manual') {
             if (!record || !Number.isInteger(homeGoals) || !Number.isInteger(awayGoals) || homeGoals<0 || awayGoals<0) return false;
             if (record.status==='SETTLED') return false;
@@ -7794,6 +7837,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             record.results={oneXTwo:homeGoals>awayGoals?'homeWin':homeGoals===awayGoals?'draw':'awayWin',overUnder:over?'over25':'under25',btts:btts?'bttsYes':'bttsNo',
                 homeWin:homeGoals>awayGoals?'WON':'LOST',draw:homeGoals===awayGoals?'WON':'LOST',awayWin:homeGoals<awayGoals?'WON':'LOST',over25:over?'WON':'LOST',under25:over?'LOST':'WON',bttsYes:btts?'WON':'LOST',bttsNo:btts?'LOST':'WON',
                 source:source==='table_import'?'results_table_import':'manual_entry'};
+            // El marcador de A1 también liquida las sencillas vinculadas de la bitácora.
+            // La llamada está aquí para cubrir tanto captura manual como importación masiva.
+            settleA1LinkedPendingBets(record, homeGoals, awayGoals);
             return true;
         }
 
