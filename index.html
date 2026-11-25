@@ -8350,6 +8350,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             const esc = value => escapeModelPredictionHtml(String(value ?? ''));
             const pct = value => `${(value * 100).toFixed(1)}%`;
+            const signedPp = value => `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)} pp`;
             root.innerHTML = Array.from(groups.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([league, records], index) => `
                 <details class="rounded-xl border border-slate-700/80 bg-slate-950/45 overflow-hidden" ${index===0?'open':''}>
                     <summary class="cursor-pointer list-none flex items-center justify-between gap-2 px-3 py-3 bg-slate-900/80">
@@ -8366,8 +8367,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                             const fairOdds = Number(prob) > 0 ? (1 / Number(prob)) : null;
                             const calibration = m.calibration[key] || {};
                             const calibrationLine = calibration.active
-                                ? `<div class="mt-1 text-[7px] text-cyan-300">Platt Área 1 · Original ${pct(calibration.rawProbability)} · ${calibration.count}/15 · ${calibration.wins}G/${calibration.losses}P</div>`
-                                : `<div class="mt-1 text-[7px] text-slate-500">Sin ajuste · ${calibration.count || 0}/15 · requiere 5 ganadas y 5 perdidas</div>`;
+                                ? `<div class="mt-1 text-[8px] text-cyan-200">Platt Área 1: ${pct(calibration.calibratedProbability)} · Original: ${pct(calibration.rawProbability)} · ${signedPp(calibration.calibratedProbability-calibration.rawProbability)} ajuste</div><div class="text-[7px] text-cyan-300/70">Fuente: Área 1 · ${calibration.count}/${calibration.allCount} recientes · N efectivo ${Number(calibration.effectiveCount || 0).toFixed(1)} · ventana ${calibration.windowLimit} · vida media ${calibration.halfLifeDays} días</div>`
+                                : `<div class="mt-1 text-[8px] text-slate-500">Platt Área 1 aún no validado (${calibration.count || 0}/15; requiere 5 ganadas y 5 perdidas). Se conserva probabilidad original: ${pct(calibration.rawProbability)}.</div>`;
                             return `<div class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
                             <div class="flex items-center justify-between gap-1"><b class="text-[9px] ${color}">${label}</b><strong class="text-sm ${color} tabular-nums">${pct(prob)}</strong></div>
                             ${calibrationLine}
