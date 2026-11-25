@@ -5529,8 +5529,12 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
         function toggleKellyMonteCarloModal(show, fromBetModal = false) {
             const modal = document.getElementById('kellyMonteCarloModal');
             const banner = document.getElementById('kmcFromBetBanner');
+            if (!modal) return;
             if (show) {
                 kmcOpenedFromBetModal = !!fromBetModal;
+                // Si el formulario de apuesta fue abierto desde el seguimiento de Área 1,
+                // el MC debe quedar por encima del formulario y de la ventana contenedora.
+                modal.style.zIndex = fromBetModal ? '120' : '';
                 if (!fromBetModal) {
                     const bankInput = document.getElementById('kmcInitialBankroll');
                     if (bankInput) bankInput.value = Math.round(getActiveAvailableBankroll());
@@ -5539,7 +5543,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 modal.classList.remove('hidden');
                 updateKmcTheoreticalKelly();
                 requestAnimationFrame(() => { if (!kmcCurrentSimulationResults || kmcOpenedFromBetModal) runKellyMonteCarloSimulation(); else renderKmcActiveChart(); });
-            } else { modal.classList.add('hidden'); kmcOpenedFromBetModal = false; }
+            } else { modal.classList.add('hidden'); modal.style.zIndex = ''; kmcOpenedFromBetModal = false; }
         }
 
         function openKellyMonteCarloModal() {
@@ -6312,7 +6316,21 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 }, 180);
             } else m.classList.add('hidden');
         }
-        function toggleLogBetModal(show) { const m = document.getElementById('logBetModal'); if (show) m.classList.remove('hidden'); else m.classList.add('hidden'); }
+        function toggleLogBetModal(show) {
+            const m = document.getElementById('logBetModal');
+            if (!m) return;
+            if (show) {
+                // El preselector vive dentro de modelTrackingModal (z-index 95).
+                // Elevar temporalmente el formulario permite abrirlo encima sin cerrar el padre.
+                const trackingModal = document.getElementById('modelTrackingModal');
+                const trackingIsOpen = !!trackingModal && !trackingModal.classList.contains('hidden');
+                m.style.zIndex = trackingIsOpen ? '110' : '';
+                m.classList.remove('hidden');
+            } else {
+                m.classList.add('hidden');
+                m.style.zIndex = '';
+            }
+        }
 
         function toggleLeagueModal(show) {
             const modal = document.getElementById('leagueModal');
