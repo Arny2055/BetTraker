@@ -8328,47 +8328,61 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (leaguesEl) leaguesEl.textContent = '0';
                 return;
             }
+
+            // Filtro de visualización: solo selecciones con Platt validado y ajuste absoluto <= 5 pp.
+            // No modifica registros, probabilidades, estados ni datos guardados.
+            const A1_PLATT_MAX_ADJUSTMENT = 0.05;
             const pending = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
                 .filter(record => record && record.status !== 'SETTLED' && record.inputs &&
                     ['homeGF','homeGA','awayGF','awayGA'].every(key => Number.isFinite(Number(record.inputs[key]))))
                 .sort((a,b) => String(a.matchDate || '').localeCompare(String(b.matchDate || '')) ||
                     String(a.kickoff || '').localeCompare(String(b.kickoff || '')));
+
+            const eligibleRecords = pending.map(record => {
+                const markets = getA1PendingGeometricMarkets(record);
+                if (!markets) return null;
+                const eligibleKeys = ['over25','under25','bttsYes','bttsNo'].filter(key => {
+                    const calibration = markets.calibration && markets.calibration[key];
+                    if (!calibration || calibration.active !== true) return false;
+                    const adjustment = Number(calibration.calibratedProbability) - Number(calibration.rawProbability);
+                    return Number.isFinite(adjustment) && Math.abs(adjustment) <= A1_PLATT_MAX_ADJUSTMENT + 1e-12;
+                });
+                return eligibleKeys.length ? { record, markets, eligibleKeys } : null;
+            }).filter(Boolean);
+
             const groups = new Map();
-            pending.forEach(record => {
-                const league = String(record.league || 'Sin competición');
+            eligibleRecords.forEach(item => {
+                const league = String(item.record.league || 'Sin competición');
                 if (!groups.has(league)) groups.set(league, []);
-                groups.get(league).push(record);
+                groups.get(league).push(item);
             });
-            if (countEl) countEl.textContent = String(pending.length);
+            if (countEl) countEl.textContent = String(eligibleRecords.length);
             if (leaguesEl) leaguesEl.textContent = String(groups.size);
-            if (notice) notice.textContent = pending.length
-                ? `${pending.length} partidos pendientes agrupados en ${groups.size} ligas. Cada partido muestra los cuatro lados de los mercados solicitados.`
-                : 'No hay partidos pendientes con inputs GF/GA válidos en la memoria disponible de Área 1.';
-            if (!pending.length) {
-                root.innerHTML = '<p class="text-[9px] text-slate-500 text-center py-4">No hay partidos pendientes para registrar.</p>';
+            if (notice) notice.textContent = eligibleRecords.length
+                ? `${eligibleRecords.length} partidos en ${groups.size} ligas cumplen Platt validado con ajuste entre −5.0 y +5.0 pp. Solo se muestran los mercados que pasan el filtro.`
+                : 'No hay partidos pendientes con Platt validado y al menos un mercado cuyo ajuste esté entre −5.0 y +5.0 pp.';
+            if (!eligibleRecords.length) {
+                root.innerHTML = '<p class="text-[9px] text-slate-500 text-center py-4">No hay partidos que cumplan el filtro Platt ±5.0 pp. Los partidos sin muestra validada o con ajustes fuera del umbral permanecen guardados, pero no se muestran aquí.</p>';
                 return;
             }
             const esc = value => escapeModelPredictionHtml(String(value ?? ''));
             const pct = value => `${(value * 100).toFixed(1)}%`;
             const signedPp = value => `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)} pp`;
-            root.innerHTML = Array.from(groups.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([league, records], index) => `
+            root.innerHTML = Array.from(groups.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([league, items], index) => `
                 <details class="rounded-xl border border-slate-700/80 bg-slate-950/45 overflow-hidden" ${index===0?'open':''}>
                     <summary class="cursor-pointer list-none flex items-center justify-between gap-2 px-3 py-3 bg-slate-900/80">
-                        <span class="min-w-0"><b class="block text-[11px] text-white truncate">${esc(league)}</b><small class="text-[8px] text-slate-400">${records.length} partido(s) pendiente(s)</small></span>
+                        <span class="min-w-0"><b class="block text-[11px] text-white truncate">${esc(league)}</b><small class="text-[8px] text-slate-400">${items.length} partido(s) que cumplen ±5.0 pp</small></span>
                         <span class="text-[9px] font-black text-amber-200 border border-amber-500/30 bg-amber-500/10 rounded-lg px-2 py-1">VER PARTIDOS <i class="fa-solid fa-chevron-down ml-1"></i></span>
                     </summary>
-                    <div class="p-2 space-y-2">${records.map(record => {
-                        const m = getA1PendingGeometricMarkets(record);
-                        if (!m) return '';
+                    <div class="p-2 space-y-2">${items.map(({record, markets:m, eligibleKeys}) => {
                         const matchId = esc(record.id);
                         const matchName = `${esc(record.home || 'Local')} vs ${esc(record.away || 'Visitante')}`;
                         const dateLine = `${esc(record.matchDate || 'Fecha no disponible')}${record.kickoff ? ' · '+esc(record.kickoff) : ''}`;
                         const card = (key,label,prob,color) => {
                             const fairOdds = Number(prob) > 0 ? (1 / Number(prob)) : null;
                             const calibration = m.calibration[key] || {};
-                            const calibrationLine = calibration.active
-                                ? `<div class="mt-1 text-[8px] text-cyan-200">Platt Área 1: ${pct(calibration.calibratedProbability)} · Original: ${pct(calibration.rawProbability)} · ${signedPp(calibration.calibratedProbability-calibration.rawProbability)} ajuste</div><div class="text-[7px] text-cyan-300/70">Fuente: Área 1 · ${calibration.count}/${calibration.allCount} recientes · N efectivo ${Number(calibration.effectiveCount || 0).toFixed(1)} · ventana ${calibration.windowLimit} · vida media ${calibration.halfLifeDays} días</div>`
-                                : `<div class="mt-1 text-[8px] text-slate-500">Platt Área 1 aún no validado (${calibration.count || 0}/15; requiere 5 ganadas y 5 perdidas). Se conserva probabilidad original: ${pct(calibration.rawProbability)}.</div>`;
+                            const adjustment = Number(calibration.calibratedProbability) - Number(calibration.rawProbability);
+                            const calibrationLine = `<div class="mt-1 text-[8px] text-cyan-200">Platt Área 1: ${pct(calibration.calibratedProbability)} · Original: ${pct(calibration.rawProbability)} · ${signedPp(adjustment)} ajuste</div><div class="text-[7px] text-cyan-300/70">Fuente: Área 1 · ${calibration.count}/${calibration.allCount} recientes · N efectivo ${Number(calibration.effectiveCount || 0).toFixed(1)} · ventana ${calibration.windowLimit} · vida media ${calibration.halfLifeDays} días</div>`;
                             return `<div class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
                             <div class="flex items-center justify-between gap-1"><b class="text-[9px] ${color}">${label}</b><strong class="text-sm ${color} tabular-nums">${pct(prob)}</strong></div>
                             ${calibrationLine}
@@ -8379,14 +8393,15 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                             </div>
                         </div>`;
                         };
+                        const marketCards = [
+                            ['over25','OVER 2.5',m.over25,'text-emerald-300'],
+                            ['under25','UNDER 2.5',m.under25,'text-slate-200'],
+                            ['bttsYes','BTTS SÍ',m.bttsYes,'text-amber-200'],
+                            ['bttsNo','BTTS NO',m.bttsNo,'text-slate-200']
+                        ].filter(([key]) => eligibleKeys.includes(key)).map(([key,label,prob,color]) => card(key,label,prob,color)).join('');
                         return `<article class="rounded-xl border border-slate-700/70 bg-slate-950/55 p-2.5">
                             <div class="flex items-start justify-between gap-2 mb-2"><div class="min-w-0"><b class="block text-[10px] text-white break-words">${matchName}</b><span class="text-[8px] text-slate-500">${dateLine}</span></div><span class="shrink-0 text-[8px] font-black text-cyan-200">λ ${m.lambdaHome.toFixed(2)} / ${m.lambdaAway.toFixed(2)}</span></div>
-                            <div class="grid grid-cols-2 gap-2">
-                                ${card('over25','OVER 2.5',m.over25,'text-emerald-300')}
-                                ${card('under25','UNDER 2.5',m.under25,'text-slate-200')}
-                                ${card('bttsYes','BTTS SÍ',m.bttsYes,'text-amber-200')}
-                                ${card('bttsNo','BTTS NO',m.bttsNo,'text-slate-200')}
-                            </div>
+                            <div class="grid grid-cols-2 gap-2">${marketCards}</div>
                         </article>`;
                     }).join('')}</div>
                 </details>
