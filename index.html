@@ -435,13 +435,13 @@
                     <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">3</span> Pronósticos
                 </button>
                 <button onclick="openModelTrackingWindow('modelPredictionStatsPanel')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-cyan-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-chart-line"></i> Rendimiento Poisson</button>
-                <button onclick="scrollToSection('sec-match')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="scrollToSection('sec-match')" style="display:none" aria-hidden="true" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-400 text-[9px] font-black flex items-center justify-center">2</span> Partido
                 </button>
-                <button onclick="scrollToSection('sec-results')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="scrollToSection('sec-results')" style="display:none" aria-hidden="true" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">4</span> Mercados
                 </button>
-                <button onclick="scrollToSection('sec-advanced')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="scrollToSection('sec-advanced')" style="display:none" aria-hidden="true" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">5</span> Avanzado
                 </button>
                 <button onclick="scrollToSection('sec-parlay')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
@@ -576,7 +576,7 @@
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-trophy text-gold-400 text-xs"></i>
-                        <span class="text-xs font-black text-slate-200 uppercase tracking-wide">Liga Activa:</span>
+                        <span class="text-xs font-black text-slate-200 uppercase tracking-wide" style="display:none" aria-hidden="true">Liga Activa:</span>
                     </div>
                     <select id="activeLeagueSelect" onchange="onLeagueSelectChange()" class="bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1 text-xs font-extrabold text-emerald-400 focus:outline-none focus:border-emerald-500 max-w-[200px] truncate"></select>
                 </div>
@@ -607,7 +607,7 @@
                 <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-globe text-emerald-400 text-xs"></i>
-                        <h2 class="font-extrabold text-xs text-white">Análisis Global de Liga (Promedios GF)</h2>
+                        <h2 class="font-extrabold text-xs text-white" aria-label="Análisis Global de Liga (Promedios GF)"><span style="display:none" aria-hidden="true">Análisis Global de Liga (Promedios GF)</span></h2>
                     </div>
                     <span id="leagueAvgBadge" class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Promedios Reales</span>
                 </div>
