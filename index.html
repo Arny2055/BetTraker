@@ -435,13 +435,13 @@
                     <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">3</span> Pronósticos
                 </button>
                 <button onclick="openModelTrackingWindow('modelPredictionStatsPanel')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-cyan-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95"><i class="fa-solid fa-chart-line"></i> Rendimiento Poisson</button>
-                <button onclick="scrollToSection('sec-match')" style="display:none" aria-hidden="true" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="scrollToSection('sec-match')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-gold-500/20 border border-gold-500/40 text-gold-400 text-[9px] font-black flex items-center justify-center">2</span> Partido
                 </button>
-                <button onclick="scrollToSection('sec-results')" style="display:none" aria-hidden="true" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="scrollToSection('sec-results')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[9px] font-black flex items-center justify-center">4</span> Mercados
                 </button>
-                <button onclick="scrollToSection('sec-advanced')" style="display:none" aria-hidden="true" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
+                <button onclick="scrollToSection('sec-advanced')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
                     <span class="w-5 h-5 rounded-md bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[9px] font-black flex items-center justify-center">5</span> Avanzado
                 </button>
                 <button onclick="scrollToSection('sec-parlay')" class="shrink-0 px-2 py-1.5 rounded-lg text-[10px] font-black text-slate-300 hover:bg-slate-800 hover:text-white flex items-center gap-1 transition-all active:scale-95">
@@ -576,7 +576,7 @@
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-trophy text-gold-400 text-xs"></i>
-                        <span class="text-xs font-black text-slate-200 uppercase tracking-wide" style="display:none" aria-hidden="true">Liga Activa:</span>
+                        <span class="text-xs font-black text-slate-200 uppercase tracking-wide">Liga Activa:</span>
                     </div>
                     <select id="activeLeagueSelect" onchange="onLeagueSelectChange()" class="bg-inputBg border border-slate-700 rounded-xl px-2.5 py-1 text-xs font-extrabold text-emerald-400 focus:outline-none focus:border-emerald-500 max-w-[200px] truncate"></select>
                 </div>
@@ -607,7 +607,7 @@
                 <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-globe text-emerald-400 text-xs"></i>
-                        <h2 class="font-extrabold text-xs text-white" aria-label="Análisis Global de Liga (Promedios GF)"><span style="display:none" aria-hidden="true">Análisis Global de Liga (Promedios GF)</span></h2>
+                        <h2 class="font-extrabold text-xs text-white">Análisis Global de Liga (Promedios GF)</h2>
                     </div>
                     <span id="leagueAvgBadge" class="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/20">Promedios Reales</span>
                 </div>
@@ -8408,158 +8408,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             `).join('');
         }
 
-        // ============================================================
-        // SELECTOR DIARIO A1 · máximo 15 partidos distintos.
-        // Evalúa en orden cronológico: cada observación de prueba se calibra
-        // únicamente con observaciones anteriores. No altera los modelos.
-        // ============================================================
-        function evaluateA1SelectionWalkForward(rows) {
-            const ordered = (Array.isArray(rows) ? rows : []).slice().sort((a, b) =>
-                getModelPredictionCalibrationTimestamp(a) - getModelPredictionCalibrationTimestamp(b));
-            const test = [];
-            for (let index = 15; index < ordered.length; index++) {
-                const training = ordered.slice(0, index);
-                const model = fitPoissonMarketModel(training);
-                if (!model || !model.ready) continue;
-                const trainingWeight = training.reduce((sum, row) => sum + (Number(row.calibrationWeight) > 0 ? Number(row.calibrationWeight) : 1), 0);
-                const trainingWins = training.reduce((sum, row) => sum + (row.status === 'WON' ? (Number(row.calibrationWeight) > 0 ? Number(row.calibrationWeight) : 1) : 0), 0);
-                const baseline = trainingWeight > 0 ? trainingWins / trainingWeight : 0.5;
-                const raw = Math.max(0.000001, Math.min(0.999999, Number(ordered[index].prob) / 100));
-                const calibrated = Math.max(0.000001, Math.min(0.999999,
-                    poissonCalibrationSigmoid(model.a + model.b * poissonCalibrationLogit(raw))));
-                test.push({ raw, calibrated, baseline, outcome: ordered[index].status === 'WON' ? 1 : 0 });
-            }
-            const metrics = key => {
-                if (!test.length) return null;
-                const brier = test.reduce((sum, row) => sum + Math.pow(row[key] - row.outcome, 2), 0) / test.length;
-                const logLoss = test.reduce((sum, row) => {
-                    const probability = Math.max(0.000001, Math.min(0.999999, row[key]));
-                    return sum - (row.outcome ? Math.log(probability) : Math.log(1 - probability));
-                }, 0) / test.length;
-                return { brier, logLoss };
-            };
-            const raw = metrics('raw'), calibrated = metrics('calibrated'), baseline = metrics('baseline');
-            const better = (a, b) => !!(a && b && a.brier < b.brier && a.logLoss < b.logLoss);
-            return { count: test.length, raw, calibrated, baseline,
-                poissonBeatsBaseline: better(raw, baseline),
-                plattBeatsPoisson: better(calibrated, raw),
-                plattWorsens: !!(raw && calibrated && calibrated.brier > raw.brier && calibrated.logLoss > raw.logLoss) };
-        }
-
-        function renderA1DailyPriority() {
-            const root = document.getElementById('a1DailyPriorityResults');
-            if (!root) return;
-            if (!isArea1Admin()) {
-                root.innerHTML = '<p class="text-[9px] text-slate-500 py-2">La prioridad diaria está disponible en la vista del propietario de Área 1.</p>';
-                return;
-            }
-            const all = Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [];
-            const pending = all.filter(record => record && record.status !== 'SETTLED');
-            const pendingCount = document.getElementById('a1DailyPendingCount');
-            if (pendingCount) pendingCount.textContent = String(pending.length);
-            const definitions = [
-                { key:'homeWin', market:'Resultado Final (1X2)', selection:'Local', oddsKey:'homeWin', label:'1X2 · Local', is1x2:true },
-                { key:'draw', market:'Resultado Final (1X2)', selection:'Empate (X)', oddsKey:'draw', label:'1X2 · Empate', is1x2:true },
-                { key:'awayWin', market:'Resultado Final (1X2)', selection:'Visitante', oddsKey:'awayWin', label:'1X2 · Visitante', is1x2:true },
-                { key:'over25', market:'Over / Under Goles', selection:'Over 2.5', oddsKey:'over25', label:'Over 2.5' },
-                { key:'under25', market:'Over / Under Goles', selection:'Under 2.5', oddsKey:'under25', label:'Under 2.5' },
-                { key:'bttsYes', market:'Ambos Anotan', selection:'Ambos Anotan Si', oddsKey:'bttsYes', label:'BTTS Sí' },
-                { key:'bttsNo', market:'Ambos Anotan', selection:'Ambos Anotan No', oddsKey:'bttsNo', label:'BTTS No' }
-            ];
-            const candidates = [];
-            let missingHistory = 0, insufficientTest = 0, mixedEvidence = 0;
-            pending.forEach(record => {
-                const markets = getA1PendingGeometricMarkets(record);
-                const options = [];
-                definitions.forEach(def => {
-                    let history, rawProbability, calibration;
-                    if (def.is1x2) {
-                        const probabilities = (record.probabilities && record.probabilities.original && typeof record.probabilities.original === 'object')
-                            ? record.probabilities.original : (record.probabilities || {});
-                        rawProbability = Number(probabilities[def.key]);
-                        history = buildModelPreselectorSelectionHistory(record.league, def.market, def.selection);
-                    } else {
-                        if (!markets) return;
-                        history = buildA1GeometricPendingSelectionHistory(record.league, def.market, def.selection);
-                        const source = markets.calibration?.[def.key];
-                        rawProbability = Number(source?.rawProbability);
-                    }
-                    const validHistory = history && history.count >= 15 && history.wins >= 5 && history.losses >= 5 &&
-                        !!history.model?.ready && Number.isFinite(history.brier) && Number.isFinite(history.gap) &&
-                        Number.isFinite(rawProbability) && rawProbability > 0 && rawProbability < 1;
-                    if (!validHistory) { missingHistory++; return; }
-                    const calibratedProbability = Math.max(0.000001, Math.min(0.999999,
-                        poissonCalibrationSigmoid(history.model.a + history.model.b * poissonCalibrationLogit(rawProbability))));
-                    calibration = { rawProbability, calibratedProbability };
-                    const walk = evaluateA1SelectionWalkForward(history.rows);
-                    if (walk.count < 10) { insufficientTest++; return; }
-                    const qualifies = walk.poissonBeatsBaseline || walk.plattBeatsPoisson;
-                    if (!qualifies) { mixedEvidence++; return; }
-                    const sampleTier = history.count >= 200 ? 4 : history.count >= 100 ? 3 : history.count >= 50 ? 2 : 1;
-                    // Si Platt no mejora ambos indicadores fuera de muestra,
-                    // la probabilidad priorizada vuelve a ser la original de Poisson.
-                    const priorityProbability = walk.plattBeatsPoisson ? calibratedProbability : rawProbability;
-                    const odds = Number(record.odds?.[def.oddsKey]);
-                    const hasOdds = Number.isFinite(odds) && odds > 1;
-                    const ev = hasOdds ? priorityProbability * odds - 1 : null;
-                    options.push({ record, def, calibration, history, walk, sampleTier, priorityProbability, odds:hasOdds?odds:null, ev });
-                });
-                if (!options.length) return;
-                // Una sola opción por partido: primero evidencia fuera de muestra,
-                // después tamaño de muestra y métricas; la probabilidad alta no manda.
-                options.sort((a,b) =>
-                    Number(b.walk.plattBeatsPoisson) - Number(a.walk.plattBeatsPoisson) ||
-                    Number(b.walk.poissonBeatsBaseline) - Number(a.walk.poissonBeatsBaseline) ||
-                    b.sampleTier - a.sampleTier ||
-                    ((b.walk.baseline.brier - (b.walk.plattBeatsPoisson ? b.walk.calibrated.brier : b.walk.raw.brier)) -
-                     (a.walk.baseline.brier - (a.walk.plattBeatsPoisson ? a.walk.calibrated.brier : a.walk.raw.brier))) ||
-                    Math.abs(a.history.gap ?? 1) - Math.abs(b.history.gap ?? 1) ||
-                    (b.ev ?? -Infinity) - (a.ev ?? -Infinity) ||
-                    b.calibration.calibratedProbability - a.calibration.calibratedProbability
-                );
-                candidates.push(options[0]);
-            });
-            candidates.sort((a,b) =>
-                Number(b.walk.plattBeatsPoisson) - Number(a.walk.plattBeatsPoisson) ||
-                Number(b.walk.poissonBeatsBaseline) - Number(a.walk.poissonBeatsBaseline) ||
-                b.sampleTier - a.sampleTier ||
-                ((b.walk.baseline.brier - (b.walk.plattBeatsPoisson ? b.walk.calibrated.brier : b.walk.raw.brier)) -
-                 (a.walk.baseline.brier - (a.walk.plattBeatsPoisson ? a.walk.calibrated.brier : a.walk.raw.brier))) ||
-                Math.abs(a.history.gap ?? 1) - Math.abs(b.history.gap ?? 1) ||
-                (b.ev ?? -Infinity) - (a.ev ?? -Infinity) ||
-                String(a.record.matchDate || '').localeCompare(String(b.record.matchDate || ''))
-            );
-            const selected = candidates.slice(0, 15);
-            const candidateCount = document.getElementById('a1DailyCandidateCount');
-            if (candidateCount) candidateCount.textContent = String(selected.length);
-            if (!selected.length) {
-                root.innerHTML = `<div class="rounded-xl border border-amber-500/20 bg-amber-950/10 p-3 text-[9px] text-amber-100/80">Ningún partido alcanzó los criterios de evidencia fuera de muestra. Pendientes revisados: ${pending.length}. Historial insuficiente: ${missingHistory}. Prueba con menos de 10 casos: ${insufficientTest}. Evidencia mixta o sin mejora verificable: ${mixedEvidence}. No se fuerza una selección.</div>`;
-                return;
-            }
-            const pct = value => `${(Number(value) * 100).toFixed(1)}%`;
-            const esc = value => escapeModelPredictionHtml(String(value ?? ''));
-            root.innerHTML = selected.map((item,index) => {
-                const r=item.record, c=item.calibration, h=item.history, w=item.walk;
-                const tier = h.count >= 200 ? 'Muestra amplia' : h.count >= 100 ? 'Muestra sólida' : h.count >= 50 ? 'Evidencia preliminar' : 'Experimental';
-                const evidence = w.plattBeatsPoisson ? 'Platt mejora a Poisson fuera de muestra' : 'Poisson supera la referencia histórica';
-                const delta = (c.calibratedProbability - c.rawProbability) * 100;
-                const deltaText = `${delta > 0 ? '+' : ''}${delta.toFixed(1)} pp`;
-                const evText = item.ev === null ? 'Sin cuota: EV no calculable' : `EV ${(item.ev*100).toFixed(1)}% · cuota ${item.odds.toFixed(2)}`;
-                const priorityLabel = w.plattBeatsPoisson ? 'Probabilidad priorizada (Platt)' : 'Probabilidad priorizada (Poisson original)';
-                const brierText = `Brier prueba · Poisson ${w.raw.brier.toFixed(3)} · Platt ${w.calibrated.brier.toFixed(3)} · Referencia ${w.baseline.brier.toFixed(3)}`;
-                const logText = `Log Loss prueba · Poisson ${w.raw.logLoss.toFixed(3)} · Platt ${w.calibrated.logLoss.toFixed(3)} · Referencia ${w.baseline.logLoss.toFixed(3)}`;
-                return `<article class="rounded-xl border border-emerald-500/20 bg-slate-950/65 p-3 space-y-1.5">
-                    <div class="flex items-start justify-between gap-2"><div class="min-w-0"><div class="text-[8px] font-black uppercase tracking-wider text-emerald-300">#${index+1} · ${esc(r.league||'Sin liga')}</div><div class="text-[11px] font-black text-white">${esc(r.home)} <span class="text-slate-500">vs</span> ${esc(r.away)}</div><div class="text-[8px] text-slate-400">${esc(r.matchDate||'Fecha no indicada')}${r.kickoff?' · '+esc(r.kickoff):''} · ${esc(item.def.label)}</div></div><span class="shrink-0 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2 py-1 text-[7px] font-black text-emerald-200">${tier}</span></div>
-                    <div class="flex flex-wrap gap-x-3 gap-y-1 text-[8px] text-slate-200"><span>Poisson ${pct(c.rawProbability)}</span><span>Platt ${pct(c.calibratedProbability)}</span><span>Ajuste ${deltaText}</span><span>Historial ${h.count}</span><span>Prueba ${w.count}</span></div>
-                    <div class="text-[8px] font-bold text-emerald-200">${priorityLabel}: ${pct(item.priorityProbability)}</div>
-                    <div class="text-[8px] text-cyan-200">${evidence}</div><div class="text-[7px] text-slate-400">${brierText}</div><div class="text-[7px] text-slate-500">${logText}</div>
-                    <div class="text-[8px] ${item.ev !== null && item.ev > 0 ? 'text-emerald-300' : 'text-slate-400'}">${evText}</div>
-                </article>`;
-            }).join('');
-            const foot = document.getElementById('a1DailyPriorityFootnote');
-            if (foot) foot.textContent = `Mostrando ${selected.length} de ${candidates.length} partidos candidatos (máximo 15). Se revisaron ${pending.length} pendientes. No equivale a recomendación automática de apuesta; confirma cuota, alineaciones y contexto antes de decidir.`;
-        }
-
         function renderModelPreselector() {
             const panel = document.getElementById('modelPreselectorPanel');
             if (!panel) return;
@@ -8990,7 +8838,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const root=document.getElementById('modelPredictionLog'); if(!root)return;
             renderModelPredictionStats();
             renderModelPreselector();
-            renderA1DailyPriority();
             renderModelEloPanel();
             const pending=modelPredictionRecords.filter(r=>r.status!=='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
             const settled=modelPredictionRecords.filter(r=>r.status==='SETTLED').sort((a,b)=>String(b.analyzedAt).localeCompare(String(a.analyzedAt)));
@@ -10320,21 +10167,6 @@ document.addEventListener('keydown', function(event) {
             </div>
                 </div>
             </details>
-            <div id="a1DailyPriorityPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-emerald-500/30">
-                <div class="flex flex-wrap items-start justify-between gap-2">
-                    <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-ranking-star text-emerald-300"></i> BETAGS A1 · Prioridad diaria</h3>
-                    <p class="text-[9px] text-slate-400 mt-1">Filtro estadístico de partidos pendientes. Máximo 15 partidos distintos; puede mostrar menos o ninguno si no hay evidencia suficiente. No modifica pronósticos, probabilidades ni bitácoras.</p></div>
-                    <button type="button" onclick="renderA1DailyPriority()" class="shrink-0 text-[9px] font-black bg-emerald-500/10 border border-emerald-400/30 text-emerald-200 rounded-lg px-2.5 py-2"><i class="fa-solid fa-rotate mr-1"></i>RECALCULAR</button>
-                </div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">PENDIENTES</span><b id="a1DailyPendingCount" class="block text-lg text-white tabular-nums">0</b></div>
-                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">CANDIDATOS</span><b id="a1DailyCandidateCount" class="block text-lg text-emerald-300 tabular-nums">0</b></div>
-                    <div class="rounded-xl bg-slate-950/70 border border-slate-800 p-2 text-center"><span class="block text-[8px] text-slate-500 font-bold">LÍMITE</span><b class="block text-lg text-amber-300 tabular-nums">15</b></div>
-                </div>
-                <div class="rounded-xl border border-emerald-500/20 bg-emerald-950/10 p-2.5 text-[8px] leading-relaxed text-emerald-100/80">Criterio: liga + selección exacta, historial A1 liquidado y prueba cronológica fuera de muestra. Poisson se compara contra una referencia histórica; Platt se compara contra Poisson. Si la prueba no alcanza 10 casos o los resultados son mixtos, se informa y no se presenta como evidencia sólida. La cuota y el EV solo se muestran si existen cuotas guardadas.</div>
-                <div id="a1DailyPriorityResults" class="space-y-2"><p class="text-[9px] text-slate-500">Calculando candidatos de Área 1…</p></div>
-                <p id="a1DailyPriorityFootnote" class="text-[8px] text-slate-500">Muestras: 15–49 experimental · 50–99 preliminar · 100–199 sólida · 200+ amplia. Son niveles descriptivos, no garantías de rentabilidad.</p>
-            </div>
             <div id="modelPreselectorPanel" class="glass-card rounded-2xl p-3.5 space-y-3 border border-amber-500/30">
                 <div class="flex flex-wrap items-start justify-between gap-2">
                     <div class="min-w-0"><h3 class="text-sm font-black text-white flex items-center gap-2"><i class="fa-solid fa-filter-circle-dollar text-amber-300"></i> Preselector de partidos</h3>
