@@ -8189,14 +8189,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const home = Array.from({length:maxGoals + 1}, (_,k) => poisson(k,lambdaHome));
             const away = Array.from({length:maxGoals + 1}, (_,k) => poisson(k,lambdaAway));
             let total = 0, over = 0, bttsYes = 0;
-            let homeWin = 0, draw = 0, awayWin = 0;
             for (let h = 0; h <= maxGoals; h++) {
                 for (let a = 0; a <= maxGoals; a++) {
                     const p = home[h] * away[a];
                     total += p;
-                    if (h > a) homeWin += p;
-                    else if (h === a) draw += p;
-                    else awayWin += p;
                     if (h + a >= 3) over += p;
                     if (h > 0 && a > 0) bttsYes += p;
                 }
@@ -8206,7 +8202,6 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const pBtts = Math.max(0, Math.min(1, bttsYes / total));
             return {
                 lambdaHome, lambdaAway,
-                homeWin:homeWin/total, draw:draw/total, awayWin:awayWin/total,
                 over25:pOver, under25:1-pOver,
                 bttsYes:pBtts, bttsNo:1-pBtts
             };
@@ -8437,61 +8432,30 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         const matchId = esc(record.id);
                         const matchName = `${esc(record.home || 'Local')} vs ${esc(record.away || 'Visitante')}`;
                         const dateLine = `${esc(record.matchDate || 'Fecha no disponible')}${record.kickoff ? ' · '+esc(record.kickoff) : ''}`;
-                        const tableMarkets = [
-                            { key:'homeWin', label:'1', prob:m.homeWin, color:'text-emerald-300', visible:true },
-                            { key:'draw', label:'X', prob:m.draw, color:'text-slate-200', visible:true },
-                            { key:'awayWin', label:'2', prob:m.awayWin, color:'text-rose-300', visible:true },
-                            { key:'over25', label:'Over 2.5', prob:m.over25, color:'text-emerald-300', visible:eligibleKeys.includes('over25') },
-                            { key:'under25', label:'Under 2.5', prob:m.under25, color:'text-slate-200', visible:eligibleKeys.includes('under25') },
-                            { key:'bttsYes', label:'BTTS Yes', prob:m.bttsYes, color:'text-amber-200', visible:eligibleKeys.includes('bttsYes') },
-                            { key:'bttsNo', label:'BTTS No', prob:m.bttsNo, color:'text-slate-200', visible:eligibleKeys.includes('bttsNo') }
-                        ];
-                        const probabilityCells = tableMarkets.map(item =>
-                            `<td class="px-2 py-2 text-center font-black tabular-nums ${item.color}">${item.visible ? pct(item.prob) : '—'}</td>`
-                        ).join('');
-                        const fairOddsCells = tableMarkets.map(item => {
-                            const fairOdds = Number(item.prob) > 0 ? 1 / Number(item.prob) : null;
-                            return `<td class="px-2 py-2 text-center font-black tabular-nums text-cyan-300">${item.visible && fairOdds !== null && Number.isFinite(fairOdds) ? fairOdds.toFixed(2) : '—'}</td>`;
-                        }).join('');
-                        const calibrationDetails = eligibleKeys.map(key => {
+                        const card = (key,label,prob,color) => {
+                            const fairOdds = Number(prob) > 0 ? (1 / Number(prob)) : null;
                             const calibration = m.calibration[key] || {};
-                            const labels = { over25:'Over 2.5', under25:'Under 2.5', bttsYes:'BTTS Yes', bttsNo:'BTTS No' };
                             const adjustment = Number(calibration.calibratedProbability) - Number(calibration.rawProbability);
-                            return `<div class="rounded-md border border-cyan-500/15 bg-cyan-950/10 px-2 py-1.5">
-                                <b class="text-[8px] text-cyan-200">${labels[key]}</b>
-                                <span class="block text-[8px] text-cyan-200">Platt Área 1: ${pct(calibration.calibratedProbability)} · Original: ${pct(calibration.rawProbability)} · ${signedPp(adjustment)} ajuste</span>
-                                <span class="block text-[7px] text-cyan-300/70">Fuente: Área 1 · ${calibration.count}/${calibration.allCount} recientes · N efectivo ${Number(calibration.effectiveCount || 0).toFixed(1)} · ventana ${calibration.windowLimit} · vida media ${calibration.halfLifeDays} días</span>
-                            </div>`;
-                        }).join('');
-                        const marketActions = [
-                            ['over25','OVER 2.5','text-emerald-200','border-emerald-500/35 bg-emerald-500/10'],
-                            ['under25','UNDER 2.5','text-slate-200','border-slate-600 bg-slate-800/70'],
-                            ['bttsYes','BTTS YES','text-amber-200','border-amber-500/35 bg-amber-500/10'],
-                            ['bttsNo','BTTS NO','text-slate-200','border-slate-600 bg-slate-800/70']
-                        ].filter(([key]) => eligibleKeys.includes(key)).map(([key,label,textColor,borderColor]) =>
-                            `<div class="flex items-center justify-between gap-2 rounded-lg border ${borderColor} px-2 py-1.5">
-                                <b class="text-[8px] ${textColor}">${label}</b>
-                                <div class="flex gap-1">
-                                    <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',false)" class="rounded-md border border-emerald-500/35 bg-emerald-500/10 text-emerald-200 text-[8px] font-black px-2 py-1.5"><i class="fa-solid fa-plus mr-1"></i>SENCILLA</button>
-                                    <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',true)" class="rounded-md border border-amber-500/35 bg-amber-500/10 text-amber-200 text-[8px] font-black px-2 py-1.5"><i class="fa-solid fa-layer-group mr-1"></i>PARLAY</button>
-                                </div>
-                            </div>`
-                        ).join('');
+                            const calibrationLine = `<div class="mt-1 text-[8px] text-cyan-200">Platt Área 1: ${pct(calibration.calibratedProbability)} · Original: ${pct(calibration.rawProbability)} · ${signedPp(adjustment)} ajuste</div><div class="text-[7px] text-cyan-300/70">Fuente: Área 1 · ${calibration.count}/${calibration.allCount} recientes · N efectivo ${Number(calibration.effectiveCount || 0).toFixed(1)} · ventana ${calibration.windowLimit} · vida media ${calibration.halfLifeDays} días</div>`;
+                            return `<div class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
+                            <div class="flex items-center justify-between gap-1"><b class="text-[9px] ${color}">${label}</b><strong class="text-sm ${color} tabular-nums">${pct(prob)}</strong></div>
+                            ${calibrationLine}
+                            <div class="flex items-center justify-between gap-1 mt-1 rounded-md bg-slate-950/70 border border-slate-800/80 px-2 py-1"><span class="text-[8px] uppercase tracking-wide text-slate-500 font-bold">Cuota justa</span><strong class="text-[11px] text-cyan-300 font-black tabular-nums">${fairOdds !== null && Number.isFinite(fairOdds) ? fairOdds.toFixed(2) : '—'}</strong></div>
+                            <div class="grid grid-cols-2 gap-1 mt-2">
+                                <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',false)" class="rounded-md border border-emerald-500/35 bg-emerald-500/10 text-emerald-200 text-[8px] font-black py-2"><i class="fa-solid fa-plus mr-1"></i>SENCILLA</button>
+                                <button type="button" onclick="registerA1PendingMarketBet('${matchId}','${key}',true)" class="rounded-md border border-amber-500/35 bg-amber-500/10 text-amber-200 text-[8px] font-black py-2"><i class="fa-solid fa-layer-group mr-1"></i>PARLAY</button>
+                            </div>
+                        </div>`;
+                        };
+                        const marketCards = [
+                            ['over25','OVER 2.5',m.over25,'text-emerald-300'],
+                            ['under25','UNDER 2.5',m.under25,'text-slate-200'],
+                            ['bttsYes','BTTS SÍ',m.bttsYes,'text-amber-200'],
+                            ['bttsNo','BTTS NO',m.bttsNo,'text-slate-200']
+                        ].filter(([key]) => eligibleKeys.includes(key)).map(([key,label,prob,color]) => card(key,label,prob,color)).join('');
                         return `<article class="rounded-xl border border-slate-700/70 bg-slate-950/55 p-2.5">
                             <div class="flex items-start justify-between gap-2 mb-2"><div class="min-w-0"><b class="block text-[10px] text-white break-words">${matchName}</b><span class="text-[8px] text-slate-500">${dateLine}</span></div><span class="shrink-0 text-[8px] font-black text-cyan-200">λ ${m.lambdaHome.toFixed(2)} / ${m.lambdaAway.toFixed(2)}</span></div>
-                            <div class="overflow-x-auto rounded-lg border border-slate-700/80">
-                                <table class="w-full min-w-[570px] text-[8px] border-collapse">
-                                    <thead class="bg-slate-900">
-                                        <tr><th class="px-2 py-2 text-left text-slate-400 uppercase tracking-wide">Mercado</th>${tableMarkets.map(item => `<th class="px-2 py-2 text-center ${item.color}">${item.label}</th>`).join('')}</tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="border-t border-slate-700/70 bg-slate-900/40"><th class="px-2 py-2 text-left text-slate-300 whitespace-nowrap">Probabilidad</th>${probabilityCells}</tr>
-                                        <tr class="border-t border-slate-700/70"><th class="px-2 py-2 text-left text-slate-300 whitespace-nowrap">Cuota justa</th>${fairOddsCells}</tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-2 grid grid-cols-1 gap-1">${calibrationDetails}</div>
-                            <div class="mt-2 space-y-1">${marketActions}</div>
+                            <div class="grid grid-cols-2 gap-2">${marketCards}</div>
                         </article>`;
                     }).join('')}</div>
                 </details>
