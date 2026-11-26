@@ -374,13 +374,6 @@
 }
 </style>
 
-
-    <style id="a1-pending-only-visibility">
-      /* Vista simplificada: oculta visualmente A2 sin eliminar su HTML, JS ni datos. */
-      #quickNav, #headerA2Actions, #a2OverviewBanner, #a2Footer { display: none !important; }
-      .iphone-frame > section:not(#sec-a1-pending-markets) { display: none !important; }
-      /* El encabezado conserva únicamente la identidad de BETAGS. */
-    </style>
 </head>
 <body class="min-h-screen antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col justify-between">
 
@@ -398,7 +391,7 @@
                     <p class="text-[9px] font-bold text-emerald-400 tracking-wider uppercase">Predictor & Bet Tracker</p>
                 </div>
             </div>
-            <div id="headerA2Actions" class="flex items-center gap-1.5 flex-wrap justify-end">
+            <div class="flex items-center gap-1.5 flex-wrap justify-end">
                 <a href="prepartido.html" class="bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-200 text-xs px-2.5 py-1.5 rounded-xl font-black flex items-center gap-1 transition-all active:scale-95 shadow-lg shadow-cyan-950/20" title="Abrir tablero de partidos prepartido">
                     <i class="fa-solid fa-list-check"></i> PREPARTIDO
                 </a>
@@ -461,7 +454,7 @@
             </div>
         </nav>
 
-        <div id="a2OverviewBanner" class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-3 py-2 flex items-center gap-2" style="grid-column:1 / -1;"><i class="fa-solid fa-bullseye text-emerald-300"></i><div><div class="text-[10px] font-black text-emerald-200 uppercase tracking-wider">Área 2 · Análisis para apuestas reales</div><div class="text-[9px] text-slate-400">Configuración, partido, mercados y herramientas de selección. La autocalibración usa exclusivamente apuestas reales liquidadas.</div></div></div>
+        <div class="rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-3 py-2 flex items-center gap-2" style="grid-column:1 / -1;"><i class="fa-solid fa-bullseye text-emerald-300"></i><div><div class="text-[10px] font-black text-emerald-200 uppercase tracking-wider">Área 2 · Análisis para apuestas reales</div><div class="text-[9px] text-slate-400">Configuración, partido, mercados y herramientas de selección. La autocalibración usa exclusivamente apuestas reales liquidadas.</div></div></div>
 
         <!-- ÁREA 1 → BITÁCORA: módulo independiente; no modifica ni liquida pronósticos -->
         <section id="sec-a1-pending-markets" class="space-y-3.5 scroll-mt-28">
@@ -1018,7 +1011,7 @@
             </section>
         </section>
 
-        <footer id="a2Footer" class="text-center py-2 text-slate-500 text-[10px] space-y-0.5">
+        <footer class="text-center py-2 text-slate-500 text-[10px] space-y-0.5">
             <p class="font-bold text-slate-400">Poisson VIP Pro - Modelador & Bet Tracker</p>
             <p>Cuotas justas calculadas sin margen comercial.</p>
         </footer>
