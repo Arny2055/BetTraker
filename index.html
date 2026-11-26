@@ -163,7 +163,37 @@
         .bet-actions-popup .menu-delete { color:#fda4af; }
         @media (max-width:768px) { .bet-actions-cell { width:44px !important; min-width:44px !important; padding:3px !important; } .bet-actions-trigger { width:34px; height:38px; } .bet-actions-popup { right:0; width:150px; } }
 
-    </style>
+    
+        /* Secciones principales plegables: el contenido y sus IDs permanecen intactos. */
+        .section-collapse { width:100%; min-width:0; }
+        .section-collapse-summary {
+            list-style:none; display:flex; align-items:center; justify-content:space-between;
+            gap:12px; min-height:46px; padding:11px 13px; cursor:pointer;
+            border:1px solid rgba(16,185,129,.28); border-radius:14px;
+            background:linear-gradient(110deg,rgba(15,23,42,.96),rgba(6,78,59,.20));
+            color:#e2e8f0; font-size:11px; font-weight:900; letter-spacing:.045em;
+            text-transform:uppercase; -webkit-tap-highlight-color:transparent;
+        }
+        .section-collapse-summary::-webkit-details-marker { display:none; }
+        .section-collapse-summary::marker { content:""; }
+        .section-collapse-summary:active { transform:scale(.995); }
+        .section-collapse-chevron { color:#34d399; transition:transform .2s ease; }
+        .section-collapse[open] > .section-collapse-summary {
+            border-color:rgba(16,185,129,.48); border-radius:14px 14px 10px 10px;
+            margin-bottom:10px; background:linear-gradient(110deg,rgba(15,23,42,.98),rgba(6,78,59,.30));
+        }
+        .section-collapse[open] > .section-collapse-summary .section-collapse-chevron { transform:rotate(180deg); }
+        #sec-setup > .section-collapse > summary + div,
+        #sec-league > .section-collapse > summary + div,
+        #sec-match > .section-collapse > summary + div,
+        #sec-results > .section-collapse > summary + div,
+        #sec-advanced > .section-collapse > summary + div,
+        #sec-parlay > .section-collapse > summary + div { display:none; }
+        .section-collapse > :not(summary) { min-width:0; }
+        @media (prefers-reduced-motion:reduce) {
+            .section-collapse-chevron { transition:none; }
+        }
+</style>
 
 <style id="poisson-premium-visuals">
 /* BETAGS VIP PRO — acabado visual del seguimiento independiente de Poisson.
@@ -483,6 +513,9 @@
         </section>
 
         <section id="sec-setup" class="space-y-3.5 scroll-mt-28">
+            <details class="section-collapse">
+                <summary class="section-collapse-summary"><span>1 · Configuración y Bankroll</span><i class="fa-solid fa-chevron-down section-collapse-chevron" aria-hidden="true"></i></summary>
+
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">1 · Configuración</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-emerald-500/30 to-transparent"></div>
@@ -595,9 +628,13 @@
                     </div>
                 </div>
             </section>
+        </details>
         </section>
 
         <section id="sec-league" class="space-y-3.5 scroll-mt-28">
+            <details class="section-collapse">
+                <summary class="section-collapse-summary"><span>2 · Liga · Baseline</span><i class="fa-solid fa-chevron-down section-collapse-chevron" aria-hidden="true"></i></summary>
+
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-blue-500/15 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">2 · Liga · Baseline</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-blue-500/30 to-transparent"></div>
@@ -657,9 +694,13 @@
                 </div>
                 <div id="leagueAvgTeamsInfo" class="text-[9px] text-slate-400 italic text-center">Selecciona una liga para ver los promedios globales.</div>
             </section>
+        </details>
         </section>
 
         <section id="sec-match" class="space-y-3.5 scroll-mt-28">
+            <details class="section-collapse">
+                <summary class="section-collapse-summary"><span>3 · Analizar Partido</span><i class="fa-solid fa-chevron-down section-collapse-chevron" aria-hidden="true"></i></summary>
+
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-gold-500/15 text-gold-300 border border-gold-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">3 · Analizar Partido</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-gold-500/30 to-transparent"></div>
@@ -777,9 +818,13 @@
                     <p class="text-[9px] text-slate-500 italic pt-1 border-t border-slate-800/50">El ancho del IC depende del número de partidos jugados por cada equipo. A más partidos, más confianza y más estrecho el rango. Si ingresas GF/GC manualmente sin seleccionar equipos, se asume n=10 por defecto.</p>
                 </div>
             </details>
+        </details>
         </section>
 
         <section id="sec-results" class="space-y-3.5 scroll-mt-28">
+            <details class="section-collapse">
+                <summary class="section-collapse-summary"><span>5 · Mercados y resultados</span><i class="fa-solid fa-chevron-down section-collapse-chevron" aria-hidden="true"></i></summary>
+
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">5 · Mercados</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-emerald-500/30 to-transparent"></div>
@@ -933,9 +978,13 @@
                     </div>
                 </div>
             </section>
+        </details>
         </section>
 
         <section id="sec-advanced" class="space-y-3.5 scroll-mt-28">
+            <details class="section-collapse">
+                <summary class="section-collapse-summary"><span>6 · Análisis Avanzado</span><i class="fa-solid fa-chevron-down section-collapse-chevron" aria-hidden="true"></i></summary>
+
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">6 · Análisis Avanzado</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-indigo-500/30 to-transparent"></div>
@@ -984,9 +1033,13 @@
                 </div>
                 <div class="h-44 w-full"><canvas id="goalsChart"></canvas></div>
             </section>
+        </details>
         </section>
 
         <section id="sec-parlay" class="space-y-3.5 scroll-mt-28">
+            <details class="section-collapse">
+                <summary class="section-collapse-summary"><span>7 · Constructor de Parlay</span><i class="fa-solid fa-chevron-down section-collapse-chevron" aria-hidden="true"></i></summary>
+
             <div class="flex items-center gap-2 px-1">
                 <span class="text-[9px] font-black bg-gold-500/15 text-gold-300 border border-gold-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">7 · Constructor de Parlay</span>
                 <div class="flex-1 h-px bg-gradient-to-r from-gold-500/30 to-transparent"></div>
@@ -1009,6 +1062,7 @@
                     <div><span class="block text-[8px] uppercase font-bold text-slate-400">Acción</span><button onclick="openLogParlayModal()" class="mt-0.5 w-full bg-gold-500 hover:bg-gold-600 text-slate-950 font-black text-[10px] py-1 rounded-lg transition-all shadow">Registrar Parlay</button></div>
                 </div>
             </section>
+        </details>
         </section>
 
         <footer class="text-center py-2 text-slate-500 text-[10px] space-y-0.5">
@@ -10101,6 +10155,9 @@ document.addEventListener('keydown', function(event) {
             </div>
             <div id="modelTrackingModalContent" class="overflow-y-auto overscroll-contain p-2 sm:p-4">
         <section id="sec-prediction-memory" class="poisson-premium space-y-3.5 scroll-mt-28" style="grid-column:1 / -1;">
+            <details class="section-collapse">
+                <summary class="section-collapse-summary"><span>Seguimiento y memoria de pronósticos Poisson</span><i class="fa-solid fa-chevron-down section-collapse-chevron" aria-hidden="true"></i></summary>
+
             <div id="area1RoleNotice" class="text-[8px] rounded-lg border px-2.5 py-2 border-slate-700 bg-slate-900 text-slate-300">Verificando permisos de Área 1…</div>
             <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 px-3 py-2 flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-300"></i><div><div class="text-[10px] font-black text-indigo-200 uppercase tracking-wider">Área 1 · Seguimiento independiente de Poisson</div><div class="text-[9px] text-slate-400">Pronósticos sin apuesta, métricas históricas y bitácora propia. No modifica el bankroll ni la calibración de apuestas.</div></div></div>
             <div class="flex items-center gap-2 px-1">
@@ -10225,6 +10282,7 @@ document.addEventListener('keydown', function(event) {
                     <div id="modelPredictionLog" class="space-y-3"><p class="text-center text-[10px] text-slate-500 py-4">Todavía no hay predicciones guardadas.</p></div>
                 </div>
             </details>
+        </details>
         </section>
             </div>
         </div>
