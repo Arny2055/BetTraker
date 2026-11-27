@@ -7780,10 +7780,27 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 }
             }
             try {
-                const {data,error}=await supabaseClient.from('owner_match_predictions').select('*').eq('user_id',AREA1_OWNER_USER_ID).order('analyzed_at',{ascending:false}).limit(1000);
-                if(error) throw error;
+                // Descarga paginada: evita el tope de 1,000 filas de una sola consulta.
+                // Se leen bloques de 500 hasta que Supabase devuelva una página incompleta.
+                const pageSize = 500;
+                let pageFrom = 0;
+                const allCloudRows = [];
+                while (true) {
+                    const { data: page, error: pageError } = await supabaseClient
+                        .from('owner_match_predictions')
+                        .select('*')
+                        .eq('user_id', AREA1_OWNER_USER_ID)
+                        .order('analyzed_at', { ascending: false })
+                        .order('id', { ascending: true })
+                        .range(pageFrom, pageFrom + pageSize - 1);
+                    if (pageError) throw pageError;
+                    const rows = Array.isArray(page) ? page : [];
+                    allCloudRows.push(...rows);
+                    if (rows.length < pageSize) break;
+                    pageFrom += pageSize;
+                }
                 const map=new Map(modelPredictionRecords.map(r=>[r.fingerprint || r.id,r]));
-                (data||[]).forEach(db=>{
+                allCloudRows.forEach(db=>{
                     const cloud={id:db.id,fingerprint:db.fingerprint,matchKey:db.match_key,league:db.league,home:db.home_team,away:db.away_team,
                         matchDate:db.match_date||'',kickoff:db.inputs?.kickoff||'',analyzedAt:db.analyzed_at,modelVersion:db.model_version,
                         inputs:db.inputs||{},lambdas:db.lambdas||{},probabilities:db.probabilities||{},odds:db.odds||{},status:db.status||'PENDING',
