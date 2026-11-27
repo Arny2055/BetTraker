@@ -8494,6 +8494,35 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             return item.preselectorScore;
         }
 
+        // Segundo filtro de calidad: separa los candidatos que solo cumplen
+        // mínimos de muestra de aquellos con evidencia estadística suficientemente sólida.
+        // Son umbrales operativos del preselector; no modifican los datos ni el modelo.
+        const MODEL_PRESELECTOR_QUALITY_GATE = Object.freeze({
+            minScore: 65,
+            maxBrier: 0.20,
+            maxAbsoluteGap: 0.10,
+            minEffectiveCount: 10,
+            requireNonNegativeEvWhenOddsExist: true
+        });
+
+        function evaluateModelPreselectorQuality(item) {
+            const h = item.history || {};
+            const gate = MODEL_PRESELECTOR_QUALITY_GATE;
+            const failures = [];
+            if (!Number.isFinite(item.preselectorScore) || item.preselectorScore < gate.minScore)
+                failures.push(`índice integral menor a ${gate.minScore}/100`);
+            if (!Number.isFinite(h.brier) || h.brier > gate.maxBrier)
+                failures.push(`Brier superior a ${gate.maxBrier.toFixed(2)}`);
+            if (!Number.isFinite(h.gap) || Math.abs(h.gap) > gate.maxAbsoluteGap)
+                failures.push(`brecha superior a ${(gate.maxAbsoluteGap * 100).toFixed(0)} pp`);
+            if (!Number.isFinite(h.effectiveCount) || h.effectiveCount < gate.minEffectiveCount)
+                failures.push(`muestra efectiva menor a ${gate.minEffectiveCount}`);
+            if (gate.requireNonNegativeEvWhenOddsExist && Number.isFinite(item.odds) && item.odds > 1 &&
+                (!Number.isFinite(item.ev) || item.ev < 0))
+                failures.push('EV negativo con cuota disponible');
+            return { eligible: failures.length === 0, failures };
+        }
+
         function renderModelPreselector() {
             const panel = document.getElementById('modelPreselectorPanel');
             if (!panel) return;
@@ -8536,6 +8565,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const pct = value => `${(value * 100).toFixed(1)}%`;
             const signedPp = value => `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)} pp`;
             let totalCandidates = 0;
+            let qualityRejected = 0;
+            const qualityRejectionReasons = {};
             definitions.forEach(def => {
                 const candidates = [];
                 eligiblePending.forEach(record => {
@@ -8578,6 +8609,15 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                             calibrationB: history.model.b,
                             nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev };
                         scoreModelPreselectorCandidate(candidateItem);
+                        const qualityGate = evaluateModelPreselectorQuality(candidateItem);
+                        if (!qualityGate.eligible) {
+                            qualityRejected++;
+                            qualityGate.failures.forEach(reason => {
+                                qualityRejectionReasons[reason] = (qualityRejectionReasons[reason] || 0) + 1;
+                            });
+                            return;
+                        }
+                        candidateItem.qualityGate = qualityGate;
                         qualifiedOutcomes.push(candidateItem);
                     });
                     if (!qualifiedOutcomes.length) return;
@@ -8618,7 +8658,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (count) count.textContent = `${selected.length} / 5`;
                 if (!target) return;
                 if (!selected.length) {
-                    target.innerHTML = '<p class="text-[9px] text-amber-300 py-2">Ningún partido cumple todos los filtros obligatorios para este mercado. Se requieren al menos 15 pronósticos liquidados de la misma liga y selección, con 5 aciertos y 5 fallos, calibración validada y métricas Brier/frecuencia real disponibles. No se mostrarán candidatos sin cumplirlos.</p>';
+                    target.innerHTML = '<p class="text-[9px] text-amber-300 py-2">Ningún partido superó todos los filtros para este mercado. Además del mínimo de 15 pronósticos liquidados, 5 aciertos, 5 fallos y calibración validada, se exige índice integral ≥65/100, Brier ≤0.20, brecha absoluta ≤10 pp y muestra efectiva ≥10. Si hay cuota real, también se exige EV no negativo. No se rellenan espacios con candidatos de calidad insuficiente.</p>';
                     return;
                 }
                 target.innerHTML = selected.map((item, index) => {
@@ -8636,7 +8676,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${index + 1} · ${escapeModelPredictionHtml(r.league || 'Sin competición')}</span><span class="text-right"><span class="block text-[11px] font-black text-white tabular-nums">${pct(item.calibratedProbability)}</span><span class="block text-[7px] font-black text-emerald-300">CALIDAD ${item.preselectorScore.toFixed(0)}/100</span></span></div>
                         <div class="mt-1 text-[9px] font-bold text-slate-100 break-words">${escapeModelPredictionHtml(r.home || 'Local')} vs ${escapeModelPredictionHtml(r.away || 'Visitante')}</div>
                         <div class="text-[9px] font-black text-amber-200 mt-1">${escapeModelPredictionHtml(pick.label)}</div>
-                        <div class="mt-1 text-[8px] text-emerald-200">Índice integral: ${item.preselectorScore.toFixed(1)}/100 · Brier, calibración, muestra, casos similares y probabilidad${Number.isFinite(item.ev) ? ' · EV' : ''}</div>
+                        <div class="mt-1 text-[8px] text-emerald-200">Índice integral: ${item.preselectorScore.toFixed(1)}/100 · Superó filtro de calidad</div>
+                        <div class="text-[7px] text-slate-500">Umbrales: Brier ≤0.20 · brecha ≤10 pp · N efectivo ≥10${Number.isFinite(item.odds) ? ' · EV ≥0%' : ' · sin cuota: EV no exigido'}</div>
                         ${calibrationLine}${qualityLine}${oddsLine}
                         <div class="text-[7px] text-slate-600 mt-1">${escapeModelPredictionHtml(r.matchDate || '')}${r.kickoff ? ' · ' + escapeModelPredictionHtml(r.kickoff) : ''}</div>
                         <button type="button" onclick="registerModelPreselectorBet(${modelPredictionRecords.indexOf(r)}, '${def.id}', '${pick.key}')" class="mt-2 w-full rounded-lg border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 text-[9px] font-black px-2.5 py-2 transition-colors"><i class="fa-solid fa-plus-circle mr-1"></i>REGISTRAR APUESTA</button>
@@ -8650,7 +8691,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (pendingEl) pendingEl.textContent = String(pending.length);
             if (candidatesEl) candidatesEl.textContent = String(totalCandidates);
             if (note) note.textContent = pending.length
-                ? `Se revisaron ${pending.length} partidos pendientes (${pending.length - eligiblePending.length} con fecha vencida excluidos del ranking). Filtros obligatorios intactos: mínimo 15 pronósticos liquidados de la misma liga y selección, 5 aciertos y 5 fallos, calibración validada y métricas calculables. Ranking integral 0–100: Brier 35%, calibración 25%, solidez de muestra 15%, casos similares 10% y probabilidad calibrada 15%; el EV solo ajusta moderadamente cuando existe cuota real. Máximo 5 por mercado. Sin cuotas inventadas ni relleno de candidatos no aptos.`
+                ? `Se revisaron ${pending.length} partidos pendientes (${pending.length - eligiblePending.length} con fecha vencida excluidos). Filtros base: mínimo 15 pronósticos liquidados de la misma liga y selección, 5 aciertos, 5 fallos, calibración validada y métricas calculables. Segundo filtro obligatorio: índice ≥${MODEL_PRESELECTOR_QUALITY_GATE.minScore}/100, Brier ≤${MODEL_PRESELECTOR_QUALITY_GATE.maxBrier.toFixed(2)}, brecha absoluta ≤${(MODEL_PRESELECTOR_QUALITY_GATE.maxAbsoluteGap*100).toFixed(0)} pp y N efectivo ≥${MODEL_PRESELECTOR_QUALITY_GATE.minEffectiveCount}; con cuota real, EV no negativo. ${qualityRejected} candidatos fueron descartados por calidad insuficiente. Ranking: Brier 35%, calibración 25%, muestra 15%, casos similares 10% y probabilidad calibrada 15%. Máximo 5 por mercado; no se inventan cuotas ni se rellenan lugares.`
                 : 'No hay partidos pendientes en Área 1. Los resueltos se usan exclusivamente para medir calidad y calibración.';
         }
 
@@ -8922,6 +8963,111 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (note) note.textContent = snapshot.matches
                 ? `Muestra actual: ${snapshot.matches} partidos liquidados de ${snapshot.leagues.size} ligas y ${snapshot.teams} equipos. Cada liga empieza en 1,500 puntos; K=${MODEL_ELO_K_FACTOR}, ventaja local=${MODEL_ELO_HOME_ADVANTAGE}. El porcentaje mostrado es expectativa de puntos del local (victoria=1, empate=0.5, derrota=0), NO probabilidad directa de ganar. Solo se reconstruye con resultados presentes en Área 1; si faltan jornadas anteriores, el rating parte de una muestra incompleta.`
                 : 'Aún no hay resultados liquidados para calcular ELO. Cada liga comenzará con 1,500 puntos por equipo cuando existan marcadores finales. El módulo no modifica Poisson, la calibración ni las apuestas.';
+        }
+
+        // DIAGNÓSTICO DE SOLO LECTURA: compara la copia local y los conteos de Supabase.
+        // No modifica registros, no sincroniza y no ejecuta operaciones INSERT/UPDATE/DELETE.
+        function countModelPredictionStatuses(rows) {
+            const safe = Array.isArray(rows) ? rows : [];
+            const settled = safe.filter(r => String(r?.status || '').toUpperCase() === 'SETTLED').length;
+            return { total: safe.length, pending: safe.length - settled, settled };
+        }
+
+        function readModelPredictionLocalSnapshot() {
+            let raw = null, parsed = null, parseError = null;
+            try {
+                raw = localStorage.getItem(MODEL_PREDICTIONS_STORAGE_KEY);
+                parsed = raw ? JSON.parse(raw) : [];
+                if (!Array.isArray(parsed)) throw new Error('El contenido local no es un arreglo JSON.');
+            } catch (error) {
+                parseError = String(error?.message || error);
+                parsed = null;
+            }
+            return { raw, parsed, parseError, memory: Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [] };
+        }
+
+        async function readModelPredictionCloudCounts(table) {
+            const base = { table, total: null, pending: null, settled: null, error: null };
+            try {
+                const totalResult = await supabaseClient.from(table).select('id', { count: 'exact', head: true }).eq('user_id', AREA1_OWNER_USER_ID);
+                if (totalResult.error) throw totalResult.error;
+                base.total = Number(totalResult.count || 0);
+                const pendingResult = await supabaseClient.from(table).select('id', { count: 'exact', head: true }).eq('user_id', AREA1_OWNER_USER_ID).neq('status', 'SETTLED');
+                if (pendingResult.error) throw pendingResult.error;
+                base.pending = Number(pendingResult.count || 0);
+                const settledResult = await supabaseClient.from(table).select('id', { count: 'exact', head: true }).eq('user_id', AREA1_OWNER_USER_ID).eq('status', 'SETTLED');
+                if (settledResult.error) throw settledResult.error;
+                base.settled = Number(settledResult.count || 0);
+            } catch (error) {
+                base.error = String(error?.message || error);
+            }
+            return base;
+        }
+
+        function renderModelPredictionDiagnosticResult(localSnapshot, cloudResults) {
+            const target = document.getElementById('modelPredictionDiagnosticResult');
+            if (!target) return;
+            const local = localSnapshot.parsed;
+            const memory = localSnapshot.memory;
+            const localCounts = countModelPredictionStatuses(local);
+            const memoryCounts = countModelPredictionStatuses(memory);
+            const rows = [
+                ['Copia guardada en iPhone', local ? `${localCounts.total} · ${localCounts.pending} pendientes · ${localCounts.settled} liquidados` : 'No se pudo interpretar'],
+                ['Memoria activa de la página', `${memoryCounts.total} · ${memoryCounts.pending} pendientes · ${memoryCounts.settled} liquidados`],
+                ...cloudResults.map(result => [result.table, result.error ? `Error de lectura: ${result.error}` : `${result.total} · ${result.pending} pendientes · ${result.settled} liquidados`])
+            ];
+            target.innerHTML = `<div class="rounded-xl border border-cyan-500/20 bg-slate-950/70 p-2.5 space-y-1.5"><div class="text-[9px] font-black text-cyan-200">RESULTADO DEL DIAGNÓSTICO · SOLO LECTURA</div>${rows.map(([label,value])=>`<div class="flex flex-wrap justify-between gap-2 text-[9px]"><span class="text-slate-400">${escapeModelPredictionHtml(label)}</span><b class="text-slate-100 text-right">${escapeModelPredictionHtml(value)}</b></div>`).join('')}${localSnapshot.parseError ? `<p class="text-[8px] text-amber-300">Aviso de lectura local: ${escapeModelPredictionHtml(localSnapshot.parseError)}</p>` : ''}<p class="text-[8px] text-slate-500">No se modificó ni sincronizó ningún registro. Las tablas se consultaron únicamente para obtener conteos exactos.</p></div>`;
+        }
+
+        async function runModelPredictionDiagnostic() {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede revisar la memoria privada de Área 1.'); return; }
+            const button = document.getElementById('modelPredictionDiagnosticBtn');
+            const target = document.getElementById('modelPredictionDiagnosticResult');
+            if (button) { button.disabled = true; button.textContent = 'Revisando…'; }
+            if (target) target.innerHTML = '<p class="text-[9px] text-cyan-200">Leyendo la copia local y consultando conteos de Supabase sin modificar datos…</p>';
+            try {
+                const snapshot = readModelPredictionLocalSnapshot();
+                const cloud = supabaseClient
+                    ? await Promise.all(['owner_match_predictions','match_predictions'].map(readModelPredictionCloudCounts))
+                    : [{ table: 'Supabase', error: 'No hay sesión/conexión activa; no se consultó la nube.' }];
+                window.__betagsA1DiagnosticSnapshot = { capturedAt: new Date().toISOString(), localSnapshot: snapshot, cloudCounts: cloud };
+                renderModelPredictionDiagnosticResult(snapshot, cloud);
+                const exportButton = document.getElementById('modelPredictionBackupBtn');
+                if (exportButton) exportButton.disabled = !snapshot.raw && !snapshot.parsed;
+            } catch (error) {
+                console.error('[Área 1] Diagnóstico de memoria:', error);
+                if (target) target.innerHTML = `<p class="text-[9px] text-rose-300">No se pudo completar el diagnóstico: ${escapeModelPredictionHtml(error?.message || error)}</p>`;
+            } finally {
+                if (button) { button.disabled = false; button.textContent = 'Repetir diagnóstico'; }
+            }
+        }
+
+        function downloadModelPredictionLocalBackup() {
+            if (!isArea1Admin()) { showToast('Solo el administrador puede respaldar la memoria privada de Área 1.'); return; }
+            const snapshot = readModelPredictionLocalSnapshot();
+            const diagnostic = window.__betagsA1DiagnosticSnapshot || null;
+            const backup = {
+                format: 'BETAGS_A1_LOCAL_BACKUP',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                storageKey: MODEL_PREDICTIONS_STORAGE_KEY,
+                rawLocalStorageValue: snapshot.raw,
+                parsedLocalRecords: snapshot.parsed,
+                inMemoryRecords: snapshot.memory,
+                parseError: snapshot.parseError,
+                diagnosticCloudCounts: diagnostic?.cloudCounts || null,
+                note: 'Respaldo de solo lectura. No restaura ni modifica automáticamente ningún dato.'
+            };
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `BETAGS_A1_respaldo_local_${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+            showToast('Respaldo local generado. Conserva el archivo sin modificarlo.');
         }
 
         // La bitácora se pagina únicamente en pantalla: el historial completo permanece intacto.
@@ -10324,6 +10470,12 @@ document.addEventListener('keydown', function(event) {
                 </summary>
                 <div class="px-3.5 pb-3.5 pt-0 space-y-2.5">
                     <div class="flex flex-wrap items-center justify-between gap-2"><input id="modelPredictionSearch" type="search" oninput="modelPredictionLogPages.PENDING=0;modelPredictionLogPages.SETTLED=0;renderModelPredictionLog()" placeholder="Buscar liga o equipo..." class="min-w-0 flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[9px] text-slate-200 placeholder:text-slate-600"><select id="modelPredictionFilter" onchange="renderModelPredictionLog()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[9px] text-slate-200"><option value="ALL">Pendientes y resueltas</option><option value="PENDING">Solo pendientes</option><option value="SETTLED">Solo resueltas</option></select><button onclick="syncModelPredictionsFromCloud()" class="text-[9px] bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-300"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Sincronizar</button></div>
+                    <div class="rounded-xl border border-cyan-500/20 bg-slate-900/60 p-2.5 space-y-2">
+                        <div class="text-[9px] font-black text-cyan-200">PROTECCIÓN Y DIAGNÓSTICO DEL HISTORIAL</div>
+                        <p class="text-[8px] text-slate-400">Primero revisa cuántos registros existen en el iPhone y en Supabase. Esta revisión no sincroniza, no liquida y no elimina nada.</p>
+                        <div class="flex flex-wrap gap-2"><button id="modelPredictionDiagnosticBtn" type="button" onclick="runModelPredictionDiagnostic()" class="text-[9px] font-bold bg-cyan-900/60 border border-cyan-500/30 text-cyan-100 rounded-lg px-3 py-2">Diagnosticar historial</button><button id="modelPredictionBackupBtn" type="button" onclick="downloadModelPredictionLocalBackup()" class="text-[9px] font-bold bg-emerald-900/50 border border-emerald-500/30 text-emerald-100 rounded-lg px-3 py-2">Descargar respaldo local</button></div>
+                        <div id="modelPredictionDiagnosticResult" aria-live="polite" class="space-y-1"><p class="text-[8px] text-slate-500">Ejecuta el diagnóstico. Después descarga y conserva el respaldo local antes de cualquier reparación.</p></div>
+                    </div>
                     <p class="text-[8px] text-slate-500">Se muestran 10 registros por página, del más reciente al más antiguo. La paginación y la búsqueda no eliminan ni modifican el historial.</p>
                     <div id="modelPredictionLog" class="space-y-3"><p class="text-center text-[10px] text-slate-500 py-4">Todavía no hay predicciones guardadas.</p></div>
                 </div>
