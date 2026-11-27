@@ -8462,6 +8462,38 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             `).join('');
         }
 
+        // Puntuación integral del preselector. Es una capa de ranking:
+        // no altera Poisson, snapshots, datos históricos ni calibradores.
+        function scoreModelPreselectorCandidate(item) {
+            const h = item.history;
+            const clamp01 = value => Math.max(0, Math.min(1, Number(value) || 0));
+            // Brier: 0 es perfecto; 0.25 sirve como referencia neutral binaria.
+            const brierScore = clamp01(1 - (Number(h.brier) / 0.25));
+            // Brecha absoluta entre probabilidad media y frecuencia observada.
+            const calibrationScore = clamp01(1 - Math.abs(Number(h.gap)) / 0.20);
+            // La muestra gana confianza gradualmente; no se premia sin límite.
+            const sampleScore = clamp01(Number(h.effectiveCount || 0) / 40);
+            // Casos cercanos: solo se consideran evidencia local cuando hay al menos cinco.
+            const nearbyScore = item.nearbyCount >= 5
+                ? clamp01(item.nearbyCount / 10) : 0.35;
+            // La probabilidad ayuda a ordenar, pero no puede compensar una mala calibración.
+            const probabilityScore = clamp01((item.calibratedProbability - 0.50) / 0.30);
+            let score = 35 * brierScore +
+                        25 * calibrationScore +
+                        15 * sampleScore +
+                        10 * nearbyScore +
+                        15 * probabilityScore;
+            // Si hay cuota real, el EV funciona como ajuste moderado, no como sustituto
+            // de la fiabilidad histórica. Sin cuota no se inventa ni se penaliza.
+            if (Number.isFinite(item.ev)) {
+                if (item.ev < 0) score -= Math.min(10, Math.abs(item.ev) * 40);
+                else score += Math.min(5, item.ev * 20);
+            }
+            item.preselectorScore = Math.max(0, Math.min(100, score));
+            item.scoreComponents = { brierScore, calibrationScore, sampleScore, nearbyScore, probabilityScore };
+            return item.preselectorScore;
+        }
+
         function renderModelPreselector() {
             const panel = document.getElementById('modelPreselectorPanel');
             if (!panel) return;
@@ -8475,7 +8507,17 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             }
             const allRecords = Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [];
             const publishedCandidates = [];
+            const todayLocal = (() => {
+                const now = new Date();
+                return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            })();
             const pending = allRecords.filter(r => r && r.status !== 'SETTLED');
+            const eligiblePending = pending.filter(r => {
+                const date = String(r.matchDate || '').slice(0, 10);
+                // Una fecha válida ya vencida no es un próximo partido. Se conserva
+                // intacta en el historial; solo se evita recomendarla.
+                return !/^\d{4}-\d{2}-\d{2}$/.test(date) || date >= todayLocal;
+            });
             const definitions = [
                 { id: '1x2', target: 'modelPreselector1x2', count: 'modelPreselectorCount1x2', market: 'Resultado Final (1X2)', keys: [
                     { key: 'homeWin', label: r => `Gana ${r.home}`, odd: 'homeWin', selection: 'Local' },
@@ -8496,7 +8538,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             let totalCandidates = 0;
             definitions.forEach(def => {
                 const candidates = [];
-                pending.forEach(record => {
+                eligiblePending.forEach(record => {
                     const probabilities = (record.probabilities && record.probabilities.original && typeof record.probabilities.original === 'object')
                         ? record.probabilities.original : (record.probabilities || {});
                     const outcomes = def.keys.map(option => ({
@@ -8526,7 +8568,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         const odds = Number(record.odds?.[option.oddKey]);
                         const hasOdds = Number.isFinite(odds) && odds > 1;
                         const ev = hasOdds ? calibratedProbability * odds - 1 : null;
-                        qualifiedOutcomes.push({ record, chosen: option, rawProbability, calibratedProbability, history,
+                        const candidateItem = { record, chosen: option, rawProbability, calibratedProbability, history,
                             calibrationSource: 'Área 1 · pronósticos liquidados',
                             calibrationMethod: 'Platt Scaling ponderado por recencia',
                             calibrationWindow: history.windowLimit,
@@ -8534,26 +8576,28 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                             calibrationEffectiveCount: history.effectiveCount,
                             calibrationA: history.model.a,
                             calibrationB: history.model.b,
-                            nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev });
+                            nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev };
+                        scoreModelPreselectorCandidate(candidateItem);
+                        qualifiedOutcomes.push(candidateItem);
                     });
                     if (!qualifiedOutcomes.length) return;
                     // Una sola selección por partido y mercado. Primero calidad histórica
                     // (Brier y brecha probabilidad/frecuencia), luego probabilidad calibrada.
                     qualifiedOutcomes.sort((a, b) =>
+                        b.preselectorScore - a.preselectorScore ||
+                        (Number.isFinite(b.ev) ? b.ev : -Infinity) - (Number.isFinite(a.ev) ? a.ev : -Infinity) ||
                         a.history.brier - b.history.brier ||
-                        Math.abs(a.history.gap) - Math.abs(b.history.gap) ||
-                        b.calibratedProbability - a.calibratedProbability ||
-                        b.history.count - a.history.count
+                        b.history.effectiveCount - a.history.effectiveCount
                     );
                     candidates.push(qualifiedOutcomes[0]);
                 });
                 // Ranking estricto: mejor calidad (Brier), menor brecha entre frecuencia
                 // real y media pronosticada, mayor probabilidad calibrada y mayor muestra.
                 candidates.sort((a, b) =>
+                    b.preselectorScore - a.preselectorScore ||
+                    (Number.isFinite(b.ev) ? b.ev : -Infinity) - (Number.isFinite(a.ev) ? a.ev : -Infinity) ||
                     a.history.brier - b.history.brier ||
-                    Math.abs(a.history.gap) - Math.abs(b.history.gap) ||
-                    b.calibratedProbability - a.calibratedProbability ||
-                    b.history.count - a.history.count ||
+                    b.history.effectiveCount - a.history.effectiveCount ||
                     String(b.record.analyzedAt || '').localeCompare(String(a.record.analyzedAt || ''))
                 );
                 const selected = candidates.slice(0, 5);
@@ -8564,7 +8608,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         league:r.league||'', home:r.home||'', away:r.away||'', matchDate:r.matchDate||'', kickoff:r.kickoff||'',
                         calibratedProbability:item.calibratedProbability, rawProbability:item.rawProbability,
                         historyCount:h.count, wins:h.wins, losses:h.losses, effectiveCount:h.effectiveCount,
-                        brier:h.brier, logLoss:h.logLoss, gap:h.gap, odds:item.odds||null
+                        brier:h.brier, logLoss:h.logLoss, gap:h.gap, odds:item.odds||null,
+                        preselectorScore:item.preselectorScore, ev:item.ev
                     });
                 });
                 totalCandidates += selected.length;
@@ -8588,9 +8633,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         ? `<div class="mt-1 text-[8px] text-slate-400">Cuota ${item.odds.toFixed(2)} · EV con prob. ${h.model.ready ? 'calibrada' : 'original'} ${item.ev >= 0 ? '+' : ''}${(item.ev * 100).toFixed(1)}% por unidad (sin comisión)</div>`
                         : '<div class="mt-1 text-[8px] text-slate-500">Sin cuota · EV no calculable</div>';
                     return `<article class="rounded-lg border border-slate-800 bg-slate-900/80 p-2">
-                        <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${index + 1} · ${escapeModelPredictionHtml(r.league || 'Sin competición')}</span><span class="text-[11px] font-black text-white tabular-nums">${pct(item.calibratedProbability)}</span></div>
+                        <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${index + 1} · ${escapeModelPredictionHtml(r.league || 'Sin competición')}</span><span class="text-right"><span class="block text-[11px] font-black text-white tabular-nums">${pct(item.calibratedProbability)}</span><span class="block text-[7px] font-black text-emerald-300">CALIDAD ${item.preselectorScore.toFixed(0)}/100</span></span></div>
                         <div class="mt-1 text-[9px] font-bold text-slate-100 break-words">${escapeModelPredictionHtml(r.home || 'Local')} vs ${escapeModelPredictionHtml(r.away || 'Visitante')}</div>
                         <div class="text-[9px] font-black text-amber-200 mt-1">${escapeModelPredictionHtml(pick.label)}</div>
+                        <div class="mt-1 text-[8px] text-emerald-200">Índice integral: ${item.preselectorScore.toFixed(1)}/100 · Brier, calibración, muestra, casos similares y probabilidad${Number.isFinite(item.ev) ? ' · EV' : ''}</div>
                         ${calibrationLine}${qualityLine}${oddsLine}
                         <div class="text-[7px] text-slate-600 mt-1">${escapeModelPredictionHtml(r.matchDate || '')}${r.kickoff ? ' · ' + escapeModelPredictionHtml(r.kickoff) : ''}</div>
                         <button type="button" onclick="registerModelPreselectorBet(${modelPredictionRecords.indexOf(r)}, '${def.id}', '${pick.key}')" class="mt-2 w-full rounded-lg border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 text-[9px] font-black px-2.5 py-2 transition-colors"><i class="fa-solid fa-plus-circle mr-1"></i>REGISTRAR APUESTA</button>
@@ -8604,8 +8650,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (pendingEl) pendingEl.textContent = String(pending.length);
             if (candidatesEl) candidatesEl.textContent = String(totalCandidates);
             if (note) note.textContent = pending.length
-                ? `Se analizaron ${pending.length} partidos pendientes. FILTROS OBLIGATORIOS: cada selección debe tener al menos 15 pronósticos liquidados de su misma liga, mínimo 5 aciertos y 5 fallos, calibración por selección validada y Brier/frecuencia real calculables. Si falla cualquiera, se excluye; nunca se rellena el cupo con partidos no aptos. Ranking: menor Brier, menor brecha probabilidad media/frecuencia real y después mayor probabilidad calibrada. Máximo 5 por mercado; no se mezclan ligas ni apuestas reales.`
-                : 'No hay partidos pendientes en Área 1. Guarda nuevos pronósticos para que el preselector pueda examinarlos. Los partidos resueltos se utilizan únicamente como historial de calidad y calibración.';
+                ? `Se revisaron ${pending.length} partidos pendientes (${pending.length - eligiblePending.length} con fecha vencida excluidos del ranking). Filtros obligatorios intactos: mínimo 15 pronósticos liquidados de la misma liga y selección, 5 aciertos y 5 fallos, calibración validada y métricas calculables. Ranking integral 0–100: Brier 35%, calibración 25%, solidez de muestra 15%, casos similares 10% y probabilidad calibrada 15%; el EV solo ajusta moderadamente cuando existe cuota real. Máximo 5 por mercado. Sin cuotas inventadas ni relleno de candidatos no aptos.`
+                : 'No hay partidos pendientes en Área 1. Los resueltos se usan exclusivamente para medir calidad y calibración.';
         }
 
         function renderModelPredictionStats() {
