@@ -1397,7 +1397,10 @@
                             <button id="tabBtnClosed" onclick="setActiveBetTab('closed')" class="px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 text-slate-400 hover:text-white"><i class="fa-solid fa-circle-check"></i> Cerradas <span id="badgeClosedCount" class="ml-1 px-1.5 bg-slate-800 text-slate-300 rounded-full text-[10px]">0</span></button>
                             <button id="tabBtnAll" onclick="setActiveBetTab('all')" class="px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 text-slate-400 hover:text-white"><i class="fa-solid fa-list-ul"></i> Todas</button>
                         </div>
-                        <button onclick="clearBetLogHistory()" class="text-[10px] text-rose-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-trash-can"></i> Limpiar Caja</button>
+                        <div class="flex items-center gap-3 flex-wrap justify-end">
+                            <button onclick="clearBetLogHistory()" class="text-[10px] text-rose-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-trash-can"></i> Limpiar Caja</button>
+                            <button onclick="clearAllBetHistorySafely()" class="text-[10px] text-rose-300 hover:text-rose-200 underline flex items-center gap-1"><i class="fa-solid fa-trash-can-arrow-up"></i> Reiniciar historial de apuestas</button>
+                        </div>
                     </div>
                     <div id="sectionPendingBets" class="space-y-1.5">
                         <div class="flex justify-between items-center px-1"><span class="text-xs font-extrabold text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-hourglass-half"></i> Pendientes</span><span class="text-[10px] font-bold text-slate-400" id="pendingSummaryText">Riesgo: $0.00</span></div>
@@ -4669,6 +4672,70 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             updateTrackerMetrics();
             updateParallelTrackerMetrics();
             showToast("Apuesta eliminada.");
+        }
+
+        // Reinicio global y acotado: SOLO apuestas normales y paralelas.
+        // Conserva bankrolls, balances, movimientos de caja, pronósticos A1/A2 y configuración.
+        async function clearAllBetHistorySafely() {
+            if (!currentUser || !supabaseClient) {
+                showToast('Inicia sesión para reiniciar el historial sincronizado de apuestas.');
+                return;
+            }
+            if (!confirm('Se eliminarán TODAS las apuestas normales y paralelas de esta cuenta, en este dispositivo y en Supabase. Se conservarán saldos, bankrolls, movimientos de caja, Área 1, Área 2 y calibraciones. Primero se descargará un respaldo. ¿Continuar?')) return;
+            const phrase = prompt('Para confirmar, escribe exactamente: BORRAR APUESTAS');
+            if (phrase !== 'BORRAR APUESTAS') { showToast('Reinicio cancelado. No se modificó ningún dato.'); return; }
+
+            autoSyncPaused = true;
+            setSyncStatus('syncing');
+            try {
+                // Capturar copia local y nube antes de cualquier eliminación.
+                const [remoteBetsRes, remoteParallelRes] = await Promise.all([
+                    supabaseClient.from('bets').select('*').eq('user_id', currentUser.id),
+                    supabaseClient.from('parallel_bets').select('*').eq('user_id', currentUser.id)
+                ]);
+                if (remoteBetsRes.error) throw remoteBetsRes.error;
+                if (remoteParallelRes.error) throw remoteParallelRes.error;
+
+                const backup = {
+                    type: 'BETAGS_VIP_PRO_BET_HISTORY_BACKUP',
+                    createdAt: new Date().toISOString(),
+                    userId: currentUser.id,
+                    scope: 'bets + parallel_bets only; no bankrolls, box_transactions, predictions or configuration',
+                    local: { bets: betLogData, parallelBets: parallelBetLogData },
+                    supabase: { bets: remoteBetsRes.data || [], parallelBets: remoteParallelRes.data || [] }
+                };
+                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `BETAGS_respaldo_historial_apuestas_${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+                // Borrado estrictamente limitado al usuario y a las dos tablas de apuestas.
+                const [delBets, delParallel] = await Promise.all([
+                    supabaseClient.from('bets').delete().eq('user_id', currentUser.id),
+                    supabaseClient.from('parallel_bets').delete().eq('user_id', currentUser.id)
+                ]);
+                if (delBets.error) throw delBets.error;
+                if (delParallel.error) throw delParallel.error;
+
+                betLogData = [];
+                parallelBetLogData = [];
+                localStorage.setItem('poisson_vip_betlog', '[]');
+                localStorage.setItem('poisson_vip_parallel_betlog', '[]');
+                updateMarketFilterDropdown();
+                updateTrackerMetrics();
+                updateParallelTrackerMetrics();
+                setSyncStatus('synced');
+                showToast('Historial de apuestas reiniciado. Saldos, movimientos y pronósticos conservados.');
+            } catch (e) {
+                console.error('[BetHistoryReset] No se pudo completar el reinicio:', e);
+                setSyncStatus('error');
+                showToast('No se completó el reinicio. Revisa la conexión y los permisos; conserva el respaldo descargado.');
+            } finally {
+                autoSyncPaused = false;
+            }
         }
 
         async function clearBetLogHistory() {
