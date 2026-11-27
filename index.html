@@ -8494,6 +8494,35 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             return item.preselectorScore;
         }
 
+        // Segundo filtro de calidad: separa los candidatos que solo cumplen
+        // mínimos de muestra de aquellos con evidencia estadística suficientemente sólida.
+        // Son umbrales operativos del preselector; no modifican los datos ni el modelo.
+        const MODEL_PRESELECTOR_QUALITY_GATE = Object.freeze({
+            minScore: 65,
+            maxBrier: 0.20,
+            maxAbsoluteGap: 0.10,
+            minEffectiveCount: 10,
+            requireNonNegativeEvWhenOddsExist: true
+        });
+
+        function evaluateModelPreselectorQuality(item) {
+            const h = item.history || {};
+            const gate = MODEL_PRESELECTOR_QUALITY_GATE;
+            const failures = [];
+            if (!Number.isFinite(item.preselectorScore) || item.preselectorScore < gate.minScore)
+                failures.push(`índice integral menor a ${gate.minScore}/100`);
+            if (!Number.isFinite(h.brier) || h.brier > gate.maxBrier)
+                failures.push(`Brier superior a ${gate.maxBrier.toFixed(2)}`);
+            if (!Number.isFinite(h.gap) || Math.abs(h.gap) > gate.maxAbsoluteGap)
+                failures.push(`brecha superior a ${(gate.maxAbsoluteGap * 100).toFixed(0)} pp`);
+            if (!Number.isFinite(h.effectiveCount) || h.effectiveCount < gate.minEffectiveCount)
+                failures.push(`muestra efectiva menor a ${gate.minEffectiveCount}`);
+            if (gate.requireNonNegativeEvWhenOddsExist && Number.isFinite(item.odds) && item.odds > 1 &&
+                (!Number.isFinite(item.ev) || item.ev < 0))
+                failures.push('EV negativo con cuota disponible');
+            return { eligible: failures.length === 0, failures };
+        }
+
         function renderModelPreselector() {
             const panel = document.getElementById('modelPreselectorPanel');
             if (!panel) return;
@@ -8536,6 +8565,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             const pct = value => `${(value * 100).toFixed(1)}%`;
             const signedPp = value => `${value > 0 ? '+' : ''}${(value * 100).toFixed(1)} pp`;
             let totalCandidates = 0;
+            let qualityRejected = 0;
+            const qualityRejectionReasons = {};
             definitions.forEach(def => {
                 const candidates = [];
                 eligiblePending.forEach(record => {
@@ -8578,6 +8609,15 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                             calibrationB: history.model.b,
                             nearbyCount: nearby.length, nearbyFrequency, odds: hasOdds ? odds : null, ev };
                         scoreModelPreselectorCandidate(candidateItem);
+                        const qualityGate = evaluateModelPreselectorQuality(candidateItem);
+                        if (!qualityGate.eligible) {
+                            qualityRejected++;
+                            qualityGate.failures.forEach(reason => {
+                                qualityRejectionReasons[reason] = (qualityRejectionReasons[reason] || 0) + 1;
+                            });
+                            return;
+                        }
+                        candidateItem.qualityGate = qualityGate;
                         qualifiedOutcomes.push(candidateItem);
                     });
                     if (!qualifiedOutcomes.length) return;
@@ -8618,7 +8658,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 if (count) count.textContent = `${selected.length} / 5`;
                 if (!target) return;
                 if (!selected.length) {
-                    target.innerHTML = '<p class="text-[9px] text-amber-300 py-2">Ningún partido cumple todos los filtros obligatorios para este mercado. Se requieren al menos 15 pronósticos liquidados de la misma liga y selección, con 5 aciertos y 5 fallos, calibración validada y métricas Brier/frecuencia real disponibles. No se mostrarán candidatos sin cumplirlos.</p>';
+                    target.innerHTML = '<p class="text-[9px] text-amber-300 py-2">Ningún partido superó todos los filtros para este mercado. Además del mínimo de 15 pronósticos liquidados, 5 aciertos, 5 fallos y calibración validada, se exige índice integral ≥65/100, Brier ≤0.20, brecha absoluta ≤10 pp y muestra efectiva ≥10. Si hay cuota real, también se exige EV no negativo. No se rellenan espacios con candidatos de calidad insuficiente.</p>';
                     return;
                 }
                 target.innerHTML = selected.map((item, index) => {
@@ -8636,7 +8676,8 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                         <div class="flex items-center justify-between gap-2"><span class="text-[8px] font-black text-slate-500">#${index + 1} · ${escapeModelPredictionHtml(r.league || 'Sin competición')}</span><span class="text-right"><span class="block text-[11px] font-black text-white tabular-nums">${pct(item.calibratedProbability)}</span><span class="block text-[7px] font-black text-emerald-300">CALIDAD ${item.preselectorScore.toFixed(0)}/100</span></span></div>
                         <div class="mt-1 text-[9px] font-bold text-slate-100 break-words">${escapeModelPredictionHtml(r.home || 'Local')} vs ${escapeModelPredictionHtml(r.away || 'Visitante')}</div>
                         <div class="text-[9px] font-black text-amber-200 mt-1">${escapeModelPredictionHtml(pick.label)}</div>
-                        <div class="mt-1 text-[8px] text-emerald-200">Índice integral: ${item.preselectorScore.toFixed(1)}/100 · Brier, calibración, muestra, casos similares y probabilidad${Number.isFinite(item.ev) ? ' · EV' : ''}</div>
+                        <div class="mt-1 text-[8px] text-emerald-200">Índice integral: ${item.preselectorScore.toFixed(1)}/100 · Superó filtro de calidad</div>
+                        <div class="text-[7px] text-slate-500">Umbrales: Brier ≤0.20 · brecha ≤10 pp · N efectivo ≥10${Number.isFinite(item.odds) ? ' · EV ≥0%' : ' · sin cuota: EV no exigido'}</div>
                         ${calibrationLine}${qualityLine}${oddsLine}
                         <div class="text-[7px] text-slate-600 mt-1">${escapeModelPredictionHtml(r.matchDate || '')}${r.kickoff ? ' · ' + escapeModelPredictionHtml(r.kickoff) : ''}</div>
                         <button type="button" onclick="registerModelPreselectorBet(${modelPredictionRecords.indexOf(r)}, '${def.id}', '${pick.key}')" class="mt-2 w-full rounded-lg border border-emerald-500/35 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-200 text-[9px] font-black px-2.5 py-2 transition-colors"><i class="fa-solid fa-plus-circle mr-1"></i>REGISTRAR APUESTA</button>
@@ -8650,7 +8691,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (pendingEl) pendingEl.textContent = String(pending.length);
             if (candidatesEl) candidatesEl.textContent = String(totalCandidates);
             if (note) note.textContent = pending.length
-                ? `Se revisaron ${pending.length} partidos pendientes (${pending.length - eligiblePending.length} con fecha vencida excluidos del ranking). Filtros obligatorios intactos: mínimo 15 pronósticos liquidados de la misma liga y selección, 5 aciertos y 5 fallos, calibración validada y métricas calculables. Ranking integral 0–100: Brier 35%, calibración 25%, solidez de muestra 15%, casos similares 10% y probabilidad calibrada 15%; el EV solo ajusta moderadamente cuando existe cuota real. Máximo 5 por mercado. Sin cuotas inventadas ni relleno de candidatos no aptos.`
+                ? `Se revisaron ${pending.length} partidos pendientes (${pending.length - eligiblePending.length} con fecha vencida excluidos). Filtros base: mínimo 15 pronósticos liquidados de la misma liga y selección, 5 aciertos, 5 fallos, calibración validada y métricas calculables. Segundo filtro obligatorio: índice ≥${MODEL_PRESELECTOR_QUALITY_GATE.minScore}/100, Brier ≤${MODEL_PRESELECTOR_QUALITY_GATE.maxBrier.toFixed(2)}, brecha absoluta ≤${(MODEL_PRESELECTOR_QUALITY_GATE.maxAbsoluteGap*100).toFixed(0)} pp y N efectivo ≥${MODEL_PRESELECTOR_QUALITY_GATE.minEffectiveCount}; con cuota real, EV no negativo. ${qualityRejected} candidatos fueron descartados por calidad insuficiente. Ranking: Brier 35%, calibración 25%, muestra 15%, casos similares 10% y probabilidad calibrada 15%. Máximo 5 por mercado; no se inventan cuotas ni se rellenan lugares.`
                 : 'No hay partidos pendientes en Área 1. Los resueltos se usan exclusivamente para medir calidad y calibración.';
         }
 
