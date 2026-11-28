@@ -8467,9 +8467,9 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 return;
             }
 
-            // Filtro de visualización: solo selecciones con Platt validado y ajuste absoluto <= 5 pp.
+            // Filtro de visualización: solo selecciones con Platt validado y ajuste absoluto <= 2 pp.
             // No modifica registros, probabilidades, estados ni datos guardados.
-            const A1_PLATT_MAX_ADJUSTMENT = 0.05;
+            const A1_PLATT_MAX_ADJUSTMENT = 0.02;
             const pending = (Array.isArray(modelPredictionRecords) ? modelPredictionRecords : [])
                 .filter(record => record && record.status !== 'SETTLED' && record.inputs &&
                     ['homeGF','homeGA','awayGF','awayGA'].every(key => Number.isFinite(Number(record.inputs[key]))))
@@ -8497,10 +8497,10 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             if (countEl) countEl.textContent = String(eligibleRecords.length);
             if (leaguesEl) leaguesEl.textContent = String(groups.size);
             if (notice) notice.textContent = eligibleRecords.length
-                ? `${eligibleRecords.length} partidos en ${groups.size} ligas cumplen Platt validado con ajuste entre −5.0 y +5.0 pp. Solo se muestran los mercados que pasan el filtro.`
-                : 'No hay partidos pendientes con Platt validado y al menos un mercado cuyo ajuste esté entre −5.0 y +5.0 pp.';
+                ? `${eligibleRecords.length} partidos en ${groups.size} ligas cumplen Platt validado con ajuste entre −2.0 y +2.0 pp. Solo se muestran los mercados que pasan el filtro.`
+                : 'No hay partidos pendientes con Platt validado y al menos un mercado cuyo ajuste esté entre −2.0 y +2.0 pp.';
             if (!eligibleRecords.length) {
-                root.innerHTML = '<p class="text-[9px] text-slate-500 text-center py-4">No hay partidos que cumplan el filtro Platt ±5.0 pp. Los partidos sin muestra validada o con ajustes fuera del umbral permanecen guardados, pero no se muestran aquí.</p>';
+                root.innerHTML = '<p class="text-[9px] text-slate-500 text-center py-4">No hay partidos que cumplan el filtro Platt ±2.0 pp. Los partidos sin muestra validada o con ajustes fuera del umbral permanecen guardados, pero no se muestran aquí.</p>';
                 return;
             }
             const esc = value => escapeModelPredictionHtml(String(value ?? ''));
@@ -8509,7 +8509,7 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
             root.innerHTML = Array.from(groups.entries()).sort((a,b)=>a[0].localeCompare(b[0])).map(([league, items], index) => `
                 <details class="rounded-xl border border-slate-700/80 bg-slate-950/45 overflow-hidden" ${index===0?'open':''}>
                     <summary class="cursor-pointer list-none flex items-center justify-between gap-2 px-3 py-3 bg-slate-900/80">
-                        <span class="min-w-0"><b class="block text-[11px] text-white truncate">${esc(league)}</b><small class="text-[8px] text-slate-400">${items.length} partido(s) que cumplen ±5.0 pp</small></span>
+                        <span class="min-w-0"><b class="block text-[11px] text-white truncate">${esc(league)}</b><small class="text-[8px] text-slate-400">${items.length} partido(s) que cumplen ±2.0 pp</small></span>
                         <span class="text-[9px] font-black text-amber-200 border border-amber-500/30 bg-amber-500/10 rounded-lg px-2 py-1">VER PARTIDOS <i class="fa-solid fa-chevron-down ml-1"></i></span>
                     </summary>
                     <div class="p-2 space-y-2">${items.map(({record, markets:m, eligibleKeys}) => {
