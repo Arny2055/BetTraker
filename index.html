@@ -8917,6 +8917,47 @@ GP	W	D	L	GF	GA	GD	Pts	PPG
                 else note.textContent=`Muestra: ${settled.length} partidos resueltos${selected==='ALL'?' en todas las competiciones':` de ${selected}`}. Las métricas se calculan con probabilidades originales congeladas. Estos resultados alimentan exclusivamente la calibración independiente de pronósticos cuando se activa; nunca se mezclan con la calibración de apuestas reales ni modifican los registros históricos.`;
             }
             const pendingHint=document.getElementById('modelStatsPendingHint');if(pendingHint)pendingHint.textContent=`${pending} pendientes excluidos`;
+            renderLeagueCalibrationRanking();
+        }
+
+        // Ranking independiente de calibración por liga. Usa probabilidades originales
+        // congeladas y marcadores reales de Área 1; es de solo lectura.
+        function renderLeagueCalibrationRanking() {
+            const root=document.getElementById('leagueCalibrationRanking');
+            if(!root)return;
+            const minSample=Math.max(5,Number(document.getElementById('leagueCalibrationMinSample')?.value)||10);
+            const valid=(Array.isArray(modelPredictionRecords)?modelPredictionRecords:[]).filter(r=>
+                r && r.status==='SETTLED' && String(r.league||'').trim() &&
+                r.actualHomeGoals!==null && r.actualHomeGoals!==undefined && String(r.actualHomeGoals).trim()!=='' &&
+                r.actualAwayGoals!==null && r.actualAwayGoals!==undefined && String(r.actualAwayGoals).trim()!=='' &&
+                Number.isInteger(Number(r.actualHomeGoals)) && Number(r.actualHomeGoals)>=0 &&
+                Number.isInteger(Number(r.actualAwayGoals)) && Number(r.actualAwayGoals)>=0
+            );
+            const groups=new Map();
+            for(const r of valid){
+                const league=String(r.league).trim();
+                if(!groups.has(league))groups.set(league,[]);
+                groups.get(league).push(r);
+            }
+            const pct=v=>Number.isFinite(v)?`${(v*100).toFixed(1)}%`:'—';
+            const gap=v=>Number.isFinite(v)?`${v>0?'+':''}${v.toFixed(1)} pp`:'—';
+            const tone=v=>!Number.isFinite(v)?'text-slate-400':Math.abs(v)<=3?'text-emerald-300':Math.abs(v)<=6?'text-amber-300':'text-rose-300';
+            const definitions=[
+                {id:'1x2',title:'1X2',desc:'Promedio de las brechas absolutas entre Local, Empate y Visitante.',calc(rows){
+                    let n=0,ps=[0,0,0],ys=[0,0,0];
+                    for(const r of rows){const p=(r.probabilities?.original&&typeof r.probabilities.original==='object')?r.probabilities.original:(r.probabilities||{});const vals=['homeWin','draw','awayWin'].map(k=>Number(p[k]));if(!vals.every(v=>Number.isFinite(v)&&v>=0&&v<=1))continue;const sum=vals.reduce((a,b)=>a+b,0);if(sum<=0)continue;const hg=Number(r.actualHomeGoals),ag=Number(r.actualAwayGoals);const truth=[hg>ag,hg===ag,hg<ag];vals.forEach((v,i)=>{ps[i]+=v/sum;ys[i]+=truth[i]?1:0;});n++;}
+                    if(!n)return null;const pred=ps.map(v=>v/n),real=ys.map(v=>v/n),d=pred.map((v,i)=>(v-real[i])*100);return {n,pred:pred.map(pct).join(' / '),real:real.map(pct).join(' / '),deviation:d.reduce((a,b)=>a+Math.abs(b),0)/3};
+                }},
+                {id:'ou',title:'Over / Under 2.5',desc:'Brecha de frecuencia para Over 2.5 (Under es su complemento).',calc(rows){return leagueBinaryMetric(rows,'over25',r=>Number(r.actualHomeGoals)+Number(r.actualAwayGoals)>=3);}},
+                {id:'btts',title:'BTTS',desc:'Brecha de frecuencia para BTTS Sí (BTTS No es su complemento).',calc(rows){return leagueBinaryMetric(rows,'bttsYes',r=>Number(r.actualHomeGoals)>0&&Number(r.actualAwayGoals)>0);}}
+            ];
+            function leagueBinaryMetric(rows,key,outcome){let n=0,ps=0,ys=0;for(const r of rows){const p=(r.probabilities?.original&&typeof r.probabilities.original==='object')?r.probabilities.original:(r.probabilities||{});const prob=Number(p[key]);if(!Number.isFinite(prob)||prob<0||prob>1)continue;n++;ps+=prob;ys+=outcome(r)?1:0;}return n?{n,pred:pct(ps/n),real:pct(ys/n),deviation:(ps/n-ys/n)*100}:null;}
+            root.innerHTML=definitions.map(def=>{
+                const rows=[...groups.entries()].map(([league,records])=>({league,metric:def.calc(records)})).filter(x=>x.metric&&x.metric.n>=minSample).sort((a,b)=>Math.abs(a.metric.deviation)-Math.abs(b.metric.deviation)||b.metric.n-a.metric.n);
+                const body=rows.length?rows.map((x,i)=>`<tr class="border-t border-slate-800"><td class="p-2 text-slate-100 font-bold">${i+1}. ${escapeModelPredictionHtml(x.league)}</td><td class="p-2 text-slate-300">${x.metric.n}</td><td class="p-2 text-slate-300 whitespace-nowrap">${x.metric.pred}</td><td class="p-2 text-slate-300 whitespace-nowrap">${x.metric.real}</td><td class="p-2 font-black whitespace-nowrap ${tone(x.metric.deviation)}">${gap(x.metric.deviation)}</td></tr>`).join(''):`<tr><td colspan="5" class="p-3 text-center text-slate-500">No hay ligas con al menos ${minSample} partidos válidos en este mercado.</td></tr>`;
+                return `<div class="rounded-xl border border-slate-800 overflow-hidden"><div class="px-2.5 py-2 bg-slate-900/80"><div class="text-[10px] font-black text-white">${def.title} · MEJOR CALIBRADAS</div><p class="text-[8px] text-slate-500 mt-0.5">${def.desc} Ordenadas por menor brecha absoluta.</p></div><div class="overflow-x-auto"><table class="w-full text-[9px] text-left"><thead class="bg-slate-950 text-slate-400"><tr><th class="p-2">Liga</th><th class="p-2">PJ</th><th class="p-2">Prob. media</th><th class="p-2">Frecuencia real</th><th class="p-2">Brecha pp</th></tr></thead><tbody>${body}</tbody></table></div></div>`;
+            }).join('');
+            const count=document.getElementById('leagueCalibrationSampleCount');if(count)count.textContent=`${valid.length} partidos resueltos válidos en ${groups.size} ligas`;
         }
 
         // ELO independiente por competición: se reconstruye desde los resultados liquidados
@@ -10546,6 +10587,11 @@ document.addEventListener('keydown', function(event) {
                     <p class="text-[8px] text-slate-500">Cada selección tiene sus propios tramos del 0% al 100%. En cada tramo se compara la probabilidad media pronosticada con la frecuencia real del evento, incluso cuando la selección no era la favorita. Brier y Log Loss: cuanto más bajos, mejor.</p>
                 </div>
                 <div id="modelPredictionStatsNote" class="text-[9px] text-slate-500 bg-slate-950/60 rounded-lg p-2">Aún no hay suficientes pronósticos resueltos para calcular métricas.</div>
+            </div>
+            <div id="leagueCalibrationRanking" class="area1-admin-only hidden glass-card rounded-2xl p-3.5 space-y-3 border border-emerald-500/30">
+                <div class="flex items-start justify-between gap-2"><div><h3 class="text-sm font-black text-white"><i class="fa-solid fa-ranking-star text-emerald-300 mr-1"></i> Ligas mejor calibradas</h3><p class="text-[9px] text-slate-400 mt-1">Compara la probabilidad media guardada contra la frecuencia observada en los marcadores reales. Menor brecha absoluta (más cerca de 0 pp) significa mejor calibración.</p></div><span class="text-[8px] font-black rounded-lg px-2 py-1 bg-emerald-500/10 text-emerald-200 border border-emerald-500/25">RANKING</span></div>
+                <div class="flex flex-wrap items-center gap-2"><label for="leagueCalibrationMinSample" class="text-[9px] text-slate-400 font-bold">Muestra mínima por liga</label><select id="leagueCalibrationMinSample" onchange="renderLeagueCalibrationRanking()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[9px] text-slate-200"><option value="10">10 partidos</option><option value="15">15 partidos</option><option value="20">20 partidos</option><option value="30">30 partidos</option></select><span id="leagueCalibrationSampleCount" class="text-[8px] text-slate-500 ml-auto">0 partidos</span></div>
+                <div class="rounded-lg border border-amber-500/20 bg-amber-950/10 p-2 text-[8px] text-amber-100/80">Se usan exclusivamente pronósticos de Área 1 ya resueltos con probabilidad original válida. No se incluyen pendientes ni apuestas registradas. En 1X2 se promedian las tres brechas absolutas; en goles y BTTS se contrasta la probabilidad de Sí/Over con su frecuencia real (la opción contraria es complementaria).</div>
             </div>
             <details id="modelPredictionLogDetails" class="area1-admin-only hidden glass-card rounded-2xl border border-slate-700/80 group">
                 <summary class="list-none cursor-pointer select-none p-3.5 flex items-center justify-between gap-2 [&::-webkit-details-marker]:hidden">
